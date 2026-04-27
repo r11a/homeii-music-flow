@@ -3796,6 +3796,34 @@
     );
   }
 
+  _historyRecommendationItems(limit = 5) {
+    const currentIndex = this._state.maQueueState?.current_index ?? -1;
+    const queueItems = this._getNowPlayingQueueItems()
+      .filter((item) => (item?.sort_index ?? -1) !== currentIndex)
+      .map((item) => {
+        const media = item.media_item || {};
+        return {
+          uri: String(media.uri || "").trim(),
+          media_type: media.media_type || item.media_type || "track",
+          title: media.name || item.name || this._m("Recommended track", "המלצה"),
+          artist: media.artists?.map((artist) => artist.name).join(", ") || media.album?.name || "",
+          album: media.album?.name || "",
+          image: this._queueItemImageUrl(item, 120) || this._artUrl(media) || "",
+        };
+      })
+      .filter((item) => item.uri)
+      .slice(0, limit);
+    if (queueItems.length) return queueItems;
+    const seen = new Set();
+    return (this._state.mobileRecentHistory || [])
+      .filter((item) => item?.uri && !seen.has(item.uri) && seen.add(item.uri))
+      .slice(0, limit)
+      .map((item) => ({
+        ...item,
+        title: item.title || item.name || this._m("Recommended track", "המלצה"),
+      }));
+  }
+
   _setHistoryDrawerOpen(open = false) {
     this._state.mobileHistoryDrawerOpen = !!open;
     const drawer = this.$("historyDrawer");
@@ -3827,9 +3855,18 @@
     }
     drawer?.removeAttribute("hidden");
     button?.removeAttribute("hidden");
-    const items = this._visibleRecentHistoryItems();
+    const tab = this._state.mobileHistoryDrawerTab === "recommendations" ? "recommendations" : "recent";
+    this.shadowRoot?.querySelectorAll("[data-history-tab]")?.forEach((btn) => {
+      const active = btn.dataset.historyTab === tab;
+      btn.classList.toggle("active", active);
+      btn.setAttribute("aria-selected", active ? "true" : "false");
+    });
+    const items = tab === "recommendations" ? this._historyRecommendationItems() : this._visibleRecentHistoryItems();
     if (!items.length) {
-      const emptyHtml = `<div class="history-empty">${this._esc(this._m("Play a few tracks and they will appear here.", "נגן כמה שירים והם יופיעו כאן."))}</div>`;
+      const emptyText = tab === "recommendations"
+        ? this._m("Recommendations will appear once HOMEii Flow sees your queue or recent listening.", "המלצות יופיעו אחרי ש-HOMEii Flow יזהה את התור או ההאזנות האחרונות.")
+        : this._m("Play a few tracks and they will appear here.", "נגן כמה שירים והם יופיעו כאן.");
+      const emptyHtml = `<div class="history-empty">${this._esc(emptyText)}</div>`;
       if (this._state.mobileHistoryRenderedHtml !== emptyHtml) {
         host.innerHTML = emptyHtml;
         this._state.mobileHistoryRenderedHtml = emptyHtml;
@@ -3856,7 +3893,8 @@
       host.querySelectorAll("[data-history-index]").forEach((btn) => btn.addEventListener("click", async (e) => {
         const trigger = e.currentTarget;
         const index = Number(trigger.dataset.historyIndex);
-        const item = this._visibleRecentHistoryItems()[index];
+        const currentTab = this._state.mobileHistoryDrawerTab === "recommendations" ? "recommendations" : "recent";
+        const item = (currentTab === "recommendations" ? this._historyRecommendationItems() : this._visibleRecentHistoryItems())[index];
         if (!item?.uri) return;
         this._pressUiButton(trigger);
         await this._playMedia(item.uri, item.media_type || "track", "play", {
@@ -4631,6 +4669,7 @@
     this._lyricsRequestToken = "";
     requestAnimationFrame(() => {
       this._syncNowPlayingUI();
+      this._syncTabletAutoFitUi();
       if (typeof this._refreshMobileArtStack === "function") this._refreshMobileArtStack(true);
     });
   }
@@ -5187,8 +5226,9 @@
     const uri = String(entry?.uri || "").trim();
     if (!uri) return false;
     if (!likedNow) {
-      const ref = this._parseMediaReference(uri, mediaType);
-      const playerUri = String(this._getSelectedPlayer()?.attributes?.media_content_id || "").trim();
+      const playerUri = this._entryTargetsCurrentMedia(entry)
+        ? String(this._getSelectedPlayer()?.attributes?.media_content_id || "").trim()
+        : "";
       const bestUri = playerUri || uri;
       const bestRef = this._parseMediaReference(bestUri, mediaType);
       let lastError = null;
@@ -7671,6 +7711,7 @@
 
   _tickProgress() {
     this._syncSleepTimerState();
+    this._syncScheduledStartState();
     this._syncNightModeUi();
     this._syncSleepTimerChip();
     const player = this._getSelectedPlayer();
@@ -7688,6 +7729,7 @@
 
   async _updateNowPlayingState() {
     this._syncSleepTimerState();
+    this._syncScheduledStartState();
     if (this._state.selectedPlayer && this._isDirectMaPlayer(this._state.selectedPlayer)) {
       await this._refreshDirectMaPlayers();
     }
@@ -10842,6 +10884,12 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     this._state.mobileSleepTimerPlayer = "";
     this._state.mobileSleepTimerOrigin = "";
     this._state.mobileSleepTimerMenuOpen = false;
+    this._state.mobileStartTimerEnabled = false;
+    this._state.mobileStartTimerTime = "07:00";
+    this._state.mobileStartTimerPlayer = "";
+    this._state.mobileStartTimerVolume = 35;
+    this._state.mobileStartTimerDays = [0, 1, 2, 3, 4, 5, 6];
+    this._state.mobileStartTimerLastRunKey = "";
     this._state.mobileLyricsSyncEnabled = true;
     this._state.mobileLyricsSyncOffsetMs = 0;
     this._state.mobileCompactMode = false;
@@ -10850,6 +10898,8 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     this._state.mobileHistoryRenderedHtml = "";
     this._state.mobileCurrentHistoryEntry = null;
     this._state.mobileHistoryDrawerOpen = false;
+    this._state.mobileHistoryDrawerTab = "recent";
+    this._state.mobileSettingsScrollTop = 0;
     this._state.controlRoomRestoreAfterMenu = false;
     this._state.controlRoomRenderedHtml = "";
     this._state.controlRoomRenderSignature = "";
@@ -10909,6 +10959,12 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     try { this._state.mobileSleepTimerEndsAt = Number(localStorage.getItem("homeii_music_flow_mobile_sleep_timer_at") || 0) || 0; } catch (_) {}
     try { this._state.mobileSleepTimerPlayer = localStorage.getItem("homeii_music_flow_mobile_sleep_timer_player") || ""; } catch (_) {}
     try { this._state.mobileSleepTimerOrigin = localStorage.getItem("homeii_music_flow_mobile_sleep_timer_origin") || ""; } catch (_) {}
+    try { this._state.mobileStartTimerEnabled = JSON.parse(localStorage.getItem("homeii_music_flow_mobile_start_timer_enabled") ?? "false"); } catch (_) {}
+    try { this._state.mobileStartTimerTime = this._normalizeClockTime(localStorage.getItem("homeii_music_flow_mobile_start_timer_time") || "07:00", "07:00"); } catch (_) {}
+    try { this._state.mobileStartTimerPlayer = localStorage.getItem("homeii_music_flow_mobile_start_timer_player") || ""; } catch (_) {}
+    try { this._state.mobileStartTimerVolume = Math.max(0, Math.min(100, Number(localStorage.getItem("homeii_music_flow_mobile_start_timer_volume") || 35) || 35)); } catch (_) {}
+    try { this._state.mobileStartTimerDays = this._normalizeNightModeDays(localStorage.getItem("homeii_music_flow_mobile_start_timer_days")); } catch (_) {}
+    try { this._state.mobileStartTimerLastRunKey = localStorage.getItem("homeii_music_flow_mobile_start_timer_last_run") || ""; } catch (_) {}
     try { this._state.mobileLyricsSyncEnabled = JSON.parse(localStorage.getItem("homeii_music_flow_mobile_lyrics_sync") ?? "true"); } catch (_) {}
     try { this._state.mobileLyricsSyncOffsetMs = Math.max(-10000, Math.min(10000, Number(localStorage.getItem("homeii_music_flow_mobile_lyrics_offset_ms") || 0) || 0)); } catch (_) {}
     try { this._state.mobileCompactMode = JSON.parse(localStorage.getItem("homeii_music_flow_mobile_compact_mode") ?? "false"); } catch (_) {}
@@ -11768,6 +11824,88 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     `;
   }
 
+  _scheduledStartDays() {
+    return this._normalizeNightModeDays(this._state.mobileStartTimerDays);
+  }
+
+  _scheduledStartPlayerId() {
+    const configured = String(this._state.mobileStartTimerPlayer || "").trim();
+    if (configured && this._playerByEntityId(configured)) return configured;
+    return String(this._state.selectedPlayer || this._getSelectedPlayer()?.entity_id || "").trim();
+  }
+
+  _scheduledStartStatusLabel() {
+    if (!this._state.mobileStartTimerEnabled) {
+      return this._m("No scheduled start is active", "אין כרגע תזמון הפעלה פעיל");
+    }
+    const player = this._playerByEntityId(this._scheduledStartPlayerId());
+    const playerName = player?.attributes?.friendly_name || this._m("Selected player", "הנגן הנבחר");
+    const dayLabels = this._nightModeDayOptions()
+      .filter(([value]) => this._scheduledStartDays().includes(value))
+      .map(([, label]) => label)
+      .join(" ");
+    const time = this._normalizeClockTime(this._state.mobileStartTimerTime || "07:00", "07:00");
+    const volume = Math.max(0, Math.min(100, Number(this._state.mobileStartTimerVolume || 35) || 35));
+    return this._isHebrew()
+      ? `${time} · ${playerName} · ${volume}% · ${dayLabels}`
+      : `${time} · ${playerName} · ${volume}% · ${dayLabels}`;
+  }
+
+  _setScheduledStartFromMenu() {
+    const timeInput = this.$("scheduledStartTimeInput");
+    const playerSelect = this.$("scheduledStartPlayerSelect");
+    const volumeInput = this.$("scheduledStartVolumeInput");
+    const checkedDays = Array.from(this.shadowRoot?.querySelectorAll("input[data-start-timer-day]:checked") || [])
+      .map((input) => Number(input.dataset.startTimerDay))
+      .filter((value) => Number.isInteger(value) && value >= 0 && value <= 6);
+    const playerId = String(playerSelect?.value || this._state.selectedPlayer || "").trim();
+    if (!playerId) {
+      this._toastError(this._m("Select a player first", "בחר נגן קודם"));
+      return false;
+    }
+    this._state.mobileStartTimerEnabled = true;
+    this._state.mobileStartTimerTime = this._normalizeClockTime(timeInput?.value || "07:00", "07:00");
+    this._state.mobileStartTimerPlayer = playerId;
+    this._state.mobileStartTimerVolume = Math.max(0, Math.min(100, Number(volumeInput?.value || 35) || 35));
+    this._state.mobileStartTimerDays = this._normalizeNightModeDays(checkedDays);
+    this._state.mobileStartTimerLastRunKey = "";
+    this._persistMobileAppearance();
+    this._toastSuccess(this._m("Scheduled start saved", "תזמון ההפעלה נשמר"));
+    return true;
+  }
+
+  _clearScheduledStart(showToast = false) {
+    this._state.mobileStartTimerEnabled = false;
+    this._state.mobileStartTimerLastRunKey = "";
+    this._persistMobileAppearance();
+    if (showToast) this._toast(this._m("Scheduled start cleared", "תזמון ההפעלה בוטל"));
+  }
+
+  _syncScheduledStartState(date = new Date()) {
+    if (!this._state.mobileStartTimerEnabled) return;
+    const time = this._normalizeClockTime(this._state.mobileStartTimerTime || "07:00", "07:00");
+    const [hours, minutes] = time.split(":").map((part) => Number(part) || 0);
+    if (date.getHours() !== hours || date.getMinutes() !== minutes) return;
+    const enabledDays = new Set(this._scheduledStartDays());
+    if (!enabledDays.has(Number(date.getDay()))) return;
+    const runKey = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}-${time}`;
+    if (this._state.mobileStartTimerLastRunKey === runKey) return;
+    const entityId = this._scheduledStartPlayerId();
+    if (!entityId) return;
+    this._state.mobileStartTimerLastRunKey = runKey;
+    this._persistMobileAppearance();
+    const volume = Math.max(0, Math.min(100, Number(this._state.mobileStartTimerVolume || 35) || 35));
+    this._setPlayerVolumeFor(entityId, volume / 100);
+    if (this._isDirectMaPlayer(entityId)) {
+      this._callDirectMaPlayerCommand(entityId, "players/cmd/play")
+        .then(() => this._refreshDirectMaPlayers().catch(() => {}))
+        .catch((error) => this._toastError(error?.message || this._m("Scheduled start failed", "תזמון ההפעלה נכשל")));
+    } else {
+      this._hass?.callService?.("media_player", "media_play", { entity_id: entityId })?.catch?.((error) => this._toastError(error?.message || this._m("Scheduled start failed", "תזמון ההפעלה נכשל")));
+    }
+    this._toastSuccess(this._m("Scheduled start activated", "תזמון ההפעלה הופעל"));
+  }
+
   _tabletAutoFitEnabled() {
     return HomeiiResponsiveFoundation.tabletAutoFitEnabled(this._layoutModeConfig());
   }
@@ -12121,6 +12259,12 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     try { localStorage.setItem("homeii_music_flow_mobile_sleep_timer_at", String(Number(this._state.mobileSleepTimerEndsAt || 0) || 0)); } catch (_) {}
     try { localStorage.setItem("homeii_music_flow_mobile_sleep_timer_player", this._state.mobileSleepTimerPlayer || ""); } catch (_) {}
     try { localStorage.setItem("homeii_music_flow_mobile_sleep_timer_origin", this._state.mobileSleepTimerOrigin || ""); } catch (_) {}
+    try { localStorage.setItem("homeii_music_flow_mobile_start_timer_enabled", JSON.stringify(!!this._state.mobileStartTimerEnabled)); } catch (_) {}
+    try { localStorage.setItem("homeii_music_flow_mobile_start_timer_time", this._normalizeClockTime(this._state.mobileStartTimerTime || "07:00", "07:00")); } catch (_) {}
+    try { localStorage.setItem("homeii_music_flow_mobile_start_timer_player", this._state.mobileStartTimerPlayer || ""); } catch (_) {}
+    try { localStorage.setItem("homeii_music_flow_mobile_start_timer_volume", String(Math.max(0, Math.min(100, Number(this._state.mobileStartTimerVolume || 35) || 35)))); } catch (_) {}
+    try { localStorage.setItem("homeii_music_flow_mobile_start_timer_days", JSON.stringify(this._scheduledStartDays())); } catch (_) {}
+    try { localStorage.setItem("homeii_music_flow_mobile_start_timer_last_run", this._state.mobileStartTimerLastRunKey || ""); } catch (_) {}
     try { localStorage.setItem("homeii_music_flow_mobile_lyrics_sync", JSON.stringify(this._state.mobileLyricsSyncEnabled !== false)); } catch (_) {}
     try { localStorage.setItem("homeii_music_flow_mobile_lyrics_offset_ms", String(this._lyricsSyncOffsetMs())); } catch (_) {}
     try { localStorage.setItem("homeii_music_flow_mobile_compact_mode", JSON.stringify(!!this._state.mobileCompactMode)); } catch (_) {}
@@ -13918,6 +14062,16 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
           text-align:start;
           max-width:min(320px, 100%);
         }
+        .card.rtl .compact-up-next {
+          direction:rtl;
+          flex-direction:row;
+          justify-content:flex-start;
+          text-align:right;
+        }
+        .compact-up-next .up-next-line {
+          min-width:0;
+          max-width:100%;
+        }
         .night-quick-row {
           display:flex;
           flex-wrap:wrap;
@@ -14451,7 +14605,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
           gap:10px;
           margin:18px auto 0;
           width:auto;
-          max-width:min(58vw, 196px);
+          max-width:min(calc(100% - 32px), 430px);
           min-height:36px;
           padding:7px 12px;
           border-radius:18px;
@@ -14513,17 +14667,19 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
         }
         .player-focus-copy {
           min-width:0;
-          display:grid;
-          gap:6px;
-          justify-items:center;
+          display:flex;
+          align-items:center;
+          gap:8px;
+          justify-content:center;
         }
         .player-focus-tags {
           display:flex;
           align-items:center;
           justify-content:center;
-          flex-wrap:wrap;
+          flex-wrap:nowrap;
           gap:6px;
-          min-height:20px;
+          min-height:0;
+          min-width:0;
         }
         .player-focus-pill {
           min-height:20px;
@@ -14656,7 +14812,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
           white-space:nowrap;
           overflow:hidden;
           text-overflow:ellipsis;
-          max-width:calc(100vw - 120px);
+          max-width:220px;
         }
         .card.layout-tablet .player-focus-name {
           order:1;
@@ -14670,9 +14826,14 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
         }
         .card.layout-tablet .player-focus-copy {
           order:1;
+          display:grid;
+          justify-items:center;
+          gap:6px;
         }
         .card.layout-tablet .player-focus-tags {
           justify-content:center;
+          flex-wrap:wrap;
+          min-height:20px;
         }
         .player-focus-meta {
           display:flex;
@@ -17021,14 +17182,19 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
         }
         .sleep-timer-corner {
           position:absolute;
-          inset-block-end:14px;
+          inset-block-end:calc(104px + env(safe-area-inset-bottom, 0px));
           z-index:8;
           display:grid;
           gap:8px;
           align-items:end;
         }
-        .sleep-timer-corner.right { inset-inline-end:18px; justify-items:end; }
-        .sleep-timer-corner.left { inset-inline-start:18px; justify-items:start; }
+        .sleep-timer-corner.right,
+        .sleep-timer-corner.left {
+          inset-inline-start:50%;
+          inset-inline-end:auto;
+          justify-items:center;
+          transform:translateX(-50%);
+        }
         .sleep-timer-corner[hidden],
         .sleep-timer-chip[hidden],
         .sleep-timer-menu[hidden] {
@@ -17139,10 +17305,9 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
           transform:translateX(0);
         }
         .history-drawer-head {
-          display:flex;
-          align-items:center;
-          justify-content:space-between;
+          display:grid;
           gap:10px;
+          align-items:start;
           min-height:58px;
           padding:16px 16px 10px;
           border-bottom:1px solid rgba(255,255,255,.08);
@@ -17153,6 +17318,33 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
           letter-spacing:.08em;
           text-transform:uppercase;
           color:rgba(255,255,255,.66);
+        }
+        .history-drawer-tabs {
+          display:flex;
+          align-items:center;
+          gap:6px;
+          padding:4px;
+          border-radius:999px;
+          background:rgba(255,255,255,.06);
+          border:1px solid rgba(255,255,255,.08);
+        }
+        .history-tab {
+          min-height:30px;
+          flex:1 1 0;
+          padding:0 10px;
+          border:none;
+          border-radius:999px;
+          background:transparent;
+          color:rgba(255,255,255,.68);
+          font:inherit;
+          font-size:11px;
+          font-weight:900;
+          cursor:pointer;
+        }
+        .history-tab.active {
+          color:#18120a;
+          background:linear-gradient(135deg, var(--ma-accent), color-mix(in srgb, var(--ma-accent) 72%, white 28%));
+          box-shadow:0 8px 16px color-mix(in srgb, var(--ma-accent) 16%, transparent);
         }
         .history-drawer-body {
           overflow:auto;
@@ -17188,6 +17380,16 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
         }
         .theme-light .history-drawer-title {
           color:#7b889b;
+        }
+        .theme-light .history-drawer-tabs {
+          background:rgba(236,241,247,.86);
+          border-color:rgba(143,159,181,.14);
+        }
+        .theme-light .history-tab {
+          color:#69778c;
+        }
+        .theme-light .history-tab.active {
+          color:#392805;
         }
         .theme-light .history-empty {
           color:#6f7d91;
@@ -17278,12 +17480,12 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
         }
         .lyrics-backdrop {
           position:absolute; inset:0; z-index:70; display:none; align-items:center; justify-content:center;
-          padding:max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+          padding:max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
           background:rgba(8,10,16,.58); backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);
         }
         .lyrics-backdrop.open { display:flex; }
         .lyrics-sheet {
-          width:min(100%, 720px); max-height:calc(100% - 8px); overflow:hidden; display:grid; grid-template-rows:auto minmax(0,1fr);
+          width:min(1120px, calc(100% - 8px)); max-height:calc(100% - 8px); overflow:hidden; display:grid; grid-template-rows:auto minmax(0,1fr);
           border-radius:28px; border:1px solid rgba(255,255,255,.12); background:rgba(17,19,28,.88); box-shadow:0 24px 60px rgba(0,0,0,.34);
         }
         .theme-light .lyrics-sheet { background:rgba(255,255,255,.92); border-color:rgba(147,161,183,.2); }
@@ -17364,17 +17566,21 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
         .theme-light .lyrics-sync-btn.active {
           background:color-mix(in srgb, var(--ma-accent) 16%, rgba(240,244,250,.96));
         }
-        .lyrics-body { overflow:auto; padding:22px 18px 26px; white-space:pre-wrap; line-height:1.92; font-size:clamp(18px, 4.6vw, 24px); color:#fff; text-align:center; scroll-behavior:smooth; }
+        .lyrics-body { overflow:auto; padding:clamp(24px, 4vw, 42px) clamp(18px, 5vw, 72px) 32px; white-space:pre-wrap; line-height:1.92; font-size:clamp(18px, 3vw, 30px); color:#fff; text-align:center; scroll-behavior:smooth; display:grid; justify-items:center; }
         .theme-light .lyrics-body { color:#1f2633; }
         .lyrics-state { display:grid; place-items:center; min-height:220px; text-align:center; color:rgba(255,255,255,.72); }
         .theme-light .lyrics-state { color:rgba(55,68,85,.68); }
         .lyrics-pre { margin:0; font:inherit; white-space:pre-wrap; text-align:center; }
         .lyrics-timeline {
+          width:min(100%, 920px);
+          margin-inline:auto;
           display:grid;
           gap:14px;
-          padding:10px 4px 42vh;
+          padding:10px 4px 44vh;
         }
         .lyrics-line {
+          width:100%;
+          text-align:center;
           opacity:.42;
           transform:scale(.96);
           transform-origin:center;
@@ -17565,6 +17771,10 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
         }
         .queue-row[data-queue-draggable="1"] {
           cursor:grab;
+        }
+        .queue-list.touch-dragging {
+          touch-action:none;
+          user-select:none;
         }
         .queue-row.dragging {
           opacity:.42;
@@ -17975,11 +18185,11 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
           align-content:start;
         }
         .media-items-list.layout-grid {
-          grid-template-columns:repeat(auto-fill, minmax(156px, 1fr));
-          gap:14px;
+          grid-template-columns:repeat(auto-fill, minmax(148px, 1fr));
+          gap:12px;
         }
         .card.layout-tablet .media-items-list.layout-grid {
-          grid-template-columns:repeat(auto-fill, minmax(180px, 1fr));
+          grid-template-columns:repeat(auto-fill, minmax(172px, 1fr));
         }
         .media-items-list.layout-list {
           grid-template-columns:1fr;
@@ -18010,8 +18220,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
           align-items:center;
           gap:8px;
         }
-        .media-more-btn,
-        .media-like-btn {
+        .media-more-btn {
           flex-shrink:0;
           min-width:38px;
           min-height:38px;
@@ -18021,25 +18230,15 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
           place-items:center;
           color:var(--ma-accent);
         }
-        .media-like-btn.active {
-          color:#f5a623;
-          background:rgba(245,166,35,.16);
-        }
-        .media-more-btn .ui-ic,
-        .media-like-btn .ui-ic {
+        .media-more-btn .ui-ic {
           width:17px;
           height:17px;
         }
-        .theme-light .media-more-btn,
-        .theme-light .media-like-btn {
+        .theme-light .media-more-btn {
           color:var(--ma-accent);
           background:color-mix(in srgb, var(--ma-accent) 14%, rgba(255,255,255,.86));
           border:1px solid color-mix(in srgb, var(--ma-accent) 30%, rgba(147,161,183,.2));
           box-shadow:0 10px 18px color-mix(in srgb, var(--ma-accent) 14%, rgba(111,126,150,.12));
-        }
-        .theme-light .media-like-btn.active {
-          color:#c6780a;
-          background:rgba(245,166,35,.18);
         }
         .media-entry.list {
           min-height:82px;
@@ -18072,10 +18271,13 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
           grid-template-columns:minmax(0,1fr);
           align-content:start;
           justify-items:stretch;
-          gap:12px;
-          padding:14px 14px 16px;
-          border-radius:24px;
+          gap:10px;
+          padding:12px 12px 14px;
+          border-radius:20px;
           text-align:center;
+          background:linear-gradient(180deg, rgba(255,255,255,.075), rgba(255,255,255,.04));
+          border:1px solid rgba(255,255,255,.1);
+          box-shadow:0 14px 28px rgba(0,0,0,.12), inset 0 1px 0 rgba(255,255,255,.05);
         }
         .media-entry.grid .media-entry-main {
           display:grid;
@@ -18088,8 +18290,8 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
           max-width:none;
           height:auto;
           aspect-ratio:1/1;
-          border-radius:20px;
-          box-shadow:0 14px 30px rgba(0,0,0,.2);
+          border-radius:16px;
+          box-shadow:none;
         }
         .media-entry.grid .media-entry-actions {
           position:absolute;
@@ -18103,6 +18305,11 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
         }
         .media-entry.grid .menu-item-sub {
           margin-top:6px;
+        }
+        .theme-light .media-entry.grid {
+          background:linear-gradient(180deg, rgba(255,255,255,.82), rgba(246,249,253,.72));
+          border-color:rgba(147,161,183,.16);
+          box-shadow:0 12px 24px rgba(111,126,150,.11), inset 0 1px 0 rgba(255,255,255,.5);
         }
         .media-section-title {
           font-size:12px;
@@ -18835,6 +19042,35 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
           grid-template-columns:repeat(2, minmax(0,1fr));
           gap:12px;
         }
+        .scheduled-start-card {
+          border-color:color-mix(in srgb, var(--ma-accent) 22%, rgba(255,255,255,.12));
+          background:
+            radial-gradient(circle at 12% 12%, color-mix(in srgb, var(--ma-accent) 14%, transparent), transparent 34%),
+            rgba(255,255,255,.08);
+        }
+        .scheduled-start-grid {
+          display:grid;
+          grid-template-columns:minmax(0, .88fr) minmax(0, 1.12fr);
+          gap:12px;
+          align-items:stretch;
+        }
+        .scheduled-start-field {
+          display:grid;
+          gap:10px;
+          padding:14px;
+          border-radius:18px;
+          background:rgba(255,255,255,.06);
+          border:1px solid rgba(255,255,255,.12);
+        }
+        .theme-light .scheduled-start-card {
+          background:
+            radial-gradient(circle at 12% 12%, color-mix(in srgb, var(--ma-accent) 12%, transparent), transparent 34%),
+            rgba(255,255,255,.72);
+        }
+        .theme-light .scheduled-start-field {
+          background:rgba(255,255,255,.76);
+          border-color:rgba(147,161,183,.2);
+        }
         .night-time-card {
           display:grid;
           gap:10px;
@@ -18974,6 +19210,9 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
           color:#1f2633;
         }
         @media (max-width: 760px) {
+          .scheduled-start-grid {
+            grid-template-columns:minmax(0,1fr);
+          }
           .night-window-grid {
             grid-template-columns:minmax(0,1fr);
           }
@@ -19299,16 +19538,16 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
           .player-chip { padding:0 2px; }
           .player-focus {
             margin-top:4px;
-            max-width:min(46vw, 152px);
+            max-width:min(calc(100% - 28px), 360px);
             min-height:32px;
             padding:6px 10px;
             border-radius:16px;
             gap:8px;
           }
-          .player-focus-copy { gap:4px; }
-          .player-focus-tags { min-height:18px; gap:4px; }
+          .player-focus-copy { gap:6px; }
+          .player-focus-tags { min-height:0; gap:4px; flex-wrap:nowrap; }
           .player-focus-pill { min-height:18px; padding:0 7px; font-size:calc(9px * var(--v2-font-scale)); }
-          .player-focus-name { font-size:calc(11px * var(--v2-font-scale)); max-width:100%; }
+          .player-focus-name { font-size:calc(11px * var(--v2-font-scale)); max-width:min(46vw, 180px); }
           .hero-mobile-top { margin-bottom:8px; }
           .hero-split-shell { gap:12px; }
           .hero-info { gap:10px; }
@@ -19533,7 +19772,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
 .control-room-volume{width:100%;}
 .control-room-volume-value{min-width:34px;font-size:calc(11px * var(--v2-font-scale));font-weight:800;color:rgba(255,255,255,.78);text-align:end;}
 .theme-light .control-room-volume-value{color:#4f6077;}
-.control-room-tray{position:absolute;inset-inline-start:50%;inset-block-end:112px;display:grid;gap:12px;align-self:end;width:min(1180px, calc(100% - 44px));padding:14px 16px;border-radius:30px;border:1px solid rgba(255,255,255,.12);background:rgba(9,12,18,.4);backdrop-filter:blur(26px);-webkit-backdrop-filter:blur(26px);box-shadow:0 24px 60px rgba(0,0,0,.28);z-index:4;transform:translateX(-50%);}
+.control-room-tray{position:absolute;inset-inline-start:50%;inset-block-end:112px;display:grid;grid-template-rows:auto minmax(0,1fr);gap:12px;align-self:end;width:min(1180px, calc(100% - 44px));max-height:min(62vh, 560px);overflow:hidden;padding:14px 16px;border-radius:30px;border:1px solid rgba(255,255,255,.12);background:rgba(9,12,18,.4);backdrop-filter:blur(26px);-webkit-backdrop-filter:blur(26px);box-shadow:0 24px 60px rgba(0,0,0,.28);z-index:4;transform:translateX(-50%);pointer-events:auto;}
 .control-room-tray.compact{width:min(760px, calc(100% - 44px));}
 .control-room-tray.wide{width:min(1100px, 100%);}
 .theme-light .control-room-tray{background:rgba(255,255,255,.62);border-color:rgba(27,41,66,.08);box-shadow:0 14px 30px rgba(28,42,68,.12);}
@@ -19542,10 +19781,10 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
 .control-room-tray-sub{font-size:calc(12px * var(--v2-font-scale));color:rgba(255,255,255,.62);}
 .theme-light .control-room-tray-title{color:#18253a;}
 .theme-light .control-room-tray-sub{color:#71829a;}
-.control-room-transfer-bar{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) auto;align-items:center;gap:12px;}
+.control-room-transfer-bar{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) auto;align-items:center;gap:12px;min-height:0;}
 .control-room-transfer-bar select,.control-room-search{min-height:52px;border-radius:18px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.08);color:#fff;font:inherit;}
 .theme-light .control-room-transfer-bar select,.theme-light .control-room-search{background:rgba(245,248,252,.94);border-color:rgba(27,40,62,.08);color:#18253a;}
-.control-room-transfer-bar select{padding:0 14px;outline:none;}
+.control-room-transfer-bar select{padding:0 14px;outline:none;min-width:0;pointer-events:auto;}
 .control-room-transfer-arrow{width:44px;height:44px;border-radius:16px;display:grid;place-items:center;color:rgba(255,255,255,.8);background:rgba(255,255,255,.06);}
 .theme-light .control-room-transfer-arrow{color:#3d4f69;background:rgba(236,241,247,.94);}
 .control-room-tray-btn{width:52px;height:52px;border-radius:18px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.08);color:#fff;display:grid;place-items:center;}
@@ -19556,8 +19795,8 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
 .control-room-search-mic{width:36px;height:36px;padding:0;border-radius:12px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.08);color:inherit;display:grid;place-items:center;}
 .theme-light .control-room-search-mic{background:rgba(234,240,247,.9);border-color:rgba(27,40,62,.08);}
 .control-room-search-mic .ui-ic{opacity:.9;}
-.control-room-library-results{min-height:0;max-height:300px;overflow:auto;padding-inline-end:4px;}
-.control-room-picker-list{display:grid;gap:10px;max-height:320px;overflow:auto;padding-inline-end:4px;}
+.control-room-library-results{min-height:0;max-height:min(42vh, 360px);overflow:auto;padding-inline-end:4px;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;}
+.control-room-picker-list{display:grid;gap:10px;min-height:0;max-height:min(42vh, 360px);overflow:auto;padding-inline-end:4px;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;}
 .control-room-picker-row{display:grid;grid-template-columns:52px minmax(0,1fr) 28px;align-items:center;gap:12px;padding:10px 12px;border-radius:20px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.06);color:inherit;text-align:inherit;}
 .control-room-picker-row.active{border-color:rgba(var(--dynamic-accent-rgb,245 166 35) / .28);background:rgba(var(--dynamic-accent-rgb,245 166 35) / .14);}
 .theme-light .control-room-picker-row{background:rgba(255,255,255,.82);border-color:rgba(28,42,68,.08);}
@@ -19696,7 +19935,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
   .control-room-grid-wrap{padding:24px 20px 0;}
   .control-room-grid{max-width:100%;}
   .control-room-tile.selected{transform:translateY(-12px) scale(1.03);}
-  .control-room-tray{inset-block-end:102px;width:min(1080px, calc(100% - 36px));}
+  .control-room-tray{inset-block-end:102px;width:min(1080px, calc(100% - 36px));max-height:calc(100dvh - 168px);}
   .control-room-tray.compact{width:min(680px, calc(100% - 36px));}
   .control-room-dock{padding:12px 14px calc(14px + env(safe-area-inset-bottom, 0px));gap:10px;max-width:calc(100% - 2px);}
   .control-room-now-pill{min-width:220px;max-width:260px;}
@@ -19720,6 +19959,10 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
         <aside class="history-drawer ${historyEdgeClass}" id="historyDrawer" hidden>
           <div class="history-drawer-head">
             <div class="history-drawer-title">${this._esc(this._m("Recently played", "נוגן לאחרונה"))}</div>
+            <div class="history-drawer-tabs" role="tablist" aria-label="${this._esc(this._m("History tabs", "טאבי היסטוריה"))}">
+              <button class="history-tab active" data-history-tab="recent" role="tab" aria-selected="true">${this._esc(this._m("Recent", "אחרונים"))}</button>
+              <button class="history-tab" data-history-tab="recommendations" role="tab" aria-selected="false">${this._esc(this._m("Recommended", "המלצות"))}</button>
+            </div>
           </div>
           <div class="history-drawer-body" id="historyDrawerBody"></div>
         </aside>
@@ -19821,6 +20064,15 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     this.$("historyToggleFab")?.addEventListener("click", (e) => {
       if (!this._pressUiButton(e.currentTarget)) return;
       this._toggleHistoryDrawer();
+    });
+    this.$("historyDrawer")?.addEventListener("click", (e) => {
+      const tabBtn = e.target.closest("[data-history-tab]");
+      if (!tabBtn) return;
+      e.preventDefault();
+      e.stopPropagation();
+      this._state.mobileHistoryDrawerTab = tabBtn.dataset.historyTab === "recommendations" ? "recommendations" : "recent";
+      this._state.mobileHistoryRenderedHtml = "";
+      this._syncRecentHistoryUi();
     });
     this.$("sleepTimerCorner")?.addEventListener("click", (e) => {
       const chipBtn = e.target.closest("#sleepTimerChip");
@@ -20972,6 +21224,13 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     this._syncNowPlayingUI();
   }
 
+  _rememberMobileMenuScroll(page = this._state.menuPage || "main") {
+    if (page !== "settings") return;
+    const body = this.$("mobileMenuBody");
+    if (!body) return;
+    this._state.mobileSettingsScrollTop = body.scrollTop || 0;
+  }
+
   _openMobileMenu(page = "main", options = {}) {
     if (page === "settings" && this._usesVisualSettings()) {
       this._toastSuccess(this._m("Card settings are managed from the visual editor", "הגדרות הכרטיס מנוהלות מתוך העורך הוויזואלי"));
@@ -20986,9 +21245,13 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     const previousPage = this._state.menuPage || "main";
     const hasExplicitScrollTop = options?.scrollTop !== undefined && options?.scrollTop !== null;
     const explicitScrollTop = Number(options?.scrollTop);
+    const rememberedSettingsScrollTop = nextPage === "settings" ? Number(this._state.mobileSettingsScrollTop || 0) : null;
+    const samePageScrollTop = wasOpen && previousPage === nextPage ? (this.$("mobileMenuBody")?.scrollTop || 0) : null;
     const restoreScrollTop = hasExplicitScrollTop && Number.isFinite(explicitScrollTop)
       ? explicitScrollTop
-      : (wasOpen && previousPage === nextPage ? (this.$("mobileMenuBody")?.scrollTop || 0) : null);
+      : (Number.isFinite(samePageScrollTop) && samePageScrollTop > 0
+        ? samePageScrollTop
+        : (Number.isFinite(rememberedSettingsScrollTop) && rememberedSettingsScrollTop > 0 ? rememberedSettingsScrollTop : samePageScrollTop));
     this._state.menuOpen = true;
     this._state.menuPage = nextPage;
     if (String(this._state.menuPage).startsWith("library_") && this._layoutModeConfig() === "tablet") {
@@ -21071,11 +21334,20 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
   }
 
   _sleepTimerMenuHtml() {
+    this._loadPlayers();
     const remaining = this._sleepTimerRemainingLabel();
     const active = this._sleepTimerRemainingMs() > 0;
     const status = active
       ? this._m(`Active for ${remaining}`, `פעיל לעוד ${remaining}`)
       : this._m("No sleep timer is active", "אין כרגע טיימר שינה פעיל");
+    const scheduledTime = this._normalizeClockTime(this._state.mobileStartTimerTime || "07:00", "07:00");
+    const scheduledPlayer = this._scheduledStartPlayerId();
+    const scheduledVolume = Math.max(0, Math.min(100, Number(this._state.mobileStartTimerVolume || 35) || 35));
+    const scheduledDays = new Set(this._scheduledStartDays());
+    const playerOptions = (this._state.players || []).map((player) => {
+      const name = player.attributes?.friendly_name || player.entity_id;
+      return `<option value="${this._esc(player.entity_id)}" ${player.entity_id === scheduledPlayer ? "selected" : ""}>${this._esc(name)}</option>`;
+    }).join("");
     return `
       <div class="settings-shell">
         <div class="settings-group">
@@ -21097,6 +21369,39 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
               </span>
             </button>
           ` : ``}
+        </div>
+        <div class="settings-group scheduled-start-card">
+          <div class="settings-label">${this._esc(this._m("Scheduled Start", "תזמון הפעלה"))}</div>
+          <div class="settings-hint">${this._esc(this._scheduledStartStatusLabel())}</div>
+          <div class="scheduled-start-grid">
+            <label class="night-time-card" for="scheduledStartTimeInput">
+              <span class="night-time-label">${this._esc(this._m("Start time", "שעת הפעלה"))}</span>
+              <input class="night-time-input" id="scheduledStartTimeInput" type="time" value="${this._esc(scheduledTime)}" step="60" aria-label="${this._esc(this._m("Start time", "שעת הפעלה"))}">
+            </label>
+            <label class="scheduled-start-field" for="scheduledStartPlayerSelect">
+              <span class="settings-label">${this._esc(this._m("Player", "נגן"))}</span>
+              <select class="media-sort-select settings-select" id="scheduledStartPlayerSelect" aria-label="${this._esc(this._m("Player", "נגן"))}">
+                ${playerOptions || `<option value="">${this._esc(this._m("No players found", "לא נמצאו נגנים"))}</option>`}
+              </select>
+            </label>
+          </div>
+          <div class="settings-range scheduled-volume-field">
+            <div class="settings-label">${this._esc(this._m("Volume", "ווליום"))}</div>
+            <input id="scheduledStartVolumeInput" type="range" min="0" max="100" step="1" value="${this._esc(String(scheduledVolume))}">
+            <div class="settings-value">${this._esc(String(scheduledVolume))}%</div>
+          </div>
+          <div class="settings-label">${this._esc(this._m("Active days", "ימים פעילים"))}</div>
+          <div class="settings-check-grid">
+            ${this._nightModeDayOptions().map(([value, label]) => `
+              <label class="settings-check-pill">
+                <input type="checkbox" data-start-timer-day="${this._esc(String(value))}" ${scheduledDays.has(value) ? "checked" : ""}>
+                <span>${this._esc(label)}</span>
+              </label>`).join("")}
+          </div>
+          <div class="settings-actions">
+            <button class="settings-pill active" data-start-timer-save>${this._esc(this._m("Activate schedule", "הפעל תזמון"))}</button>
+            ${this._state.mobileStartTimerEnabled ? `<button class="settings-pill" data-start-timer-clear>${this._esc(this._m("Cancel schedule", "בטל תזמון"))}</button>` : ``}
+          </div>
         </div>
       </div>
     `;
@@ -21833,14 +22138,6 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     return `<div class="media-items-list layout-${this._esc(layout)}">${items.map((item) => {
       const art = this._artUrl(item);
       const artistName = this._artistName(item) || "";
-      const liked = this._isEntryLiked({
-        uri: item.uri || "",
-        media_type: mediaType,
-        name: item.name || "",
-        artist: artistName,
-        album: item.album?.name || "",
-        image: art || "",
-      });
       const sub = mediaType === "artist"
         ? this._m("Artist", "אמן")
         : mediaType === "radio"
@@ -21856,7 +22153,6 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
             </span>
           </button>
           <div class="media-entry-actions">
-            <button class="chip-btn queue-more-btn media-like-btn ${liked ? "active" : ""}" data-media-like="${this._esc(item.uri || "")}" data-media-type="${this._esc(mediaType)}" data-media-name="${this._esc(item.name || "")}" data-media-artist="${this._esc(artistName)}" data-media-album="${this._esc(item.album?.name || "")}" data-media-image="${this._esc(art || "")}" title="${this._esc(this._m("Like", "אהבתי"))}">${this._iconSvg(liked ? "heart_filled" : "heart_outline")}</button>
             <button class="chip-btn queue-more-btn media-more-btn" data-media-more="${this._esc(item.uri || "")}" data-media-type="${this._esc(mediaType)}" data-media-name="${this._esc(item.name || "")}" data-media-artist="${this._esc(artistName)}" data-media-album="${this._esc(item.album?.name || "")}" data-media-image="${this._esc(art || "")}" title="${this._esc(this._m("Actions", "פעולות"))}">${this._iconSvg("more")}</button>
           </div>
         </div>
@@ -22318,6 +22614,84 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
       this._state.mobileQueueDragFinishedUntil = Date.now() + 700;
       await this._reorderQueueItemByDrop(draggedId, targetId);
     });
+
+    let touchDrag = null;
+    const cancelTouchDrag = () => {
+      if (touchDrag?.timer) clearTimeout(touchDrag.timer);
+      touchDrag = null;
+      list.classList.remove("touch-dragging");
+      clearDropState();
+      this._state.mobileQueueDragItemId = "";
+    };
+    const targetFromY = (clientY) => {
+      const rows = Array.from(list.querySelectorAll(".queue-row")).filter((row) => row.dataset.queueItemId !== touchDrag?.id);
+      for (const row of rows) {
+        const rect = row.getBoundingClientRect();
+        if (clientY < rect.top + (rect.height / 2)) return { row, id: row.dataset.queueItemId || "" };
+      }
+      return { row: null, id: "" };
+    };
+    const updateTouchDropTarget = (clientY) => {
+      list.querySelectorAll(".queue-row.drop-before").forEach((row) => row.classList.remove("drop-before"));
+      const target = targetFromY(clientY);
+      if (target.row) target.row.classList.add("drop-before");
+      if (touchDrag) touchDrag.targetId = target.id;
+    };
+    const startTouchDrag = () => {
+      if (!touchDrag?.row || touchDrag.active) return;
+      touchDrag.active = true;
+      this._state.mobileQueueDragItemId = touchDrag.id;
+      list.classList.add("touch-dragging");
+      touchDrag.row.classList.add("dragging");
+      this._hapticTap([8]);
+    };
+    list.addEventListener("pointerdown", (event) => {
+      if (event.pointerType === "mouse") return;
+      const row = event.target?.closest?.(".queue-row[data-queue-draggable='1']");
+      if (!row || event.target?.closest?.("button,a,input,select,textarea")) return;
+      const id = row.dataset.queueItemId || "";
+      if (!id) return;
+      touchDrag = {
+        id,
+        row,
+        pointerId: event.pointerId,
+        startX: event.clientX,
+        startY: event.clientY,
+        targetId: id,
+        active: false,
+        timer: setTimeout(startTouchDrag, 180),
+      };
+      try { row.setPointerCapture?.(event.pointerId); } catch (_) {}
+    });
+    list.addEventListener("pointermove", (event) => {
+      if (!touchDrag || touchDrag.pointerId !== event.pointerId) return;
+      const dx = Math.abs(event.clientX - touchDrag.startX);
+      const dy = Math.abs(event.clientY - touchDrag.startY);
+      if (!touchDrag.active && (dx > 12 || dy > 12)) {
+        cancelTouchDrag();
+        return;
+      }
+      if (!touchDrag.active) return;
+      event.preventDefault();
+      updateTouchDropTarget(event.clientY);
+    }, { passive: false });
+    list.addEventListener("pointerup", async (event) => {
+      if (!touchDrag || touchDrag.pointerId !== event.pointerId) return;
+      const wasActive = !!touchDrag.active;
+      const draggedId = touchDrag.id;
+      const targetId = touchDrag.targetId;
+      if (touchDrag.timer) clearTimeout(touchDrag.timer);
+      touchDrag = null;
+      list.classList.remove("touch-dragging");
+      clearDropState();
+      this._state.mobileQueueDragItemId = "";
+      if (!wasActive || !draggedId) return;
+      event.preventDefault();
+      event.stopPropagation();
+      this._state.mobileQueueDragFinishedUntil = Date.now() + 700;
+      await this._reorderQueueItemByDrop(draggedId, targetId);
+    }, { passive: false });
+    list.addEventListener("pointercancel", cancelTouchDrag);
   }
 
   async _reorderQueueItemByDrop(draggedItemId, targetItemId) {
@@ -22546,6 +22920,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
   }
 
   async _handleMobileMenuClick(e) {
+    this._rememberMobileMenuScroll();
     const announcementPresetBtn = e.target.closest("[data-announcement-preset-fill]");
     if (announcementPresetBtn) {
       e.preventDefault();
@@ -22674,6 +23049,24 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
       e.stopPropagation();
       this._flashInteraction(sleepTimerCancelBtn);
       this._clearSleepTimer(true);
+      await this._renderMobileMenu();
+      return;
+    }
+    const startTimerSaveBtn = e.target.closest("[data-start-timer-save]");
+    if (startTimerSaveBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      this._flashInteraction(startTimerSaveBtn);
+      this._setScheduledStartFromMenu();
+      await this._renderMobileMenu();
+      return;
+    }
+    const startTimerClearBtn = e.target.closest("[data-start-timer-clear]");
+    if (startTimerClearBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      this._flashInteraction(startTimerClearBtn);
+      this._clearScheduledStart(true);
       await this._renderMobileMenu();
       return;
     }
@@ -23049,6 +23442,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
   }
 
   _handleMobileMenuChange(e) {
+    this._rememberMobileMenuScroll();
     if (e.target?.id === "mobileAnnouncementText") {
       this._state.mobileAnnouncementText = e.target.value || "";
       return;
@@ -23098,6 +23492,12 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
       this._build();
       this._init();
       this._openMobileMenu("settings");
+      return;
+    }
+    if (e.target?.id === "scheduledStartVolumeInput") {
+      const pct = Math.max(0, Math.min(100, Number(e.target.value || 0)));
+      const valueEl = e.target.closest(".scheduled-volume-field")?.querySelector(".settings-value");
+      if (valueEl) valueEl.textContent = `${pct}%`;
       return;
     }
     if (e.target?.id === "mobileNightStartInput" || e.target?.id === "mobileNightEndInput") {

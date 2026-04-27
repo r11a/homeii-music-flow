@@ -20,6 +20,7 @@ const sourceText = await readFile(srcMainPath, "utf8");
 const version = extractCardVersion(sourceText);
 
 await mkdir(path.dirname(distMainPath), { recursive: true });
+await copyFile(srcMainPath, distMainPath);
 await rm(distSendspinPath, { recursive: true, force: true });
 await cp(srcSendspinPath, distSendspinPath, { recursive: true });
 
