@@ -1,4 +1,4 @@
-# homeii-music-flow
+# HOMEii Music Flow
 
 <p align="center">
   <img src="docs/media/homeii-flow-preview.gif" alt="homeii-music-flow visual preview" width="100%">
