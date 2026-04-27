@@ -1,0 +1,31 @@
+{
+  "name": "homeii-music-flow",
+  "version": "5.0.0",
+  "description": "Premium Home Assistant Music Assistant dashboard card with a mobile-first visual player and built-in editor.",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "keywords": [
+    "home-assistant",
+    "lovelace",
+    "hacs",
+    "music-assistant",
+    "dashboard-card"
+  ],
+  "scripts": {
+    "build": "vite build && node ./scripts/release.mjs",
+    "release": "node ./scripts/release.mjs",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check": "npm run lint && npm run test"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.25.0",
+    "eslint": "^9.25.0",
+    "globals": "^15.15.0",
+    "jsdom": "^26.0.0",
+    "vite": "^6.3.5",
+    "vitest": "^3.1.0"
+  }
+}
