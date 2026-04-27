@@ -1,4 +1,8 @@
-# HOMEii Music Flow
+# HOMEii Flow
+
+<p align="center">
+  <img src="docs/brand/homeii-flow-logo.svg" alt="HOMEii Flow logo" width="260">
+</p>
 
 <p align="center">
   <img src="docs/media/homeii-flow-preview.gif" alt="homeii-music-flow visual preview" width="100%">
@@ -12,7 +16,7 @@
   <img alt="Built with Codex" src="https://img.shields.io/badge/built%20with-Codex-111111">
 </p>
 
-`homeii-music-flow` is a premium Home Assistant dashboard card for Music Assistant.
+`HOMEii Flow` (`homeii-music-flow`) is a premium Home Assistant dashboard card for Music Assistant.
 It was created to make music control feel like a real listening experience, not just a row of playback buttons.
 
 The card is built around a simple idea: the music area in a smart home should feel alive, elegant, useful, and personal.
@@ -422,6 +426,8 @@ https://github.com/r11a/homeii-music-flow
 type: custom:homeii-music-flow
 ```
 
+HACS installs the complete `dist/` package, including the local Sendspin browser player files, Embla swipe support, and the HOMEii Flow logo asset.
+
 If HACS does not add the resource automatically, add:
 
 ```text
@@ -430,14 +436,20 @@ If HACS does not add the resource automatically, add:
 
 ### Manual Install
 
-1. Copy `dist/homeii-music-flow.js` into your Home Assistant `www` folder.
-2. Add this Lovelace resource:
+1. Create this folder in Home Assistant:
 
 ```text
-/local/homeii-music-flow.js?v=5.0.0
+/config/www/community/homeii-music-flow/
 ```
 
-3. Use the card:
+2. Copy the full contents of this repo's `dist/` folder into it.
+3. Add this Lovelace resource:
+
+```text
+/local/community/homeii-music-flow/homeii-music-flow.js?v=5.0.0
+```
+
+4. Use the card:
 
 ```yaml
 type: custom:homeii-music-flow
@@ -456,14 +468,20 @@ show_theme_toggle: true
 ## Project Structure
 
 ```text
-dist/homeii-music-flow.js   stable runtime for Home Assistant / HACS
-src/homeii-music-flow.js    current main source snapshot
-src/core/                   extracted foundations for state, queue, players, media, theme, layout
-src/config/                 config validators
-tests/                      regression coverage for core logic
-scripts/release.mjs         release sync tooling
-docs/media/                 screenshots and GIF previews for the repo page
-docs/qa-matrix.md           viewport/theme/interaction release gate
+dist/homeii-music-flow.js        stable runtime for Home Assistant / HACS
+dist/sendspin-js/                packaged local browser player files
+dist/vendor/embla-carousel.umd.js packaged mobile swipe support
+dist/homeii-flow-logo.svg        packaged brand asset
+src/homeii-music-flow.js         current main source snapshot
+src/sendspin-js/                 source copy of the local browser player files
+vendor/embla-carousel.umd.js     source copy of Embla used by the release package
+src/core/                        extracted foundations for state, queue, players, media, theme, layout
+src/config/                      config validators
+tests/                           regression coverage for core logic
+scripts/release.mjs              release sync tooling
+docs/brand/                      repository logo and brand assets
+docs/media/                      screenshots and GIF previews for the repo page
+docs/qa-matrix.md                viewport/theme/interaction release gate
 ```
 
 ## Development

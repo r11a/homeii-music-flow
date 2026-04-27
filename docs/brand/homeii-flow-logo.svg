@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="680" height="380" viewBox="0 0 680 380">
+  <title>homeii FLOW logo</title>
+  <defs>
+    <linearGradient id="gBlue" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1A6FD4"/>
+      <stop offset="100%" stop-color="#4EAAFF"/>
+    </linearGradient>
+    <linearGradient id="gCyan" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0E9EBF"/>
+      <stop offset="100%" stop-color="#38D4F5"/>
+    </linearGradient>
+    <linearGradient id="gPurple" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#6C4BE8"/>
+      <stop offset="100%" stop-color="#A87FF5"/>
+    </linearGradient>
+    <linearGradient id="gWave" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#4EAAFF" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#6C4BE8" stop-opacity="0.6"/>
+    </linearGradient>
+    <linearGradient id="gTitle" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#4EAAFF"/>
+      <stop offset="50%" stop-color="#A87FF5"/>
+      <stop offset="100%" stop-color="#38D4F5"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="680" height="380" fill="#0D1117" rx="16"/>
+
+  <ellipse cx="340" cy="430" rx="580" ry="280" fill="none" stroke="#4EAAFF" stroke-width="0.5" stroke-opacity="0.10"/>
+  <ellipse cx="340" cy="450" rx="480" ry="250" fill="none" stroke="#6C4BE8" stroke-width="0.5" stroke-opacity="0.08"/>
+
+  <rect x="52" y="185" width="6" height="44" rx="3" fill="#4EAAFF" opacity="0.18"/>
+  <rect x="63" y="175" width="6" height="64" rx="3" fill="#4EAAFF" opacity="0.18"/>
+  <rect x="74" y="189" width="6" height="36" rx="3" fill="#4EAAFF" opacity="0.18"/>
+  <rect x="85" y="171" width="6" height="72" rx="3" fill="#4EAAFF" opacity="0.18"/>
+  <rect x="96" y="181" width="6" height="52" rx="3" fill="#4EAAFF" opacity="0.18"/>
+  <rect x="107" y="193" width="6" height="28" rx="3" fill="#4EAAFF" opacity="0.18"/>
+  <rect x="118" y="177" width="6" height="60" rx="3" fill="#4EAAFF" opacity="0.18"/>
+  <rect x="129" y="187" width="6" height="40" rx="3" fill="#4EAAFF" opacity="0.18"/>
+
+  <rect x="538" y="185" width="6" height="44" rx="3" fill="#A87FF5" opacity="0.18"/>
+  <rect x="549" y="173" width="6" height="68" rx="3" fill="#A87FF5" opacity="0.18"/>
+  <rect x="560" y="191" width="6" height="32" rx="3" fill="#A87FF5" opacity="0.18"/>
+  <rect x="571" y="177" width="6" height="60" rx="3" fill="#A87FF5" opacity="0.18"/>
+  <rect x="582" y="167" width="6" height="80" rx="3" fill="#A87FF5" opacity="0.18"/>
+  <rect x="593" y="185" width="6" height="44" rx="3" fill="#A87FF5" opacity="0.18"/>
+  <rect x="604" y="175" width="6" height="64" rx="3" fill="#A87FF5" opacity="0.18"/>
+  <rect x="615" y="193" width="6" height="28" rx="3" fill="#A87FF5" opacity="0.18"/>
+
+  <path d="M 30 228 Q 120 188 200 228 Q 280 268 340 218 Q 400 168 480 228 Q 540 268 650 213" fill="none" stroke="url(#gWave)" stroke-width="1.5" stroke-opacity="0.35" stroke-linecap="round"/>
+  <path d="M 30 243 Q 110 208 200 248 Q 290 286 360 234 Q 420 190 500 242 Q 560 278 650 233" fill="none" stroke="url(#gBlue)" stroke-width="1" stroke-opacity="0.22" stroke-linecap="round"/>
+
+  <text x="340" y="118" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="22" font-weight="300" letter-spacing="14" fill="url(#gTitle)" opacity="0.9">HOMEii</text>
+  <line x1="240" y1="130" x2="440" y2="130" stroke="url(#gTitle)" stroke-width="0.5" stroke-opacity="0.35"/>
+
+  <rect x="148" y="148" width="11" height="124" rx="5.5" fill="url(#gBlue)"/>
+  <rect x="148" y="148" width="62" height="11" rx="5.5" fill="url(#gBlue)"/>
+  <rect x="148" y="200" width="50" height="10" rx="5" fill="url(#gBlue)"/>
+
+  <rect x="232" y="148" width="11" height="124" rx="5.5" fill="url(#gCyan)"/>
+  <rect x="232" y="261" width="64" height="11" rx="5.5" fill="url(#gCyan)"/>
+
+  <rect x="316" y="148" width="11" height="124" rx="5.5" fill="url(#gPurple)"/>
+  <rect x="380" y="148" width="11" height="124" rx="5.5" fill="url(#gPurple)"/>
+  <rect x="316" y="148" width="75" height="11" rx="5.5" fill="url(#gPurple)"/>
+  <rect x="316" y="261" width="75" height="11" rx="5.5" fill="url(#gPurple)"/>
+
+  <rect x="411" y="148" width="11" height="124" rx="5.5" fill="url(#gBlue)"/>
+  <rect x="480" y="148" width="11" height="124" rx="5.5" fill="url(#gBlue)"/>
+  <line x1="416" y1="272" x2="446" y2="210" stroke="url(#gBlue)" stroke-width="11" stroke-linecap="round"/>
+  <line x1="486" y1="272" x2="446" y2="210" stroke="url(#gBlue)" stroke-width="11" stroke-linecap="round"/>
+
+  <circle cx="340" cy="328" r="5" fill="url(#gCyan)" opacity="0.9"/>
+  <circle cx="326" cy="328" r="3.5" fill="url(#gBlue)" opacity="0.5"/>
+  <circle cx="354" cy="328" r="3.5" fill="url(#gPurple)" opacity="0.5"/>
+  <circle cx="314" cy="328" r="2.5" fill="#4EAAFF" opacity="0.25"/>
+  <circle cx="366" cy="328" r="2.5" fill="#A87FF5" opacity="0.25"/>
+
+  <text x="340" y="354" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="400" letter-spacing="5" fill="#4EAAFF" opacity="0.6">MUSIC  ASSISTANT</text>
+</svg>

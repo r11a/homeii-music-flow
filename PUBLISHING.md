@@ -8,6 +8,12 @@
   - `LICENSE`
   - `hacs.json`
   - `dist/homeii-music-flow.js`
+  - `dist/sendspin-js/`
+  - `dist/vendor/embla-carousel.umd.js`
+  - `dist/homeii-flow-logo.svg`
+  - `docs/brand/homeii-flow-logo.svg`
+  - `src/sendspin-js/`
+  - `vendor/embla-carousel.umd.js`
   - `.github/workflows/validate.yml`
 
 ## 2. Create the 5.0.0 release
@@ -16,13 +22,15 @@
 - Create a GitHub release from that tag.
 - Title the release `5.0.0`.
 - Use the `5.0.0` section from `CHANGELOG.md` as the release notes.
-- Attach `dist/homeii-music-flow.js` if you want a direct downloadable runtime artifact.
+- If you attach a release artifact, zip the contents of `dist/`; do not publish only a single JS file while the local Sendspin player and Embla swipe support are enabled.
 
 ## 3. Verify repository files after publishing
 
 - Confirm `hacs.json` still points to `homeii-music-flow.js`.
-- Confirm the repository root contains `homeii-music-flow.js`.
 - Confirm `dist/homeii-music-flow.js` matches the released runtime.
+- Confirm `dist/sendspin-js/` exists for the local Sendspin browser player.
+- Confirm `dist/vendor/embla-carousel.umd.js` exists for mobile swipe support.
+- Confirm `dist/homeii-flow-logo.svg` and `docs/brand/homeii-flow-logo.svg` exist.
 - Confirm the HACS validation workflow is enabled on GitHub.
 
 ## 4. Add the repository to HACS as a custom repository
@@ -48,10 +56,14 @@ type: custom:homeii-music-flow
 
 ## 6. Manual fallback
 
-If you need a manual fallback release path, copy:
+If you need a manual fallback release path, copy the full contents of:
 
-`dist/homeii-music-flow.js`
+`dist/`
 
-to Home Assistant `www` and load:
+to:
 
-`/local/homeii-music-flow.js?v=5.0.0`
+`/config/www/community/homeii-music-flow/`
+
+Then load:
+
+`/local/community/homeii-music-flow/homeii-music-flow.js?v=5.0.0`

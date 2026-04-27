@@ -1,7 +1,6 @@
 BACKUP/
 backups/
 mobile/
-vendor/
 _editor_research/
 PROJECT PICTUERS/
 node_modules/
@@ -15,8 +14,8 @@ coverage/
 
 homeii-browser-card-v*.js
 homeii-music-mobile-v*.js
-ma-browser-card-mobile.js
 homeii-browser-card.js
+homeii-music-flow.js
 homeii-music-flow-full-v*.js
 homeii-music-flow-v*.js
 

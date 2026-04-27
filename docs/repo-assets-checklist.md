@@ -1,11 +1,12 @@
 # Repo Assets Checklist
 
-The repo now uses `docs/media/` for stable GitHub-friendly image names.
+The repo now uses `docs/brand/` for logo assets and `docs/media/` for stable GitHub-friendly image names.
 The raw `PROJECT PICTUERS` folder can stay local as the source capture folder, but the README should reference only files from `docs/media/`.
 
 ## Current assets
 
 - `homeii-flow-preview.gif`
+- `docs/brand/homeii-flow-logo.svg`
 - `hero-main-light.png`
 - `history-light.png`
 - `studio.png`

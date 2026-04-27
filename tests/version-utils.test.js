@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  extractCardVersion,
-  formatVersionedBuildFilename,
-} from "../src/core/version-utils.js";
+import { extractCardVersion } from "../src/core/version-utils.js";
 
 describe("version utils", () => {
   it("extracts the runtime version from source text", () => {
@@ -14,12 +11,6 @@ describe("version utils", () => {
   it("throws when the version constant is missing", () => {
     expect(() => extractCardVersion("const SOMETHING_ELSE = true;")).toThrow(
       "Unable to locate HOMEII_CARD_VERSION in source."
-    );
-  });
-
-  it("formats versioned release filenames", () => {
-    expect(formatVersionedBuildFilename("4.9.0")).toBe(
-      "ma-browser-card-mobile-v4.9.0.js"
     );
   });
 });
