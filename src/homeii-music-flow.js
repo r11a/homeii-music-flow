@@ -4408,6 +4408,7 @@
       <article class="control-room-tile ${art ? "has-art" : "no-art"} ${isSelected ? "selected" : ""} ${isPrimary ? "primary" : ""} ${playing ? "is-playing" : ""}" data-room-tile="${this._esc(player.entity_id)}" ${tileStyle}>
         <div class="control-room-tile-bg"></div>
         <div class="control-room-tile-shade"></div>
+        ${art ? "" : `<div class="control-room-tile-logo">${this._brandLogoImgHtml("homeii-logo-fallback control-room-logo")}</div>`}
         <button class="control-room-select-fab ${isSelected ? "active" : ""}" data-room-select="${this._esc(player.entity_id)}" title="${this._esc(this._m("Select player", "בחר נגן"))}">
           ${this._iconSvg(isSelected ? "check" : "grid")}
         </button>
@@ -15055,16 +15056,18 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
           background:rgba(235,240,255,.88);
         }
         .player-focus-art-wrap {
-          display:none;
+          display:flex;
           align-items:center;
           justify-content:center;
-          width:100%;
+          width:auto;
+          flex:none;
         }
         .player-focus-art {
-          width:54px;
-          height:54px;
-          border-radius:18px;
-          display:block;
+          width:32px;
+          height:32px;
+          border-radius:999px;
+          display:grid;
+          place-items:center;
           background:rgba(255,255,255,.08) center/cover no-repeat;
           border:1px solid rgba(255,255,255,.14);
           box-shadow:0 12px 26px rgba(0,0,0,.14), inset 0 1px 0 rgba(255,255,255,.08);
@@ -15075,6 +15078,20 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
           background:
             radial-gradient(circle at 32% 24%, color-mix(in srgb, var(--ma-accent) 34%, rgba(255,255,255,.14)), transparent 42%),
             linear-gradient(145deg, rgba(255,255,255,.12), rgba(255,255,255,.04));
+        }
+        .player-focus-art.brand-logo {
+          background:
+            radial-gradient(circle at 30% 22%, color-mix(in srgb, var(--ma-accent) 30%, rgba(255,255,255,.18)), transparent 48%),
+            rgba(255,255,255,.08);
+        }
+        .player-focus-logo {
+          width:76%;
+          height:76%;
+          object-fit:contain;
+          border-radius:999px;
+          filter:drop-shadow(0 8px 16px rgba(0,0,0,.22));
+          position:relative;
+          z-index:1;
         }
         .player-focus-art::after {
           content:"";
@@ -15125,7 +15142,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
         .card.layout-tablet .player-focus-art {
           width:68px;
           height:68px;
-          border-radius:22px;
+          border-radius:999px;
         }
         .player-focus-name {
           font-size:calc(12px * var(--v2-font-scale));
@@ -15630,7 +15647,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
         .fallback-disc {
           width:104px;
           height:104px;
-          border-radius:34px;
+          border-radius:999px;
           display:grid;
           place-items:center;
           background:rgba(12,16,24,.36);
@@ -15647,6 +15664,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
           max-width:100%;
           max-height:100%;
           object-fit:contain;
+          border-radius:999px;
           display:block;
           margin:auto;
           filter:drop-shadow(0 12px 24px rgba(0,0,0,.24));
@@ -15654,10 +15672,23 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
         .fallback-logo {
           background:rgba(255,255,255,.12);
           padding:14px;
+          overflow:hidden;
         }
         .fallback-logo .homeii-logo-fallback {
           width:100%;
           height:100%;
+        }
+        .menu-thumb:has(.homeii-logo-fallback),
+        .history-chip-art:has(.homeii-logo-fallback),
+        .control-room-picker-art:has(.homeii-logo-fallback),
+        .control-room-transfer-art:has(.homeii-logo-fallback),
+        .player-premium-art:has(.homeii-logo-fallback),
+        .group-player-art:has(.homeii-logo-fallback) {
+          border-radius:999px;
+          padding:8px;
+          background:
+            radial-gradient(circle at 30% 22%, color-mix(in srgb, var(--ma-accent) 28%, rgba(255,255,255,.14)), transparent 48%),
+            rgba(255,255,255,.08);
         }
         .menu-thumb .homeii-logo-fallback,
         .history-chip-art .homeii-logo-fallback,
@@ -15665,8 +15696,8 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
         .control-room-transfer-art .homeii-logo-fallback,
         .player-premium-art .homeii-logo-fallback,
         .group-player-art .homeii-logo-fallback {
-          width:76%;
-          height:76%;
+          width:72%;
+          height:72%;
           filter:drop-shadow(0 6px 12px rgba(0,0,0,.2));
         }
         .surprise-me-logo {
@@ -17220,6 +17251,23 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
         .card.empty-media .progress-line {
           display:none;
         }
+        .card.layout-tablet.empty-media .hero-split-shell {
+          grid-template-columns:minmax(0, 1fr) !important;
+          justify-items:center;
+        }
+        .card.layout-tablet.empty-media .hero-visual,
+        .card.layout-tablet.empty-media .art-stage,
+        .card.layout-tablet.empty-media .mobile-art-shell,
+        .card.layout-tablet.empty-media .art-stack-view,
+        .card.layout-tablet.empty-media .art-stack-viewport,
+        .card.layout-tablet.empty-media .art-stack-container {
+          display:none !important;
+        }
+        .card.layout-tablet.empty-media .hero-info {
+          max-width:min(820px, 100%);
+          align-items:center;
+          text-align:center;
+        }
         .card.radio-media .empty-quick-shelf {
           display:none !important;
         }
@@ -17310,7 +17358,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
         .card.layout-tablet .player-focus-art {
           width:60px;
           height:60px;
-          border-radius:20px;
+          border-radius:999px;
           overflow:hidden;
           background-size:cover;
           background-position:center;
@@ -17976,6 +18024,37 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
         .theme-light .lyrics-line.active {
           color:#101722;
           text-shadow:0 10px 26px color-mix(in srgb, var(--ma-accent) 28%, transparent);
+        }
+        .card.layout-tablet .lyrics-backdrop {
+          align-items:center;
+          padding:max(44px, env(safe-area-inset-top)) max(34px, env(safe-area-inset-right)) max(34px, env(safe-area-inset-bottom)) max(34px, env(safe-area-inset-left));
+        }
+        .card.layout-tablet .lyrics-sheet {
+          width:min(1320px, calc(100% - 96px));
+          max-height:calc(100% - 96px);
+          border-radius:34px;
+        }
+        .card.layout-tablet .lyrics-head {
+          align-items:center;
+          gap:16px;
+          padding:22px 24px 18px;
+        }
+        .card.layout-tablet .lyrics-title-wrap {
+          min-width:0;
+          padding-inline:24px;
+        }
+        .card.layout-tablet .lyrics-title,
+        .card.layout-tablet .lyrics-sub {
+          white-space:nowrap;
+          overflow:hidden;
+          text-overflow:ellipsis;
+        }
+        .card.layout-tablet .lyrics-title {
+          font-size:clamp(24px, 2.8vw, 34px);
+          line-height:1.18;
+        }
+        .card.layout-tablet .lyrics-body {
+          padding-block-start:clamp(34px, 5vh, 56px);
         }
         @media (max-width: 600px) {
           .lyrics-backdrop {
@@ -19695,27 +19774,45 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
           gap:14px;
         }
         .announcement-target {
-          min-height:56px;
+          min-height:68px;
           display:grid;
-          grid-template-columns:22px minmax(0,1fr);
+          grid-template-columns:54px minmax(0,1fr);
           align-items:center;
-          gap:10px;
-          padding:0 12px;
-          border-radius:20px;
+          gap:12px;
+          padding:8px 12px;
+          border-radius:22px;
           border:1px solid color-mix(in srgb, var(--ma-accent) 24%, transparent);
           background:color-mix(in srgb, var(--ma-accent) 12%, transparent);
           font-size:17px;
           font-weight:950;
         }
+        .announcement-target-icon {
+          width:46px;
+          height:46px;
+          border-radius:17px;
+          display:grid;
+          place-items:center;
+          color:#18120a;
+          background:linear-gradient(135deg, var(--ma-accent), color-mix(in srgb, var(--ma-accent) 72%, white 28%));
+          box-shadow:0 14px 24px color-mix(in srgb, var(--ma-accent) 20%, transparent);
+        }
+        .announcement-target-icon .ui-ic {
+          width:22px;
+          height:22px;
+        }
         .announcement-target-select {
           width:100%;
           min-width:0;
+          min-height:48px;
           border:none;
           background:transparent;
           box-shadow:none;
           padding:0;
           font:inherit;
           color:inherit;
+          white-space:nowrap;
+          overflow:hidden;
+          text-overflow:ellipsis;
         }
         .theme-dark .announcement-target {
           background:rgba(20,24,32,.74);
@@ -19828,12 +19925,15 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
           border-color:rgba(147,161,183,.18);
         }
         .announcement-send-btn {
-          min-height:58px;
+          min-height:62px;
+          display:flex !important;
+          flex-direction:row !important;
+          align-items:center;
           justify-content:center;
-          gap:10px;
+          gap:12px;
           font-size:17px;
         }
-        .announcement-send-btn .ui-ic { width:22px; height:22px; }
+        .announcement-send-btn .ui-ic { width:24px; height:24px; flex:none; }
         .settings-stat-row {
           display:flex;
           align-items:center;
@@ -20222,6 +20322,9 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
 .theme-light .control-room-tile-shade{background:
   linear-gradient(180deg, rgba(255,255,255,.04) 0%, rgba(255,255,255,.02) 20%, rgba(245,248,252,.54) 66%, rgba(245,248,252,.9) 100%),
   linear-gradient(90deg, rgba(255,255,255,.08) 0%, rgba(255,255,255,0) 42%, rgba(255,255,255,.04) 100%);}
+.control-room-tile-logo{position:absolute;inset-block-start:16px;inset-inline-start:16px;width:70px;height:70px;border-radius:999px;display:grid;place-items:center;padding:10px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.14);box-shadow:0 14px 30px rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.12);z-index:1;overflow:hidden;}
+.theme-light .control-room-tile-logo{background:rgba(255,255,255,.58);border-color:rgba(27,40,62,.08);}
+.control-room-tile-logo .homeii-logo-fallback{width:100%;height:100%;object-fit:contain;border-radius:999px;}
 .control-room-tile-main,.control-room-volume-row,.control-room-select-fab{position:relative;z-index:1;}
 .control-room-tile-main{display:flex;align-items:flex-end;justify-content:flex-start;min-height:100%;background:none;border:none;color:inherit;text-align:inherit;padding:0;}
 .control-room-select-fab{position:absolute;inset-block-start:14px;inset-inline-end:14px;width:40px;height:40px;padding:0;border-radius:15px;border:1px solid rgba(255,255,255,.14);background:rgba(9,12,18,.28);color:#fff;display:grid;place-items:center;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-shadow:0 10px 22px rgba(0,0,0,.18);}
@@ -21008,8 +21111,15 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
         || this._imageUrl(player?.attributes?.entity_picture, 180)
         || this._imageUrl(player?.attributes?.media_image_url, 180)
         || "";
-      thumb.style.backgroundImage = art ? `url("${art}")` : "";
       thumb.classList.toggle("placeholder", !art);
+      thumb.classList.toggle("brand-logo", !art);
+      if (art) {
+        thumb.style.backgroundImage = `url("${art}")`;
+        thumb.innerHTML = "";
+      } else {
+        thumb.style.backgroundImage = "";
+        thumb.innerHTML = this._brandLogoImgHtml("homeii-logo-fallback player-focus-logo");
+      }
     }
     this._syncMobilePlayerNavButtons();
     this._setMobileRandomFabVisible(true);
@@ -22846,7 +22956,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     return `
       <div class="announcements-shell">
         <div class="announcement-target">
-          <span class="menu-title-icon">${this._iconSvg("speaker")}</span>
+          <span class="announcement-target-icon">${this._iconSvg("speaker")}</span>
           <select class="media-sort-select announcement-target-select" id="mobileAnnouncementTargetSelect" aria-label="${this._esc(this._m("Announcement target", "יעד כריזה"))}">
             ${targetOptions.map(([value, label]) => `<option value="${this._esc(value)}" ${value === targetValue ? "selected" : ""}>${this._esc(label)}</option>`).join("")}
           </select>
