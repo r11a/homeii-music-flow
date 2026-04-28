@@ -20,6 +20,17 @@ The raw `PROJECT PICTUERS` folder can stay local as the source capture folder, b
 - `tablet.png`
 - `mobile-1.jpg` through `mobile-7.jpg`
 
+## README release checks
+
+- The README should reference only `docs/brand/` and `docs/media/` image assets.
+- The README should include the My Home Assistant HACS repository button:
+  `https://my.home-assistant.io/redirect/hacs_repository/?owner=r11a&repository=homeii-music-flow&category=plugin`
+- The README should include an HACS install/download link:
+  `https://www.hacs.xyz/docs/use/download/download/`
+- The README should explain that the HACS UI calls this repository type `Dashboard`, while the HACS backend/my-link category is `plugin`.
+- The README should mention that `dist/` includes `homeii-music-flow.js`, `sendspin-js/`, `vendor/embla-carousel.umd.js`, and `homeii-flow-logo.svg`.
+- The README should include Music Assistant and Sendspin credits.
+
 ## Still worth adding later
 
 1. A real short screen-recording GIF of queue search and player switching
