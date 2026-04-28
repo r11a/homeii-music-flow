@@ -2906,6 +2906,8 @@
   }
 
   _isLocalSendspinDesired() {
+    const session = this._localSendspinGlobalSession(false);
+    if (session?.desired) return true;
     if (this._localSendspinDesired) return true;
     try {
       return sessionStorage.getItem(this._localSendspinDesiredStorageKey()) === "1";
@@ -2916,6 +2918,8 @@
 
   _setLocalSendspinDesired(enabled) {
     this._localSendspinDesired = !!enabled;
+    const session = this._localSendspinGlobalSession();
+    if (session) session.desired = !!enabled;
     try {
       if (enabled) sessionStorage.setItem(this._localSendspinDesiredStorageKey(), "1");
       else sessionStorage.removeItem(this._localSendspinDesiredStorageKey());
@@ -2927,6 +2931,70 @@
       clearTimeout(this._localSendspinReconnectTimer);
       this._localSendspinReconnectTimer = null;
     }
+  }
+
+  _localSendspinGlobalSession(create = true) {
+    if (typeof window === "undefined") return null;
+    const key = "__homeiiLocalSendspinSessionV1";
+    if (!window[key] && create) {
+      window[key] = {
+        player: null,
+        socket: null,
+        audioElement: null,
+        connected: false,
+        connecting: false,
+        playerId: "",
+        state: null,
+        desired: false,
+        controller: null,
+        lifecycleListening: false,
+        lifecycleHandler: null,
+      };
+    }
+    return window[key] || null;
+  }
+
+  _adoptLocalSendspinGlobalSession() {
+    const session = this._localSendspinGlobalSession(false);
+    if (!session) return null;
+    this._localSendspinPlayer = session.player || null;
+    this._localSendspinSocket = session.socket || null;
+    this._localSendspinConnected = !!session.connected;
+    this._localSendspinConnecting = !!session.connecting;
+    this._localSendspinPlayerId = session.playerId || this._localSendspinPlayerId || "";
+    this._localSendspinState = session.state || this._localSendspinState || null;
+    this._localSendspinDesired = !!session.desired || this._localSendspinDesired;
+    if (session.desired || this._isLocalSendspinDesired()) {
+      this._state.awaitingThisDevicePlayer = true;
+      this._state.localSendspinStatus = session.connected ? "connected" : (session.connecting ? "connecting" : "reconnecting");
+    }
+    return session;
+  }
+
+  _syncLocalSendspinGlobalSession() {
+    const session = this._localSendspinGlobalSession();
+    if (!session) return null;
+    session.player = this._localSendspinPlayer || null;
+    session.socket = this._localSendspinSocket || null;
+    session.connected = !!this._localSendspinConnected;
+    session.connecting = !!this._localSendspinConnecting;
+    session.playerId = this._localSendspinPlayerId || session.playerId || "";
+    session.state = this._localSendspinState || null;
+    session.desired = !!this._isLocalSendspinDesired();
+    if (!session.controller || session.controller === this || this.isConnected) session.controller = this;
+    return session;
+  }
+
+  _clearLocalSendspinGlobalRuntime() {
+    const session = this._localSendspinGlobalSession(false);
+    if (!session) return;
+    session.player = null;
+    session.socket = null;
+    session.connected = false;
+    session.connecting = false;
+    session.state = null;
+    if (!session.desired) session.playerId = "";
+    if (session.controller === this) session.controller = null;
   }
 
   _sanitizeLocalSendspinPlayerId(value) {
@@ -3219,17 +3287,21 @@
   }
 
   _ensureLocalSendspinAudioElement() {
-    let audio = this.$("homeiiLocalAudio");
+    const session = this._localSendspinGlobalSession();
+    let audio = session?.audioElement || null;
+    if (audio && !audio.isConnected) audio = null;
+    if (!audio && typeof document !== "undefined") audio = document.getElementById("homeiiLocalAudio");
     if (!audio) {
       audio = document.createElement("audio");
       audio.id = "homeiiLocalAudio";
       audio.className = "homeii-local-audio";
       audio.setAttribute("playsinline", "");
       audio.setAttribute("aria-hidden", "true");
-      this.shadowRoot.querySelector(".card")?.appendChild(audio);
+      document.body?.appendChild(audio);
     }
     audio.controls = false;
     audio.preload = "auto";
+    if (session) session.audioElement = audio;
     return audio;
   }
 
@@ -3257,15 +3329,16 @@
   }
 
   _scheduleLocalSendspinReconnect(reason = "lifecycle", delayMs = 900) {
+    this._adoptLocalSendspinGlobalSession();
     if (!this._isLocalSendspinDesired()) return;
     if (!this._maUrl || !this._maToken) return;
     if (this._localSendspinConnecting || this._localSendspinConnected) return;
-    if (!this.isConnected) return;
     if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
     this._clearLocalSendspinReconnectTimer();
     this._localSendspinReconnectTimer = setTimeout(() => {
       this._localSendspinReconnectTimer = null;
-      if (!this._isLocalSendspinDesired() || this._localSendspinConnecting || this._localSendspinConnected || !this.isConnected) return;
+      this._adoptLocalSendspinGlobalSession();
+      if (!this._isLocalSendspinDesired() || this._localSendspinConnecting || this._localSendspinConnected) return;
       if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
       console.info("[Homeii Sendspin] reconnecting local player", reason);
       this._startLocalSendspinPlayer({ automatic: true }).catch((error) => {
@@ -3286,20 +3359,47 @@
   }
 
   _attachLocalSendspinLifecycleListeners() {
-    if (this._localSendspinLifecycleListening || typeof window === "undefined" || typeof document === "undefined") return;
-    document.addEventListener("visibilitychange", this._boundLocalSendspinLifecycle);
-    window.addEventListener("pageshow", this._boundLocalSendspinLifecycle);
-    window.addEventListener("focus", this._boundLocalSendspinLifecycle);
-    window.addEventListener("online", this._boundLocalSendspinLifecycle);
+    if (typeof window === "undefined" || typeof document === "undefined") return;
+    const session = this._localSendspinGlobalSession();
+    if (!session) return;
+    session.controller = this;
+    if (session.lifecycleListening) {
+      this._localSendspinLifecycleListening = true;
+      return;
+    }
+    session.lifecycleHandler = (event) => {
+      const activeSession = this._localSendspinGlobalSession(false);
+      const controller = activeSession?.controller || this;
+      if (controller && typeof controller._handleLocalSendspinLifecycle === "function") {
+        controller._handleLocalSendspinLifecycle(event);
+      }
+    };
+    document.addEventListener("visibilitychange", session.lifecycleHandler);
+    window.addEventListener("pageshow", session.lifecycleHandler);
+    window.addEventListener("focus", session.lifecycleHandler);
+    window.addEventListener("online", session.lifecycleHandler);
+    session.lifecycleListening = true;
     this._localSendspinLifecycleListening = true;
   }
 
   _detachLocalSendspinLifecycleListeners() {
-    if (!this._localSendspinLifecycleListening || typeof window === "undefined" || typeof document === "undefined") return;
-    document.removeEventListener("visibilitychange", this._boundLocalSendspinLifecycle);
-    window.removeEventListener("pageshow", this._boundLocalSendspinLifecycle);
-    window.removeEventListener("focus", this._boundLocalSendspinLifecycle);
-    window.removeEventListener("online", this._boundLocalSendspinLifecycle);
+    if (typeof window === "undefined" || typeof document === "undefined") return;
+    const session = this._localSendspinGlobalSession(false);
+    if (!session?.lifecycleListening || !session.lifecycleHandler) {
+      this._localSendspinLifecycleListening = false;
+      return;
+    }
+    if (this._isLocalSendspinDesired() || session.desired) {
+      this._localSendspinLifecycleListening = false;
+      return;
+    }
+    document.removeEventListener("visibilitychange", session.lifecycleHandler);
+    window.removeEventListener("pageshow", session.lifecycleHandler);
+    window.removeEventListener("focus", session.lifecycleHandler);
+    window.removeEventListener("online", session.lifecycleHandler);
+    session.lifecycleListening = false;
+    session.lifecycleHandler = null;
+    if (session.controller === this) session.controller = null;
     this._localSendspinLifecycleListening = false;
   }
 
@@ -3311,12 +3411,18 @@
     this._localSendspinConnected = false;
     this._localSendspinSocket = null;
     this._state.localSendspinStatus = desired ? "reconnecting" : "idle";
+    const session = this._syncLocalSendspinGlobalSession();
+    const controller = session?.controller && typeof session.controller._scheduleLocalSendspinReconnect === "function"
+      ? session.controller
+      : this;
     if (desired) {
-      this._toast(this._localText(
-        "This device player paused in the background; reconnecting when the dashboard is active.",
-        "נגן המכשיר הושהה ברקע; יתחבר מחדש כשהדשבורד פעיל."
-      ));
-      this._scheduleLocalSendspinReconnect(event?.type || "socket_close", 1200);
+      if (controller.isConnected) {
+        controller._toast(controller._localText(
+          "This device player paused in the background; reconnecting when the dashboard is active.",
+          "נגן המכשיר הושהה ברקע; יתחבר מחדש כשהדשבורד פעיל."
+        ));
+      }
+      controller._scheduleLocalSendspinReconnect(event?.type || "socket_close", 1200);
     }
   }
 
@@ -3363,11 +3469,17 @@
     this._localSendspinConnected = false;
     this._localSendspinState = null;
     this._state.localSendspinStatus = this._isLocalSendspinDesired() ? "reconnecting" : "idle";
+    this._syncLocalSendspinGlobalSession();
+    if (reason === "user_request") {
+      this._clearLocalSendspinGlobalRuntime();
+      this._detachLocalSendspinLifecycleListeners();
+    }
     if (suppressClose) setTimeout(() => { this._localSendspinSuppressClose = false; }, 1000);
   }
 
   async _startLocalSendspinPlayer(options = {}) {
     const automatic = !!options.automatic;
+    this._adoptLocalSendspinGlobalSession();
     if (!automatic) this._setLocalSendspinDesired(true);
     if (this._localSendspinConnecting) {
       if (!automatic) this._toast(this._localText("Local player is already connecting.", "הנגן המקומי כבר בתהליך התחברות."));
@@ -3382,6 +3494,7 @@
     this._clearLocalSendspinReconnectTimer();
     this._localSendspinConnecting = true;
     this._state.localSendspinStatus = "connecting";
+    this._syncLocalSendspinGlobalSession();
     if (this._state.menuOpen && typeof this._renderMobileMenu === "function") this._renderMobileMenu().catch(() => {});
     try {
       this._assertLocalSendspinConfig();
@@ -3409,7 +3522,10 @@
         codecs: ["flac", "pcm"],
         syncDelay: syncDelay || undefined,
         correctionMode: "quality-local",
-        onStateChange: (state) => { this._localSendspinState = state; },
+        onStateChange: (state) => {
+          this._localSendspinState = state;
+          this._syncLocalSendspinGlobalSession();
+        },
         onDelayCommand: (delayMs) => {
           try { localStorage.setItem(this._localSendspinSyncDelayStorageKey(), String(delayMs)); } catch (_) {}
         },
@@ -3425,6 +3541,7 @@
       this._state.localSendspinStatus = "connected";
       this._state.awaitingThisDevicePlayer = true;
       this._state.knownBrowserPlayerIds = knownBrowserPlayerIds;
+      this._syncLocalSendspinGlobalSession();
       if (!automatic) this._toastSuccess(this._localText("Local Sendspin player connected from this card.", "נגן Sendspin המקומי חובר מתוך הכרטיס."));
       this._scheduleThisDevicePlayerDiscovery();
       this._refreshDirectMaPlayers({ renderMenu: true }).catch(() => {});
@@ -3436,6 +3553,7 @@
       else this._toastError(error?.message || this._localText("Local Sendspin connection failed.", "חיבור Sendspin המקומי נכשל."));
     } finally {
       this._localSendspinConnecting = false;
+      this._syncLocalSendspinGlobalSession();
       if (this._state.menuOpen && typeof this._renderMobileMenu === "function") this._renderMobileMenu().catch(() => {});
     }
   }
@@ -3479,6 +3597,10 @@
 
   _isAvailableThisDevicePlayer(player = null) {
     if (!player) return false;
+    if (this._isLocalSendspinPlayer(player)) {
+      this._adoptLocalSendspinGlobalSession();
+      if (!this._isLocalSendspinDesired() && !this._localSendspinConnected && !this._localSendspinConnecting) return false;
+    }
     const state = String(player.state || "").toLowerCase();
     const attrs = player.attributes || {};
     const raw = player.__homeiiRawPlayer || {};
@@ -3646,9 +3768,8 @@
   async _refreshDirectMaPlayers(options = {}) {
     if (this._directMaPlayersRefreshPromise) return this._directMaPlayersRefreshPromise;
     this._directMaPlayersRefreshPromise = (async () => {
-      if (!this._state.wsReady || !this._ws) return this._directMaPlayers || [];
       try {
-        const rawPlayers = await this._wsSend("players/all", {
+        const rawPlayers = await this._callDirectMaCommand("players/all", {
           return_unavailable: true,
           return_disabled: false,
           return_protocol_players: true,
@@ -3685,7 +3806,7 @@
   async _playMediaOnDirectMaPlayer(entityId, uri, mediaType = "album", enqueue = "play", options = {}) {
     const player = this._playerByEntityId(entityId);
     const queueId = this._directMaQueueId(player || entityId);
-    if (!queueId || !this._state.wsReady) throw new Error("Direct Music Assistant player is not ready");
+    if (!queueId) throw new Error("Direct Music Assistant player is not ready");
     if (enqueue === "shuffle") {
       await this._callDirectMaCommand("player_queues/shuffle", { queue_id: queueId, shuffle_enabled: true });
     }
@@ -3708,6 +3829,7 @@
   }
 
   _connectThisDevicePlayer() {
+    this._attachLocalSendspinLifecycleListeners();
     const selectedPlayer = this._getSelectedPlayer();
     if (this._isExternalBrowserPlayer(selectedPlayer)) {
       this._state.selectedPlayer = null;
@@ -3723,6 +3845,7 @@
   }
 
   _disconnectThisDevicePlayer() {
+    this._adoptLocalSendspinGlobalSession();
     const selectedPlayer = this._getSelectedPlayer();
     if (this._isLocalSendspinPlayer(selectedPlayer)) {
       this._state.selectedPlayer = null;
@@ -3731,6 +3854,7 @@
     this._rememberThisDevicePlayer("");
     this._state.awaitingThisDevicePlayer = false;
     this._state.knownBrowserPlayerIds = [];
+    this._directMaPlayers = [];
     this._stopLocalSendspinPlayer("user_request");
     this._refreshDirectMaPlayers({ renderMenu: true }).catch(() => {});
     this._loadPlayers();
@@ -4127,7 +4251,7 @@
     const nextHtml = `
       ${items.map((item, index) => `
         <button class="history-chip" data-history-index="${this._esc(String(index))}" title="${this._esc(item.title || "")}">
-          <span class="history-chip-art">${item.image ? `<img src="${this._esc(item.image)}" alt="">` : this._brandLogoImgHtml("homeii-logo-fallback")}</span>
+          <span class="history-chip-art">${item.image ? `<img src="${this._esc(item.image)}" alt="">` : this._iconSvg("music_note")}</span>
           <span class="history-chip-copy">
             <span class="history-chip-title">${this._esc(item.title || this._m("Recent track", "שיר קודם"))}</span>
             <span class="history-chip-sub">${this._esc(item.artist || item.album || item.provider_label || "—")}</span>
@@ -4317,7 +4441,7 @@
           const attr = kind === "visible" ? "data-room-visible-toggle" : "data-room-selection-toggle";
           return `
             <button class="control-room-picker-row ${active ? "active" : ""}" ${attr}="${this._esc(entityId)}">
-              <span class="control-room-picker-art">${art ? `<img src="${this._esc(art)}" alt="">` : this._brandLogoImgHtml("homeii-logo-fallback")}</span>
+              <span class="control-room-picker-art">${art ? `<img src="${this._esc(art)}" alt="">` : this._iconSvg("speaker")}</span>
               <span class="control-room-picker-copy">
                 <span class="control-room-picker-title">${this._esc(name)}</span>
                 <span class="control-room-picker-sub">${this._esc(subtitle || "")}</span>
@@ -4618,7 +4742,7 @@
             const isActive = player.entity_id === selectedId;
             return `
               <button class="control-room-transfer-choice ${isActive ? "active" : ""}" data-room-transfer-${role}="${this._esc(player.entity_id)}">
-                <span class="control-room-transfer-art">${art ? `<img src="${this._esc(art)}" alt="">` : this._brandLogoImgHtml("homeii-logo-fallback")}</span>
+                <span class="control-room-transfer-art">${art ? `<img src="${this._esc(art)}" alt="">` : this._iconSvg("speaker")}</span>
                 <span class="control-room-transfer-copy">
                   <span class="control-room-transfer-title">${this._esc(player.attributes?.friendly_name || player.entity_id)}</span>
                   <span class="control-room-transfer-sub">${this._esc(player.attributes?.media_title || this._playerStateLabel(player))}</span>
@@ -7413,7 +7537,7 @@
   }
 
   async _callDirectMaCommand(command, args = {}) {
-    if (this._state.wsReady) {
+    if (this._state.wsReady && this._ws) {
       return this._wsSend(command, args);
     }
     if (!this._maUrl) {
@@ -7499,6 +7623,7 @@
     if (!entities.length) entities = Object.values(hassStates).filter((entity) => entity.entity_id.startsWith("media_player."));
     const directPlayers = this._mergeDirectMaPlayers(entities);
     if (directPlayers.length) entities = [...entities, ...directPlayers];
+    entities = entities.filter((entity) => !this._isLocalSendspinPlayer(entity) || this._isAvailableThisDevicePlayer(entity));
     this._state.players = entities;
     if (!entities.length) {
       if (sel) sel.innerHTML = `<option value="">${this._esc(this._t("No players found"))}</option>`;
@@ -8649,6 +8774,7 @@
   }
 
   connectedCallback() {
+    this._adoptLocalSendspinGlobalSession();
     this._cancelLocalSendspinDisconnect();
     this._attachLocalSendspinLifecycleListeners();
     this._scheduleLocalSendspinReconnect("connected", 600);
@@ -8673,8 +8799,15 @@
       this._ctxMenu.remove();
       this._ctxMenu = null;
     }
-    this._detachLocalSendspinLifecycleListeners();
-    this._scheduleLocalSendspinStop("shutdown", 5 * 60 * 1000);
+    const keepLocalSendspinAlive = this._isLocalSendspinDesired();
+    this._syncLocalSendspinGlobalSession();
+    if (keepLocalSendspinAlive) {
+      const session = this._localSendspinGlobalSession();
+      if (session && !session.controller) session.controller = this;
+    } else {
+      this._detachLocalSendspinLifecycleListeners();
+      this._scheduleLocalSendspinStop("shutdown", 5 * 60 * 1000);
+    }
     document.removeEventListener("click", this._boundDocClick);
     if (this._resizeListening) {
       window.removeEventListener("resize", this._boundWindowResize);
@@ -13301,7 +13434,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     return `
       <div class="art-stack-fallback static-fallback">
         <div class="fallback-aura"></div>
-        <div class="fallback-disc fallback-logo">${this._brandLogoImgHtml("homeii-logo-fallback")}</div>
+        <div class="fallback-disc">${this._iconSvg("music_note")}</div>
       </div>
     `;
   }
@@ -15782,54 +15915,6 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
           -webkit-backdrop-filter:blur(14px);
         }
         .fallback-disc .ui-ic { width:46px; height:46px; }
-        .homeii-logo-fallback {
-          width:72%;
-          height:72%;
-          max-width:100%;
-          max-height:100%;
-          object-fit:contain;
-          border-radius:999px;
-          display:block;
-          margin:auto;
-          filter:drop-shadow(0 12px 24px rgba(0,0,0,.24));
-        }
-        .fallback-logo {
-          background:rgba(255,255,255,.12);
-          padding:14px;
-          overflow:hidden;
-        }
-        .fallback-logo .homeii-logo-fallback {
-          width:100%;
-          height:100%;
-        }
-        .menu-thumb:has(.homeii-logo-fallback),
-        .history-chip-art:has(.homeii-logo-fallback),
-        .control-room-picker-art:has(.homeii-logo-fallback),
-        .control-room-transfer-art:has(.homeii-logo-fallback) {
-          border-radius:999px;
-          padding:8px;
-          background:
-            radial-gradient(circle at 30% 22%, color-mix(in srgb, var(--ma-accent) 28%, rgba(255,255,255,.14)), transparent 48%),
-            rgba(255,255,255,.08);
-        }
-        .menu-thumb .homeii-logo-fallback,
-        .history-chip-art .homeii-logo-fallback,
-        .control-room-picker-art .homeii-logo-fallback,
-        .control-room-transfer-art .homeii-logo-fallback {
-          width:72%;
-          height:72%;
-          filter:drop-shadow(0 6px 12px rgba(0,0,0,.2));
-        }
-        .surprise-me-logo {
-          position:absolute;
-          inset:18%;
-          width:64%;
-          height:64%;
-          object-fit:contain;
-          z-index:2;
-          opacity:.96;
-          filter:drop-shadow(0 16px 30px rgba(0,0,0,.28));
-        }
         .surprise-me-card .surprise-me-wand {
           z-index:3;
         }
@@ -21593,7 +21678,6 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
       if (this.$("npArt")) this.$("npArt").innerHTML = `
         <button class="surprise-me-card compact magic-empty" id="surpriseMeBtn" aria-label="${this._esc(options.artLabel || this._m("Surprise me", "תפתיע אותי"))}">
           <span class="surprise-me-glow"></span>
-          ${this._brandLogoImgHtml("surprise-me-logo")}
           <span class="surprise-me-wand">${this._iconSvg(options.artIcon || "wand")}</span>
         </button>
       `;
@@ -21763,12 +21847,11 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
       const effectiveArt = (this._mobileSwipeMode() === "browse" && Number(browseStack.offset || 0) !== 0)
         ? (browsePreviewArt || art)
         : art;
-      const brandArt = this._brandLogoUrl();
-      const displayArt = effectiveArt || brandArt;
+      const displayArt = effectiveArt || "";
       const overlay = this._mobileBackdropOverlay(this._effectiveTheme());
       if (artHost) {
         artHost.classList.toggle("placeholder", !displayArt);
-        artHost.classList.toggle("brand-fallback", !effectiveArt && !!displayArt);
+        artHost.classList.remove("brand-fallback");
         artHost.style.backgroundImage = "";
         artHost.dataset.emptyAction = emptyAction || "";
       }
@@ -23328,7 +23411,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
           <div class="group-player-card">
             <label class="group-player-row player-premium-head">
               <span class="player-premium-art">
-                ${art ? `<img src="${this._esc(art)}" alt="">` : this._brandLogoImgHtml("homeii-logo-fallback")}
+                ${art ? `<img src="${this._esc(art)}" alt="">` : this._iconSvg("speaker")}
                 ${playerGroupCount ? `<span class="player-group-badge">${this._esc(playerGroupCount)}</span>` : ``}
               </span>
               <span class="player-premium-copy">
@@ -23370,7 +23453,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
       return `
         <div class="queue-row ${current ? "active" : ""}" data-queue-item-id="${this._esc(key)}" data-uri="${this._esc(item.media_item?.uri || "")}" data-type="track" data-sort-index="${this._esc(item.sort_index ?? "")}">
           <div class="queue-index">${queueLead}</div>
-          <div class="menu-thumb">${img ? `<img src="${this._esc(img)}" alt="">` : this._brandLogoImgHtml("homeii-logo-fallback")}</div>
+          <div class="menu-thumb">${img ? `<img src="${this._esc(img)}" alt="">` : this._iconSvg("music_note")}</div>
           <div class="queue-meta">
             <div class="queue-title">${this._esc(item.media_item?.name || item.name || "")}</div>
             <div class="queue-sub">${this._esc(artist)}</div>

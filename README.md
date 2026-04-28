@@ -40,7 +40,7 @@ This project was created from a UX/product vision by a Home Assistant user with 
 
 ## Why It Stands Out
 
-- **Sendspin browser player built in:** turn the current browser, phone, tablet, or wall panel into a Music Assistant playback target directly from the card.
+- **Sendspin browser player built in:** turn the current browser, phone, tablet, or wall panel into a Music Assistant playback target directly from the card, with a session that survives Lovelace page changes while the dashboard stays open.
 - **Premium now-playing experience:** artwork-led layout, dynamic atmosphere, elegant controls, full-screen lyrics, and responsive visual polish.
 - **Studio / Control Room:** choose players, group rooms, control volumes, move playback, and manage multi-room listening.
 - **Mobile-first workflow:** queue, search, library, actions, timers, announcements, settings, and player switching are designed for touch.
@@ -127,6 +127,8 @@ What it does:
 - registers the phone, tablet, PC browser, or wall panel as a playable Music Assistant target
 - lets the device appear in the player list once Music Assistant publishes it back to Home Assistant
 - keeps a HOMEii-specific player identity so the card does not accidentally pick a random browser player from another tab
+- keeps the active local player alive at dashboard/tab level while moving between Lovelace pages or dashboards in the same Home Assistant session
+- removes the HOMEii local player immediately when **Disconnect this device** is used
 - packages the required `sendspin-js` runtime in `dist/sendspin-js/`
 
 What you need:
@@ -144,6 +146,7 @@ Notes:
 - Local network playback is preferred. Remote playback depends on Music Assistant, browser, WebRTC, and network conditions.
 - HTTPS matters: an HTTPS Home Assistant dashboard cannot open an insecure `ws://` Sendspin connection. Use an HTTPS Music Assistant URL, or open Home Assistant locally over HTTP when testing on the same network.
 - Mobile lifecycle matters: iOS, Android, and WebView-based apps can suspend browser audio/WebSocket work when the app is backgrounded or the phone is locked. HOMEii Flow will reconnect the HOMEii Sendspin player when the dashboard becomes active again, but it cannot force the operating system to keep a locked/backgrounded browser alive forever.
+- Lovelace navigation is handled inside HOMEii Flow: the local Sendspin audio element and connection intent are kept outside the card instance, so moving between dashboard pages should not require reconnecting.
 - Use **Disconnect this device** in the player screen when you want HOMEii Flow to stop reconnecting the local browser player.
 - Mobile browsers may require a user gesture before audio playback is allowed after a reconnect.
 
@@ -195,7 +198,7 @@ Notes:
 - Dynamic background and color atmosphere from current artwork
 - Full player, compact player, mobile player, tablet layout, and desktop layout
 - Album art, title, artist, album, source, progress, volume, and queue context
-- Logo fallback when no artwork is available
+- Clean neutral fallback when no artwork is available
 - Light, dark, and auto theme behavior
 
 ### Sendspin / This Device
@@ -204,6 +207,7 @@ Notes:
 - HOMEii-specific Sendspin player identity
 - Direct authenticated Sendspin WebSocket bridge
 - Reconnect on dashboard return, app focus, `pageshow`, and network-online events
+- Dashboard-level local session so the browser player is not tied to one Lovelace card instance
 - Grace period when leaving the dashboard page before stopping the local player
 - Manual disconnect action to stop automatic reconnect for this browser session
 - Device discovery after connection
@@ -305,7 +309,7 @@ Notes:
 - Blurred artwork background and ambient treatment
 - Track title, artist, album, and source metadata
 - Source/provider badge display
-- Missing-artwork logo fallback
+- Neutral missing-artwork fallback
 - Idle, unavailable, loading, paused, and playing states
 - Long title and long artist handling
 - Hebrew/RTL-safe metadata alignment
