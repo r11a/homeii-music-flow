@@ -17252,16 +17252,49 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
           display:none;
         }
         .card.layout-tablet.empty-media .hero-split-shell {
-          grid-template-columns:minmax(0, 1fr) !important;
+          grid-template-columns:minmax(150px, 220px) minmax(0, 1fr) !important;
+          align-items:center;
           justify-items:center;
         }
-        .card.layout-tablet.empty-media .hero-visual,
-        .card.layout-tablet.empty-media .art-stage,
-        .card.layout-tablet.empty-media .mobile-art-shell,
-        .card.layout-tablet.empty-media .art-stack-view,
+        .card.layout-tablet.empty-media .hero-visual {
+          display:grid !important;
+          justify-self:center;
+          width:min(210px, 22vw);
+          min-width:150px;
+        }
+        .card.layout-tablet.empty-media .art-stage {
+          display:grid !important;
+          place-items:center;
+          width:100%;
+          min-height:0;
+          padding:0;
+        }
+        .card.layout-tablet.empty-media .mobile-art-shell {
+          display:grid !important;
+          place-items:center;
+          width:168px;
+          height:168px;
+          padding:0;
+          border-radius:999px;
+          background:transparent;
+          border:none;
+          box-shadow:none;
+          overflow:visible;
+        }
+        .card.layout-tablet.empty-media .art-stack-view {
+          display:grid !important;
+          place-items:center;
+          width:168px;
+          min-height:168px;
+          background:transparent;
+          border:none;
+          box-shadow:none;
+          overflow:visible;
+        }
         .card.layout-tablet.empty-media .art-stack-viewport,
         .card.layout-tablet.empty-media .art-stack-container {
-          display:none !important;
+          display:contents !important;
+          min-height:0 !important;
         }
         .card.layout-tablet.empty-media .hero-info {
           max-width:min(820px, 100%);
