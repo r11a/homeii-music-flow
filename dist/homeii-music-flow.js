@@ -52,6 +52,8 @@
     this._boundContentContext = this._handleContentContext.bind(this);
     this._boundQueuePanelClick = this._handleQueuePanelClick.bind(this);
     this._boundWindowResize = this._handleWindowResize.bind(this);
+    this._boundBrandLogoError = this._handleBrandLogoError.bind(this);
+    this.shadowRoot.addEventListener("error", this._boundBrandLogoError, true);
     this._imageBlobCache = new Map();
     this._imageFailed = new Set();
     this._resizeListening = false;
@@ -79,6 +81,8 @@
       validator(nextConfig);
     }
     this._config = nextConfig;
+    this._homeiiBrandLogoUrl = "";
+    this._homeiiBrandLogoCandidates = null;
 
     try {
       this._state.lang = localStorage.getItem("homeii_music_flow_lang") || this._config.language || "auto";
@@ -360,7 +364,6 @@
       library_music: `<svg class="ui-ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="4.5" y="5" width="9" height="14" rx="2.2" fill="none" stroke="currentColor" stroke-width="2"></rect><path d="M15.5 8.5v7.2a2.3 2.3 0 1 0 1.5 2.15V10l3-1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M7.5 9h3.5M7.5 12h3.5M7.5 15h2.2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path></svg>`,
       media: `<svg class="ui-ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="2" fill="none" stroke="currentColor" stroke-width="2"></rect><rect x="13" y="4" width="7" height="7" rx="2" fill="none" stroke="currentColor" stroke-width="2"></rect><rect x="4" y="13" width="7" height="7" rx="2" fill="none" stroke="currentColor" stroke-width="2"></rect><rect x="13" y="13" width="7" height="7" rx="2" fill="none" stroke="currentColor" stroke-width="2"></rect></svg>`,
       menu: `<svg class="ui-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 7h12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path><path d="M6 12h12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path><path d="M6 17h12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path></svg>`,
-      grip: `<svg class="ui-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5.5h.01M15 5.5h.01M9 12h.01M15 12h.01M9 18.5h.01M15 18.5h.01" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"></path></svg>`,
       settings: `<svg class="ui-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.2A3.8 3.8 0 1 0 12 15.8 3.8 3.8 0 0 0 12 8.2Z" fill="none" stroke="currentColor" stroke-width="2"></path><path d="M4 13.4v-2.8l2.1-.5a6.2 6.2 0 0 1 .8-1.8L5.8 6.6l2-2 1.7 1.1c.6-.3 1.2-.6 1.8-.8L11.8 3h2.8l.5 2.1c.6.2 1.2.5 1.8.8l1.7-1.1 2 2-1.1 1.7c.3.6.6 1.2.8 1.8l2.1.5v2.8l-2.1.5a6.2 6.2 0 0 1-.8 1.8l1.1 1.7-2 2-1.7-1.1c-.6.3-1.2.6-1.8.8l-.5 2.1h-2.8l-.5-2.1a6.2 6.2 0 0 1-1.8-.8l-1.7 1.1-2-2 1.1-1.7a6.2 6.2 0 0 1-.8-1.8Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"></path></svg>`,
       home: `<svg class="ui-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.8 11.1 12 5l7.2 6.1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M7.2 10.2v8.3h9.6v-8.3" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"></path><path d="M10.2 18.5v-4.7h3.6v4.7" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"></path></svg>`,
       stats: `<svg class="ui-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 18.5V13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path><path d="M10 18.5V9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path><path d="M15 18.5V5.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path><path d="M20 18.5V11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path></svg>`,
@@ -396,23 +399,63 @@
     return icons[name] || "";
   }
 
-  _brandLogoUrl() {
-    if (typeof this._homeiiBrandLogoUrl === "string") return this._homeiiBrandLogoUrl;
+  _versionedAssetUrl(url) {
+    const value = String(url || "").trim();
+    if (!value || /^data:/i.test(value) || /[?&]v=/.test(value)) return value;
+    const version = typeof HOMEII_CARD_VERSION === "string" ? HOMEII_CARD_VERSION : "5.0.0";
+    return `${value}${value.includes("?") ? "&" : "?"}v=${encodeURIComponent(version)}`;
+  }
+
+  _brandLogoCandidates() {
+    if (Array.isArray(this._homeiiBrandLogoCandidates)) return this._homeiiBrandLogoCandidates;
+    const urls = [];
+    const push = (url, versioned = false) => {
+      const value = String(url || "").trim();
+      if (!value) return;
+      const next = versioned ? this._versionedAssetUrl(value) : value;
+      if (!urls.includes(next)) urls.push(next);
+    };
     const configured = String(this._config?.brand_logo_url || this._config?.logo_url || "").trim();
-    if (configured) {
-      this._homeiiBrandLogoUrl = configured;
-      return this._homeiiBrandLogoUrl;
-    }
+    push(configured);
     try {
-      this._homeiiBrandLogoUrl = new URL("./homeii-flow-logo.svg", import.meta.url).href;
-    } catch (_) {
-      this._homeiiBrandLogoUrl = "/local/community/homeii-music-flow/homeii-flow-logo.svg";
-    }
+      push(new URL("./homeii-flow-logo.svg", import.meta.url).href, true);
+    } catch (_) {}
+    push("/local/community/homeii-music-flow/homeii-flow-logo.svg", true);
+    push("/hacsfiles/homeii-music-flow/homeii-flow-logo.svg", true);
+    push("/local/homeii-flow-logo.svg", true);
+    this._homeiiBrandLogoCandidates = urls.length ? urls : ["/local/community/homeii-music-flow/homeii-flow-logo.svg"];
+    return this._homeiiBrandLogoCandidates;
+  }
+
+  _brandLogoUrl() {
+    if (typeof this._homeiiBrandLogoUrl === "string" && this._homeiiBrandLogoUrl) return this._homeiiBrandLogoUrl;
+    this._homeiiBrandLogoUrl = this._brandLogoCandidates()[0] || "/local/community/homeii-music-flow/homeii-flow-logo.svg";
     return this._homeiiBrandLogoUrl;
   }
 
   _brandLogoImgHtml(className = "homeii-logo-fallback") {
-    return `<img class="${this._esc(className)}" src="${this._esc(this._brandLogoUrl())}" alt="HOMEii Flow" loading="lazy" decoding="async">`;
+    const candidates = this._brandLogoCandidates();
+    const primary = candidates[0] || this._brandLogoUrl();
+    const fallbacks = candidates.slice(1).join("|");
+    return `<img class="${this._esc(className)}" data-homeii-brand-logo="1" data-homeii-logo-fallbacks="${this._esc(fallbacks)}" src="${this._esc(primary)}" alt="HOMEii Flow" loading="lazy" decoding="async">`;
+  }
+
+  _handleBrandLogoError(event) {
+    const img = event?.target;
+    if (!img?.dataset || img.dataset.homeiiBrandLogo !== "1") return;
+    const current = img.getAttribute("src") || "";
+    const fallbacks = String(img.dataset.homeiiLogoFallbacks || "")
+      .split("|")
+      .map((url) => url.trim())
+      .filter(Boolean);
+    while (fallbacks.length) {
+      const next = fallbacks.shift();
+      if (!next || next === current) continue;
+      img.dataset.homeiiLogoFallbacks = fallbacks.join("|");
+      img.setAttribute("src", next);
+      return;
+    }
+    img.classList.add("logo-load-failed");
   }
 
   _setButtonIcon(el, name) {
@@ -4135,7 +4178,7 @@
         : this._controlRoomSelectedPlayerIds()
     );
     return `
-      <div class="control-room-picker-list">
+      <div class="control-room-picker-list" data-control-room-scroll="${this._esc(kind)}">
         ${allPlayers.map((player) => {
           const entityId = player.entity_id;
           const active = activeIds.has(entityId);
@@ -4440,7 +4483,7 @@
       const target = this._state.controlRoomTransferTarget || "";
       const targetPlayers = players.filter((player) => player.entity_id !== source);
       const transferChoiceRows = (role, options, selectedId) => `
-        <div class="control-room-transfer-list">
+        <div class="control-room-transfer-list" data-control-room-scroll="transfer-${this._esc(role)}">
           ${options.length ? options.map((player) => {
             const art = player.attributes?.entity_picture_local || player.attributes?.entity_picture || "";
             const isActive = player.entity_id === selectedId;
@@ -4490,7 +4533,7 @@
               ${this._iconSvg("mic")}
             </button>
           </label>
-          <div class="control-room-library-results" id="controlRoomLibraryResults">${this._controlRoomLibraryResultsHtml()}</div>
+          <div class="control-room-library-results" id="controlRoomLibraryResults" data-control-room-scroll="library">${this._controlRoomLibraryResultsHtml()}</div>
         </div>
       `;
     }
@@ -4559,8 +4602,9 @@
     const primaryMuted = primary ? this._isMuted(primary) : false;
     const visiblePlayerIds = this._controlRoomVisiblePlayerIds();
     const gridStyle = this._controlRoomGridStyle(players.length);
+    const panelOpen = !!this._state.controlRoomPanel;
     return `
-      <div class="control-room-scene ${primaryArt ? "has-art" : ""}" ${sceneStyle}>
+      <div class="control-room-scene ${primaryArt ? "has-art" : ""} ${panelOpen ? "panel-open" : ""}" ${sceneStyle}>
         <div class="control-room-scene-bg"></div>
         <div class="control-room-scene-glow"></div>
         <div class="control-room-layout">
@@ -4640,6 +4684,20 @@
       || host.innerHTML !== this._state.controlRoomRenderedHtml;
     if (needsRender) {
       const nextHtml = this._controlRoomHtml();
+      const scrollSnapshot = {};
+      host.querySelectorAll?.("[data-control-room-scroll]")?.forEach((el) => {
+        const key = el.dataset.controlRoomScroll || "";
+        if (key) scrollSnapshot[key] = { top: el.scrollTop || 0, left: el.scrollLeft || 0 };
+      });
+      const restoreScroll = () => {
+        host.querySelectorAll?.("[data-control-room-scroll]")?.forEach((el) => {
+          const key = el.dataset.controlRoomScroll || "";
+          const pos = scrollSnapshot[key];
+          if (!pos) return;
+          el.scrollTop = pos.top;
+          el.scrollLeft = pos.left;
+        });
+      };
       if (
         force
         || this._state.controlRoomRenderedHtml !== nextHtml
@@ -4648,6 +4706,8 @@
       ) {
         host.innerHTML = nextHtml;
         this._state.controlRoomRenderedHtml = nextHtml;
+        restoreScroll();
+        requestAnimationFrame(() => restoreScroll());
       }
       this._state.controlRoomRenderSignature = nextSignature;
     }
@@ -4764,17 +4824,29 @@
   _closeLyricsModal() {
     const backdrop = this.$("lyricsBackdrop");
     if (!backdrop) return;
+    const card = this.shadowRoot?.querySelector(".card");
     backdrop.classList.remove("open");
     backdrop.onclick = null;
     backdrop.innerHTML = "";
+    card?.classList.remove("lyrics-modal-open");
     this._state.lyricsOpen = false;
     this._state.lyricsLines = [];
     this._state.lyricsActiveIndex = -1;
     this._lyricsRequestToken = "";
+    const restoreTabletFrame = () => {
+      const currentCard = this.shadowRoot?.querySelector(".card");
+      if (!currentCard?.classList.contains("layout-tablet")) return;
+      [currentCard, this.shadowRoot?.querySelector(".stage"), this.shadowRoot?.querySelector(".tablet-shell"), this.shadowRoot?.querySelector(".tablet-main")]
+        .filter(Boolean)
+        .forEach((el) => { try { el.scrollTop = 0; } catch (_) {} });
+      void currentCard.offsetHeight;
+    };
     requestAnimationFrame(() => {
       this._syncNowPlayingUI();
       this._syncTabletAutoFitUi();
       if (typeof this._refreshMobileArtStack === "function") this._refreshMobileArtStack(true);
+      restoreTabletFrame();
+      requestAnimationFrame(restoreTabletFrame);
     });
   }
 
@@ -4805,6 +4877,7 @@
         <div class="lyrics-body">${bodyHtml}</div>
       </div>`;
     backdrop.classList.add("open");
+    this.shadowRoot?.querySelector(".card")?.classList.add("lyrics-modal-open");
     backdrop.onclick = (e) => { if (e.target === backdrop) this._closeLyricsModal(); };
     backdrop.querySelector("#lyricsCloseBtn")?.addEventListener("click", () => this._closeLyricsModal());
     backdrop.querySelector("#lyricsSyncBtn")?.addEventListener("click", () => this._toggleLyricsSyncEnabled());
@@ -15589,6 +15662,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
         .menu-thumb .homeii-logo-fallback,
         .history-chip-art .homeii-logo-fallback,
         .control-room-picker-art .homeii-logo-fallback,
+        .control-room-transfer-art .homeii-logo-fallback,
         .player-premium-art .homeii-logo-fallback,
         .group-player-art .homeii-logo-fallback {
           width:76%;
@@ -17777,8 +17851,12 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
           position:absolute; inset:0; z-index:70; display:none; align-items:center; justify-content:center;
           padding:max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
           background:rgba(8,10,16,.58); backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);
+          overscroll-behavior:contain;
         }
         .lyrics-backdrop.open { display:flex; }
+        .card.layout-tablet.lyrics-modal-open {
+          overflow:hidden;
+        }
         .lyrics-sheet {
           width:min(1160px, calc(100% - 8px)); max-height:calc(100% - 8px); overflow:hidden; display:grid; grid-template-rows:auto minmax(0,1fr);
           border-radius:28px; border:1px solid rgba(255,255,255,.12); background:rgba(17,19,28,.88); box-shadow:0 24px 60px rgba(0,0,0,.34);
@@ -17861,7 +17939,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
         .theme-light .lyrics-sync-btn.active {
           background:color-mix(in srgb, var(--ma-accent) 16%, rgba(240,244,250,.96));
         }
-        .lyrics-body { overflow:auto; padding:clamp(24px, 4vw, 42px) clamp(18px, 5vw, 72px) 32px; white-space:pre-wrap; line-height:1.92; font-size:clamp(18px, 3vw, 30px); color:#fff; text-align:center; scroll-behavior:smooth; display:grid; justify-items:center; }
+        .lyrics-body { overflow:auto; padding:clamp(24px, 4vw, 42px) clamp(18px, 5vw, 72px) 32px; white-space:pre-wrap; line-height:1.92; font-size:clamp(18px, 3vw, 30px); color:#fff; text-align:center; scroll-behavior:smooth; display:grid; justify-items:center; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
         .theme-light .lyrics-body { color:#1f2633; }
         .lyrics-state { display:grid; place-items:center; min-height:220px; text-align:center; color:rgba(255,255,255,.72); }
         .theme-light .lyrics-state { color:rgba(55,68,85,.68); }
@@ -18135,48 +18213,6 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
           transform:translateY(-2px) scale(.988);
           border-color:color-mix(in srgb, var(--ma-accent) 34%, transparent);
           box-shadow:0 12px 30px color-mix(in srgb, var(--ma-accent) 16%, transparent);
-        }
-        .queue-row[data-queue-draggable="1"] {
-          cursor:grab;
-        }
-        .queue-drag-handle {
-          width:32px;
-          height:42px;
-          min-width:32px;
-          border:none;
-          border-radius:14px;
-          display:grid;
-          place-items:center;
-          background:rgba(255,255,255,.06);
-          color:rgba(255,255,255,.62);
-          cursor:grab;
-          touch-action:none;
-          flex:0 0 32px;
-        }
-        .queue-drag-handle:disabled {
-          opacity:.26;
-          cursor:default;
-        }
-        .queue-drag-handle .ui-ic {
-          width:18px;
-          height:18px;
-        }
-        .theme-light .queue-drag-handle {
-          background:rgba(237,242,248,.82);
-          color:#6d7a8d;
-        }
-        .queue-list.touch-dragging {
-          touch-action:none;
-          user-select:none;
-        }
-        .queue-row.dragging {
-          opacity:.42;
-          transform:scale(.985);
-          cursor:grabbing;
-        }
-        .queue-row.drop-before {
-          border-color:color-mix(in srgb, var(--ma-accent) 46%, transparent);
-          box-shadow:inset 0 3px 0 color-mix(in srgb, var(--ma-accent) 84%, white 16%), 0 14px 32px color-mix(in srgb, var(--ma-accent) 14%, transparent);
         }
         .theme-dark .menu-sheet,
         .theme-dark .notice,
@@ -18786,8 +18822,8 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
         }
         .queue-row {
           display:grid;
-          grid-template-columns:32px 18px 46px minmax(0,1fr) auto;
-          grid-template-areas:"drag idx thumb meta actions";
+          grid-template-columns:18px 46px minmax(0,1fr) auto;
+          grid-template-areas:"idx thumb meta actions";
           align-items:center;
           cursor:pointer;
           min-height:58px;
@@ -18800,11 +18836,10 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
           min-height:74px;
           padding:10px 14px;
           border-radius:22px;
-          grid-template-columns:40px 48px minmax(0,1fr) 56px;
-          grid-template-areas:"drag actions meta thumb";
+          grid-template-columns:48px minmax(0,1fr) 56px;
+          grid-template-areas:"actions meta thumb";
           column-gap:14px;
         }
-        .queue-drag-handle { grid-area:drag; justify-self:center; }
         .queue-row .menu-thumb { grid-area:thumb; }
         .queue-row .menu-thumb {
           width:42px;
@@ -20054,7 +20089,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
             padding:14px 12px 16px;
           }
           .queue-row {
-            grid-template-columns:30px 18px 44px minmax(0,1fr) auto;
+            grid-template-columns:18px 44px minmax(0,1fr) auto;
             min-height:58px;
             padding:8px 10px;
             row-gap:0;
@@ -20062,12 +20097,6 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
           }
           .queue-index {
             width:18px;
-          }
-          .queue-drag-handle {
-            width:30px;
-            min-width:30px;
-            height:40px;
-            border-radius:12px;
           }
           .queue-row .menu-thumb {
             width:40px;
@@ -20159,6 +20188,11 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
   linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,0));
   mix-blend-mode:screen;opacity:.88;animation:control-room-glow-breathe 22s ease-in-out infinite;}
 .theme-light .control-room-scene-glow{opacity:.58;}
+.control-room-scene.panel-open .control-room-scene-bg,
+.control-room-scene.panel-open .control-room-scene-glow{animation:none!important;transform:none!important;}
+.control-room-scene.panel-open .control-room-scene-bg{filter:blur(12px) saturate(.92)!important;}
+.control-room-scene.panel-open .control-room-tray{background:rgba(21,22,28,.92);backdrop-filter:none;-webkit-backdrop-filter:none;}
+.theme-light .control-room-scene.panel-open .control-room-tray{background:rgba(250,252,255,.96);}
 .control-room-layout{position:relative;z-index:1;height:100%;min-height:100%;display:grid;grid-template-rows:minmax(0,1fr) auto;gap:12px;}
 .control-room-grid-wrap{min-height:0;height:100%;padding:24px 28px 0;overflow:auto;display:block;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;}
 .control-room-grid{width:100%;display:grid;grid-template-columns:repeat(var(--control-room-cols, 3), minmax(0,1fr));gap:var(--control-room-gap, 18px);align-content:start;justify-content:stretch;justify-items:stretch;margin-inline:auto;grid-auto-rows:max-content;}
@@ -20212,7 +20246,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
 .control-room-volume{width:100%;}
 .control-room-volume-value{min-width:34px;font-size:calc(11px * var(--v2-font-scale));font-weight:800;color:rgba(255,255,255,.78);text-align:end;}
 .theme-light .control-room-volume-value{color:#4f6077;}
-.control-room-tray{position:absolute;inset-inline-start:50%;inset-block-end:112px;display:grid;grid-template-rows:auto minmax(0,1fr);gap:12px;align-self:end;width:min(1180px, calc(100% - 44px));max-height:min(62vh, 560px);overflow:hidden;padding:14px 16px;border-radius:30px;border:1px solid rgba(255,255,255,.12);background:rgba(9,12,18,.4);backdrop-filter:blur(26px);-webkit-backdrop-filter:blur(26px);box-shadow:0 24px 60px rgba(0,0,0,.28);z-index:32;transform:translateX(-50%);pointer-events:auto;touch-action:auto;}
+.control-room-tray{position:absolute;inset-inline-start:50%;inset-block-end:112px;display:grid;grid-template-rows:auto minmax(0,1fr);gap:12px;align-self:end;width:min(1180px, calc(100% - 44px));max-height:min(68vh, 620px);overflow:hidden;padding:14px 16px;border-radius:30px;border:1px solid rgba(255,255,255,.12);background:rgba(9,12,18,.4);backdrop-filter:blur(26px);-webkit-backdrop-filter:blur(26px);box-shadow:0 24px 60px rgba(0,0,0,.28);z-index:32;transform:translateX(-50%);pointer-events:auto;touch-action:auto;contain:layout paint;}
 .control-room-tray.compact{width:min(760px, calc(100% - 44px));}
 .control-room-tray.wide{width:min(1100px, 100%);}
 .theme-light .control-room-tray{background:rgba(255,255,255,.62);border-color:rgba(27,41,66,.08);box-shadow:0 14px 30px rgba(28,42,68,.12);}
@@ -20229,7 +20263,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
 .control-room-transfer-column{display:grid;grid-template-rows:auto minmax(0,1fr);gap:8px;min-width:0;min-height:0;}
 .control-room-transfer-label{font-size:calc(11px * var(--v2-font-scale));font-weight:900;color:rgba(255,255,255,.6);padding-inline:4px;}
 .theme-light .control-room-transfer-label{color:#6f8097;}
-.control-room-transfer-list{display:grid;align-content:start;gap:8px;min-height:0;max-height:min(38vh, 320px);overflow:auto;padding-inline-end:4px;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;}
+.control-room-transfer-list{display:grid;align-content:start;gap:8px;min-height:0;max-height:min(48vh, 430px);overflow:auto;overflow-y:auto;padding-inline-end:4px;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;scrollbar-gutter:stable;}
 .control-room-transfer-choice{display:grid;grid-template-columns:44px minmax(0,1fr) 24px;align-items:center;gap:10px;min-height:58px;padding:8px 10px;border-radius:18px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.06);color:inherit;text-align:inherit;}
 .control-room-transfer-choice.active{border-color:rgba(var(--dynamic-accent-rgb,245 166 35) / .32);background:rgba(var(--dynamic-accent-rgb,245 166 35) / .16);}
 .theme-light .control-room-transfer-choice{background:rgba(255,255,255,.82);border-color:rgba(28,42,68,.08);}
@@ -20256,8 +20290,8 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
 .control-room-search-mic{width:36px;height:36px;padding:0;border-radius:12px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.08);color:inherit;display:grid;place-items:center;}
 .theme-light .control-room-search-mic{background:rgba(234,240,247,.9);border-color:rgba(27,40,62,.08);}
 .control-room-search-mic .ui-ic{opacity:.9;}
-.control-room-library-results{min-height:0;max-height:min(42vh, 360px);overflow:auto;padding-inline-end:4px;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;}
-.control-room-picker-list{display:grid;gap:10px;min-height:0;max-height:min(42vh, 360px);overflow:auto;padding-inline-end:4px;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;}
+.control-room-library-results{min-height:0;max-height:min(58vh, 540px);overflow:auto;overflow-y:auto;padding-inline-end:4px;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;scrollbar-gutter:stable;}
+.control-room-picker-list{display:grid;gap:10px;min-height:0;max-height:min(58vh, 540px);overflow:auto;overflow-y:auto;padding-inline-end:4px;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;scrollbar-gutter:stable;}
 .control-room-picker-row{display:grid;grid-template-columns:52px minmax(0,1fr) 28px;align-items:center;gap:12px;padding:10px 12px;border-radius:20px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.06);color:inherit;text-align:inherit;}
 .control-room-picker-row.active{border-color:rgba(var(--dynamic-accent-rgb,245 166 35) / .28);background:rgba(var(--dynamic-accent-rgb,245 166 35) / .14);}
 .theme-light .control-room-picker-row{background:rgba(255,255,255,.82);border-color:rgba(28,42,68,.08);}
@@ -20407,8 +20441,10 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
   .control-room-grid-wrap{padding:24px 20px 0;}
   .control-room-grid{max-width:100%;}
   .control-room-tile.selected{transform:translateY(-12px) scale(1.03);}
-  .control-room-tray{inset-block-end:102px;width:min(1080px, calc(100% - 36px));max-height:calc(100dvh - 168px);}
+  .control-room-tray{inset-block-end:128px;width:min(1080px, calc(100% - 36px));max-height:calc(100dvh - 220px);}
   .control-room-tray.compact{width:min(680px, calc(100% - 36px));}
+  .control-room-picker-list,.control-room-library-results{max-height:calc(100dvh - 300px);}
+  .control-room-transfer-list{max-height:calc(50dvh - 72px);}
   .control-room-dock{padding:12px 14px calc(14px + env(safe-area-inset-bottom, 0px));gap:10px;max-width:calc(100% - 2px);}
   .control-room-now-pill{min-width:220px;max-width:260px;}
   .control-room-dock-btn,.control-room-selection-pill{width:auto;height:50px;min-width:50px;}
@@ -20418,13 +20454,13 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
 }
 @media (max-width:760px){
   .control-room-grid-wrap{padding:18px 10px 0;}
-  .control-room-tray{inset-block-end:86px;width:calc(100% - 16px);max-height:calc(100dvh - 146px);padding:12px;border-radius:24px;z-index:32;}
+  .control-room-tray{inset-block-end:112px;width:calc(100% - 16px);max-height:calc(100dvh - 206px);padding:12px;border-radius:24px;z-index:32;}
   .control-room-tray.compact,.control-room-tray.wide{width:calc(100% - 16px);}
   .control-room-transfer-board{grid-template-columns:minmax(0,1fr);gap:10px;}
   .control-room-transfer-arrow{display:none;}
   .control-room-transfer-action{width:100%;height:50px;}
   .control-room-tray.transfer-panel .control-room-transfer-list{max-height:min(30dvh, 220px);}
-  .control-room-picker-list,.control-room-library-results{max-height:calc(100dvh - 260px);}
+  .control-room-picker-list,.control-room-library-results{max-height:calc(100dvh - 320px);}
 }
 
 </style>
@@ -20583,6 +20619,11 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
       if (!this._pressUiButton(e.currentTarget)) return;
       this._closeControlRoom();
     });
+    const keepControlRoomScroll = (e) => {
+      if (e.target?.closest?.("[data-control-room-scroll]")) e.stopPropagation();
+    };
+    this.$("controlRoomBackdrop")?.addEventListener("wheel", keepControlRoomScroll, { passive: true });
+    this.$("controlRoomBackdrop")?.addEventListener("touchmove", keepControlRoomScroll, { passive: true });
     this.$("controlRoomBackdrop")?.addEventListener("click", async (e) => {
       if (e.target?.id === "controlRoomBackdrop") {
         this._closeControlRoom();
@@ -23051,13 +23092,11 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
       const artist = item.media_item?.artists?.map((a) => a.name).join(", ") || "";
       const current = item.sort_index === (this._state.maQueueState?.current_index ?? -1);
       const media = item.media_item || {};
-      const draggable = !current;
       const queueLead = current && activelyPlaying
         ? `<span class="queue-eq" aria-hidden="true"><span></span><span></span><span></span></span>`
         : (current ? "▶" : this._esc(item.sort_index ?? ""));
       return `
-        <div class="queue-row ${current ? "active" : ""}" draggable="${draggable ? "true" : "false"}" data-queue-draggable="${draggable ? "1" : "0"}" data-queue-item-id="${this._esc(key)}" data-uri="${this._esc(item.media_item?.uri || "")}" data-type="track" data-sort-index="${this._esc(item.sort_index ?? "")}">
-          <button class="queue-drag-handle" type="button" data-queue-drag-handle="${this._esc(key)}" ${draggable ? "" : "disabled"} title="${this._esc(this._m("Drag to reorder", "גרור כדי לסדר"))}" aria-label="${this._esc(this._m("Drag to reorder", "גרור כדי לסדר"))}">${this._iconSvg("grip")}</button>
+        <div class="queue-row ${current ? "active" : ""}" data-queue-item-id="${this._esc(key)}" data-uri="${this._esc(item.media_item?.uri || "")}" data-type="track" data-sort-index="${this._esc(item.sort_index ?? "")}">
           <div class="queue-index">${queueLead}</div>
           <div class="menu-thumb">${img ? `<img src="${this._esc(img)}" alt="">` : this._brandLogoImgHtml("homeii-logo-fallback")}</div>
           <div class="queue-meta">
@@ -23070,190 +23109,6 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
         </div>
       `;
     }).join("")}</div>`;
-  }
-
-  _bindMobileQueueDrag(container) {
-    const list = container?.querySelector?.(".queue-list");
-    if (!list) return;
-    let activeDrag = null;
-    const clearDropState = () => {
-      list.querySelectorAll(".queue-row.dragging,.queue-row.drop-before").forEach((row) => {
-        row.classList.remove("dragging", "drop-before");
-      });
-    };
-    const targetFromY = (clientY) => {
-      const draggedId = activeDrag?.id || this._state.mobileQueueDragItemId || "";
-      const rows = Array.from(list.querySelectorAll(".queue-row")).filter((row) => row.dataset.queueItemId !== draggedId);
-      for (const row of rows) {
-        const rect = row.getBoundingClientRect();
-        if (clientY < rect.top + (rect.height / 2)) return { row, id: row.dataset.queueItemId || "" };
-      }
-      return { row: null, id: "" };
-    };
-    const updateDropTarget = (clientY) => {
-      list.querySelectorAll(".queue-row.drop-before").forEach((row) => row.classList.remove("drop-before"));
-      const target = targetFromY(clientY);
-      if (target.row) target.row.classList.add("drop-before");
-      if (activeDrag) activeDrag.targetId = target.id;
-      return target;
-    };
-    const markDragFinished = () => {
-      this._state.mobileQueueDragFinishedUntil = Date.now() + 700;
-    };
-    list.querySelectorAll(".queue-row[data-queue-draggable='1']").forEach((row) => {
-      row.addEventListener("dragstart", (event) => {
-        const id = row.dataset.queueItemId || "";
-        if (!id) return;
-        this._state.mobileQueueDragItemId = id;
-        row.classList.add("dragging");
-        if (event.dataTransfer) {
-          event.dataTransfer.effectAllowed = "move";
-          event.dataTransfer.setData("text/plain", id);
-        }
-      });
-      row.addEventListener("dragend", () => {
-        clearDropState();
-        this._state.mobileQueueDragItemId = "";
-      });
-    });
-    list.addEventListener("dragover", (event) => {
-      const draggedId = this._state.mobileQueueDragItemId || "";
-      if (!draggedId) return;
-      const dropTarget = targetFromY(event.clientY);
-      const target = dropTarget.row || event.target?.closest?.(".queue-row");
-      if (target?.dataset?.queueItemId === draggedId) return;
-      event.preventDefault();
-      list.querySelectorAll(".queue-row.drop-before").forEach((row) => row.classList.remove("drop-before"));
-      target?.classList.add("drop-before");
-      if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
-    });
-    list.addEventListener("drop", async (event) => {
-      const draggedId = this._state.mobileQueueDragItemId || event.dataTransfer?.getData("text/plain") || "";
-      const dropTarget = targetFromY(event.clientY);
-      const target = dropTarget.row || event.target?.closest?.(".queue-row");
-      if (!draggedId) return;
-      event.preventDefault();
-      event.stopPropagation();
-      const targetId = dropTarget.id || target?.dataset?.queueItemId || "";
-      clearDropState();
-      this._state.mobileQueueDragItemId = "";
-      this._state.mobileQueueDragFinishedUntil = Date.now() + 700;
-      await this._reorderQueueItemByDrop(draggedId, targetId);
-    });
-
-    const startPointerDrag = () => {
-      if (!activeDrag?.row || activeDrag.active) return;
-      activeDrag.active = true;
-      this._state.mobileQueueDragItemId = activeDrag.id;
-      list.classList.add("touch-dragging");
-      activeDrag.row.classList.add("dragging");
-      this._hapticTap([8]);
-    };
-    const stopPointerListeners = (drag = activeDrag) => {
-      window.removeEventListener("pointermove", onPointerMove, { capture: true });
-      window.removeEventListener("pointerup", onPointerUp, { capture: true });
-      window.removeEventListener("pointercancel", onPointerCancel, { capture: true });
-      if (drag?.timer) clearTimeout(drag.timer);
-      try { drag?.row?.releasePointerCapture?.(drag.pointerId); } catch (_) {}
-    };
-    const cancelPointerDrag = () => {
-      stopPointerListeners();
-      activeDrag = null;
-      list.classList.remove("touch-dragging");
-      clearDropState();
-      this._state.mobileQueueDragItemId = "";
-    };
-    const finishPointerDrag = async (event) => {
-      const drag = activeDrag;
-      if (!drag || drag.pointerId !== event.pointerId) return;
-      const wasActive = !!drag.active;
-      const draggedId = drag.id;
-      const targetId = drag.targetId || "";
-      stopPointerListeners(drag);
-      activeDrag = null;
-      list.classList.remove("touch-dragging");
-      clearDropState();
-      this._state.mobileQueueDragItemId = "";
-      if (!wasActive || !draggedId) return;
-      event.preventDefault();
-      event.stopPropagation();
-      markDragFinished();
-      await this._reorderQueueItemByDrop(draggedId, targetId);
-    };
-    const onPointerMove = (event) => {
-      if (!activeDrag || activeDrag.pointerId !== event.pointerId) return;
-      const dx = Math.abs(event.clientX - activeDrag.startX);
-      const dy = Math.abs(event.clientY - activeDrag.startY);
-      if (!activeDrag.active && (activeDrag.handleDrag || dx > 4 || dy > 4)) startPointerDrag();
-      if (!activeDrag.active) return;
-      event.preventDefault();
-      event.stopPropagation();
-      updateDropTarget(event.clientY);
-    };
-    async function onPointerUp(event) {
-      await finishPointerDrag(event);
-    }
-    const onPointerCancel = () => cancelPointerDrag();
-    list.addEventListener("pointerdown", (event) => {
-      const handle = event.target?.closest?.("[data-queue-drag-handle]");
-      if (!handle || handle.disabled) return;
-      const row = handle.closest?.(".queue-row[data-queue-draggable='1']");
-      const id = row?.dataset?.queueItemId || "";
-      if (!row || !id) return;
-      if (activeDrag) cancelPointerDrag();
-      event.preventDefault();
-      event.stopPropagation();
-      activeDrag = {
-        id,
-        row,
-        handleDrag: true,
-        pointerId: event.pointerId,
-        startX: event.clientX,
-        startY: event.clientY,
-        targetId: id,
-        active: false,
-        timer: event.pointerType === "mouse" ? null : setTimeout(startPointerDrag, 35),
-      };
-      try { row.setPointerCapture?.(event.pointerId); } catch (_) {}
-      window.addEventListener("pointermove", onPointerMove, { passive: false, capture: true });
-      window.addEventListener("pointerup", onPointerUp, { passive: false, capture: true });
-      window.addEventListener("pointercancel", onPointerCancel, { capture: true });
-      if (event.pointerType === "mouse") startPointerDrag();
-    });
-  }
-
-  async _reorderQueueItemByDrop(draggedItemId, targetItemId) {
-    const player = this._getSelectedPlayer();
-    if (!player || !draggedItemId || this._state.queueActionPending) return;
-    const allItems = [...(this._state.queueItems || [])];
-    const currentIndex = this._state.maQueueState?.current_index ?? 0;
-    const currentPos = this._getCurrentPosition();
-    const fromIndex = allItems.findIndex((item) => this._getQueueItemKey(item) === String(draggedItemId));
-    let toIndex = allItems.findIndex((item) => this._getQueueItemKey(item) === String(targetItemId));
-    if (fromIndex < 0) return;
-    const draggedItem = allItems[fromIndex];
-    if ((draggedItem?.sort_index ?? -1) <= currentIndex) return;
-    if (toIndex < 0) toIndex = allItems.length;
-    const firstMovableIndex = allItems.findIndex((item) => (item.sort_index ?? Number.MAX_SAFE_INTEGER) > currentIndex);
-    const minTargetIndex = firstMovableIndex >= 0 ? firstMovableIndex : 0;
-    toIndex = Math.max(minTargetIndex, Math.min(toIndex, allItems.length));
-    if (fromIndex === toIndex || fromIndex + 1 === toIndex) return;
-
-    const reordered = [...allItems];
-    const [moved] = reordered.splice(fromIndex, 1);
-    const adjustedTarget = fromIndex < toIndex ? toIndex - 1 : toIndex;
-    reordered.splice(adjustedTarget, 0, moved);
-
-    try {
-      this._setQueueBusy(true);
-      await this._rebuildQueue(player.entity_id, reordered, currentPos);
-      await this._refreshQueueAfterMutation(180);
-      if (this._state.menuOpen && this._state.menuPage === "queue") await this._renderMobileMenu();
-    } catch (error) {
-      this._toast(error?.message || this._t("Queue action failed"));
-    } finally {
-      this._setQueueBusy(false);
-    }
   }
 
   async _renderMobileMenu() {
@@ -23426,7 +23281,6 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
         </div>
         ${this._queueMenuHtml()}
       `;
-      this._bindMobileQueueDrag(body);
       return;
     }
     if (page === "players") body.innerHTML = this._playersMenuHtml();
@@ -23960,14 +23814,8 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
       await this._transferQueueTo(transferBtn.dataset.menuTransfer);
       return this._closeMobileMenu();
     }
-    if (e.target.closest("[data-queue-drag-handle]")) {
-      e.preventDefault();
-      e.stopPropagation();
-      return;
-    }
     const queueRow = e.target.closest(".queue-row");
     if (queueRow?.dataset.queueItemId || queueRow?.dataset.uri) {
-      if (Number(this._state.mobileQueueDragFinishedUntil || 0) > Date.now()) return;
       await this._playQueueItem(
         queueRow.dataset.queueItemId,
         queueRow.dataset.uri,
