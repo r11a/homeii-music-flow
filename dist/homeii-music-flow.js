@@ -43,6 +43,7 @@
     this._localSendspinDesired = false;
     this._localSendspinLifecycleListening = false;
     this._localSendspinSuppressClose = false;
+    this._toastHistory = new Map();
     this._directMaPlayers = [];
     this._directMaPlayersRefreshPromise = null;
 
@@ -2964,9 +2965,10 @@
     this._localSendspinPlayerId = session.playerId || this._localSendspinPlayerId || "";
     this._localSendspinState = session.state || this._localSendspinState || null;
     this._localSendspinDesired = !!session.desired || this._localSendspinDesired;
-    if (session.desired || this._isLocalSendspinDesired()) {
-      this._state.awaitingThisDevicePlayer = true;
+    const desired = session.desired || this._isLocalSendspinDesired();
+    if (desired) {
       this._state.localSendspinStatus = session.connected ? "connected" : (session.connecting ? "connecting" : "reconnecting");
+      if (session.connected) this._state.awaitingThisDevicePlayer = false;
     }
     return session;
   }
@@ -3319,12 +3321,6 @@
       if (this._state.menuOpen && typeof this._renderMobileMenu === "function") {
         this._renderMobileMenu().catch(() => {});
       }
-      if (delay === 10000 && this._state.awaitingThisDevicePlayer) {
-        this._toast(this._localText(
-          "Local player is connected; waiting for Home Assistant to publish it.",
-          "הנגן המקומי מחובר; ממתין ש-Home Assistant יציג אותו ברשימה."
-        ));
-      }
     }, delay));
   }
 
@@ -3416,12 +3412,6 @@
       ? session.controller
       : this;
     if (desired) {
-      if (controller.isConnected) {
-        controller._toast(controller._localText(
-          "This device player paused in the background; reconnecting when the dashboard is active.",
-          "נגן המכשיר הושהה ברקע; יתחבר מחדש כשהדשבורד פעיל."
-        ));
-      }
       controller._scheduleLocalSendspinReconnect(event?.type || "socket_close", 1200);
     }
   }
@@ -7640,7 +7630,6 @@
         this._state.knownBrowserPlayerIds = [];
         this._state.selectedPlayer = newcomer.entity_id;
         this._state.hasAutoSelectedPlayer = true;
-        this._toast(this._t("This device player connected"));
       }
     }
     const selectedPlayer = this._playerByEntityId(this._state.selectedPlayer);
@@ -8643,11 +8632,24 @@
   _toast(message, variant = "info") {
     const wrap = this.$("toastWrap");
     if (!wrap) return;
-    const el = document.createElement("div");
+    const text = String(message ?? "").trim();
+    if (!text) return;
     const safeVariant = ["success", "error", "info"].includes(variant) ? variant : "info";
+    const now = Date.now();
+    const key = `${safeVariant}:${text}`;
+    const lastShown = this._toastHistory?.get(key) || 0;
+    if (now - lastShown < 2500) return;
+    if (!this._toastHistory) this._toastHistory = new Map();
+    this._toastHistory.set(key, now);
+    for (const [toastKey, at] of this._toastHistory.entries()) {
+      if (now - at > 12000) this._toastHistory.delete(toastKey);
+    }
+    const activeToasts = Array.from(wrap.querySelectorAll(".toast"));
+    while (activeToasts.length >= 3) activeToasts.shift()?.remove();
+    const el = document.createElement("div");
     el.className = `toast ${safeVariant}`;
     const icon = safeVariant === "success" ? "✓" : safeVariant === "error" ? "×" : "i";
-    el.innerHTML = `<span class="toast-icon">${icon}</span><span class="toast-text">${this._esc(message)}</span>`;
+    el.innerHTML = `<span class="toast-icon">${icon}</span><span class="toast-text">${this._esc(text)}</span>`;
     wrap.appendChild(el);
     setTimeout(() => el.remove(), 3300);
   }
