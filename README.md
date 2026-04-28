@@ -113,6 +113,7 @@ type: custom:homeii-music-flow
 - For best Sendspin performance: the browser device and Music Assistant should be on the same local network.
 - Sendspin URL security must match the dashboard: if Home Assistant is opened over `https://`, configure Music Assistant with an `https://` URL so HOMEii Flow can use `wss://`; browsers block `http://` / `ws://` Sendspin from an HTTPS dashboard.
 - If Home Assistant is opened locally over `http://`, a local `http://` Music Assistant URL is usually fine and HOMEii Flow will use `ws://`.
+- Mobile browsers can pause audio and WebSocket work when the app is backgrounded or the phone is locked. HOMEii Flow remembers the active "This device" intent during the current app/browser session and reconnects when the dashboard becomes active again.
 - Optional: a configured `tts.*` entity for text-to-speech announcements.
 - Optional but recommended: correct Home Assistant internal/external URLs, especially for phones, tablets, and remote access.
 
@@ -142,7 +143,9 @@ Notes:
 - Sendspin is still a technical preview in Music Assistant, so behavior can change over time.
 - Local network playback is preferred. Remote playback depends on Music Assistant, browser, WebRTC, and network conditions.
 - HTTPS matters: an HTTPS Home Assistant dashboard cannot open an insecure `ws://` Sendspin connection. Use an HTTPS Music Assistant URL, or open Home Assistant locally over HTTP when testing on the same network.
-- Mobile browsers may require a user gesture before audio playback is allowed.
+- Mobile lifecycle matters: iOS, Android, and WebView-based apps can suspend browser audio/WebSocket work when the app is backgrounded or the phone is locked. HOMEii Flow will reconnect the HOMEii Sendspin player when the dashboard becomes active again, but it cannot force the operating system to keep a locked/backgrounded browser alive forever.
+- Use **Disconnect this device** in the player screen when you want HOMEii Flow to stop reconnecting the local browser player.
+- Mobile browsers may require a user gesture before audio playback is allowed after a reconnect.
 
 ## Screenshots
 
@@ -200,6 +203,9 @@ Notes:
 - Local browser player connection from inside the card
 - HOMEii-specific Sendspin player identity
 - Direct authenticated Sendspin WebSocket bridge
+- Reconnect on dashboard return, app focus, `pageshow`, and network-online events
+- Grace period when leaving the dashboard page before stopping the local player
+- Manual disconnect action to stop automatic reconnect for this browser session
 - Device discovery after connection
 - "This device" and "Browser players" player flows
 - Local sync delay storage
