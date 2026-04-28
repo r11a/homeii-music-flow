@@ -111,6 +111,8 @@ type: custom:homeii-music-flow
 - A modern browser for the dashboard: Chrome, Edge, Safari, or a modern Android/iOS browser.
 - For the local Sendspin browser player: a direct Music Assistant URL and Music Assistant token configured in the card settings.
 - For best Sendspin performance: the browser device and Music Assistant should be on the same local network.
+- Sendspin URL security must match the dashboard: if Home Assistant is opened over `https://`, configure Music Assistant with an `https://` URL so HOMEii Flow can use `wss://`; browsers block `http://` / `ws://` Sendspin from an HTTPS dashboard.
+- If Home Assistant is opened locally over `http://`, a local `http://` Music Assistant URL is usually fine and HOMEii Flow will use `ws://`.
 - Optional: a configured `tts.*` entity for text-to-speech announcements.
 - Optional but recommended: correct Home Assistant internal/external URLs, especially for phones, tablets, and remote access.
 
@@ -139,6 +141,7 @@ Notes:
 - Sendspin is built into Music Assistant and the provider is enabled by default.
 - Sendspin is still a technical preview in Music Assistant, so behavior can change over time.
 - Local network playback is preferred. Remote playback depends on Music Assistant, browser, WebRTC, and network conditions.
+- HTTPS matters: an HTTPS Home Assistant dashboard cannot open an insecure `ws://` Sendspin connection. Use an HTTPS Music Assistant URL, or open Home Assistant locally over HTTP when testing on the same network.
 - Mobile browsers may require a user gesture before audio playback is allowed.
 
 ## Screenshots
@@ -633,6 +636,18 @@ Before publishing a release:
 - Install through HACS as a custom repository and verify the resource path.
 - Test phone, tablet, and desktop layouts.
 - Test Sendspin "This device" connection on at least one browser device.
+
+## Support
+
+HOMEii Flow is free and built as an independent community project. If it improves your Home Assistant music dashboard and you want to support continued polish, fixes, documentation, and new features, sponsorship is appreciated.
+
+No pressure: stars, feedback, screenshots, bug reports, and thoughtful feature ideas also help a lot.
+
+<p align="center">
+  <a href="https://github.com/sponsors/r11a">
+    <img alt="Sponsor HOMEii Flow" src="https://img.shields.io/badge/Sponsor-HOMEii%20Flow-EA4AAA?logo=githubsponsors&logoColor=white">
+  </a>
+</p>
 
 ## Credits
 
