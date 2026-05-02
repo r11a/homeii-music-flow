@@ -22,7 +22,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/r11a/homeii-music-flow"><img alt="version" src="https://img.shields.io/badge/version-5.0.0-gold"></a>
+  <a href="https://github.com/r11a/homeii-music-flow"><img alt="version" src="https://img.shields.io/badge/version-5.1.0-gold"></a>
   <img alt="Home Assistant" src="https://img.shields.io/badge/Home%20Assistant-Lovelace-41BDF5">
   <img alt="Music Assistant" src="https://img.shields.io/badge/Music%20Assistant-required-7C5CFF">
   <img alt="Sendspin" src="https://img.shields.io/badge/Sendspin-browser%20player-18B6FF">
@@ -42,11 +42,24 @@ This project was created from a UX/product vision by a Home Assistant user with 
 
 - **Sendspin browser player built in:** turn the current browser, phone, tablet, or wall panel into a Music Assistant playback target directly from the card, with a session that survives Lovelace page changes while the dashboard stays open.
 - **Premium now-playing experience:** artwork-led layout, dynamic atmosphere, elegant controls, full-screen lyrics, and responsive visual polish.
+- **FLOW guided music wizard:** a simple step-by-step music flow for choosing players, picking a mood or existing content, reviewing visual results, and starting playback without learning the full Music Assistant UI.
 - **Studio / Control Room:** choose players, group rooms, control volumes, move playback, and manage multi-room listening.
-- **Mobile-first workflow:** queue, search, library, actions, timers, announcements, settings, and player switching are designed for touch.
+- **Mobile-first workflow:** queue, search, library, FLOW, actions, timers, announcements, settings, and player switching are designed for touch.
 - **Real Music Assistant library flow:** playlists, albums, artists, tracks, radio, favorites, recent listening, and recommendations.
 - **Hebrew and RTL ready:** layout, labels, alignment, and interaction patterns are built for Hebrew as a first-class use case.
 - **Release-ready package:** HACS-ready `dist/` output includes the card, Sendspin files, Embla swipe support, and the brand asset.
+
+## What's New In 5.1.0
+
+- **FLOW replaces SIMPLE:** a polished guided wizard with a fresh start on every open, reset controls on every step, free-style mood search, and a visual results grid.
+- **Queue actions inside the row:** queue items expand in place with clear `Play next`, `Play now`, move up/down, and remove actions instead of opening a modal.
+- **Clear queue transfer entry:** the queue view now exposes a labeled transfer button with the queue count.
+- **Better artwork browsing:** cover browsing keeps artwork fully visible and reacts immediately when a new item is selected.
+- **History drawer reliability:** recent listening opens directly with the latest 10 items instead of waiting for a tab change.
+- **Lyrics font controls:** lyrics now include `+`, `-`, and reset controls for font size.
+- **Studio and modal polish:** more consistent brand/logo treatment and clearer action labels across opened panels.
+- **Safer global stop:** `Stop all players` stops playback, clears queues, disconnects player groups, and disconnects the local `This device` player when present.
+- **Updated defaults:** card height `850`, night mode off, next-song preview off, smart mic mode, visual-editor settings, dynamic theme auto, subtle background motion, icon+text footer, artwork swipe browsing, home shortcut off, and Music Assistant liked mode.
 
 ## Quick Install
 
@@ -93,7 +106,7 @@ If HACS does not add the resource automatically, add:
 3. Add this Lovelace resource:
 
 ```text
-/local/community/homeii-music-flow/homeii-music-flow.js?v=5.0.0
+/local/community/homeii-music-flow/homeii-music-flow.js?v=5.1.0
 ```
 
 4. Add the card:
@@ -215,6 +228,19 @@ Notes:
 - Local sync delay storage
 - Packaged `sendspin-js` runtime for HACS/manual installs
 
+### FLOW Guided Wizard
+
+- Step-by-step music wizard for non-technical users
+- Clean restart every time FLOW is opened from the actions menu
+- Reset button on every step
+- Player and multi-player selection
+- Choose by mood or from existing library content
+- Mood presets: calm, energetic, morning, night, kids, Israeli, and free style
+- Existing content modes: playlist, artist, artist radio, and library radio
+- Free-style text search for custom moods or situations
+- Visual result grid with large rounded cards, artwork, media type, and clear selection state
+- Playback confirmation overlay before returning to the main player
+
 ### Studio / Control Room
 
 - Player grid for room control
@@ -224,6 +250,7 @@ Notes:
 - Per-room volume sliders
 - Move/transfer playback foundations
 - Search and play library media from Studio
+- Labeled action dock for search, queue transfer, grouping, and ungrouping
 - Stable tablet panel layout and scroll handling
 
 ### Queue
@@ -231,7 +258,9 @@ Notes:
 - Queue panel and full queue view
 - Current item and up-next display
 - Queue search
+- Inline expandable queue-row actions
 - Play now, play next, add to queue, remove, and move actions where supported
+- Clear transfer-queue label and queue-count button
 - Artwork and duration display
 - Empty queue and loading states
 
@@ -249,6 +278,7 @@ Notes:
 - Wide lyrics screen
 - Centered, immersive lyric presentation
 - Synced lyrics offset controls
+- Lyrics font size controls with `+`, `-`, and reset
 - Lyrics cache and unavailable states
 - Mobile/tablet layout fixes for long song and artist names
 
@@ -266,6 +296,7 @@ Notes:
 ### History And Recommendations
 
 - Recent listening drawer
+- Last 10 recent items shown immediately when opening history
 - Recommendations tab
 - Playlist recommendations
 - Queue/recent-based suggestion foundations
@@ -286,7 +317,8 @@ Notes:
 - Active player button
 - Mobile main bar customization
 - Compact volume controls
-- Swipe/browse support through Embla
+- Artwork swipe/browse support through Embla
+- Immediate artwork selection feedback while browsing covers
 - Mobile settings saved locally
 - Touch-sized controls and RTL-safe layout
 
@@ -296,6 +328,7 @@ Notes:
 - In-card settings panels
 - Language, theme, layout, color, motion, footer, volume, mic, swipe, liked, night mode, and shortcut settings
 - Announcement preset and TTS entity settings
+- 5.1.0 defaults: height `850`, night mode `off`, up-next `off`, mic `smart`, settings source `visual editor`, dynamic theme `auto`, background motion `subtle`, footer `icon+text`, font scale `1`, artwork swipe `browse`, home shortcut `off`, liked mode `Music Assistant`
 - Config validation and tested state helpers
 
 ## Full Feature Map
@@ -363,12 +396,17 @@ Notes:
 - Queue item artwork
 - Queue item duration
 - Queue item context actions
+- Inline row expansion for touch-safe actions
+- Text actions for play next and play now
+- Wider centered move up/down action buttons
+- Red translucent remove action
 - Play now
 - Shuffle play
 - Play next
 - Add to queue
 - Remove from queue
 - Move up/down where supported
+- Queue transfer label and count in the queue header
 - Queue transfer between players foundations
 - Empty queue state
 - Queue action feedback
@@ -439,7 +477,7 @@ Notes:
 - Group membership detection
 - Static group handling foundations
 - Derived group stats
-- Stop all players
+- Stop all players with stop, queue clear, group disconnect, and local Sendspin disconnect
 - Player transfer target selection
 - Player state indicators
 - Player artwork/track preview
@@ -472,6 +510,7 @@ Notes:
 - Scheduled start player selection
 - Scheduled start volume
 - Scheduled start playlist selection
+- Mobile-safe schedule controls for narrow iPhone layouts
 - Random pleasant morning fallback
 - Night mode: off / auto / on
 - Night mode start/end times
@@ -483,6 +522,7 @@ Notes:
 ### Actions
 
 - Dedicated actions menu
+- FLOW guided wizard
 - Scheduling shortcut
 - Sleep timer shortcut
 - Announcements shortcut
@@ -490,6 +530,22 @@ Notes:
 - Home shortcut option
 - Studio shortcut option
 - Fast mobile access to high-use controls
+
+### FLOW Guided Wizard
+
+- Guided three-step flow: players, music, play
+- Clean state on every open from the actions menu
+- Reset action on every step
+- All players and individual player selection
+- Mood-based search
+- Existing content search
+- Free-style mood query
+- Playlist, artist, artist radio, and library radio flows
+- Visual results grid
+- Large rounded result cards with artwork and media type
+- Active result highlighting
+- Play confirmation overlay
+- Automatic return to the main player after starting playback
 
 ### Search
 
@@ -628,7 +684,7 @@ npm run lint
 npm test
 ```
 
-Current packaged version: `5.0.0`
+Current packaged version: `5.1.0`
 
 ## Release Readiness
 

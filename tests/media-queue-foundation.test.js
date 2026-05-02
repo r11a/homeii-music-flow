@@ -4,6 +4,8 @@ import {
   entryTargetsCurrentMedia,
   getQueueItemByIndexOrKey,
   getQueueItemKey,
+  getQueueItemPlaybackId,
+  getQueueItemStableId,
   getQueueItemUri,
   mediaRefsEquivalent,
   mobileCurrentQueueIndex,
@@ -42,11 +44,35 @@ describe("media queue foundation", () => {
       },
     };
     expect(getQueueItemKey(item)).toBe("q1");
+    expect(getQueueItemStableId(item)).toBe("q1");
+    expect(getQueueItemPlaybackId(item)).toBe("q1");
     expect(getQueueItemUri(item)).toBe("spotify://track/123");
     expect(queueItemPrimaryTitle(item)).toBe("Track A");
     expect(queueItemPrimaryArtist(item)).toBe("Artist A");
     expect(mobileCurrentQueueIndex("4")).toBe(4);
     expect(mobileCurrentQueueIndex("")).toBe(-1);
+
+    const mediaIdOnly = {
+      sort_index: 5,
+      item_id: "123",
+      media_item: {
+        uri: "spotify://track/123",
+        name: "Track A",
+      },
+    };
+    expect(getQueueItemKey(mediaIdOnly)).toBe("5");
+    expect(getQueueItemStableId(mediaIdOnly)).toBe("");
+    expect(getQueueItemPlaybackId(mediaIdOnly)).toBe("");
+
+    const normalizedFallback = {
+      sort_index: 6,
+      queue_item_id: "spotify://track/123",
+      queue_item_id_trusted: false,
+      media_item: { uri: "spotify://track/123", name: "Track A" },
+    };
+    expect(getQueueItemKey(normalizedFallback)).toBe("6");
+    expect(getQueueItemStableId(normalizedFallback)).toBe("");
+    expect(getQueueItemPlaybackId(normalizedFallback)).toBe("");
   });
 
   it("resolves queue matching and up-next state", () => {
@@ -56,10 +82,21 @@ describe("media queue foundation", () => {
       { sort_index: 1, queue_item_id: "c", media_item: { uri: "spotify://track/c", name: "C" } },
     ];
     expect(sortQueueItems(items).map((item) => item.queue_item_id)).toEqual(["a", "c", "b"]);
+    expect(getQueueItemKey(items[0])).toBe("b");
     expect(resolveMobileUpNextItem({ current_index: 0 }, items)?.queue_item_id).toBe("c");
     expect(queueItemsContainCurrent(items, { current_index: 1, current_item: null })).toBe(true);
     expect(resolveQueuePlayIndex(items, { queueItemId: "b" })).toBe(2);
     expect(getQueueItemByIndexOrKey(items, { fallbackUri: "spotify://track/c" })?.queue_item_id).toBe("c");
+    expect(resolveQueuePlayIndex(items, {
+      queueItemId: "1",
+      fallbackUri: "spotify://track/b",
+      explicitSortIndex: 1,
+    })).toBe(2);
+    expect(getQueueItemByIndexOrKey(items, {
+      sortIndex: 1,
+      queueItemId: "1",
+      fallbackUri: "spotify://track/b",
+    })?.queue_item_id).toBe("b");
   });
 
   it("matches entries against current media and active player", () => {

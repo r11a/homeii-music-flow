@@ -137,7 +137,7 @@ export function applyRecentPlaybackSnapshot(
   };
 }
 
-export function visibleRecentHistoryItems(currentEntry = null, recentHistory = [], limit = 5) {
+export function visibleRecentHistoryItems(currentEntry = null, recentHistory = [], limit = 10) {
   const currentKey = currentEntry?.key || "";
   return (Array.isArray(recentHistory) ? recentHistory : [])
     .filter((entry) => entry?.uri && entry?.key && entry.key !== currentKey)

@@ -34,7 +34,7 @@ export function normalizeMobileFooterMode(value) {
 }
 
 export function normalizeMobileMicMode(value) {
-  return normalizeEnum(value, MOBILE_MIC_MODES, "on");
+  return normalizeEnum(value, MOBILE_MIC_MODES, "smart");
 }
 
 export function normalizeMobileVolumeMode(value) {
@@ -101,12 +101,12 @@ export function normalizeVisualMobileState(config = {}, {
     mobileBackgroundMotionMode: normalizeEnum(config.mobile_background_motion_mode, MOBILE_BACKGROUND_MOTION_MODES, "subtle"),
     mobileCustomTextTone: String(config.mobile_custom_text_tone || "light") === "dark" ? "dark" : "light",
     mobileFontScale: clampMobileFontScale(config.mobile_font_scale),
-    mobileNightMode: normalizeEnum(config.night_mode, MOBILE_NIGHT_MODES, "auto"),
+    mobileNightMode: normalizeEnum(config.night_mode, MOBILE_NIGHT_MODES, "off"),
     mobileNightModeStart: normalizeClockTime(config.night_mode_auto_start || "22:00", "22:00"),
     mobileNightModeEnd: normalizeClockTime(config.night_mode_auto_end || "06:00", "06:00"),
     mobileNightModeDays: normalizeNightModeDays(config.night_mode_days),
     mobileCompactMode: !!config.mobile_compact_mode,
-    mobileShowUpNext: config.mobile_show_up_next !== false,
+    mobileShowUpNext: config.mobile_show_up_next === true,
     mobileFooterSearchEnabled: !!config.mobile_footer_search_enabled,
     mobileStudioShortcutEnabled: config.mobile_studio_shortcut !== false,
     mobileFooterMode: normalizeMobileFooterMode(config.mobile_footer_mode),
@@ -115,7 +115,7 @@ export function normalizeVisualMobileState(config = {}, {
     mobileVolumeMode: normalizeMobileVolumeMode(config.mobile_volume_mode),
     mobileMicMode: normalizeMobileMicMode(config.mobile_mic_mode),
     mobileLikedMode: normalizeEnum(config.mobile_liked_mode, MOBILE_LIKED_MODES, "ma"),
-    mobileSwipeMode: normalizeEnum(config.mobile_swipe_mode, MOBILE_SWIPE_MODES, "play"),
+    mobileSwipeMode: normalizeEnum(config.mobile_swipe_mode, MOBILE_SWIPE_MODES, "browse"),
     mobileRadioBrowserCountry: String(config.mobile_radio_browser_country || "all"),
     mobileLibraryTabs: Array.isArray(config.mobile_library_tabs) && config.mobile_library_tabs.length
       ? config.mobile_library_tabs.slice()

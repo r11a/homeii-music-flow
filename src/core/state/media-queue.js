@@ -37,21 +37,24 @@ function findQueueItemIndex(queueItems = [], {
   sortIndex = "",
   fallbackType = "track",
 } = {}, compareMediaRefs = mediaRefsEquivalent) {
+  const items = Array.isArray(queueItems) ? queueItems : [];
   const normalizedIndex = normalizeFiniteNumber(sortIndex);
   const key = String(queueItemId || "").trim();
   const targetUri = String(uri || "").trim();
-  return queueItems.findIndex((item) =>
-    (Number.isFinite(normalizedIndex) && Number(item?.sort_index) === normalizedIndex)
-    || (key && getQueueItemKey(item) === key)
-    || (
-      targetUri
-      && compareMediaRefs(
-        getQueueItemUri(item),
-        targetUri,
-        item?.media_item?.media_type || item?.media_type || fallbackType,
-      )
+  const keyIndex = key ? items.findIndex((item) =>
+    getQueueItemStableId(item) === key
+    || getQueueItemKey(item) === key
+  ) : -1;
+  if (keyIndex >= 0) return keyIndex;
+  const uriIndex = targetUri ? items.findIndex((item) =>
+    compareMediaRefs(
+      getQueueItemUri(item),
+      targetUri,
+      item?.media_item?.media_type || item?.media_type || fallbackType,
     )
-  );
+  ) : -1;
+  if (uriIndex >= 0) return uriIndex;
+  return items.findIndex((item) => Number.isFinite(normalizedIndex) && Number(item?.sort_index) === normalizedIndex);
 }
 
 export function parseMediaReference(uri = "", fallbackType = "track") {
@@ -98,7 +101,35 @@ export function mediaRefsEquivalent(uriA = "", uriB = "", fallbackType = "track"
 }
 
 export function getQueueItemKey(item) {
-  return String(item?.queue_item_id || item?.item_id || item?.id || item?.sort_index || item?.media_item?.uri || item?.uri || "");
+  const stableId = getQueueItemStableId(item);
+  const sortIndex = normalizeFiniteNumber(item?.sort_index);
+  return String(stableId || (Number.isFinite(sortIndex) ? sortIndex : "") || getQueueItemUri(item) || "");
+}
+
+export function getQueueItemStableId(item) {
+  const uri = String(getQueueItemUri(item) || "").trim();
+  const parsed = parseMediaReference(uri, item?.media_item?.media_type || item?.media_type || "track");
+  const trustedQueueId = [item?.queue_service_id]
+    .map((value) => String(value || "").trim())
+    .find(Boolean);
+  if (trustedQueueId) return trustedQueueId;
+  const queueItemId = String(item?.queue_item_id || "").trim();
+  if (queueItemId && item?.queue_item_id_trusted !== false) return queueItemId;
+  const fallbackCandidates = [item?.item_id, item?.id]
+    .map((value) => String(value || "").trim())
+    .filter(Boolean);
+  return fallbackCandidates.find((value) =>
+    value !== uri
+    && value !== parsed.item_id
+    && !uri.endsWith(`/${value}`)
+    && !uri.endsWith(`:${value}`)
+  ) || "";
+}
+
+export function getQueueItemPlaybackId(item) {
+  const value = getQueueItemStableId(item);
+  if (!value || /^\d+$/.test(value)) return "";
+  return value;
 }
 
 export function getQueueItemUri(item) {
@@ -193,20 +224,23 @@ export function resolveQueuePlayIndex(queueItems = [], {
   explicitSortIndex = "",
 } = {}, compareMediaRefs = mediaRefsEquivalent) {
   const normalizedExplicit = normalizeFiniteNumber(explicitSortIndex);
-  if (Number.isFinite(normalizedExplicit)) return normalizedExplicit;
-  const match = (Array.isArray(queueItems) ? queueItems : []).find((item) =>
-    (queueItemId && getQueueItemKey(item) === String(queueItemId).trim())
-    || (
-      fallbackUri
-      && compareMediaRefs(
+  const items = Array.isArray(queueItems) ? queueItems : [];
+  const key = String(queueItemId || "").trim();
+  const uri = String(fallbackUri || "").trim();
+  const match = (key ? items.find((item) =>
+    getQueueItemStableId(item) === key
+    || getQueueItemKey(item) === key
+  ) : null)
+    || (uri ? items.find((item) =>
+      compareMediaRefs(
         getQueueItemUri(item),
-        String(fallbackUri).trim(),
+        uri,
         item?.media_item?.media_type || item?.media_type || "track",
       )
-    )
-  );
+    ) : null);
   const resolved = Number(match?.sort_index);
-  return Number.isFinite(resolved) ? resolved : null;
+  if (Number.isFinite(resolved)) return resolved;
+  return Number.isFinite(normalizedExplicit) ? normalizedExplicit : null;
 }
 
 export function getQueueItemByIndexOrKey(queueItems = [], {
@@ -217,18 +251,20 @@ export function getQueueItemByIndexOrKey(queueItems = [], {
   const normalizedIndex = normalizeFiniteNumber(sortIndex);
   const key = String(queueItemId || "").trim();
   const uri = String(fallbackUri || "").trim();
-  return (Array.isArray(queueItems) ? queueItems : []).find((item) =>
-    (Number.isFinite(normalizedIndex) && Number(item?.sort_index) === normalizedIndex)
-    || (key && getQueueItemKey(item) === key)
-    || (
-      uri
-      && compareMediaRefs(
+  const items = Array.isArray(queueItems) ? queueItems : [];
+  return (key ? items.find((item) =>
+    getQueueItemStableId(item) === key
+    || getQueueItemKey(item) === key
+  ) : null)
+    || (uri ? items.find((item) =>
+      compareMediaRefs(
         getQueueItemUri(item),
         uri,
         item?.media_item?.media_type || item?.media_type || "track",
       )
-    )
-  ) || null;
+    ) : null)
+    || items.find((item) => Number.isFinite(normalizedIndex) && Number(item?.sort_index) === normalizedIndex)
+    || null;
 }
 
 export function resolveMobileArtStackContext({
@@ -260,6 +296,7 @@ export function resolveMobileArtStackContext({
 
   let baseIndex = -1;
   const titleMatches = (item) => queueTitleArtistMatch(item, playerTitle, playerArtist);
+  let pendingResolved = false;
 
   if (hasPendingPlay) {
     const pendingMatch = findQueueItemIndex(sortedQueueItems, {
@@ -267,10 +304,13 @@ export function resolveMobileArtStackContext({
       uri: pendingUri,
       sortIndex: pendingIndexValue,
     }, compareMediaRefs);
-    if (pendingMatch >= 0) baseIndex = pendingMatch;
+    if (pendingMatch >= 0) {
+      baseIndex = pendingMatch;
+      pendingResolved = true;
+    }
   }
 
-  if (currentItem) {
+  if (currentItem && !pendingResolved) {
     const currentKey = getQueueItemKey(currentItem);
     const currentUri = getQueueItemUri(currentItem);
     const keyIndex = findQueueItemIndex(sortedQueueItems, {

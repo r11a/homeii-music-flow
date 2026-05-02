@@ -14,7 +14,7 @@ export function mobileCompactModeEnabled(state) {
 }
 
 export function mobileShowUpNextEnabled(state) {
-  return state?.mobileShowUpNext !== false;
+  return state?.mobileShowUpNext === true;
 }
 
 export function mobileDynamicThemeMode(state) {

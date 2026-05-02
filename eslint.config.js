@@ -36,6 +36,7 @@ export default [
       globals: browserGlobals,
     },
     rules: {
+      "no-empty": ["error", { allowEmptyCatch: true }],
       "no-unused-vars": ["warn", { args: "none", ignoreRestSiblings: true }],
     },
   },

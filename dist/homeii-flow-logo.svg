@@ -24,8 +24,6 @@
     </linearGradient>
   </defs>
 
-  <rect width="680" height="380" fill="#0D1117" rx="16"/>
-
   <ellipse cx="340" cy="430" rx="580" ry="280" fill="none" stroke="#4EAAFF" stroke-width="0.5" stroke-opacity="0.10"/>
   <ellipse cx="340" cy="450" rx="480" ry="250" fill="none" stroke="#6C4BE8" stroke-width="0.5" stroke-opacity="0.08"/>
 

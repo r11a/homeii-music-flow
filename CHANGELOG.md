@@ -1,5 +1,22 @@
 # Changelog
 
+## 5.1.0 - 2026-05-02
+
+Feature and release-readiness update for the next repository distribution.
+
+Highlights:
+
+- Renamed the guided music experience from SIMPLE to FLOW.
+- Added the FLOW wizard with clean state on open, reset controls on every step, player selection, mood/content choices, free-style mood search, visual result cards, playback confirmation, and automatic return to the main player.
+- Reworked queue actions into an inline row expansion with clear play-next, play-now, move up/down, and remove controls.
+- Added a clear transfer-queue label and queue count to the queue header.
+- Improved artwork browsing so covers remain fully visible and selected artwork reacts immediately.
+- Fixed the recent history drawer so it opens with the latest 10 items.
+- Added lyrics font size controls.
+- Polished Studio, opened panels, logo/header treatment, and action labels.
+- Updated the global stop action to stop players, clear queues, disconnect groups, and disconnect the local Sendspin player when present.
+- Updated release defaults for height, night mode, up-next, mic mode, settings source, dynamic theme, background motion, footer mode, font scale, artwork browsing, home shortcut, and liked mode.
+
 ## 5.0.0 - 2026-04-27
 
 First stable public release for GitHub and HACS distribution.

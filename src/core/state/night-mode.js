@@ -125,7 +125,7 @@ export function sleepTimerStartedFromNightMode(remainingMs, origin = "") {
 }
 
 export function sleepTimerChipVisible(remainingMs, origin = "") {
-  return sleepTimerStartedFromNightMode(remainingMs, origin);
+  return Number(remainingMs || 0) > 0;
 }
 
 export function createSleepTimerTargetAt(minutes, now = Date.now()) {

@@ -87,6 +87,7 @@ describe("night mode foundation", () => {
     expect(normalizeSleepTimerOrigin("NIGHT")).toBe("night");
     expect(sleepTimerStartedFromNightMode(60000, "night")).toBe(true);
     expect(sleepTimerChipVisible(60000, "night")).toBe(true);
+    expect(sleepTimerChipVisible(60000, "general")).toBe(true);
     expect(sleepTimerChipVisible(0, "night")).toBe(false);
   });
 

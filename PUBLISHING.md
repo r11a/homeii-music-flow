@@ -23,12 +23,12 @@
   - the HACS My Home Assistant button
   - the HACS download/install button
 
-## 2. Create the 5.0.0 release
+## 2. Create the 5.1.0 release
 
-- Create a Git tag named `v5.0.0`.
+- Create a Git tag named `v5.1.0`.
 - Create a GitHub release from that tag.
-- Title the release `5.0.0`.
-- Use the `5.0.0` section from `CHANGELOG.md` as the release notes.
+- Title the release `5.1.0`.
+- Use the `5.1.0` section from `CHANGELOG.md` as the release notes.
 - If you attach a release artifact, zip the contents of `dist/`; do not publish only a single JS file while the local Sendspin player and Embla swipe support are enabled.
 
 ## 3. Verify repository files after publishing
@@ -79,12 +79,12 @@ to:
 
 Then load:
 
-`/local/community/homeii-music-flow/homeii-music-flow.js?v=5.0.0`
+`/local/community/homeii-music-flow/homeii-music-flow.js?v=5.1.0`
 
 ## 7. Final pre-release smoke test
 
 - Load the card after a hard browser refresh.
-- Verify main player, compact player, Studio, queue, library, actions, settings, lyrics, announcements, history, recommendations, and night mode screens.
+- Verify main player, compact player, FLOW, Studio, queue, library, actions, settings, lyrics, announcements, history, recommendations, and night mode screens.
 - Verify `This device` creates a HOMEii Sendspin browser player and does not select an unrelated browser player.
 - Verify phone, tablet, and desktop layouts.
 - Verify light and dark themes.
