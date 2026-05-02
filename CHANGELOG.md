@@ -1,5 +1,11 @@
 # Changelog
 
+## 5.1.5 - 2026-05-02
+
+Home Assistant Dashboard picker registry fix.
+
+- Mutates the existing `window.customCards` array in place instead of replacing it, matching Home Assistant's picker implementation which imports and keeps the original array reference.
+
 ## 5.1.4 - 2026-05-02
 
 Stronger Home Assistant Dashboard picker registration.

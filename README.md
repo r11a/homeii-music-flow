@@ -22,7 +22,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/r11a/homeii-music-flow"><img alt="version" src="https://img.shields.io/badge/version-5.1.4-gold"></a>
+  <a href="https://github.com/r11a/homeii-music-flow"><img alt="version" src="https://img.shields.io/badge/version-5.1.5-gold"></a>
   <img alt="Home Assistant" src="https://img.shields.io/badge/Home%20Assistant-Dashboard-41BDF5">
   <img alt="Music Assistant" src="https://img.shields.io/badge/Music%20Assistant-required-7C5CFF">
   <img alt="Sendspin" src="https://img.shields.io/badge/Sendspin-browser%20player-18B6FF">
@@ -48,6 +48,10 @@ HOMEii Flow started from my own daily use of Home Assistant and Music Assistant.
 - **Real Music Assistant library flow:** playlists, albums, artists, tracks, radio, favorites, recent listening, and recommendations.
 - **Hebrew and RTL ready:** layout, labels, alignment, and interaction patterns are built for Hebrew as a first-class use case.
 - **Release-ready package:** HACS-ready `dist/` output includes the card, Sendspin files, Embla swipe support, and the brand asset.
+
+## What's New In 5.1.5
+
+- **Dashboard picker registry fix:** HOMEii Flow now mutates Home Assistant's existing `window.customCards` registry in place instead of replacing it, matching the way the HA picker imports and reads custom-card metadata.
 
 ## What's New In 5.1.4
 
@@ -122,7 +126,7 @@ If HACS does not add the resource automatically, add:
 3. Add this Dashboard resource:
 
 ```text
-/local/community/homeii-music-flow/homeii-music-flow.js?v=5.1.4
+/local/community/homeii-music-flow/homeii-music-flow.js?v=5.1.5
 ```
 
 4. Add the card:
@@ -700,7 +704,7 @@ npm run lint
 npm test
 ```
 
-Current packaged version: `5.1.4`
+Current packaged version: `5.1.5`
 
 ## Release Readiness
 
