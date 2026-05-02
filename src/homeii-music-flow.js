@@ -170,7 +170,6 @@
 
   static getStubConfig() {
     return {
-      type: "custom:homeii-music-flow",
       config_entry_id: "",
       ma_url: "",
       ma_token: "",
@@ -430,7 +429,7 @@
   _versionedAssetUrl(url) {
     const value = String(url || "").trim();
     if (!value || /^data:/i.test(value) || /[?&]v=/.test(value)) return value;
-    const version = typeof HOMEII_CARD_VERSION === "string" ? HOMEII_CARD_VERSION : "5.1.2";
+    const version = typeof HOMEII_CARD_VERSION === "string" ? HOMEII_CARD_VERSION : "5.1.3";
     return `${value}${value.includes("?") ? "&" : "?"}v=${encodeURIComponent(version)}`;
   }
 
@@ -9686,9 +9685,9 @@ function ensureHaEditorComponents() {
   } catch (_) {}
 }
 
-const HOMEII_CARD_VERSION = "5.1.2";
-const HOMEII_BROWSER_EDITOR_TAG = "homeii-music-flow-browser-editor-v5120";
-const HOMEII_MOBILE_EDITOR_TAG = "homeii-music-flow-editor-v5120";
+const HOMEII_CARD_VERSION = "5.1.3";
+const HOMEII_BROWSER_EDITOR_TAG = "homeii-music-flow-browser-editor-v5130";
+const HOMEII_MOBILE_EDITOR_TAG = "homeii-music-flow-editor-v5130";
 
 const HomeiiEditorLocale = Object.freeze({
   isHebrewLanguageTag(value) {
@@ -12257,7 +12256,7 @@ if (!customElements.get(HOMEII_BROWSER_EDITOR_TAG)) {
   customElements.define(HOMEII_BROWSER_EDITOR_TAG, HomeiiBaseMusicEditor);
 }
 
-window.customCards = window.customCards || [];
+window.customCards = (window.customCards || []).filter((card) => card?.type !== "custom:homeii-music-flow");
 
 class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
   constructor() {
@@ -12467,7 +12466,6 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
   static getStubConfig() {
     return {
       ...HomeiiBaseMusicCard.getStubConfig(),
-      type: "custom:homeii-music-flow",
       show_ma_button: false,
       layout_mode: "auto",
       settings_source: "visual",
@@ -29149,12 +29147,13 @@ if (!customElements.get("homeii-music-mobile-editor")) {
   customElements.define("homeii-music-mobile-editor", HomeiiMusicMobileEditor);
 }
 
-if (!window.customCards.some((c) => c.type === "custom:homeii-music-flow")) {
+if (!window.customCards.some((c) => c.type === "homeii-music-flow")) {
   window.customCards.push({
-    type: "custom:homeii-music-flow",
-    name: "homeii-music-flow",
-    description: `Luxury mobile Music Assistant flow with premium compact tile v${HOMEII_CARD_VERSION}`,
-    preview: true,
+    type: "homeii-music-flow",
+    name: "HOMEii Flow",
+    description: `Premium Music Assistant dashboard card v${HOMEII_CARD_VERSION}`,
+    preview: false,
+    documentationURL: "https://github.com/r11a/homeii-music-flow",
   });
 }
 

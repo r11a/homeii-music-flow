@@ -1,5 +1,13 @@
 # Changelog
 
+## 5.1.3 - 2026-05-02
+
+Home Assistant Dashboard picker fix.
+
+- Registered HOMEii Flow with `window.customCards` using the element type expected by Home Assistant's card picker.
+- Updated stub configuration to omit `type`, while preserving normal YAML usage with `type: custom:homeii-music-flow`.
+- Disabled live picker preview and clear stale picker metadata from older loaded bundles so new cards do not open through the compact preview path.
+
 ## 5.1.2 - 2026-05-02
 
 HACS README refresh.
