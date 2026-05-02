@@ -32,6 +32,6 @@ This matrix is the release gate for the `4.9.x` stabilization cycle. Every relea
 
 ## Release Rule
 
-- `5.1.0` is blocked by any known `P0` or `P1` bug in the matrix above.
+- `5.1.1` is blocked by any known `P0` or `P1` bug in the matrix above.
 - Cosmetic `P3` issues may ship only if they are documented and non-regressive.
 - Any regression found in one viewport/theme combination must be retested across the rest of the matrix after the fix lands.

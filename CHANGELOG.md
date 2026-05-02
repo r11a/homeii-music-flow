@@ -1,5 +1,11 @@
 # Changelog
 
+## 5.1.1 - 2026-05-02
+
+HACS presentation fix.
+
+- Updated README logo, preview, and screenshot links to absolute GitHub raw URLs so they render inside the HACS download screen.
+
 ## 5.1.0 - 2026-05-02
 
 Feature and release-readiness update for the next repository distribution.

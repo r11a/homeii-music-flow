@@ -1,7 +1,7 @@
 # HOMEii Flow
 
 <p align="center">
-  <img src="docs/brand/homeii-flow-logo.svg" alt="HOMEii Flow logo" width="280">
+  <img src="https://raw.githubusercontent.com/r11a/homeii-music-flow/main/docs/brand/homeii-flow-logo.svg" alt="HOMEii Flow logo" width="280">
 </p>
 
 <p align="center">
@@ -22,7 +22,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/r11a/homeii-music-flow"><img alt="version" src="https://img.shields.io/badge/version-5.1.0-gold"></a>
+  <a href="https://github.com/r11a/homeii-music-flow"><img alt="version" src="https://img.shields.io/badge/version-5.1.1-gold"></a>
   <img alt="Home Assistant" src="https://img.shields.io/badge/Home%20Assistant-Lovelace-41BDF5">
   <img alt="Music Assistant" src="https://img.shields.io/badge/Music%20Assistant-required-7C5CFF">
   <img alt="Sendspin" src="https://img.shields.io/badge/Sendspin-browser%20player-18B6FF">
@@ -31,7 +31,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/media/homeii-flow-preview.gif" alt="HOMEii Flow preview" width="100%">
+  <img src="https://raw.githubusercontent.com/r11a/homeii-music-flow/main/docs/media/homeii-flow-preview.gif" alt="HOMEii Flow preview" width="100%">
 </p>
 
 HOMEii Flow is a custom Home Assistant Lovelace card for Music Assistant. It turns music control into a polished listening surface: visual, fast, personal, and comfortable on both wall tablets and phones.
@@ -48,6 +48,10 @@ This project was created from a UX/product vision by a Home Assistant user with 
 - **Real Music Assistant library flow:** playlists, albums, artists, tracks, radio, favorites, recent listening, and recommendations.
 - **Hebrew and RTL ready:** layout, labels, alignment, and interaction patterns are built for Hebrew as a first-class use case.
 - **Release-ready package:** HACS-ready `dist/` output includes the card, Sendspin files, Embla swipe support, and the brand asset.
+
+## What's New In 5.1.1
+
+- **HACS README assets fixed:** the logo, preview GIF, and screenshots now use absolute GitHub raw URLs so they render inside the HACS download screen.
 
 ## What's New In 5.1.0
 
@@ -106,7 +110,7 @@ If HACS does not add the resource automatically, add:
 3. Add this Lovelace resource:
 
 ```text
-/local/community/homeii-music-flow/homeii-music-flow.js?v=5.1.0
+/local/community/homeii-music-flow/homeii-music-flow.js?v=5.1.1
 ```
 
 4. Add the card:
@@ -168,40 +172,40 @@ Notes:
 ### Main Experience
 
 <p align="center">
-  <img src="docs/media/hero-main-light.png" alt="Main now playing layout" width="100%">
+  <img src="https://raw.githubusercontent.com/r11a/homeii-music-flow/main/docs/media/hero-main-light.png" alt="Main now playing layout" width="100%">
 </p>
 
 ### Studio / Players / Queue
 
 | Studio | Players | Queue |
 | --- | --- | --- |
-| <img src="docs/media/studio.png" alt="Studio player grid" width="100%"> | <img src="docs/media/players.png" alt="Player selection and grouping" width="100%"> | <img src="docs/media/queue.png" alt="Queue panel" width="100%"> |
+| <img src="https://raw.githubusercontent.com/r11a/homeii-music-flow/main/docs/media/studio.png" alt="Studio player grid" width="100%"> | <img src="https://raw.githubusercontent.com/r11a/homeii-music-flow/main/docs/media/players.png" alt="Player selection and grouping" width="100%"> | <img src="https://raw.githubusercontent.com/r11a/homeii-music-flow/main/docs/media/queue.png" alt="Queue panel" width="100%"> |
 
 ### Library / Actions / Settings
 
 | Library | Actions | Settings |
 | --- | --- | --- |
-| <img src="docs/media/library.png" alt="Music Assistant library browser" width="100%"> | <img src="docs/media/actions.png" alt="Actions and schedules menu" width="100%"> | <img src="docs/media/settings.png" alt="Settings panel" width="100%"> |
+| <img src="https://raw.githubusercontent.com/r11a/homeii-music-flow/main/docs/media/library.png" alt="Music Assistant library browser" width="100%"> | <img src="https://raw.githubusercontent.com/r11a/homeii-music-flow/main/docs/media/actions.png" alt="Actions and schedules menu" width="100%"> | <img src="https://raw.githubusercontent.com/r11a/homeii-music-flow/main/docs/media/settings.png" alt="Settings panel" width="100%"> |
 
 ### Lyrics / Announcements / Tablet
 
 | Lyrics | Announcements | Tablet |
 | --- | --- | --- |
-| <img src="docs/media/lyrics.png" alt="Lyrics screen" width="100%"> | <img src="docs/media/announcement.png" alt="Announcement screen" width="100%"> | <img src="docs/media/tablet.png" alt="Tablet layout" width="100%"> |
+| <img src="https://raw.githubusercontent.com/r11a/homeii-music-flow/main/docs/media/lyrics.png" alt="Lyrics screen" width="100%"> | <img src="https://raw.githubusercontent.com/r11a/homeii-music-flow/main/docs/media/announcement.png" alt="Announcement screen" width="100%"> | <img src="https://raw.githubusercontent.com/r11a/homeii-music-flow/main/docs/media/tablet.png" alt="Tablet layout" width="100%"> |
 
 ### Mobile Details
 
 | Mobile 1 | Mobile 2 | Mobile 3 |
 | --- | --- | --- |
-| <img src="docs/media/mobile-1.jpg" alt="Mobile screenshot 1" width="100%"> | <img src="docs/media/mobile-2.jpg" alt="Mobile screenshot 2" width="100%"> | <img src="docs/media/mobile-3.jpg" alt="Mobile screenshot 3" width="100%"> |
+| <img src="https://raw.githubusercontent.com/r11a/homeii-music-flow/main/docs/media/mobile-1.jpg" alt="Mobile screenshot 1" width="100%"> | <img src="https://raw.githubusercontent.com/r11a/homeii-music-flow/main/docs/media/mobile-2.jpg" alt="Mobile screenshot 2" width="100%"> | <img src="https://raw.githubusercontent.com/r11a/homeii-music-flow/main/docs/media/mobile-3.jpg" alt="Mobile screenshot 3" width="100%"> |
 
 | Mobile 4 | Mobile 5 | Mobile 6 |
 | --- | --- | --- |
-| <img src="docs/media/mobile-4.jpg" alt="Mobile screenshot 4" width="100%"> | <img src="docs/media/mobile-5.jpg" alt="Mobile screenshot 5" width="100%"> | <img src="docs/media/mobile-6.jpg" alt="Mobile screenshot 6" width="100%"> |
+| <img src="https://raw.githubusercontent.com/r11a/homeii-music-flow/main/docs/media/mobile-4.jpg" alt="Mobile screenshot 4" width="100%"> | <img src="https://raw.githubusercontent.com/r11a/homeii-music-flow/main/docs/media/mobile-5.jpg" alt="Mobile screenshot 5" width="100%"> | <img src="https://raw.githubusercontent.com/r11a/homeii-music-flow/main/docs/media/mobile-6.jpg" alt="Mobile screenshot 6" width="100%"> |
 
 | History | Mobile 7 |
 | --- | --- |
-| <img src="docs/media/history-light.png" alt="History and recommendations drawer" width="100%"> | <img src="docs/media/mobile-7.jpg" alt="Mobile screenshot 7" width="100%"> |
+| <img src="https://raw.githubusercontent.com/r11a/homeii-music-flow/main/docs/media/history-light.png" alt="History and recommendations drawer" width="100%"> | <img src="https://raw.githubusercontent.com/r11a/homeii-music-flow/main/docs/media/mobile-7.jpg" alt="Mobile screenshot 7" width="100%"> |
 
 ## Feature Highlights
 
@@ -328,7 +332,7 @@ Notes:
 - In-card settings panels
 - Language, theme, layout, color, motion, footer, volume, mic, swipe, liked, night mode, and shortcut settings
 - Announcement preset and TTS entity settings
-- 5.1.0 defaults: height `850`, night mode `off`, up-next `off`, mic `smart`, settings source `visual editor`, dynamic theme `auto`, background motion `subtle`, footer `icon+text`, font scale `1`, artwork swipe `browse`, home shortcut `off`, liked mode `Music Assistant`
+- Current defaults: height `850`, night mode `off`, up-next `off`, mic `smart`, settings source `visual editor`, dynamic theme `auto`, background motion `subtle`, footer `icon+text`, font scale `1`, artwork swipe `browse`, home shortcut `off`, liked mode `Music Assistant`
 - Config validation and tested state helpers
 
 ## Full Feature Map
@@ -684,7 +688,7 @@ npm run lint
 npm test
 ```
 
-Current packaged version: `5.1.0`
+Current packaged version: `5.1.1`
 
 ## Release Readiness
 
