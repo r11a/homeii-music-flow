@@ -1,5 +1,11 @@
 # Changelog
 
+## 5.1.2 - 2026-05-02
+
+HACS README refresh.
+
+- Republished the README updates in a new release so Home Assistant/HACS can pull the fixed logo, screenshots, personal project background, and Dashboard wording instead of older cached `5.1.0` content.
+
 ## 5.1.1 - 2026-05-02
 
 HACS presentation fix.
