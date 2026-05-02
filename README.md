@@ -36,7 +36,7 @@
 
 HOMEii Flow is a custom Home Assistant Lovelace card for Music Assistant. It turns music control into a polished listening surface: visual, fast, personal, and comfortable on both wall tablets and phones.
 
-This project was created from a UX/product vision by a Home Assistant user with no programming background. The design direction, daily use cases, Hebrew/RTL needs, and experience goals came from real home use. The implementation was built iteratively with Codex.
+HOMEii Flow started from my own daily use of Home Assistant and Music Assistant. I wanted it to feel less like a technical dashboard widget and more like a real music app inside Home Assistant, so a lot of thought went into the flow, touch interactions, Hebrew/RTL comfort, wall-tablet behavior, mobile details, and the small moments that make choosing music feel natural at home.
 
 ## Why It Stands Out
 
