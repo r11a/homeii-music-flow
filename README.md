@@ -23,7 +23,7 @@
 
 <p align="center">
   <a href="https://github.com/r11a/homeii-music-flow"><img alt="version" src="https://img.shields.io/badge/version-5.1.1-gold"></a>
-  <img alt="Home Assistant" src="https://img.shields.io/badge/Home%20Assistant-Lovelace-41BDF5">
+  <img alt="Home Assistant" src="https://img.shields.io/badge/Home%20Assistant-Dashboard-41BDF5">
   <img alt="Music Assistant" src="https://img.shields.io/badge/Music%20Assistant-required-7C5CFF">
   <img alt="Sendspin" src="https://img.shields.io/badge/Sendspin-browser%20player-18B6FF">
   <img alt="HACS" src="https://img.shields.io/badge/HACS-custom%20repository-41BDF5">
@@ -34,13 +34,13 @@
   <img src="https://raw.githubusercontent.com/r11a/homeii-music-flow/main/docs/media/homeii-flow-preview.gif" alt="HOMEii Flow preview" width="100%">
 </p>
 
-HOMEii Flow is a custom Home Assistant Lovelace card for Music Assistant. It turns music control into a polished listening surface: visual, fast, personal, and comfortable on both wall tablets and phones.
+HOMEii Flow is a custom Home Assistant Dashboard card for Music Assistant. It turns music control into a polished listening surface: visual, fast, personal, and comfortable on both wall tablets and phones.
 
 HOMEii Flow started from my own daily use of Home Assistant and Music Assistant. I wanted it to feel less like a technical dashboard widget and more like a real music app inside Home Assistant, so a lot of thought went into the flow, touch interactions, Hebrew/RTL comfort, wall-tablet behavior, mobile details, and the small moments that make choosing music feel natural at home.
 
 ## Why It Stands Out
 
-- **Sendspin browser player built in:** turn the current browser, phone, tablet, or wall panel into a Music Assistant playback target directly from the card, with a session that survives Lovelace page changes while the dashboard stays open.
+- **Sendspin browser player built in:** turn the current browser, phone, tablet, or wall panel into a Music Assistant playback target directly from the card, with a session that survives Dashboard page changes while the dashboard stays open.
 - **Premium now-playing experience:** artwork-led layout, dynamic atmosphere, elegant controls, full-screen lyrics, and responsive visual polish.
 - **FLOW guided music wizard:** a simple step-by-step music flow for choosing players, picking a mood or existing content, reviewing visual results, and starting playback without learning the full Music Assistant UI.
 - **Studio / Control Room:** choose players, group rooms, control volumes, move playback, and manage multi-room listening.
@@ -107,7 +107,7 @@ If HACS does not add the resource automatically, add:
 ```
 
 2. Copy the full contents of `dist/` into that folder.
-3. Add this Lovelace resource:
+3. Add this Dashboard resource:
 
 ```text
 /local/community/homeii-music-flow/homeii-music-flow.js?v=5.1.1
@@ -121,7 +121,7 @@ type: custom:homeii-music-flow
 
 ## Requirements
 
-- Home Assistant with Lovelace custom cards enabled.
+- Home Assistant with Dashboard custom cards enabled.
 - Music Assistant installed, running, and connected to Home Assistant.
 - At least one Music Assistant player exposed as a Home Assistant `media_player`.
 - HACS for the easiest install path, or manual access to `/config/www/community/`.
@@ -144,7 +144,7 @@ What it does:
 - registers the phone, tablet, PC browser, or wall panel as a playable Music Assistant target
 - lets the device appear in the player list once Music Assistant publishes it back to Home Assistant
 - keeps a HOMEii-specific player identity so the card does not accidentally pick a random browser player from another tab
-- keeps the active local player alive at dashboard/tab level while moving between Lovelace pages or dashboards in the same Home Assistant session
+- keeps the active local player alive at dashboard/tab level while moving between Dashboard pages in the same Home Assistant session
 - removes the HOMEii local player immediately when **Disconnect this device** is used
 - packages the required `sendspin-js` runtime in `dist/sendspin-js/`
 
@@ -163,7 +163,7 @@ Notes:
 - Local network playback is preferred. Remote playback depends on Music Assistant, browser, WebRTC, and network conditions.
 - HTTPS matters: an HTTPS Home Assistant dashboard cannot open an insecure `ws://` Sendspin connection. Use an HTTPS Music Assistant URL, or open Home Assistant locally over HTTP when testing on the same network.
 - Mobile lifecycle matters: iOS, Android, and WebView-based apps can suspend browser audio/WebSocket work when the app is backgrounded or the phone is locked. HOMEii Flow will reconnect the HOMEii Sendspin player when the dashboard becomes active again, but it cannot force the operating system to keep a locked/backgrounded browser alive forever.
-- Lovelace navigation is handled inside HOMEii Flow: the local Sendspin audio element and connection intent are kept outside the card instance, so moving between dashboard pages should not require reconnecting.
+- Dashboard navigation is handled inside HOMEii Flow: the local Sendspin audio element and connection intent are kept outside the card instance, so moving between dashboard pages should not require reconnecting.
 - Use **Disconnect this device** in the player screen when you want HOMEii Flow to stop reconnecting the local browser player.
 - Mobile browsers may require a user gesture before audio playback is allowed after a reconnect.
 
@@ -224,7 +224,7 @@ Notes:
 - HOMEii-specific Sendspin player identity
 - Direct authenticated Sendspin WebSocket bridge
 - Reconnect on dashboard return, app focus, `pageshow`, and network-online events
-- Dashboard-level local session so the browser player is not tied to one Lovelace card instance
+- Dashboard-level local session so the browser player is not tied to one Dashboard card instance
 - Grace period when leaving the dashboard page before stopping the local player
 - Manual disconnect action to stop automatic reconnect for this browser session
 - Device discovery after connection
