@@ -429,7 +429,7 @@
   _versionedAssetUrl(url) {
     const value = String(url || "").trim();
     if (!value || /^data:/i.test(value) || /[?&]v=/.test(value)) return value;
-    const version = typeof HOMEII_CARD_VERSION === "string" ? HOMEII_CARD_VERSION : "5.1.3";
+    const version = typeof HOMEII_CARD_VERSION === "string" ? HOMEII_CARD_VERSION : "5.1.4";
     return `${value}${value.includes("?") ? "&" : "?"}v=${encodeURIComponent(version)}`;
   }
 
@@ -9685,9 +9685,9 @@ function ensureHaEditorComponents() {
   } catch (_) {}
 }
 
-const HOMEII_CARD_VERSION = "5.1.3";
-const HOMEII_BROWSER_EDITOR_TAG = "homeii-music-flow-browser-editor-v5130";
-const HOMEII_MOBILE_EDITOR_TAG = "homeii-music-flow-editor-v5130";
+const HOMEII_CARD_VERSION = "5.1.4";
+const HOMEII_BROWSER_EDITOR_TAG = "homeii-music-flow-browser-editor-v5140";
+const HOMEII_MOBILE_EDITOR_TAG = "homeii-music-flow-editor-v5140";
 
 const HomeiiEditorLocale = Object.freeze({
   isHebrewLanguageTag(value) {
@@ -29122,7 +29122,15 @@ class HomeiiMusicFlowBaseEditor extends HomeiiBaseMusicEditor {
   }
 }
 
-class HomeiiMusicFlowCard extends HomeiiMusicFlowBaseCard {}
+class HomeiiMusicFlowCard extends HomeiiMusicFlowBaseCard {
+  static getStubConfig() {
+    return HomeiiMusicFlowBaseCard.getStubConfig();
+  }
+
+  static getConfigForm() {
+    return HomeiiMusicFlowBaseCard.getConfigForm();
+  }
+}
 class HomeiiMusicMobileCard extends HomeiiMusicFlowBaseCard {}
 class HomeiiMusicFlowEditor extends HomeiiMusicFlowBaseEditor {}
 class HomeiiMusicMobileEditor extends HomeiiMusicFlowBaseEditor {}
@@ -29147,7 +29155,11 @@ if (!customElements.get("homeii-music-mobile-editor")) {
   customElements.define("homeii-music-mobile-editor", HomeiiMusicMobileEditor);
 }
 
-if (!window.customCards.some((c) => c.type === "homeii-music-flow")) {
+function registerHomeiiDashboardCard() {
+  window.customCards = (window.customCards || []).filter((card) => (
+    card?.type !== "custom:homeii-music-flow"
+    && card?.type !== "homeii-music-flow"
+  ));
   window.customCards.push({
     type: "homeii-music-flow",
     name: "HOMEii Flow",
@@ -29156,5 +29168,9 @@ if (!window.customCards.some((c) => c.type === "homeii-music-flow")) {
     documentationURL: "https://github.com/r11a/homeii-music-flow",
   });
 }
+
+registerHomeiiDashboardCard();
+if (typeof queueMicrotask === "function") queueMicrotask(registerHomeiiDashboardCard);
+setTimeout(registerHomeiiDashboardCard, 500);
 
 

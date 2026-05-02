@@ -12,7 +12,7 @@ Use only this runtime package folder in Home Assistant `www`:
 
 Use only this Lovelace resource pattern:
 
-`/local/community/homeii-music-flow/homeii-music-flow.js?v=5.1.3`
+`/local/community/homeii-music-flow/homeii-music-flow.js?v=5.1.4`
 
 From now on, bump only the query version after `?v=`.
 Do not change the file name again unless there is a hard cache emergency.
@@ -29,14 +29,14 @@ Stable deploy target:
 
 `dist/` should always be the latest approved install package.
 
-## Current 5.1.3 Mapping
+## Current 5.1.4 Mapping
 
 - Edit: `src/homeii-music-flow.js`
 - Review/share: `dist/`
 - Deploy to HA `www`: copy the full contents of `dist/` into `www/community/homeii-music-flow/`
 - Package includes: `homeii-music-flow.js`, `sendspin-js/`, `vendor/embla-carousel.umd.js`, `homeii-flow-logo.svg`
 - Lovelace type: `custom:homeii-music-flow`
-- Lovelace resource: `/local/community/homeii-music-flow/homeii-music-flow.js?v=5.1.3`
+- Lovelace resource: `/local/community/homeii-music-flow/homeii-music-flow.js?v=5.1.4`
 
 ## Cache Reset Rule
 
@@ -48,7 +48,7 @@ If a new version is approved:
 
 Example:
 
-`/local/community/homeii-music-flow/homeii-music-flow.js?v=5.1.3`
+`/local/community/homeii-music-flow/homeii-music-flow.js?v=5.1.4`
 
 ## Foundation Note
 

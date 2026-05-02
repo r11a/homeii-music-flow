@@ -1,5 +1,12 @@
 # Changelog
 
+## 5.1.4 - 2026-05-02
+
+Stronger Home Assistant Dashboard picker registration.
+
+- Re-registers HOMEii Flow custom-card metadata after module load to survive picker/resource load timing.
+- Exposes picker config methods directly on the final `HomeiiMusicFlowCard` class instead of relying only on static inheritance.
+
 ## 5.1.3 - 2026-05-02
 
 Home Assistant Dashboard picker fix.
