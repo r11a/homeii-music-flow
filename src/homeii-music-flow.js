@@ -429,7 +429,7 @@
   _versionedAssetUrl(url) {
     const value = String(url || "").trim();
     if (!value || /^data:/i.test(value) || /[?&]v=/.test(value)) return value;
-    const version = typeof HOMEII_CARD_VERSION === "string" ? HOMEII_CARD_VERSION : "5.1.5";
+    const version = typeof HOMEII_CARD_VERSION === "string" ? HOMEII_CARD_VERSION : "5.1.6";
     return `${value}${value.includes("?") ? "&" : "?"}v=${encodeURIComponent(version)}`;
   }
 
@@ -9685,9 +9685,9 @@ function ensureHaEditorComponents() {
   } catch (_) {}
 }
 
-const HOMEII_CARD_VERSION = "5.1.5";
-const HOMEII_BROWSER_EDITOR_TAG = "homeii-music-flow-browser-editor-v5150";
-const HOMEII_MOBILE_EDITOR_TAG = "homeii-music-flow-editor-v5150";
+const HOMEII_CARD_VERSION = "5.1.6";
+const HOMEII_BROWSER_EDITOR_TAG = "homeii-music-flow-browser-editor-v5160";
+const HOMEII_MOBILE_EDITOR_TAG = "homeii-music-flow-editor-v5160";
 
 const HomeiiEditorLocale = Object.freeze({
   isHebrewLanguageTag(value) {
@@ -9942,7 +9942,9 @@ const HomeiiMobileSettingsFoundation = Object.freeze({
       .filter((item) => !(usesVisualSettings && item === "settings"))
       .filter((item) => !(hidePlayers && item === "players"));
     const normalizedFallback = fallback.filter((item) => !(hidePlayers && item === "players"));
-    return cleaned.length ? cleaned : normalizedFallback;
+    const normalized = cleaned.length ? cleaned : normalizedFallback;
+    if (!usesVisualSettings && !normalized.includes("settings")) normalized.push("settings");
+    return normalized;
   },
   normalizeMobileQuickActions(items, fallbackItems = []) {
     const allowed = new Set(["timer", "like", "lyrics", "queue", "radio", "history", "info"]);
@@ -23195,6 +23197,27 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
           margin:0;
           accent-color:var(--ma-accent);
         }
+        .settings-check-pill.is-locked {
+          cursor:default;
+          opacity:.94;
+        }
+        .settings-check-pill.is-locked input {
+          opacity:.78;
+        }
+        .settings-fixed-badge {
+          margin-inline-start:auto;
+          padding:3px 8px;
+          border-radius:999px;
+          background:rgba(245,166,35,.16);
+          color:var(--ma-accent);
+          font-size:11px;
+          font-weight:900;
+          letter-spacing:0;
+        }
+        .rtl .settings-fixed-badge {
+          margin-inline-start:0;
+          margin-inline-end:auto;
+        }
         .rtl .settings-check-pill {
           direction:rtl;
           justify-content:flex-start;
@@ -26972,6 +26995,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     const playerOptions = (this._state.players || []).map((player) => [player.entity_id, player.attributes?.friendly_name || player.entity_id]);
     const visibleMainBarOptions = mainBarOptions;
     const showStudioMainBarOption = this._controlRoomEnabled();
+    const settingsMainBarLocked = !this._usesVisualSettings();
     return `
       <div class="settings-shell">
         <div class="settings-group">
@@ -27081,11 +27105,15 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
                 <span>${this._esc(this._controlRoomLabel())}</span>
               </label>
             ` : ``}
-            ${visibleMainBarOptions.map(([value, label]) => `
-              <label class="settings-check-pill">
-                <input type="checkbox" data-setting-main-bar-item="${this._esc(value)}" ${selectedMainBar.has(value) ? "checked" : ""}>
+            ${visibleMainBarOptions.map(([value, label]) => {
+              const locked = settingsMainBarLocked && value === "settings";
+              return `
+              <label class="settings-check-pill ${locked ? "is-locked" : ""}">
+                <input type="checkbox" data-setting-main-bar-item="${this._esc(value)}" ${selectedMainBar.has(value) || locked ? "checked" : ""} ${locked ? "disabled" : ""}>
                 <span>${this._esc(label)}</span>
-              </label>`).join("")}
+                ${locked ? `<span class="settings-fixed-badge">${this._esc(this._m("Fixed", "קבוע"))}</span>` : ""}
+              </label>`;
+            }).join("")}
           </div>
           <div class="settings-label">${this._m("Volume control (large screen only)", "בקרת ווליום (זמין רק במסך גדול)")}</div>
           <div class="settings-pills">
@@ -29056,6 +29084,10 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     const mainBarCheckbox = e.target?.closest?.("input[data-setting-main-bar-item]");
     if (mainBarCheckbox) {
       const item = mainBarCheckbox.dataset.settingMainBarItem;
+      if (!this._usesVisualSettings() && item === "settings") {
+        mainBarCheckbox.checked = true;
+        return;
+      }
       const current = new Set(this._mobileMainBarItems());
       if (mainBarCheckbox.checked) current.add(item); else current.delete(item);
       const next = Array.from(current);

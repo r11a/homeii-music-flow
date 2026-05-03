@@ -1,5 +1,13 @@
 # Changelog
 
+## 5.1.6 - 2026-05-03
+
+In-card UI settings access fix.
+
+- Keeps `Settings` permanently available in the main bar when `settings_source` is set to UI/in-card mode, even if saved settings, YAML, or older local state omit it.
+- Locks the Settings item in the in-card main bar selector so it is clear that it cannot be disabled in UI mode.
+- Bumps editor custom element tags so Home Assistant loads the refreshed visual editor after the release update.
+
 ## 5.1.5 - 2026-05-02
 
 Home Assistant Dashboard picker registry fix.

@@ -86,6 +86,12 @@ describe("mobile settings foundation", () => {
       fallbackItems: ["actions", "players", "library", "settings"],
     })).toEqual(["theme"]);
 
+    expect(normalizeMobileMainBarItems(["actions"], {
+      usesVisualSettings: false,
+      hidePlayers: false,
+      fallbackItems: ["actions"],
+    })).toEqual(["actions", "settings"]);
+
     expect(normalizeMobileMainBarItems([], {
       usesVisualSettings: false,
       hidePlayers: true,

@@ -72,7 +72,9 @@ export function normalizeMobileMainBarItems(items, {
     .filter((item) => !(usesVisualSettings && item === "settings"))
     .filter((item) => !(hidePlayers && item === "players"));
   const normalizedFallback = fallback.filter((item) => !(hidePlayers && item === "players"));
-  return cleaned.length ? cleaned : normalizedFallback;
+  const normalized = cleaned.length ? cleaned : normalizedFallback;
+  if (!usesVisualSettings && !normalized.includes("settings")) normalized.push("settings");
+  return normalized;
 }
 
 export function normalizeMobileLibraryTabs(tabs, fallbackTabs = []) {
