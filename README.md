@@ -1,6 +1,10 @@
 # HOMEii Flow
 
 <p align="center">
+  <img src="https://raw.githubusercontent.com/r11a/homeii-music-flow/main/HOMEii%20Flow%20Main.png" alt="HOMEii Flow main experience" width="100%">
+</p>
+
+<p align="center">
   <img src="https://raw.githubusercontent.com/r11a/homeii-music-flow/main/docs/brand/homeii-flow-logo.svg" alt="HOMEii Flow logo" width="280">
 </p>
 
@@ -188,6 +192,83 @@ If the card loads but feels incomplete, check these first:
 - If artwork is missing only when away from home, prefer Home Assistant-accessible artwork paths or expose Music Assistant through a secure reachable URL. HOMEii Flow now avoids private-network artwork URLs when the browser is remote, but a local-only MA URL can still limit Direct API artwork.
 - If no players are shown, check Music Assistant player exposure and remove overly strict pinned-player filters from the card settings.
 - Optional automation helper: create an `input_text`, then set `active_player_helper_entity` so automations can read the current HOMEii Flow target.
+
+## Active Player Helper
+
+HOMEii Flow can optionally publish the currently selected/active player to a Home Assistant helper. This is useful when you want automations, scripts, templates, dashboard buttons, or voice flows to know which player HOMEii Flow is currently controlling.
+
+The card does not create a Home Assistant entity by itself. Create an `input_text` helper once, then point HOMEii Flow to it. The card will keep that helper updated with the active player `entity_id`.
+
+### Setup
+
+1. In Home Assistant, open **Settings > Devices & services > Helpers**.
+2. Select **Create Helper**.
+3. Choose **Text**.
+4. Name it, for example: `HOMEii Flow Active Player`.
+5. Copy the created entity id, for example:
+
+```yaml
+input_text.homeii_flow_active_player
+```
+
+6. Add it to the HOMEii Flow card configuration:
+
+```yaml
+type: custom:homeii-music-flow
+active_player_helper_entity: input_text.homeii_flow_active_player
+```
+
+You can also select the helper from the visual card editor in the connection/settings section.
+
+### What The Helper Stores
+
+When HOMEii Flow is controlling the living room player, the helper value becomes:
+
+```text
+media_player.living_room
+```
+
+When you switch HOMEii Flow to another player, the helper updates automatically:
+
+```text
+media_player.kitchen
+```
+
+### Example: Play/Pause The Current HOMEii Flow Player
+
+```yaml
+alias: HOMEii Flow - Toggle active player
+sequence:
+  - service: media_player.media_play_pause
+    target:
+      entity_id: "{{ states('input_text.homeii_flow_active_player') }}"
+```
+
+### Example: Set Volume On The Current HOMEii Flow Player
+
+```yaml
+alias: HOMEii Flow - Set active player volume
+sequence:
+  - service: media_player.volume_set
+    target:
+      entity_id: "{{ states('input_text.homeii_flow_active_player') }}"
+    data:
+      volume_level: 0.35
+```
+
+### Example: Use It In A Template
+
+```yaml
+{{ state_attr(states('input_text.homeii_flow_active_player'), 'friendly_name') }}
+```
+
+### Example: Only Run If HOMEii Flow Has A Player
+
+```yaml
+condition:
+  - condition: template
+    value_template: "{{ states('input_text.homeii_flow_active_player') | regex_match('^media_player\\.') }}"
+```
 
 ## Sendspin Browser Player
 
