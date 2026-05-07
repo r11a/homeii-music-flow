@@ -40,6 +40,8 @@ export function createBaseBrowserState() {
     controlRoomTransferTarget: "",
     controlRoomPanel: "",
     controlRoomVisiblePlayers: [],
+    controlRoomCustomScenes: [],
+    controlRoomSceneName: "",
     controlRoomRevealThisDevicePending: false,
     controlRoomRenderedHtml: "",
     controlRoomRenderSignature: "",

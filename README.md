@@ -22,7 +22,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/r11a/homeii-music-flow"><img alt="version" src="https://img.shields.io/badge/version-5.2.0-gold"></a>
+  <a href="https://github.com/r11a/homeii-music-flow"><img alt="version" src="https://img.shields.io/badge/version-5.3.0-gold"></a>
   <img alt="Home Assistant" src="https://img.shields.io/badge/Home%20Assistant-Dashboard-41BDF5">
   <img alt="Music Assistant" src="https://img.shields.io/badge/Music%20Assistant-required-7C5CFF">
   <img alt="Sendspin" src="https://img.shields.io/badge/Sendspin-browser%20player-18B6FF">
@@ -48,6 +48,19 @@ HOMEii Flow started from my own daily use of Home Assistant and Music Assistant.
 - **Real Music Assistant library flow:** playlists, albums, artists, tracks, radio, favorites, recent listening, and recommendations.
 - **Hebrew and RTL ready:** layout, labels, alignment, and interaction patterns are built for Hebrew as a first-class use case.
 - **Release-ready package:** HACS-ready `dist/` output includes the card, Sendspin files, Embla swipe support, and the brand asset.
+
+## What's New In 5.3.0
+
+- **Studio scenes you can save:** save the current Studio target locally, including selected players, visible players, grouping intent, volume levels, and current media when a playable URI is available.
+- **Clearer grouped-player awareness:** grouped players now get a compact group summary above the Studio wall and stronger group badges on the player tiles.
+- **Faster Music Hub routing:** quick category buttons open playlists, artists, albums, tracks, and radio directly from Studio.
+- **Safer Actions Hub:** adds a clear `Stop all` action that reuses the global stop flow for playback, queues, groups, and the local browser player.
+- **Pro panel context:** the Pro panel now shows the current target player, protocol, Direct API readiness, realtime token status, Sendspin state, and a shortcut to the full Music Assistant interface.
+- **Queue Cockpit polish:** the queue panel uses a more opaque, contained layout with clearer source/target lanes and safer scrolling.
+- **Remote artwork reliability:** artwork URLs are normalized for local and remote Home Assistant sessions, with safer HA/proxy paths and cache-busting so desktop browsers update covers without a full page reload.
+- **Better empty-art fallback:** missing covers now show a polished HOMEii-style artwork placeholder instead of the old oversized generic icon screen.
+- **Friendly startup guardrails:** missing Music Assistant config/player discovery now shows a clear card notice instead of throwing a console-only error.
+- **Active player helper:** optional `input_text` helper support lets HOMEii Flow publish the currently active player entity id for automations and templates.
 
 ## What's New In 5.2.0
 
@@ -141,7 +154,7 @@ If HACS does not add the resource automatically, add:
 3. Add this Dashboard resource:
 
 ```text
-/local/community/homeii-music-flow/homeii-music-flow.js?v=5.2.0
+/local/community/homeii-music-flow/homeii-music-flow.js?v=5.3.0
 ```
 
 4. Add the card:
@@ -164,6 +177,17 @@ type: custom:homeii-music-flow
 - Mobile browsers can pause audio and WebSocket work when the app is backgrounded or the phone is locked. HOMEii Flow remembers the active "This device" intent during the current app/browser session and reconnects when the dashboard becomes active again.
 - Optional: a configured `tts.*` entity for text-to-speech announcements.
 - Optional but recommended: correct Home Assistant internal/external URLs, especially for phones, tablets, and remote access.
+
+## First Startup Checklist
+
+If the card loads but feels incomplete, check these first:
+
+- Music Assistant is installed, running, and exposes at least one player as a Home Assistant `media_player`.
+- The Dashboard resource points to `/hacsfiles/homeii-music-flow/homeii-music-flow.js` for HACS, or to the copied `/local/community/...` file for manual installs.
+- If you use HOMEii Flow remotely, confirm Home Assistant external/internal URLs are correct. For Direct Music Assistant features, `ma_url` should be reachable from the browser you are using, not only from the local network.
+- If artwork is missing only when away from home, prefer Home Assistant-accessible artwork paths or expose Music Assistant through a secure reachable URL. HOMEii Flow now avoids private-network artwork URLs when the browser is remote, but a local-only MA URL can still limit Direct API artwork.
+- If no players are shown, check Music Assistant player exposure and remove overly strict pinned-player filters from the card settings.
+- Optional automation helper: create an `input_text`, then set `active_player_helper_entity` so automations can read the current HOMEii Flow target.
 
 ## Sendspin Browser Player
 
@@ -677,6 +701,8 @@ language: auto
 rtl: true
 theme_mode: auto
 show_theme_toggle: true
+# Optional: create this helper in Home Assistant first.
+active_player_helper_entity: input_text.homeii_flow_active_player
 ```
 
 ### Sendspin / This Device Configuration
@@ -719,7 +745,7 @@ npm run lint
 npm test
 ```
 
-Current packaged version: `5.2.0`
+Current packaged version: `5.3.0`
 
 ## Release Readiness
 

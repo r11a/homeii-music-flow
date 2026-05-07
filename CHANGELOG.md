@@ -1,5 +1,24 @@
 # Changelog
 
+## 5.3.0 - 2026-05-07
+
+Studio Evolution and community stability release.
+
+- Adds local Studio scene saving: store the current selected players, visible player set, grouping intent, volume levels, and current media when Music Assistant exposes a playable URI.
+- Adds saved-scene run/delete controls inside the Studio Scenes panel.
+- Adds grouped-player summaries above the Studio wall so active groups are easier to understand before choosing actions.
+- Adds direct Music Hub shortcuts for playlists, artists, albums, tracks, and radio.
+- Adds a Studio Actions `Stop all` entry that uses the global stop flow for playback, queues, groups, and the local browser player.
+- Adds target player, protocol, Direct API, realtime token, Sendspin, and player-count context to Studio Pro.
+- Adds a shortcut from Studio Pro / Actions to the full Music Assistant interface.
+- Tightens Queue Cockpit layout with a more opaque panel, contained source/target lanes, and safer internal scrolling.
+- Fixes remote artwork handling by normalizing local, Home Assistant, and Music Assistant artwork URLs and avoiding private-network artwork URLs when the browser is connected remotely.
+- Adds artwork cache-busting for current media so desktop browsers refresh cover art without requiring a full page reload.
+- Replaces the missing-art screen with a HOMEii-style premium artwork fallback instead of the old oversized generic placeholder.
+- Adds friendly in-card notices when Music Assistant config/player discovery is not ready, avoiding console-only startup errors.
+- Adds optional `active_player_helper_entity` support for an `input_text` helper that receives the active player entity id for automations and templates.
+- Adds first-startup README guidance for player discovery, remote artwork, Direct MA URL/token, HACS resources, and the optional active-player helper.
+
 ## 5.2.0 - 2026-05-05
 
 Studio Focus Mode and Control Room release.
