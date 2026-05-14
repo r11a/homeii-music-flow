@@ -43,7 +43,7 @@ export function validateBaseCardEditorConfig(config) {
   assertNumberIfDefined(config.main_opacity, "main_opacity");
   assertNumberIfDefined(config.popup_opacity, "popup_opacity");
   assertNumberIfDefined(config.cache_ttl, "cache_ttl");
-  assertValueInList(config.language, "language", ["auto", "he", "en"]);
+  assertValueInList(config.language, "language", ["auto", "he", "en", "zh-CN"]);
   assertValueInList(config.theme_mode, "theme_mode", ["auto", "dark", "light"]);
   assertBooleanIfDefined(config.rtl, "rtl");
   assertBooleanIfDefined(config.performance_mode, "performance_mode");

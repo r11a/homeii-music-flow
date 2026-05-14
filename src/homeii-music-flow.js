@@ -215,8 +215,25 @@
 
   _isHebrew() {
     if (this._state.lang === "he") return true;
+    if (this._state.lang === "zh-CN") return false;
     if (this._state.lang === "en") return false;
     return !!this._config.rtl;
+  }
+
+  _isChinese() {
+    return this._state.lang === "zh-CN";
+  }
+
+  _languageShortLabel() {
+    if (this._isHebrew()) return "עב";
+    if (this._isChinese()) return "中";
+    return "EN";
+  }
+
+  _speechRecognitionLocale() {
+    if (this._isHebrew()) return "he-IL";
+    if (this._isChinese()) return "zh-CN";
+    return "en-US";
   }
 
   _effectiveTheme() {
@@ -380,6 +397,617 @@
   }
 
   _t(text) {
+    if (this._isChinese()) {
+      const map = {
+        Home: "首页",
+        "Now Playing": "正在播放",
+        Radio: "电台",
+        Podcasts: "播客",
+        Albums: "专辑",
+        Artists: "艺人",
+        Tracks: "歌曲",
+        Playlists: "播放列表",
+        "Nothing playing": "当前没有播放内容",
+        "Open queue": "打开队列",
+        Shuffle: "随机播放",
+        Previous: "上一首",
+        "Play / Pause": "播放 / 暂停",
+        Next: "下一首",
+        Repeat: "循环",
+        Seek: "拖动进度",
+        "Playing on": "当前播放设备",
+        "Loading players...": "正在加载播放器...",
+        Mute: "静音",
+        "Search everything...": "搜索全部内容...",
+        Clear: "清除",
+        Connecting: "连接中",
+        Connected: "已连接",
+        "Connecting...": "正在连接...",
+        "Loading...": "加载中...",
+        "No content found": "未找到内容",
+        "Favorite Radio": "收藏电台",
+        "Recently Added": "最近新增",
+        Discover: "发现",
+        "All Albums": "全部专辑",
+        "All Artists": "全部艺人",
+        "All Tracks": "全部歌曲",
+        "All Podcasts": "全部播客",
+        "Radio Stations": "电台频道",
+        Queue: "播放队列",
+        "Play all": "全部播放",
+        "Shuffle all": "全部随机",
+        Search: "搜索",
+        "No results": "没有结果",
+        "Loading library...": "正在加载资料库...",
+        "Loading queue...": "正在加载队列...",
+        "Queue is empty": "播放队列为空",
+        "Playback started": "已开始播放",
+        "Select a player first": "请先选择播放器",
+        "Try again": "重试",
+        "Recently Played": "最近播放",
+        "Play now": "立即播放",
+        "Shuffle play": "随机播放",
+        "Play next": "下一首播放",
+        "Add to queue": "加入队列",
+        "No players found": "未找到播放器",
+        "Fallback mode": "基础模式",
+        "Up Next": "即将播放",
+        "No active media": "当前没有活动媒体",
+        Unknown: "未知",
+        items: "项",
+        "Open full queue": "打开完整队列",
+        "Search in queue": "在队列中搜索",
+        "Search queue and library...": "搜索队列和资料库...",
+        "Clear search": "清除搜索",
+        "Queue results": "队列结果",
+        "Back to queue": "返回队列",
+        "Group Speakers": "扬声器分组",
+        "Apply Group": "应用分组",
+        Ungroup: "取消分组",
+        "No extra MA players": "没有额外的 MA 播放器",
+        "Group updated": "分组已更新",
+        "Group cleared": "分组已清除",
+        Language: "语言",
+        Back: "返回",
+        "Open Music Assistant": "打开 Music Assistant",
+        "Open Music Assistant?": "打开 Music Assistant？",
+        "Open the full Music Assistant interface?": "要打开完整的 Music Assistant 界面吗？",
+        Continue: "继续",
+        Cancel: "取消",
+        "Selected Player": "已选播放器",
+        Idle: "空闲",
+        Playing: "播放中",
+        Paused: "已暂停",
+        "Choose Player": "选择播放器",
+        "This Device": "本机",
+        "Browser Players": "浏览器播放器",
+        "Connect This Device": "连接本机",
+        "Open Music Assistant on this device to activate the browser player": "请在本机打开 Music Assistant 以启用浏览器播放器",
+        "Connects directly from this card using Sendspin": "通过 Sendspin 直接从此卡片连接",
+        "Waiting for this device player...": "正在等待本机播放器...",
+        "Reconnects when you return to this dashboard": "回到此仪表板后会自动重连",
+        "Disconnect This Device": "断开本机",
+        "Stops this browser player": "停止此浏览器播放器",
+        "This device player disconnected": "本机播放器已断开",
+        "Remember as this device": "记住为本机",
+        "This device player connected": "本机播放器已连接",
+        "Other players": "其他播放器",
+        Theme: "主题",
+        "Transfer Queue": "转移队列",
+        "Move to next": "移到下一首",
+        Remove: "移除",
+        Up: "上移",
+        Down: "下移",
+        "Choose target player": "选择目标播放器",
+        "Queue transferred": "队列已转移",
+        "Queue action failed": "队列操作失败",
+        "Music Assistant config entry was not found": "未找到 Music Assistant 配置条目",
+        "Reorder queue": "重排队列",
+        Dark: "深色",
+        Light: "浅色",
+        "No target players available": "没有可用的目标播放器",
+        "No queue item to rebuild": "没有可重建的队列项",
+        "Layout adapted to height": "布局已按高度调整",
+        "Open Player Picker": "打开播放器选择器",
+        Lyrics: "歌词",
+        "Track Lyrics": "歌曲歌词",
+        "Loading lyrics...": "正在加载歌词...",
+        "No lyrics found": "未找到歌词",
+        "Lyrics unavailable right now": "当前无法获取歌词",
+        Like: "喜欢",
+        Grid: "网格",
+        List: "列表",
+        Settings: "设置",
+        Library: "资料库",
+        Players: "播放器",
+        "Active Players": "活动播放器",
+        "Stop all players": "停止所有播放器",
+        Today: "今天",
+        Week: "本周",
+        Enabled: "开启",
+        Disabled: "关闭",
+        "Sort ascending": "升序",
+        "Sort descending": "降序",
+        Newest: "最新",
+        Oldest: "最早",
+        "Volume presets": "音量预设",
+        "Set volume": "设置音量",
+        "Player is pinned from settings": "该播放器已在设置中固定",
+        "Recommended playlist": "推荐播放列表",
+        Playlist: "播放列表",
+        "Recommended track": "推荐歌曲",
+        "Recommendations will appear once HOMEii Flow sees your queue or recent listening.": "当 HOMEii Flow 检测到你的队列或最近收听记录后，这里会显示推荐内容。",
+        "Play a few tracks and they will appear here.": "先播放几首歌，推荐内容就会出现在这里。",
+        "Recent track": "最近播放歌曲",
+        Studio: "音乐中枢",
+        player: "播放器",
+        "connected players": "已连接播放器",
+        "visible tiles": "显示卡片",
+        "music hub": "音乐中心",
+        actions: "操作",
+        "studio search": "中枢搜索",
+        "queue cockpit": "队列控制台",
+        "smart mix": "智能混音",
+        "recent listening": "最近收听",
+        "favorite center": "收藏中心",
+        "scene presets": "场景预设",
+        "announcement studio": "播报中心",
+        "studio pro": "中枢 Pro",
+        Controlling: "当前控制",
+        "Selected player": "已选播放器",
+        "Primary target": "主要目标",
+        "Studio opened": "音乐中枢已打开",
+        "Studio closed": "音乐中枢已关闭",
+        Track: "歌曲",
+        Album: "专辑",
+        Artist: "艺人",
+        Podcast: "播客",
+        Media: "媒体",
+        Player: "播放器",
+        "No queue": "没有队列",
+        "Queue item": "队列项目",
+        "Now playing": "正在播放",
+        "Up next": "即将播放",
+        "Queue is unavailable for this player": "该播放器暂不支持查看队列",
+        Calm: "舒缓",
+        "Soft, relaxed music": "柔和轻松的音乐",
+        Party: "派对",
+        "Energy and rhythm": "充满活力与节奏",
+        Morning: "清晨",
+        "Fresh start": "轻松开启一天",
+        Night: "夜晚",
+        "Lower volume mood": "低音量夜间氛围",
+        Kids: "儿童",
+        "Family friendly": "适合全家收听",
+        Israeli: "以色列",
+        "Local favorites": "本地热门",
+        Liked: "已喜欢",
+        "Shuffle favorites": "随机播放收藏",
+        Random: "随机",
+        "Library surprise": "资料库惊喜",
+        "Continue listening": "继续收听",
+        Favorite: "收藏",
+        "No media found.": "未找到媒体内容。",
+        Play: "播放",
+        Add: "添加",
+        "Building Studio mix...": "正在生成中枢混音...",
+        "No mix content found": "未找到可用于混音的内容",
+        "Studio mix started": "中枢混音已开始",
+        "Could not build Studio mix": "无法生成中枢混音",
+        "No queue to clone": "没有可克隆的队列",
+        "Queue cloned": "队列已克隆",
+        "Could not clone the queue": "无法克隆队列",
+        "Enter an announcement first": "请先输入播报内容",
+        "Select at least one Studio player": "请至少选择一个中枢播放器",
+        "Studio scene": "中枢场景",
+        "My Studio Scene": "我的中枢场景",
+        "Studio scene saved": "中枢场景已保存",
+        "Studio scene deleted": "中枢场景已删除",
+        "Scene players are not available": "场景中的播放器当前不可用",
+        "Studio scene was not found": "未找到该中枢场景",
+        "Home scene prepared": "家庭场景已准备好",
+        "Voice input is not supported on this device": "此设备不支持语音输入",
+        "Voice input failed": "语音输入失败",
+        "Radio mode is not available for this media type": "此媒体类型不支持电台模式",
+        "Remove from selection": "从选择中移除",
+        "Add to selection": "加入选择",
+        Selected: "已选中",
+        Select: "选择",
+        Primary: "主",
+        "Grouped players": "已分组播放器",
+        "Searching library...": "正在搜索资料库...",
+        "Search and choose Play, Next, Add, Radio, or Like.": "搜索后可选择播放、下一首、添加、电台或喜欢。",
+        "No media found for this search.": "这次搜索没有找到媒体内容。",
+        "Connected players": "已连接播放器",
+        "Choose which players stay in the current control selection.": "选择哪些播放器保留在当前控制范围内。",
+        "Visible tiles": "显示卡片",
+        "Choose which players appear as tiles in the room.": "选择哪些播放器显示为房间卡片。",
+        "Music Hub": "音乐中心",
+        "Choose the source first. Playback will use the current target.": "请先选择音源，播放会发送到当前目标。",
+        "Browse playlists, artists, albums and radio": "浏览播放列表、艺人、专辑和电台",
+        "Search tracks, albums, artists and playlists": "搜索歌曲、专辑、艺人和播放列表",
+        "FLOW Mix": "FLOW 混音",
+        "Mood, style or free text": "心情、风格或自由输入",
+        Recent: "最近",
+        "Continue what was played recently": "继续最近播放过的内容",
+        "Favorites and liked music": "收藏与喜欢的音乐",
+        Scenes: "场景",
+        "Home, party, night presets": "家庭、派对、夜晚预设",
+        Actions: "操作",
+        "Only actions for the current target are shown here.": "这里只显示当前目标可用的操作。",
+        Pause: "暂停",
+        "Clear queue": "清空队列",
+        "Target players": "目标播放器",
+        "Choose who is controlled": "选择要控制的播放器",
+        "Clean the Studio wall": "整理中枢面板",
+        Group: "分组",
+        "Join selected players": "将所选播放器加入分组",
+        Ungroup: "取消分组",
+        "Disconnect groups": "断开分组",
+        "Stop all": "全部停止",
+        "Stop playback, clear queues and disconnect groups": "停止播放、清空队列并断开分组",
+        Announcement: "播报",
+        "Speak to target players": "向目标播放器发送语音播报",
+        Timers: "定时器",
+        "Sleep timer and scheduled playback": "睡眠定时与定时播放",
+        "Open MA": "打开 MA",
+        "Open the full Music Assistant interface": "打开完整 Music Assistant 界面",
+        "Pro tools": "专业工具",
+        "Sendspin and diagnostics": "Sendspin 与诊断",
+        "Choose source": "选择音源",
+        "Choose target": "选择目标",
+        "No available players": "没有可用播放器",
+        "Queue Cockpit": "队列控制台",
+        "Transfer, clone, inspect, or clear queues without hiding the Studio.": "无需离开音乐中枢即可转移、克隆、查看或清空队列。",
+        From: "从",
+        "Source queue": "源队列",
+        "Choose a source player": "选择源播放器",
+        To: "到",
+        "Target queue": "目标队列",
+        "Choose a target player": "选择目标播放器",
+        "Transfer queue": "转移队列",
+        "Clone queue": "克隆队列",
+        Refresh: "刷新",
+        "Search the library...": "搜索资料库...",
+        "Voice search": "语音搜索",
+        "Smart Mix Builder": "智能混音生成器",
+        "Pick a mood or type your own style. Studio will search Music Assistant and build a queue.": "选择一种心情，或输入你自己的风格。音乐中枢会搜索 Music Assistant 并生成队列。",
+        "Free style: quiet jazz, Greek music, workout...": "自由风格：安静爵士、希腊音乐、运动歌单……",
+        "Build custom mix": "生成自定义混音",
+        "Recent / Continue": "最近 / 继续",
+        "Continue from recent Music Assistant activity.": "从 Music Assistant 最近的活动继续播放。",
+        "Loading recent items...": "正在加载最近内容...",
+        "No recent listening yet.": "暂时还没有最近收听记录。",
+        "Favorite Center": "收藏中心",
+        "Play, queue, radio, or remove favorites directly from Studio.": "直接在音乐中枢中播放、加入队列、开启电台或移除收藏。",
+        "Loading favorites...": "正在加载收藏...",
+        "No favorites found.": "未找到收藏内容。",
+        "Scene Presets": "场景预设",
+        "One tap prepares players, grouping, volume and content. Save your own current Studio target as a local scene.": "一键准备播放器、分组、音量和内容，也可以把当前音乐中枢目标保存为本地场景。",
+        "Selected players at comfortable volume": "已选播放器，舒适音量",
+        "Group, volume up, energetic mix": "分组、高音量、活力混音",
+        "Low volume and quiet mix": "低音量、安静混音",
+        "Name this Studio scene...": "为这个中枢场景命名...",
+        "Save current target": "保存当前目标",
+        "Volume and player target": "音量与播放器目标",
+        "Delete scene": "删除场景",
+        "No saved Studio scenes yet.": "还没有保存的中枢场景。",
+        "Announcement Studio": "播报中心",
+        "Send a short voice message or announcement URL.": "发送简短语音消息或播报链接。",
+        Message: "消息",
+        "Type what should be announced...": "输入要播报的内容...",
+        "Volume boost": "音量增强",
+        "Send announcement": "发送播报",
+        "Studio Pro": "中枢 Pro",
+        "Feature detection, player context and this-device playback tools.": "功能检测、播放器上下文与本机播放工具。",
+        None: "无",
+        Available: "可用",
+        "Missing URL": "缺少 URL",
+        Ready: "就绪",
+        Optional: "可选",
+        "Connect this device": "连接此设备",
+        Disconnect: "断开连接",
+        "Player settings and DSP presets stay read-only until Music Assistant exposes a reliable schema for this player.": "在 Music Assistant 为此播放器提供可靠 schema 之前，播放器设置和 DSP 预设将保持只读。",
+        Music: "音乐",
+        "Lyrics font size": "歌词字号",
+        "Smaller lyrics": "缩小歌词",
+        "Reset lyrics font size": "重置歌词字号",
+        "Larger lyrics": "放大歌词",
+        "Lyrics timing": "歌词时序",
+        "Lyrics earlier": "歌词提前",
+        "Reset lyrics timing": "重置歌词时序",
+        "Lyrics later": "歌词延后",
+        "Sync lyrics": "同步歌词",
+        Sync: "同步",
+        "Removed from Music Assistant liked": "已从 Music Assistant 喜欢列表移除",
+        "Added to Music Assistant liked": "已加入 Music Assistant 喜欢列表",
+        "Move to position": "移动到指定位置",
+        Close: "关闭",
+        "No next track in queue": "队列中没有下一首",
+        "Skipped to up next": "已切换到下一首",
+        "All countries": "所有国家",
+        Israel: "以色列",
+        "United States": "美国",
+        "United Kingdom": "英国",
+        Germany: "德国",
+        France: "法国",
+        Italy: "意大利",
+        Spain: "西班牙",
+        Netherlands: "荷兰",
+        Greece: "希腊",
+        Turkey: "土耳其",
+        Canada: "加拿大",
+        Australia: "澳大利亚",
+        "Radio station changed": "电台已切换",
+        "Active player helper must be an input_text entity": "活动播放器辅助实体必须是 input_text",
+        "Could not update active player helper": "无法更新活动播放器辅助实体",
+        "Music Assistant is not ready. Check that the integration is loaded or set config_entry_id in the card.": "Music Assistant 尚未就绪。请检查集成是否已加载，或在卡片中设置 config_entry_id。",
+        "No Music Assistant players were found. Check Music Assistant and media_player entities.": "未找到 Music Assistant 播放器。请检查 Music Assistant 和 media_player 实体。",
+        "More info is unavailable for this player": "此播放器没有更多信息",
+        "Started on selected player": "已在所选播放器上开始播放",
+        "Could not start playback": "无法开始播放",
+        "Queue action is not available for this player": "该播放器不支持此队列操作",
+        "Queue item id is not ready yet. Refresh the queue and try again.": "队列项目 ID 尚未准备好，请刷新队列后重试。",
+        "Random playlist": "随机播放列表",
+        "Dinner is ready": "晚饭好了",
+        "Please come to the living room": "请到客厅来",
+        "Leaving in five minutes": "五分钟后出发",
+        Sun: "周日",
+        Mon: "周一",
+        Tue: "周二",
+        Wed: "周三",
+        Thu: "周四",
+        Fri: "周五",
+        Sat: "周六",
+        "Sleep timer": "睡眠定时器",
+        "Random gentle morning mix": "随机轻柔晨间混音",
+        "Selected playlist": "已选播放列表",
+        "No scheduled start is active": "当前没有启用定时启动",
+        "Scheduled start saved": "定时启动已保存",
+        "Scheduled start cleared": "定时启动已清除",
+        "Morning mix": "晨间混音",
+        "Scheduled start": "定时启动",
+        "Scheduled start failed": "定时启动失败",
+        "Sleep timer cleared": "睡眠定时器已清除",
+        "Sleep timer set for 15 minutes": "睡眠定时器已设为 15 分钟",
+        "Chill mix": "轻松混音",
+        "Starting a chill mix": "正在启动轻松混音",
+        "Could not start chill mix": "无法启动轻松混音",
+        "Quick mix": "快速混音",
+        "Could not build Quick Mix from the current song": "无法根据当前歌曲生成快速混音",
+        "Quick mix started": "快速混音已开始",
+        "Could not start Quick Mix": "无法启动快速混音",
+        "Sleep timer finished": "睡眠定时器已结束",
+        "Night mode is always on": "夜间模式始终开启",
+        "Night mode is off": "夜间模式已关闭",
+        "Tap to start a sleep timer": "点击以启动睡眠定时器",
+        Schedules: "计划",
+        Timer: "定时器",
+        History: "历史",
+        Info: "信息",
+        "More info": "更多信息",
+        "No player groups to disconnect": "没有可断开的播放器分组",
+        "No dynamic player groups to disconnect": "没有可断开的动态播放器分组",
+        "Player groups could not be disconnected": "无法断开播放器分组",
+        "All player groups disconnected": "所有播放器分组都已断开",
+        "No active players": "没有活动播放器",
+        "Some players could not be stopped or cleared": "部分播放器未能停止或清空",
+        "Stopped all players, cleared playlists and disconnected groups": "已停止所有播放器、清空列表并断开分组",
+        "Collapse compact player": "收起紧凑播放器",
+        "Recently played": "最近播放",
+        "Expand player": "展开播放器",
+        "Play artwork action": "封面滑动操作",
+        "History tabs": "历史标签",
+        Recommended: "推荐",
+        Menu: "菜单",
+        "At least one player must stay selected": "至少保留一个已选播放器",
+        "Playback command failed": "播放命令失败",
+        "Next track failed": "切换下一首失败",
+        "Mute command failed": "静音命令失败",
+        "Could not transfer the queue": "无法转移队列",
+        "Queues refreshed": "队列已刷新",
+        "Queue cleared": "队列已清空",
+        "Will play next in Studio": "将在音乐中枢中下一首播放",
+        "Added to Studio queue": "已加入中枢队列",
+        "Radio mode started": "电台模式已启动",
+        "Favorite updated": "收藏已更新",
+        "Studio media action failed": "中枢媒体操作失败",
+        "Could not start playback in Studio": "无法在音乐中枢中开始播放",
+        "Opening Studio library": "正在打开中枢资料库",
+        "Opening timers": "正在打开定时器",
+        "Stop command failed": "停止命令失败",
+        "Select at least two players to create a group": "请至少选择两个播放器来创建分组",
+        Pinned: "已固定",
+        "Choose a queue position": "选择队列位置",
+        "Queue actions": "队列操作",
+        "Media actions": "媒体操作",
+        "Play now and clear queue": "立即播放并清空队列",
+        "Play next and clear queue": "下一首播放并清空队列",
+        "Start radio mode": "启动电台模式",
+        "Removed from liked": "已从喜欢中移除",
+        "Added to liked": "已加入喜欢",
+        "Will play next": "将作为下一首播放",
+        "Queue cleared and item moved next": "队列已清空，项目已移到下一首",
+        "Added to queue": "已加入队列",
+        "Quick play": "快速播放",
+        "Choose something from the quick shelf or tap the wand for a random playlist.": "从快捷栏选择内容，或点击魔杖获取随机播放列表。",
+        "Surprise me": "给我惊喜",
+        "No playlists found": "未找到播放列表",
+        "Could not choose media": "无法选择媒体内容",
+        "Playing a random playlist": "正在播放随机播放列表",
+        "No radio stations found": "未找到电台",
+        "Random radio": "随机电台",
+        "Playing a random radio station": "正在播放随机电台",
+        "Could not start radio playback": "无法开始电台播放",
+        Artwork: "封面",
+        "No player selected": "未选择播放器",
+        "Use expand to open the full player": "使用展开按钮打开完整播放器",
+        "Starting Quick Mix...": "正在启动快速混音...",
+        "Player is ready": "播放器已就绪",
+        "Nothing is playing right now": "当前没有播放内容",
+        "Player is ready - nothing is playing right now": "播放器已就绪，但当前没有播放内容",
+        "Card settings are managed from the visual editor": "卡片设置由可视化编辑器管理",
+        "Soft and relaxed": "柔和放松",
+        Energetic: "充满活力",
+        "Upbeat and moving": "轻快有动感",
+        "Low light listening": "适合夜晚静听",
+        "Friendly and simple": "轻松简单",
+        "Free style": "自由风格",
+        "Type anything": "随意输入",
+        "Play a saved list": "播放已保存列表",
+        "Play an artist": "播放艺人作品",
+        "Artist radio": "艺人电台",
+        "Songs around an artist": "围绕艺人的歌曲",
+        "Library radio": "资料库电台",
+        "A radio station": "一个电台",
+        "No players found yet": "尚未发现播放器",
+        "Choose where to play": "选择播放位置",
+        "All players": "所有播放器",
+        "Play everywhere": "全屋播放",
+        "Choose the music": "选择音乐",
+        "By mood": "按心情",
+        "Existing content": "现有内容",
+        "Example: quiet jazz, Greek music, workout": "例如：安静爵士、希腊音乐、运动",
+        "Name or keyword": "名称或关键词",
+        "Find music": "查找音乐",
+        "Finding music": "正在查找音乐",
+        "No matching content was found": "未找到匹配内容",
+        "Ready to play": "准备播放",
+        "Selected music": "已选音乐",
+        Results: "结果",
+        "Choose one clear option": "请选择一个明确选项",
+        Option: "选项",
+        Reset: "重置",
+        "Choose at least one player": "请至少选择一个播放器",
+        "Type a free style first": "请先输入自由风格",
+        "Could not find music": "无法找到音乐",
+        "Set sleep timer": "设置睡眠定时器",
+        "No sleep timer is active": "当前没有启用睡眠定时器",
+        "Turns off after run": "运行后关闭",
+        "Stays active": "保持启用",
+        On: "开启",
+        Off: "关闭",
+        "No wake schedules yet": "还没有唤醒计划",
+        "Sleep Timer": "睡眠定时器",
+        "Sleep timer presets": "睡眠定时预设",
+        "Wake schedules": "唤醒计划",
+        "New schedule": "新建计划",
+        "Edit schedule": "编辑计划",
+        "New wake schedule": "新建唤醒计划",
+        "Start time": "开始时间",
+        "After run": "执行后",
+        "Stay active": "保持启用",
+        "Turn off": "关闭",
+        Volume: "音量",
+        "Active days": "生效日期",
+        "Save schedule": "保存计划",
+        "Create schedule": "创建计划",
+        "Delete schedule": "删除计划",
+        "End time": "结束时间",
+        "Apply schedule": "应用计划",
+        "Night mode stays on until you choose another mode.": "夜间模式会保持开启，直到你选择其他模式。",
+        "Night mode is off until you choose another mode.": "夜间模式会保持关闭，直到你选择其他模式。",
+        Wake: "唤醒",
+        "A guided music wizard": "引导式音乐向导",
+        "Players, queue and groups": "播放器、队列与分组",
+        "Open saved songs": "打开已保存歌曲",
+        "Sleep timer and morning playback": "睡眠定时与晨间播放",
+        Announcements: "播报",
+        "Send a voice message": "发送语音消息",
+        Disconnecting: "断开中",
+        Disconnected: "已断开",
+        Enable: "启用",
+        "Player on this device": "本设备上的播放器",
+        "Transfer is unavailable while a pinned player is configured": "配置固定播放器后，暂不支持转移播放",
+        "Theme toggle": "主题切换",
+        "Performance mode": "性能模式",
+        "For weaker displays: turns off heavy blur, animations, dynamic theme extraction, and background motion.": "适用于性能较弱的屏幕：关闭重模糊、动画、动态主题提取和背景动效。",
+        "Dynamic theme": "动态主题",
+        Strong: "强",
+        "Auto extracts colors from the current artwork and keeps the effect subtle. Strong makes the palette richer and brighter.": "自动模式会从当前封面提取颜色并保持较克制的效果；强模式会让配色更饱满、更明亮。",
+        "Background motion": "背景动效",
+        Subtle: "柔和",
+        Extreme: "极强",
+        "Adds motion to the background layers. Subtle keeps it calm, Strong is noticeable, and Extreme is the boldest animated look.": "为背景层添加动效。柔和模式较平静，强模式更明显，极强模式最具动感。",
+        "Accent color": "强调色",
+        "Font size": "字体大小",
+        "Compact mode": "紧凑模式",
+        "Show Up Next": "显示即将播放",
+        "Artwork swipe": "封面滑动",
+        "Change song": "切换歌曲",
+        "Browse covers": "浏览封面",
+        Microphone: "麦克风",
+        Smart: "智能",
+        "Footer style": "底栏样式",
+        "Icon only": "仅图标",
+        "Text only": "仅文字",
+        "Icon and text": "图标和文字",
+        "Home shortcut": "主页快捷方式",
+        "Home path": "主页路径",
+        "Use any Home Assistant path. Example: /lovelace/home": "可使用任意 Home Assistant 路径，例如：/lovelace/home",
+        "Pinned players": "固定播放器",
+        "Choose one or more players. The card stays inside this group and only switches between them.": "可选择一个或多个播放器。卡片将限制在这组播放器内切换。",
+        "Quick actions": "快捷操作",
+        "Choose the small buttons shown under the song title. Timer appears first in Hebrew so it sits on the right side.": "选择歌曲标题下方显示的小按钮。希伯来语下定时器会排在最前，以便显示在右侧。",
+        "Main bar items": "主栏项目",
+        Fixed: "固定",
+        "Volume control (large screen only)": "音量控制（仅大屏可用）",
+        "Always visible": "始终显示",
+        Button: "按钮",
+        "Liked sync": "喜欢同步",
+        Local: "本地",
+        "Radio Browser country": "Radio Browser 国家",
+        "Choose a country, or All countries to browse every country inside the Radio tab.": "选择一个国家，或选择“所有国家”以在电台标签中浏览全部国家。",
+        "Library pages": "资料库页面",
+        "Open full interface": "打开完整界面",
+        "Announcement presets": "播报预设",
+        "Preset message": "预设消息",
+        "TTS entity": "TTS 实体",
+        "Text announcements use Home Assistant TTS into the selected Music Assistant player. URL announcements use Music Assistant announcement playback.": "文本播报会通过 Home Assistant TTS 发送到所选的 Music Assistant 播放器；链接播报则使用 Music Assistant 的播报播放功能。",
+        "What would you like to listen to?": "你想听点什么？",
+        "Smart voice selection": "智能语音选择",
+        Other: "其他",
+        "Searching smart selection...": "正在搜索智能选择...",
+        "Voice search is not supported on this device": "此设备不支持语音搜索",
+        "Microphone is disabled": "麦克风已禁用",
+        "Voice search failed": "语音搜索失败",
+        Ascending: "升序",
+        Descending: "降序",
+        Sort: "排序",
+        "Media layout": "媒体布局",
+        "No results found": "未找到结果",
+        "No Radio Browser countries found": "未找到 Radio Browser 国家列表",
+        stations: "个电台",
+        "Back to countries": "返回国家列表",
+        "Radio Browser": "Radio Browser",
+        "No liked media yet": "还没有喜欢的媒体内容",
+        "Cancel selection": "取消选择",
+        "Play selected": "播放所选",
+        "Searching...": "搜索中...",
+        "Search failed": "搜索失败",
+        "Announce to all players": "向所有播放器播报",
+        "Announcement target": "播报目标",
+        "Type an announcement...": "输入播报内容...",
+        Dictate: "语音输入",
+        "Announcement volume boost": "播报音量提升",
+        Announce: "播报",
+        "all players": "所有播放器",
+        "No TTS service or entity is configured": "未配置 TTS 服务或实体",
+        "Group volume": "分组音量",
+        "Radio Browser countries": "Radio Browser 国家",
+        "Worldwide popular": "全球热门",
+        "Disconnect player groups": "断开播放器分组",
+        "Loading schedules...": "正在加载计划...",
+        "Disconnecting player groups...": "正在断开播放器分组...",
+        "No liked tracks to play": "没有可播放的喜欢歌曲",
+        "No selected tracks to play": "没有选中的可播放歌曲",
+        "Favorite action sent": "收藏操作已发送",
+        "Favorite action failed": "收藏操作失败",
+        "Night schedule updated": "夜间计划已更新",
+        "Player selected": "播放器已选中",
+      };
+      return map[text] || text;
+    }
     if (!this._isHebrew()) return text;
     const map = {
       Home: "בית",
@@ -2923,7 +3551,7 @@
                 <button class="chip-btn" id="choosePlayerBtn">${this._t("Choose Player")}</button>
                 <button class="theme-btn" id="themeToggleBtn" style="display:${this._config.show_theme_toggle ? "" : "none"};">${theme === "dark" ? "☀" : "🌙"}</button>
                 <button class="chip-btn" id="maOpenBtn" style="display:none;">MA</button>
-                <button class="lang-btn" id="langBtn" title="${this._t("Language")}">${rtl ? "EN" : "עב"}</button>
+                <button class="lang-btn" id="langBtn" title="${this._t("Language")}">${this._languageShortLabel()}</button>
                 <div class="status-pill offline" id="statusPill"><span class="status-dot"></span><span id="statusText">${this._t("Connecting")}</span></div>
               </div>
             </div>
@@ -3065,7 +3693,9 @@
   $(id) { return this.shadowRoot.getElementById(id); }
 
   _toggleLanguage() {
-    this._state.lang = this._isHebrew() ? "en" : "he";
+    const order = ["en", "he", "zh-CN"];
+    const current = order.includes(this._state.lang) ? this._state.lang : "en";
+    this._state.lang = order[(order.indexOf(current) + 1) % order.length];
     try { localStorage.setItem("homeii_music_flow_lang", this._state.lang); } catch (_) {}
 
     const currentTheme = this._state.cardTheme;
@@ -3164,7 +3794,7 @@
   }
 
   _localText(en, he) {
-    return typeof this._m === "function" ? this._m(en, he) : (this._isHebrew() ? he : en);
+    return typeof this._m === "function" ? this._m(en, he) : (this._isHebrew() ? he : this._t(en));
   }
 
   _localSendspinIdStorageKey() {
@@ -5859,7 +6489,7 @@
     try { this._voiceRecognition?.abort?.(); } catch (_) {}
     const recognition = new SpeechRecognition();
     this._voiceRecognition = recognition;
-    recognition.lang = this._isHebrew() ? "he-IL" : "en-US";
+    recognition.lang = this._speechRecognitionLocale();
     recognition.interimResults = true;
     recognition.continuous = false;
     recognition.maxAlternatives = 1;
@@ -11568,6 +12198,9 @@ const HomeiiEditorLocale = Object.freeze({
   isHebrewLanguageTag(value) {
     return String(value || "").trim().toLowerCase().startsWith("he");
   },
+  isChineseLanguageTag(value) {
+    return String(value || "").trim().toLowerCase().startsWith("zh");
+  },
   pickEditorLanguageCandidate({
     hassLocaleLanguage,
     hassLanguage,
@@ -11584,6 +12217,19 @@ const HomeiiEditorLocale = Object.freeze({
         documentLanguage: doc?.documentElement?.lang,
       });
       return HomeiiEditorLocale.isHebrewLanguageTag(lang);
+    } catch (_) {
+      return false;
+    }
+  },
+  detectEditorChinese(doc = globalThis.document) {
+    try {
+      const homeAssistant = doc?.querySelector?.("home-assistant");
+      const lang = HomeiiEditorLocale.pickEditorLanguageCandidate({
+        hassLocaleLanguage: homeAssistant?.hass?.locale?.language,
+        hassLanguage: homeAssistant?.hass?.language,
+        documentLanguage: doc?.documentElement?.lang,
+      });
+      return HomeiiEditorLocale.isChineseLanguageTag(lang);
     } catch (_) {
       return false;
     }
@@ -11632,7 +12278,7 @@ const HomeiiConfigValidators = Object.freeze({
     HomeiiConfigValidators.assertNumberIfDefined(config.main_opacity, "main_opacity");
     HomeiiConfigValidators.assertNumberIfDefined(config.popup_opacity, "popup_opacity");
     HomeiiConfigValidators.assertNumberIfDefined(config.cache_ttl, "cache_ttl");
-    HomeiiConfigValidators.assertValueInList(config.language, "language", ["auto", "he", "en"]);
+    HomeiiConfigValidators.assertValueInList(config.language, "language", ["auto", "he", "en", "zh-CN"]);
     HomeiiConfigValidators.assertValueInList(config.theme_mode, "theme_mode", ["auto", "dark", "light", "custom"]);
     HomeiiConfigValidators.assertBooleanIfDefined(config.rtl, "rtl");
     HomeiiConfigValidators.assertBooleanIfDefined(config.performance_mode, "performance_mode");
@@ -13395,14 +14041,23 @@ const HomeiiMediaHistoryFoundation = Object.freeze({
   },
 });
 
+function getEditorUiLanguage() {
+  return HomeiiEditorLocale.detectEditorHebrew() ? "he" : "en";
+}
+
+function pickEditorText(language, en, he) {
+  if (language === "he") return he;
+  return en;
+}
+
 function getBaseCardConfigForm() {
-  const he = HomeiiEditorLocale.detectEditorHebrew();
+  const language = getEditorUiLanguage();
   return {
     schema: [
       {
         type: "expandable",
         name: "general_section",
-        title: he ? "כללי ותצוגה" : "General and Display",
+        title: pickEditorText(language, "General and Display", "כללי ותצוגה"),
         flatten: true,
         schema: [
           {
@@ -13414,14 +14069,15 @@ function getBaseCardConfigForm() {
               { name: "height", selector: { number: { min: 360, max: 1400, step: 10, mode: "box" } } },
               { name: "language", selector: { select: { mode: "dropdown", options: [
                 { value: "auto", label: "Auto" },
-                { value: "he", label: he ? "עברית" : "Hebrew" },
-                { value: "en", label: he ? "אנגלית" : "English" },
+                { value: "he", label: pickEditorText(language, "Hebrew", "עברית") },
+                { value: "en", label: pickEditorText(language, "English", "אנגלית") },
+                { value: "zh-CN", label: pickEditorText(language, "Simplified Chinese", "סינית פשוטה") },
               ] } } },
               { name: "theme_mode", selector: { select: { mode: "dropdown", options: [
                 { value: "auto", label: "Auto" },
-                { value: "dark", label: he ? "כהה" : "Dark" },
-                { value: "light", label: he ? "בהיר" : "Light" },
-                { value: "custom", label: he ? "אישי" : "Custom" },
+                { value: "dark", label: pickEditorText(language, "Dark", "כהה") },
+                { value: "light", label: pickEditorText(language, "Light", "בהיר") },
+                { value: "custom", label: pickEditorText(language, "Custom", "אישי") },
               ] } } },
               { name: "performance_mode", selector: { boolean: {} } },
               { name: "rtl", selector: { boolean: {} } },
@@ -13434,7 +14090,7 @@ function getBaseCardConfigForm() {
       {
         type: "expandable",
         name: "connection_section",
-        title: he ? "חיבור והתנהגות" : "Connection and Behavior",
+        title: pickEditorText(language, "Connection and Behavior", "חיבור והתנהגות"),
         flatten: true,
         schema: [
           {
@@ -13461,38 +14117,38 @@ function getBaseCardConfigForm() {
       },
     ],
     computeLabel: (schema) => ({
-      config_entry_id: "Config Entry ID",
-      ma_url: he ? "כתובת Music Assistant" : "Music Assistant URL",
-      ma_token: he ? "טוקן Music Assistant" : "Music Assistant token",
-      active_player_helper_entity: he ? "Helper לנגן פעיל" : "Active player helper",
-      ma_interface_url: he ? "נתיב ממשק MA" : "MA interface path",
-      ma_interface_target: he ? "פתיחת ממשק" : "Open interface in",
-      show_ma_button: he ? "כפתור MA" : "Show MA button",
-      show_theme_toggle: he ? "כפתור ערכת נושא" : "Show theme toggle",
-      cache_ttl: he ? "זמן קאש" : "Cache TTL",
-      height: he ? "גובה הכרטיס" : "Card height",
-      language: he ? "שפה" : "Language",
-      theme_mode: he ? "ערכת נושא" : "Theme mode",
-      performance_mode: he ? "מצב ביצועים למכשירים חלשים" : "Performance mode for weak devices",
-      night_mode: he ? "מצב לילה" : "Night mode",
-      night_mode_auto_start: he ? "שעת התחלה ללילה" : "Night start time",
-      night_mode_auto_end: he ? "שעת סיום ללילה" : "Night end time",
-      mobile_show_up_next: he ? "הצגת הבא בתור" : "Show Up Next",
+      config_entry_id: pickEditorText(language, "Config Entry ID", "Config Entry ID"),
+      ma_url: pickEditorText(language, "Music Assistant URL", "כתובת Music Assistant"),
+      ma_token: pickEditorText(language, "Music Assistant token", "טוקן Music Assistant"),
+      active_player_helper_entity: pickEditorText(language, "Active player helper", "Helper לנגן פעיל"),
+      ma_interface_url: pickEditorText(language, "MA interface path", "נתיב ממשק MA"),
+      ma_interface_target: pickEditorText(language, "Open interface in", "פתיחת ממשק"),
+      show_ma_button: pickEditorText(language, "Show MA button", "כפתור MA"),
+      show_theme_toggle: pickEditorText(language, "Show theme toggle", "כפתור ערכת נושא"),
+      cache_ttl: pickEditorText(language, "Cache TTL", "זמן קאש"),
+      height: pickEditorText(language, "Card height", "גובה הכרטיס"),
+      language: pickEditorText(language, "Language", "שפה"),
+      theme_mode: pickEditorText(language, "Theme mode", "ערכת נושא"),
+      performance_mode: pickEditorText(language, "Performance mode for weak devices", "מצב ביצועים למכשירים חלשים"),
+      night_mode: pickEditorText(language, "Night mode", "מצב לילה"),
+      night_mode_auto_start: pickEditorText(language, "Night start time", "שעת התחלה ללילה"),
+      night_mode_auto_end: pickEditorText(language, "Night end time", "שעת סיום ללילה"),
+      mobile_show_up_next: pickEditorText(language, "Show Up Next", "הצגת הבא בתור"),
       rtl: "RTL",
-      main_opacity: he ? "שקיפות ראשית" : "Main opacity",
-      popup_opacity: he ? "שקיפות חלונות" : "Popup opacity",
+      main_opacity: pickEditorText(language, "Main opacity", "שקיפות ראשית"),
+      popup_opacity: pickEditorText(language, "Popup opacity", "שקיפות חלונות"),
     })[schema.name],
     computeHelper: (schema) => ({
-      config_entry_id: he ? "מזהה ה־config entry של Music Assistant, אם רוצים קישור ישיר דרך Home Assistant." : "Music Assistant config entry id, if you want direct integration lookup through Home Assistant.",
-      ma_url: he ? "השאר ריק אם הכרטיס ניגש ל־Music Assistant דרך Home Assistant בלבד." : "Leave empty if the card should use Home Assistant only.",
-      ma_token: he ? "נדרש רק אם אתה עובד מול כתובת MA ישירה." : "Only needed when using a direct Music Assistant URL.",
-      active_player_helper_entity: he ? "אופציונלי: input_text שהכרטיס יעדכן עם entity_id של הנגן הפעיל, עבור אוטומציות ותבניות." : "Optional input_text helper updated with the active player entity_id for automations and templates.",
-      ma_interface_url: he ? "נתיב לפתיחת ממשק Music Assistant." : "Path used when opening the Music Assistant interface.",
-      cache_ttl: he ? "משך הקאש במילישניות עבור קריאות נתונים מסוימות." : "Cache duration in milliseconds for selected data requests.",
-      height: he ? "גובה הכרטיס בפיקסלים." : "Card height in pixels.",
-      performance_mode: he ? "מכבה טשטושים, אנימציות, רקעים דינמיים וצללים כבדים. מומלץ ל־Nest Hub וטאבלטים חלשים." : "Disables blur, animations, dynamic backgrounds, and heavy shadows. Recommended for Nest Hub and weaker tablets.",
-      main_opacity: he ? "שקיפות הרקע הראשי של הכרטיס." : "Opacity for the main card background.",
-      popup_opacity: he ? "שקיפות חלונות וקופצים." : "Opacity for popups and overlays.",
+      config_entry_id: pickEditorText(language, "Music Assistant config entry id, if you want direct integration lookup through Home Assistant.", "מזהה ה־config entry של Music Assistant, אם רוצים קישור ישיר דרך Home Assistant."),
+      ma_url: pickEditorText(language, "Leave empty if the card should use Home Assistant only.", "השאר ריק אם הכרטיס ניגש ל־Music Assistant דרך Home Assistant בלבד."),
+      ma_token: pickEditorText(language, "Only needed when using a direct Music Assistant URL.", "נדרש רק אם אתה עובד מול כתובת MA ישירה."),
+      active_player_helper_entity: pickEditorText(language, "Optional input_text helper updated with the active player entity_id for automations and templates.", "אופציונלי: input_text שהכרטיס יעדכן עם entity_id של הנגן הפעיל, עבור אוטומציות ותבניות."),
+      ma_interface_url: pickEditorText(language, "Path used when opening the Music Assistant interface.", "נתיב לפתיחת ממשק Music Assistant."),
+      cache_ttl: pickEditorText(language, "Cache duration in milliseconds for selected data requests.", "משך הקאש במילישניות עבור קריאות נתונים מסוימות."),
+      height: pickEditorText(language, "Card height in pixels.", "גובה הכרטיס בפיקסלים."),
+      performance_mode: pickEditorText(language, "Disables blur, animations, dynamic backgrounds, and heavy shadows. Recommended for Nest Hub and weaker tablets.", "מכבה טשטושים, אנימציות, רקעים דינמיים וצללים כבדים. מומלץ ל־Nest Hub וטאבלטים חלשים."),
+      main_opacity: pickEditorText(language, "Opacity for the main card background.", "שקיפות הרקע הראשי של הכרטיס."),
+      popup_opacity: pickEditorText(language, "Opacity for popups and overlays.", "שקיפות חלונות וקופצים."),
     })[schema.name],
     assertConfig: (config) => {
       if (!config || typeof config !== "object" || Array.isArray(config)) {
@@ -13503,25 +14159,26 @@ function getBaseCardConfigForm() {
 }
 
 function getMobileEditorTexts() {
-  const he = HomeiiEditorLocale.detectEditorHebrew();
+  const language = getEditorUiLanguage();
+  const he = language === "he";
   return {
     sections: {
-      general: he ? "כללי" : "General",
-      appearance: he ? "מראה" : "Appearance",
-      behavior: he ? "התנהגות" : "Behavior",
-      connection: he ? "חיבור והתנהגות" : "Connection and Behavior",
-      mainbar: he ? "סרגל ראשי" : "Main Bar",
-      quickactions: he ? "פעולות מהירות" : "Quick Actions",
-      library: he ? "דפי ספרייה" : "Library Tabs",
-      announcements: he ? "כריזה" : "Announcements",
+      general: pickEditorText(language, "General", "כללי"),
+      appearance: pickEditorText(language, "Appearance", "מראה"),
+      behavior: pickEditorText(language, "Behavior", "התנהגות"),
+      connection: pickEditorText(language, "Connection and Behavior", "חיבור והתנהגות"),
+      mainbar: pickEditorText(language, "Main Bar", "סרגל ראשי"),
+      quickactions: pickEditorText(language, "Quick Actions", "פעולות מהירות"),
+      library: pickEditorText(language, "Library Tabs", "דפי ספרייה"),
+      announcements: pickEditorText(language, "Announcements", "כריזה"),
     },
     labels: {
-      settings_source: he ? "מקור ההגדרות" : "Settings source",
+      settings_source: pickEditorText(language, "Settings source", "מקור ההגדרות"),
       layout_mode: he ? "מצב פריסה" : "Layout mode",
       height: he ? "גובה הכרטיס" : "Card height",
       main_opacity: he ? "שקיפות ראשית" : "Main opacity",
       popup_opacity: he ? "שקיפות חלונות" : "Popup opacity",
-      language: he ? "שפה" : "Language",
+      language: pickEditorText(language, "Language", "שפה"),
       theme_mode: he ? "ערכת נושא" : "Theme mode",
       performance_mode: he ? "מצב ביצועים למכשירים חלשים" : "Performance mode for weak devices",
       night_mode: he ? "מצב לילה" : "Night mode",
@@ -13560,13 +14217,13 @@ function getMobileEditorTexts() {
       ma_interface_url: he ? "נתיב ממשק MA" : "MA interface path",
       ma_interface_target: he ? "פתיחת ממשק" : "Open interface in",
       show_ma_button: he ? "כפתור MA" : "Show MA button",
-      show_theme_toggle: he ? "כפתור ערכת נושא" : "Show theme toggle",
-      cache_ttl: he ? "זמן קאש" : "Cache TTL",
+      show_theme_toggle: pickEditorText(language, "Show theme toggle", "כפתור ערכת נושא"),
+      cache_ttl: pickEditorText(language, "Cache TTL", "זמן קאש"),
       allow_local_likes: he ? "אהבתי מקומי" : "Allow local likes",
       use_mass_queue_send_command: he ? "Fallback mass_queue/send_command" : "mass_queue/send_command fallback",
     },
     helpers: {
-      settings_source: he ? "בחר אם ההגדרות נשלטות מתוך ה־UI בכרטיס או מתוך הגדרות הכרטיס בדשבורד." : "Choose whether settings are controlled from the in-card UI or from the card configuration in the dashboard.",
+      settings_source: pickEditorText(language, "Choose whether settings are controlled from the in-card UI or from the card configuration in the dashboard.", "בחר אם ההגדרות נשלטות מתוך ה־UI בכרטיס או מתוך הגדרות הכרטיס בדשבורד."),
       layout_mode: he ? "Auto בוחר מובייל או טאבלט לפי רוחב בפועל." : "Auto chooses mobile or tablet based on actual width.",
       theme_mode: he ? "כולל גם מצב אישי כמו במסך ההגדרות של הכרטיס." : "Includes the custom theme mode from the in-card settings screen.",
       night_mode: he ? "Off מכבה, On מפעיל תמיד, ו־Auto פועל לפי חלון השעות שהגדרת." : "Off disables it, On keeps it active, and Auto follows the configured time window.",
@@ -13576,7 +14233,7 @@ function getMobileEditorTexts() {
       mobile_show_up_next: he ? "מציג או מסתיר את שורת השיר הבא במסך הניגון." : "Show or hide the inline next-track row in Now Playing.",
       mobile_dynamic_theme_mode: he ? "מחלץ צבעים מעטיפת האלבום ומחיל אותם על הממשק." : "Extract colors from the current artwork and apply them to the interface.",
       mobile_background_motion_mode: he ? "שולט אם רקע הכרטיס נע בעדינות, ובאיזו עוצמה." : "Control whether the card background moves gently, and how strong the motion feels.",
-      performance_mode: he ? "מכבה אפקטים כבדים כדי שהכרטיס ירוץ חלק יותר על Nest Hub, טאבלטים ישנים ומסכים חלשים." : "Turns off heavy visuals so the card runs smoother on Nest Hub, older tablets, and weaker displays.",
+      performance_mode: pickEditorText(language, "Turns off heavy visuals so the card runs smoother on Nest Hub, older tablets, and weaker displays.", "מכבה אפקטים כבדים כדי שהכרטיס ירוץ חלק יותר על Nest Hub, טאבלטים ישנים ומסכים חלשים."),
       mobile_font_scale: he ? "סקייל כללי לכל הפונטים בממשק. 1 הוא ברירת המחדל." : "Global scale for every interface font. 1 is the default size.",
       mobile_compact_mode: he ? "מציג נגן אריח עצמאי וקומפקטי עם עטיפה, פקדי בסיס, ווליום וכפתור הרחבה." : "Shows a standalone compact player tile with artwork, basic controls, volume and an expand action.",
       mobile_swipe_mode: he ? "קובע האם סוויפ על עטיפת האלבום יעביר שיר או ידפדף עטיפות." : "Choose whether artwork swipe changes track or browses covers.",
@@ -13604,18 +14261,19 @@ function getMobileEditorTexts() {
     },
     options: {
       settings_source: [
-        { value: "ui", label: he ? "מה־UI בתוך הכרטיס" : "In-card UI" },
-        { value: "card", label: he ? "מהגדרות הכרטיס" : "Card configuration" },
+        { value: "ui", label: pickEditorText(language, "In-card UI", "מה־UI בתוך הכרטיס") },
+        { value: "card", label: pickEditorText(language, "Card configuration", "מהגדרות הכרטיס") },
       ],
       layout_mode: [
         { value: "auto", label: "Auto" },
         { value: "mobile", label: he ? "מובייל" : "Mobile" },
         { value: "tablet", label: he ? "טאבלט" : "Tablet" },
       ],
-      language: [
-        { value: "auto", label: "Auto" },
-        { value: "he", label: he ? "עברית" : "Hebrew" },
-        { value: "en", label: he ? "אנגלית" : "English" },
+        language: [
+          { value: "auto", label: "Auto" },
+          { value: "he", label: pickEditorText(language, "Hebrew", "עברית") },
+          { value: "en", label: pickEditorText(language, "English", "אנגלית") },
+          { value: "zh-CN", label: pickEditorText(language, "Simplified Chinese", "סינית פשוטה") },
       ],
       theme_mode: [
         { value: "auto", label: "Auto" },
@@ -14564,6 +15222,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
           { value: "auto", label: "Auto" },
           { value: "he", label: he ? "עברית" : "Hebrew" },
           { value: "en", label: he ? "אנגלית" : "English" },
+          { value: "zh-CN", label: he ? "סינית פשוטה" : "Simplified Chinese" },
         ],
         theme_mode: [
           { value: "auto", label: "Auto" },
@@ -14902,8 +15561,10 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     });
   }
 
-  _m(en, he) {
-    return this._isHebrew() ? he : en;
+  _m(en, he, zh = "") {
+    if (this._isHebrew()) return he;
+    if (this._isChinese()) return zh || this._t(en);
+    return en;
   }
 
   _effectiveTheme() {
@@ -31008,10 +31669,11 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     return `
       <div class="settings-shell">
         <div class="settings-group">
-          <div class="settings-label">${this._m("Language", "שפה")}</div>
+          <div class="settings-label">${this._m("Language", "שפה", "语言")}</div>
           <div class="settings-pills">
             ${this._settingsPill("EN", "en", this._state.lang, "data-setting-lang")}
             ${this._settingsPill("עב", "he", this._state.lang, "data-setting-lang")}
+            ${this._settingsPill("简", "zh-CN", this._state.lang, "data-setting-lang")}
           </div>
         </div>
         <div class="settings-group">
@@ -31421,7 +32083,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     } catch (_) {}
     const recognition = new SpeechRecognition();
     this._voiceRecognition = recognition;
-    recognition.lang = this._isHebrew() ? "he-IL" : "en-US";
+    recognition.lang = this._speechRecognitionLocale();
     recognition.interimResults = true;
     recognition.continuous = false;
     recognition.maxAlternatives = 1;
@@ -31507,7 +32169,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     const mode = this._state.mobileLibrarySort || "name_asc";
     const copy = [...items];
     if (mode === "name_desc") {
-      return copy.sort((a, b) => String(b?.name || "").localeCompare(String(a?.name || ""), this._isHebrew() ? "he" : "en", { sensitivity: "base", numeric: true }));
+      return copy.sort((a, b) => String(b?.name || "").localeCompare(String(a?.name || ""), this._isHebrew() ? "he" : (this._isChinese() ? "zh-CN" : "en"), { sensitivity: "base", numeric: true }));
     }
     if (mode === "date_desc") {
       const ranked = copy.map((item, index) => ({ item, index, date: this._itemDateValue(item) }));
@@ -31529,7 +32191,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
       });
       return ranked.map((entry) => entry.item);
     }
-    return copy.sort((a, b) => String(a?.name || "").localeCompare(String(b?.name || ""), this._isHebrew() ? "he" : "en", { sensitivity: "base", numeric: true }));
+    return copy.sort((a, b) => String(a?.name || "").localeCompare(String(b?.name || ""), this._isHebrew() ? "he" : (this._isChinese() ? "zh-CN" : "en"), { sensitivity: "base", numeric: true }));
   }
 
   _mediaLayoutToolbarHtml() {
@@ -32006,7 +32668,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     try { this._voiceRecognition?.abort?.(); } catch (_) {}
     const recognition = new SpeechRecognition();
     this._voiceRecognition = recognition;
-    recognition.lang = this._isHebrew() ? "he-IL" : "en-US";
+    recognition.lang = this._speechRecognitionLocale();
     recognition.interimResults = true;
     recognition.continuous = false;
     recognition.maxAlternatives = 1;

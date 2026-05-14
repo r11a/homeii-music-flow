@@ -16,7 +16,7 @@ describe("config validators", () => {
         main_opacity: 0.9,
         popup_opacity: 0.75,
         cache_ttl: 1000,
-        language: "he",
+        language: "zh-CN",
         theme_mode: "dark",
         rtl: true,
         performance_mode: true,
@@ -31,7 +31,7 @@ describe("config validators", () => {
       validateBaseCardEditorConfig({
         language: "de",
       })
-    ).toThrow("language must be one of: auto, he, en");
+    ).toThrow("language must be one of: auto, he, en, zh-CN");
 
     expect(() =>
       validateBaseCardEditorConfig({
