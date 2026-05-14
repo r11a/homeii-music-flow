@@ -11770,7 +11770,7 @@ const HomeiiConfigValidators = Object.freeze({
     HomeiiConfigValidators.assertNumberIfDefined(config.main_opacity, "main_opacity");
     HomeiiConfigValidators.assertNumberIfDefined(config.popup_opacity, "popup_opacity");
     HomeiiConfigValidators.assertNumberIfDefined(config.cache_ttl, "cache_ttl");
-    HomeiiConfigValidators.assertValueInList(config.language, "language", ["auto", "he", "en"]);
+    HomeiiConfigValidators.assertValueInList(config.language, "language", ["auto", "he", "en", "zh"]);
     HomeiiConfigValidators.assertValueInList(config.theme_mode, "theme_mode", ["auto", "dark", "light", "custom"]);
     HomeiiConfigValidators.assertBooleanIfDefined(config.rtl, "rtl");
     HomeiiConfigValidators.assertBooleanIfDefined(config.performance_mode, "performance_mode");
