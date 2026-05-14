@@ -13554,6 +13554,7 @@ function getBaseCardConfigForm() {
                 { value: "auto", label: "Auto" },
                 { value: "he", label: he ? "עברית" : "Hebrew" },
                 { value: "en", label: he ? "אנגלית" : "English" },
+                { value: "zh", label: "简体中文" },
               ] } } },
               { name: "theme_mode", selector: { select: { mode: "dropdown", options: [
                 { value: "auto", label: "Auto" },
@@ -13754,6 +13755,7 @@ function getMobileEditorTexts() {
         { value: "auto", label: "Auto" },
         { value: "he", label: he ? "עברית" : "Hebrew" },
         { value: "en", label: he ? "אנגלית" : "English" },
+        { value: "zh", label: "简体中文" },
       ],
       theme_mode: [
         { value: "auto", label: "Auto" },
@@ -14702,6 +14704,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
           { value: "auto", label: "Auto" },
           { value: "he", label: he ? "עברית" : "Hebrew" },
           { value: "en", label: he ? "אנגלית" : "English" },
+          { value: "zh", label: "简体中文" },
         ],
         theme_mode: [
           { value: "auto", label: "Auto" },
