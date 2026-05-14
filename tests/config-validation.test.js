@@ -31,7 +31,7 @@ describe("config validators", () => {
       validateBaseCardEditorConfig({
         language: "de",
       })
-    ).toThrow("language must be one of: auto, he, en");
+    ).toThrow("language must be one of: auto, he, en, zh");
 
     expect(() =>
       validateBaseCardEditorConfig({
