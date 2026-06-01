@@ -20325,6 +20325,54 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
 .card.performance-ultra-lite .screensaver-voice-btn.listening::after{
   display:none!important;
 }
+/* Low + Ultra Lite: eliminate backdrop-filter on always-visible UI
+   controls. Each backdrop-filter forces the compositor to render and
+   blur the backdrop behind the element every frame, even at idle.
+   Substituting solid semi-transparent backgrounds preserves the layered
+   look while removing the dominant GPU cost on weak hardware (kiosks,
+   RPi). Applied to .performance-lite so both low and ultra_lite
+   benefit; ultra_lite keeps its existing additional opacity tweaks. */
+.card.performance-lite .player-focus,
+.card.performance-lite .mobile-art-fab,
+.card.performance-lite .side-btn,
+.card.performance-lite .main-btn,
+.card.performance-lite .source-badge,
+.card.performance-lite .fallback-disc,
+.card.performance-lite .control-room-close,
+.card.performance-lite .empty-quick-card{
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
+.card.performance-lite .player-focus,
+.card.performance-lite .mobile-art-fab,
+.card.performance-lite .side-btn,
+.card.performance-lite .main-btn,
+.card.performance-lite .control-room-close,
+.card.performance-lite .empty-quick-card{
+  background:rgba(18,22,30,.78)!important;
+  border-color:rgba(255,255,255,.16)!important;
+}
+.card.performance-lite .source-badge{
+  background:rgba(18,22,30,.85)!important;
+}
+.card.performance-lite .fallback-disc{
+  background:rgba(18,22,30,.78)!important;
+}
+.theme-light.card.performance-lite .player-focus,
+.theme-light.card.performance-lite .mobile-art-fab,
+.theme-light.card.performance-lite .side-btn,
+.theme-light.card.performance-lite .main-btn,
+.theme-light.card.performance-lite .control-room-close,
+.theme-light.card.performance-lite .empty-quick-card{
+  background:rgba(248,250,253,.86)!important;
+  border-color:rgba(123,139,164,.22)!important;
+}
+.theme-light.card.performance-lite .source-badge{
+  background:rgba(248,250,253,.92)!important;
+}
+.theme-light.card.performance-lite .fallback-disc{
+  background:rgba(248,250,253,.86)!important;
+}
 
 .menu-sheet,
 .queue-action-sheet,

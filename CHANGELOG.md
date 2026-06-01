@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Changed
+
+- Performance: `low` and `ultra_lite` profiles now eliminate `backdrop-filter` on always-visible UI controls (transport bar buttons, mobile art FABs, side buttons, source badges, fallback disc, control-room close, empty-quick-card buttons, player-focus button). Each `backdrop-filter` forces the GPU compositor to render and blur the backdrop behind the element every frame, even when the card is idle and JS is doing nothing. Substituting solid semi-transparent backgrounds with matching border colors preserves the layered look while removing the dominant idle GPU cost on weak hardware. Measured on a dev HA dashboard with no music playing, no interaction, 60 fps stable: total Chrome CPU dropped from ~148% sustained on `full` to ~77% on `low` (-48%) and ~60% on `ultra_lite` (-59%). `full` and `high` unchanged — default users see no change. Refs #52.
+
 ### Added
 
 - Danish (`da`) localization. Adds `src/localization/da.js` with all 925 keys translated via DeepL using a glossary that locks brand names (HOMEii Flow, Music Assistant, Sendspin, Spotify, etc.) and music-domain terms (Library, Queue, Playlist, etc.) to consistent renderings. Registered in `src/localization/index.js` and exposed as "Dansk" in the language picker. Native Danish speaker review by submitter (Danish household using the card daily for kids' room dashboards).
