@@ -22344,6 +22344,16 @@ function performanceModeEnabled(state) {
 function performanceUltraLiteEnabled(state) {
   return performanceProfile(state) === "ultra_lite";
 }
+const DECODED_ARTWORK_CACHE_CAPS = Object.freeze({
+  full: 180,
+  high: 120,
+  low: 60,
+  ultra_lite: 30
+});
+function maxDecodedArtworkCache(profile) {
+  const normalized = String(profile || "").trim().toLowerCase();
+  return DECODED_ARTWORK_CACHE_CAPS[normalized] ?? DECODED_ARTWORK_CACHE_CAPS.full;
+}
 function mobileDynamicThemeMode(state) {
   const profile = performanceProfile(state);
   if (profile === "low" || profile === "ultra_lite") return "off";
@@ -30119,7 +30129,8 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
       const markReady = () => {
         this._decodedArtworkUrls.add(normalized);
         this._decodedArtworkImages.set(normalized, img);
-        while (this._decodedArtworkUrls.size > 180) {
+        const cap = maxDecodedArtworkCache(this._performanceProfile());
+        while (this._decodedArtworkUrls.size > cap) {
           const oldest = this._decodedArtworkUrls.values().next().value;
           if (!oldest) break;
           this._decodedArtworkUrls.delete(oldest);

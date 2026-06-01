@@ -40,6 +40,24 @@ export function performanceUltraLiteEnabled(state) {
   return performanceProfile(state) === "ultra_lite";
 }
 
+// Decoded artwork bitmap cache size by performance profile. Each entry pins
+// a Blob/Image of roughly 50-100 KB in memory, so the cap is the dominant
+// knob for the card's idle artwork-memory footprint on memory-constrained
+// devices (kitchen kiosks, low-RAM phones, embedded HA dashboards).
+// The "full" profile is intentionally left at today's value so existing
+// users see no change unless they explicitly opt into a lighter profile.
+const DECODED_ARTWORK_CACHE_CAPS = Object.freeze({
+  full: 180,
+  high: 120,
+  low: 60,
+  ultra_lite: 30,
+});
+
+export function maxDecodedArtworkCache(profile) {
+  const normalized = String(profile || "").trim().toLowerCase();
+  return DECODED_ARTWORK_CACHE_CAPS[normalized] ?? DECODED_ARTWORK_CACHE_CAPS.full;
+}
+
 export function mobileDynamicThemeMode(state) {
   const profile = performanceProfile(state);
   if (profile === "low" || profile === "ultra_lite") return "off";

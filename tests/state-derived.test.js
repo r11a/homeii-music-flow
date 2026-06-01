@@ -4,6 +4,7 @@ import {
   backgroundMotionAmount,
   backgroundMotionEnabled,
   isCompactTileMode,
+  maxDecodedArtworkCache,
   mobileBackgroundMotionMode,
   mobileCompactModeEnabled,
   mobileCompactWidgetMode,
@@ -71,5 +72,21 @@ describe("state derived helpers", () => {
     expect(mobileBackgroundMotionMode({ performanceProfile: "high", mobileBackgroundMotionMode: "extreme" })).toBe("subtle");
     expect(mobileDynamicThemeMode({ performanceProfile: "ultra_lite", mobileDynamicThemeMode: "strong" })).toBe("off");
     expect(mobileBackgroundMotionMode({ performanceProfile: "ultra_lite", mobileBackgroundMotionMode: "strong" })).toBe("off");
+  });
+
+  it("scales decoded-artwork cache cap by performance profile", () => {
+    // full is intentionally unchanged at 180 to preserve existing behavior
+    // for default users. Lighter profiles get tighter caps to recover memory
+    // on kiosk / low-RAM devices.
+    expect(maxDecodedArtworkCache("full")).toBe(180);
+    expect(maxDecodedArtworkCache("high")).toBe(120);
+    expect(maxDecodedArtworkCache("low")).toBe(60);
+    expect(maxDecodedArtworkCache("ultra_lite")).toBe(30);
+    // Robust to whitespace and case
+    expect(maxDecodedArtworkCache(" Ultra_Lite ")).toBe(30);
+    // Unknown / empty / null fall back to the full cap (no surprise reductions)
+    expect(maxDecodedArtworkCache("")).toBe(180);
+    expect(maxDecodedArtworkCache(null)).toBe(180);
+    expect(maxDecodedArtworkCache("nonsense")).toBe(180);
   });
 });

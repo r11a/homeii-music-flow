@@ -42,6 +42,7 @@ import {
   mobileCompactModeEnabled as homeiiMobileCompactModeEnabled,
   mobileCompactWidgetMode as homeiiMobileCompactWidgetMode,
   mobileDynamicThemeMode as homeiiMobileDynamicThemeMode,
+  maxDecodedArtworkCache as homeiiMaxDecodedArtworkCache,
   mobileShowUpNextEnabled as homeiiMobileShowUpNextEnabled,
   normalizeSettingsSource as homeiiNormalizeSettingsSource,
   performanceModeEnabled as homeiiPerformanceModeEnabled,
@@ -5022,7 +5023,8 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
       const markReady = () => {
         this._decodedArtworkUrls.add(normalized);
         this._decodedArtworkImages.set(normalized, img);
-        while (this._decodedArtworkUrls.size > 180) {
+        const cap = homeiiMaxDecodedArtworkCache(this._performanceProfile());
+        while (this._decodedArtworkUrls.size > cap) {
           const oldest = this._decodedArtworkUrls.values().next().value;
           if (!oldest) break;
           this._decodedArtworkUrls.delete(oldest);

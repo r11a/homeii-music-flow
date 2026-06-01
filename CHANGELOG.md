@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Changed
+
+- Artwork cache: the LRU cap on the decoded-artwork bitmap cache is now scaled by `performance_profile` rather than hard-coded at 180. The `full` profile is intentionally left at 180 so default users see no change. Lighter profiles get tighter caps to recover idle memory on kiosk / low-RAM devices: `high` = 120, `low` = 60, `ultra_lite` = 30. The cap selector is a new `maxDecodedArtworkCache(profile)` in `src/core/state/derived.js` that falls back to the `full` value for unknown or empty profile strings, so existing behavior is preserved. Verified end-to-end on a real card instance: pre-filling 50 entries, switching to `ultra_lite`, and triggering one decode evicts down to exactly 30.
+
 ### Added
 
 - Danish (`da`) localization. Adds `src/localization/da.js` with all 925 keys translated via DeepL using a glossary that locks brand names (HOMEii Flow, Music Assistant, Sendspin, Spotify, etc.) and music-domain terms (Library, Queue, Playlist, etc.) to consistent renderings. Registered in `src/localization/index.js` and exposed as "Dansk" in the language picker. Native Danish speaker review by submitter (Danish household using the card daily for kids' room dashboards).
