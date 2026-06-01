@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Changed
+
+- Locales: dictionaries other than English are now loaded on demand via dynamic `import()` instead of being statically bundled into the main card chunk. English remains eagerly loaded as the always-available fallback. Cuts the main-bundle gzipped size by roughly 110 KB today (about 400 KB raw) and — more importantly — ensures the per-user bundle stops growing as the community contributes additional languages. Locale 9, 10, 11 will land at zero cost to existing users; each user only ever pays for English plus the one extra language they choose. Implemented via a new `ensureLanguageLoaded(code)` helper that the card awaits at first render and on language switch before re-rendering; `translate()` and the rest of the runtime API stay synchronous and unchanged at every call site.
+
 ### Added
 
 - Danish (`da`) localization. Adds `src/localization/da.js` with all 925 keys translated via DeepL using a glossary that locks brand names (HOMEii Flow, Music Assistant, Sendspin, Spotify, etc.) and music-domain terms (Library, Queue, Playlist, etc.) to consistent renderings. Registered in `src/localization/index.js` and exposed as "Dansk" in the language picker. Native Danish speaker review by submitter (Danish household using the card daily for kids' room dashboards).

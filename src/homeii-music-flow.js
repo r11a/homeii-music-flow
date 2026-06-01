@@ -1,6 +1,7 @@
 ﻿import {
   LANGUAGE_OPTIONS as HOMEII_LANGUAGE_OPTIONS,
   detectLanguage as homeiiDetectLanguage,
+  ensureLanguageLoaded as homeiiEnsureLanguageLoaded,
   isRtlLanguage as homeiiIsRtlLanguage,
   translate as homeiiTranslate,
   translateText as homeiiTranslateText,
@@ -246,6 +247,7 @@ const HomeiiBaseMusicCard = createHomeiiBaseMusicCard({
   homeiiRadioBrowserCountryLabel,
   homeiiCountryFlagEmoji,
   homeiiDetectLanguage,
+  homeiiEnsureLanguageLoaded,
   homeiiIsRtlLanguage,
   homeiiTranslate,
   homeiiTranslateText,
@@ -32118,7 +32120,9 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     if (langBtn?.dataset.settingLang) {
       this._state.lang = langBtn.dataset.settingLang;
       try { localStorage.setItem("homeii_music_flow_lang", this._state.lang); } catch (_) {}
-      this._reopenSettingsMenuPreservingScroll({ rebuild: true, init: true });
+      homeiiEnsureLanguageLoaded(this._state.lang).finally(() => {
+        this._reopenSettingsMenuPreservingScroll({ rebuild: true, init: true });
+      });
       return;
     }
     const themeBtn = e.target.closest("[data-setting-theme]");
@@ -32838,7 +32842,9 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     if (e.target?.id === "mobileLanguageSelect") {
       this._state.lang = e.target.value || "en";
       try { localStorage.setItem("homeii_music_flow_lang", this._state.lang); } catch (_) {}
-      this._reopenSettingsMenuPreservingScroll({ rebuild: true, init: true });
+      homeiiEnsureLanguageLoaded(this._state.lang).finally(() => {
+        this._reopenSettingsMenuPreservingScroll({ rebuild: true, init: true });
+      });
       return;
     }
     if (e.target?.id === "mobileAnnouncementTtsLanguageSelect") {

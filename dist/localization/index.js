@@ -1,24 +1,28 @@
 import en from "./en.js?v=5.8.1-9e122c742b";
-import da from "./da.js?v=5.8.1-ef0757fed6";
-import es from "./es.js?v=5.8.1-f080039ddc";
-import fr from "./fr.js?v=5.8.1-012da49900";
-import he from "./he.js?v=5.8.1-da05e2083c";
-import it from "./it.js?v=5.8.1-6e7aaa258a";
-import lt from "./lt.js?v=5.8.1-dbcade157a";
-import zh from "./zh.js?v=5.8.1-f14b2e9162";
+
+// Eagerly loaded so synchronous `translate()` always has a fallback.
+const eagerLocales = { en };
+
+// Other locales are loaded on demand via these dynamic-import loaders.
+// Adding a new locale: drop the file in this directory and register it
+// here and in LANGUAGE_OPTIONS below. Nothing else needs to change.
+const LOADERS = Object.freeze({
+  da: () => import("./da.js"),
+  es: () => import("./es.js"),
+  fr: () => import("./fr.js"),
+  he: () => import("./he.js"),
+  it: () => import("./it.js"),
+  lt: () => import("./lt.js"),
+  zh: () => import("./zh.js"),
+});
+
+// Mutable cache. Other locale entries are added by ensureLanguageLoaded().
+// Treat as read-only outside this module.
+export const DICTIONARIES = eagerLocales;
+
+const PENDING_LOAD = new Map();
 
 export const DEFAULT_LANGUAGE = "en";
-
-export const DICTIONARIES = Object.freeze({
-  en,
-  da,
-  es,
-  fr,
-  he,
-  it,
-  lt,
-  zh,
-});
 
 export const RTL_LANGUAGE_CODES = Object.freeze(["he"]);
 
@@ -34,7 +38,10 @@ export const LANGUAGE_OPTIONS = Object.freeze([
   { value: "zh-CN", label: "\u7b80\u4f53\u4e2d\u6587 / Simplified Chinese" },
 ]);
 
-export const SUPPORTED_LANGUAGE_CODES = Object.freeze(Object.keys(DICTIONARIES));
+export const SUPPORTED_LANGUAGE_CODES = Object.freeze([
+  ...Object.keys(eagerLocales),
+  ...Object.keys(LOADERS),
+]);
 
 const ENGLISH_TEXT_TO_KEY = Object.freeze(
   Object.entries(en).reduce((acc, [key, value]) => {
@@ -54,7 +61,7 @@ function baseLanguageCode(value) {
 export function normalizeLanguageCode(value, fallback = DEFAULT_LANGUAGE) {
   const candidate = baseLanguageCode(value);
   if (!candidate || candidate === "auto") return fallback;
-  return DICTIONARIES[candidate] ? candidate : fallback;
+  return SUPPORTED_LANGUAGE_CODES.includes(candidate) ? candidate : fallback;
 }
 
 export function detectLanguage({
@@ -111,4 +118,34 @@ export function translateText(language, englishText, params = {}, fallback = eng
 
 export function createTranslator(language) {
   return (key, params = {}, fallback = "") => translate(language, key, params, fallback);
+}
+
+/**
+ * Ensures the dictionary for `code` is loaded into DICTIONARIES.
+ * Returns a Promise that resolves to the dictionary (or English on failure).
+ *
+ * - Idempotent: repeated calls return the same resolved dictionary.
+ * - De-duped: concurrent calls share a single in-flight Promise.
+ * - Fail-safe: dynamic-import failures fall back to English and log a warning.
+ */
+export function ensureLanguageLoaded(code) {
+  const normalized = baseLanguageCode(code);
+  if (!normalized || normalized === "auto") return Promise.resolve(DICTIONARIES.en);
+  if (DICTIONARIES[normalized]) return Promise.resolve(DICTIONARIES[normalized]);
+  if (PENDING_LOAD.has(normalized)) return PENDING_LOAD.get(normalized);
+  const loader = LOADERS[normalized];
+  if (!loader) return Promise.resolve(DICTIONARIES.en);
+  const promise = loader()
+    .then((mod) => {
+      DICTIONARIES[normalized] = mod && mod.default ? mod.default : mod;
+      PENDING_LOAD.delete(normalized);
+      return DICTIONARIES[normalized];
+    })
+    .catch((err) => {
+      PENDING_LOAD.delete(normalized);
+      console.warn(`[HOMEii Flow] Failed to load locale "${normalized}", falling back to English.`, err);
+      return DICTIONARIES.en;
+    });
+  PENDING_LOAD.set(normalized, promise);
+  return promise;
 }

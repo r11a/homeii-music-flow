@@ -15,6 +15,7 @@ export function createHomeiiBaseMusicCard({
   homeiiRadioBrowserCountryLabel,
   homeiiCountryFlagEmoji,
   homeiiDetectLanguage,
+  homeiiEnsureLanguageLoaded,
   homeiiIsRtlLanguage,
   homeiiTranslate,
   homeiiTranslateText,
@@ -455,9 +456,20 @@ export function createHomeiiBaseMusicCard({
 
       if (!this._built) {
         this._built = true;
-        this._build();
-        this._init();
-        this._scheduleLayoutRecovery("initial-build");
+        const initialLang = homeiiDetectLanguage({
+          configLanguage: this._state?.lang || this._config?.language || "en",
+          hass: this._hass,
+        });
+        const finishInitialBuild = () => {
+          this._build();
+          this._init();
+          this._scheduleLayoutRecovery("initial-build");
+        };
+        if (typeof homeiiEnsureLanguageLoaded === "function") {
+          homeiiEnsureLanguageLoaded(initialLang).finally(finishInitialBuild);
+        } else {
+          finishInitialBuild();
+        }
         return;
       }
 

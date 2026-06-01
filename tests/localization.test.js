@@ -1,15 +1,47 @@
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 
 import {
   DICTIONARIES,
   LANGUAGE_OPTIONS,
   detectLanguage,
+  ensureLanguageLoaded,
   isRtlLanguage,
   translate,
   translateText,
 } from "../src/localization/index.js";
+import enDict from "../src/localization/en.js";
+import daDict from "../src/localization/da.js";
+import esDict from "../src/localization/es.js";
+import frDict from "../src/localization/fr.js";
+import heDict from "../src/localization/he.js";
+import itDict from "../src/localization/it.js";
+import ltDict from "../src/localization/lt.js";
+import zhDict from "../src/localization/zh.js";
+
+const SOURCE_DICTS = {
+  en: enDict,
+  da: daDict,
+  es: esDict,
+  fr: frDict,
+  he: heDict,
+  it: itDict,
+  lt: ltDict,
+  zh: zhDict,
+};
 
 describe("localization", () => {
+  beforeAll(async () => {
+    // Synchronous translate() requires dictionaries to be loaded first. In
+    // production the card awaits ensureLanguageLoaded() at the relevant seams;
+    // in tests we preload every locale once so the translate-by-key assertions
+    // below see real translations instead of the English fallback.
+    await Promise.all(
+      Object.keys(SOURCE_DICTS)
+        .filter((code) => code !== "en")
+        .map((code) => ensureLanguageLoaded(code)),
+    );
+  });
+
   it("translates by key with English fallback", () => {
     expect(translate("he", "ui.home")).toBe("בית");
     expect(translate("fr", "ui.home")).toBe("Accueil");
@@ -68,9 +100,27 @@ describe("localization", () => {
   });
 
   it("keeps localized dictionaries aligned with English keys", () => {
-    const englishKeys = Object.keys(DICTIONARIES.en).sort();
-    for (const [language, dictionary] of Object.entries(DICTIONARIES)) {
+    const englishKeys = Object.keys(SOURCE_DICTS.en).sort();
+    for (const [language, dictionary] of Object.entries(SOURCE_DICTS)) {
       expect(Object.keys(dictionary).sort(), language).toEqual(englishKeys);
     }
+  });
+});
+
+describe("ensureLanguageLoaded", () => {
+  it("resolves immediately for English (eager)", async () => {
+    const dict = await ensureLanguageLoaded("en");
+    expect(dict).toBe(DICTIONARIES.en);
+  });
+
+  it("loads non-English dictionaries on demand", async () => {
+    const dict = await ensureLanguageLoaded("da");
+    expect(dict).toBeTruthy();
+    expect(DICTIONARIES.da).toBe(dict);
+  });
+
+  it("falls back to English for unknown codes without throwing", async () => {
+    const dict = await ensureLanguageLoaded("xx-not-a-locale");
+    expect(dict).toBe(DICTIONARIES.en);
   });
 });
