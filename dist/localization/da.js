@@ -636,6 +636,8 @@ const messages = Object.freeze({
   "ui.set_the_visual_order_of_quick_actions": "Indstil den visuelle r\u00e6kkef\u00f8lge. Kun valgte Quick Handlinger vises; ikke-valgte elementer ignoreres.",
   "ui.settings": "Indstillinger",
   "ui.settings_source": "Kilde til indstillinger",
+  "ui.show_confirmation_toasts": "Vis bekræftelsesbeskeder",
+  "ui.show_confirmation_toasts_helper": "Vis korte bekræftelsesbeskeder efter handlinger som at vælge en afspiller eller tilføje til favoritter. Deaktivér for at undertrykke dem; fejlbeskeder vises uanset.",
   "ui.show_ma_button": "Vis MA-knap",
   "ui.show_or_hide_the_inline_next_track_row_in_now_playing": "Vis eller skjul den indbyggede r\u00e6kke med n\u00e6ste spor i Spiller nu.",
   "ui.show_theme_toggle": "Skift til visning af tema",

@@ -26,6 +26,7 @@ describe("config validators", () => {
         performance_mode: true,
         show_ma_button: false,
         show_theme_toggle: true,
+        show_confirmation_toasts: false,
       })
     ).not.toThrow();
   });
@@ -68,6 +69,12 @@ describe("config validators", () => {
         hotel_mode: "yes",
       })
     ).toThrow("hotel_mode must be a boolean");
+
+    expect(() =>
+      validateBaseCardEditorConfig({
+        show_confirmation_toasts: "yes",
+      })
+    ).toThrow("show_confirmation_toasts must be a boolean");
   });
 
   it("accepts a valid mobile-only config", () => {

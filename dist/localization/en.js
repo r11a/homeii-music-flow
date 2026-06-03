@@ -636,6 +636,8 @@ const messages = Object.freeze({
   "ui.set_the_visual_order_of_quick_actions": "Set the visual order. Only selected Quick Actions are shown; unselected items are ignored.",
   "ui.settings": "Settings",
   "ui.settings_source": "Settings source",
+  "ui.show_confirmation_toasts": "Show confirmation messages",
+  "ui.show_confirmation_toasts_helper": "Show brief confirmation messages after actions like selecting a player or adding to liked. Disable to suppress these; error messages still appear regardless.",
   "ui.show_ma_button": "Show MA button",
   "ui.show_or_hide_the_inline_next_track_row_in_now_playing": "Show or hide the inline next-track row in Now Playing.",
   "ui.show_theme_toggle": "Show theme toggle",

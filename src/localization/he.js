@@ -636,6 +636,8 @@ const messages = Object.freeze({
   "ui.set_the_visual_order_of_quick_actions": "קובע את הסדר הוויזואלי. רק פעולות מהירות שסומנו יוצגו; פריטים שלא סומנו יתעלמו.",
   "ui.settings": "הגדרות",
   "ui.settings_source": "מקור ההגדרות",
+  "ui.show_confirmation_toasts": "הצג הודעות אישור",
+  "ui.show_confirmation_toasts_helper": "הצג הודעות אישור קצרות לאחר פעולות כגון בחירת נגן או הוספה לרשימת המועדפים. השבת אפשרות זו כדי להסתיר הודעות אלה; הודעות שגיאה ימשיכו להופיע בכל מקרה.",
   "ui.show_ma_button": "כפתור MA",
   "ui.show_or_hide_the_inline_next_track_row_in_now_playing": "מציג או מסתיר את שורת השיר הבא במסך הניגון.",
   "ui.show_theme_toggle": "כפתור ערכת נושא",

@@ -634,6 +634,8 @@ const messages$7 = Object.freeze({
   "ui.set_the_visual_order_of_quick_actions": "Set the visual order. Only selected Quick Actions are shown; unselected items are ignored.",
   "ui.settings": "Settings",
   "ui.settings_source": "Settings source",
+  "ui.show_confirmation_toasts": "Show confirmation messages",
+  "ui.show_confirmation_toasts_helper": "Show brief confirmation messages after actions like selecting a player or adding to liked. Disable to suppress these; error messages still appear regardless.",
   "ui.show_ma_button": "Show MA button",
   "ui.show_or_hide_the_inline_next_track_row_in_now_playing": "Show or hide the inline next-track row in Now Playing.",
   "ui.show_theme_toggle": "Show theme toggle",
@@ -1561,6 +1563,8 @@ const messages$6 = Object.freeze({
   "ui.set_the_visual_order_of_quick_actions": "Indstil den visuelle rækkefølge. Kun valgte Quick Handlinger vises; ikke-valgte elementer ignoreres.",
   "ui.settings": "Indstillinger",
   "ui.settings_source": "Kilde til indstillinger",
+  "ui.show_confirmation_toasts": "Vis bekræftelsesbeskeder",
+  "ui.show_confirmation_toasts_helper": "Vis korte bekræftelsesbeskeder efter handlinger som at vælge en afspiller eller tilføje til favoritter. Deaktivér for at undertrykke dem; fejlbeskeder vises uanset.",
   "ui.show_ma_button": "Vis MA-knap",
   "ui.show_or_hide_the_inline_next_track_row_in_now_playing": "Vis eller skjul den indbyggede række med næste spor i Spiller nu.",
   "ui.show_theme_toggle": "Skift til visning af tema",
@@ -2476,6 +2480,8 @@ const messages$5 = Object.freeze({
   "ui.set_volume": "Configurar volumen",
   "ui.settings": "Configuración",
   "ui.settings_source": "Origen de la configuración",
+  "ui.show_confirmation_toasts": "Mostrar mensajes de confirmación",
+  "ui.show_confirmation_toasts_helper": "Muestra breves mensajes de confirmación después de acciones como seleccionar un reproductor o añadirlo a favoritos. Desactívelo para suprimirlos; los mensajes de error seguirán apareciendo a pesar de ello.",
   "ui.show_ma_button": "Mostrar botón de MA",
   "ui.show_or_hide_the_inline_next_track_row_in_now_playing": "Muestra u oculta la fila integrada de la siguiente pista en Reproduciendo ahora.",
   "ui.show_theme_toggle": "Mostrar alternancia de tema",
@@ -3415,6 +3421,8 @@ const messages$4 = Object.freeze({
   "ui.set_the_visual_order_of_quick_actions": "Réorganiser. Seules les actions rapides sélectionnées sont affichées ; les éléments non sélectionnés sont ignorés.",
   "ui.settings": "Paramètres",
   "ui.settings_source": "Source des paramètres",
+  "ui.show_confirmation_toasts": "Afficher les messages de confirmation",
+  "ui.show_confirmation_toasts_helper": "Affiche de brefs messages de confirmation après des actions telles que la sélection d'un lecteur ou l'ajout aux favoris. Désactivez cette option pour supprimer ces messages ; les messages d'erreur s'affichent quand même.",
   "ui.show_ma_button": "Afficher le bouton MA",
   "ui.show_or_hide_the_inline_next_track_row_in_now_playing": "Afficher ou masquer la piste suivante dans Lecture en cours.",
   "ui.show_theme_toggle": "Afficher le sélecteur de thème",
@@ -4342,6 +4350,8 @@ const messages$3 = Object.freeze({
   "ui.set_the_visual_order_of_quick_actions": "קובע את הסדר הוויזואלי. רק פעולות מהירות שסומנו יוצגו; פריטים שלא סומנו יתעלמו.",
   "ui.settings": "הגדרות",
   "ui.settings_source": "מקור ההגדרות",
+  "ui.show_confirmation_toasts": "הצג הודעות אישור",
+  "ui.show_confirmation_toasts_helper": "הצג הודעות אישור קצרות לאחר פעולות כגון בחירת נגן או הוספה לרשימת המועדפים. השבת אפשרות זו כדי להסתיר הודעות אלה; הודעות שגיאה ימשיכו להופיע בכל מקרה.",
   "ui.show_ma_button": "כפתור MA",
   "ui.show_or_hide_the_inline_next_track_row_in_now_playing": "מציג או מסתיר את שורת השיר הבא במסך הניגון.",
   "ui.show_theme_toggle": "כפתור ערכת נושא",
@@ -5269,6 +5279,8 @@ const messages$2 = Object.freeze({
   "ui.set_the_visual_order_of_quick_actions": "Imposta l'ordine visivo. Verranno mostrate solo le Azioni Rapide selezionate; gli elementi non selezionati saranno ignorati.",
   "ui.settings": "Impostazioni",
   "ui.settings_source": "Sorgente impostazioni",
+  "ui.show_confirmation_toasts": "Mostra i messaggi di conferma",
+  "ui.show_confirmation_toasts_helper": "Mostra brevi messaggi di conferma dopo azioni come la selezione di un lettore o l'aggiunta ai preferiti. Disattivare per sopprimere questi messaggi; i messaggi di errore appaiono comunque.",
   "ui.show_ma_button": "Mostra pulsante MA",
   "ui.show_or_hide_the_inline_next_track_row_in_now_playing": "Mostra o nascondi la riga integrata del brano successivo in 'In Riproduzione'.",
   "ui.show_theme_toggle": "Mostra interruttore tema",
@@ -6184,6 +6196,8 @@ const messages$1 = Object.freeze({
   "ui.set_volume": "Nustatyti garsumą",
   "ui.settings": "Nustatymai",
   "ui.settings_source": "Nustatymų šaltinis",
+  "ui.show_confirmation_toasts": "Rodyti patvirtinimo pranešimus",
+  "ui.show_confirmation_toasts_helper": "Rodo trumpus patvirtinimo pranešimus po tokių veiksmų, kaip grotuvo pasirinkimas ar pridėjimas prie mėgstamų. Išjunkite, kad jie nebūtų rodomi; klaidų pranešimai vis tiek bus rodomi nepriklausomai nuo to.",
   "ui.show_ma_button": "Rodyti MA mygtuką",
   "ui.show_or_hide_the_inline_next_track_row_in_now_playing": "Rodyti/slėpti sekančio kūrinio eilutę grojimo lange.",
   "ui.show_theme_toggle": "Rodyti temos perjungiklį",
@@ -7115,6 +7129,8 @@ const messages = Object.freeze({
   "ui.set_the_visual_order_of_quick_actions": "设置显示顺序。只显示已勾选的快捷操作；未勾选的项目会被忽略。",
   "ui.settings": "设置",
   "ui.settings_source": "设置来源",
+  "ui.show_confirmation_toasts": "显示确认消息",
+  "ui.show_confirmation_toasts_helper": "在选择播放器或添加到喜爱等操作后显示简短的确认消息。禁用可抑制这些消息；无论如何，错误消息仍会显示。",
   "ui.show_ma_button": "显示 MA 按钮",
   "ui.show_or_hide_the_inline_next_track_row_in_now_playing": "显示或隐藏正在播放界面中的“即将播放”行。",
   "ui.show_theme_toggle": "显示主题切换",
@@ -7572,6 +7588,7 @@ function validateBaseCardEditorConfig(config) {
   assertValueInList(config.theme_mode, "theme_mode", ["auto", "dark", "light", "custom"]);
   assertBooleanIfDefined(config.rtl, "rtl");
   assertBooleanIfDefined(config.hotel_mode, "hotel_mode");
+  assertBooleanIfDefined(config.show_confirmation_toasts, "show_confirmation_toasts");
   assertBooleanIfDefined(config.performance_mode, "performance_mode");
   assertValueInList(config.performance_profile, "performance_profile", ["full", "high", "low", "ultra_lite"]);
   assertBooleanIfDefined(config.show_ma_button, "show_ma_button");
@@ -7715,6 +7732,7 @@ function getBaseCardConfigForm$1() {
     language: homeiiEditorI18n$1("ui.language"),
     theme_mode: homeiiEditorI18n$1("ui.theme_mode"),
     hotel_mode: homeiiEditorI18n$1("ui.hotel_mode", {}, "Hotel Mode"),
+    show_confirmation_toasts: homeiiEditorI18n$1("ui.show_confirmation_toasts", {}, "Show confirmation messages"),
     performance_profile: homeiiEditorI18n$1("ui.performance_profile"),
     performance_mode: homeiiEditorI18n$1("ui.performance_mode_for_weak_devices"),
     night_mode: homeiiEditorI18n$1("ui.night_mode"),
@@ -7734,6 +7752,7 @@ function getBaseCardConfigForm$1() {
     cache_ttl: homeiiEditorI18n$1("ui.cache_duration_in_milliseconds_for_selected_data_requests"),
     music_assistant_timeout_ms: "Maximum milliseconds to wait for Music Assistant service responses before showing an error.",
     hotel_mode: homeiiEditorI18n$1("ui.hotel_mode_helper", {}, "Minimal hotel-safe UI: player controls, volume, search, artwork browsing, and player selection only."),
+    show_confirmation_toasts: homeiiEditorI18n$1("ui.show_confirmation_toasts_helper", {}, "Show brief confirmation messages after actions like selecting a player or adding to liked. Disable to suppress these; error messages still appear regardless."),
     performance_profile: homeiiEditorI18n$1("ui.performance_profile_helper"),
     performance_mode: homeiiEditorI18n$1("ui.disables_blur_animations_dynamic_backgrounds_and_heavy_shadows_recommend"),
     main_opacity: homeiiEditorI18n$1("ui.opacity_for_the_main_card_background"),
@@ -7768,6 +7787,7 @@ function getBaseCardConfigForm$1() {
               ] } } },
               { name: "rtl", selector: { boolean: {} } },
               { name: "hotel_mode", selector: { boolean: {} } },
+              { name: "show_confirmation_toasts", selector: { boolean: {} } },
               { name: "main_opacity", selector: { number: { min: 0.3, max: 1, step: 0.02, mode: "box" } } },
               { name: "popup_opacity", selector: { number: { min: 0.4, max: 1, step: 0.02, mode: "box" } } }
             ]
@@ -7897,6 +7917,7 @@ function getMobileEditorTexts() {
       mobile_home_shortcut: homeiiEditorI18n$1("ui.home_shortcut"),
       mobile_home_shortcut_path: homeiiEditorI18n$1("ui.home_shortcut_path"),
       hotel_mode: homeiiEditorI18n$1("ui.hotel_mode", {}, "Hotel Mode"),
+      show_confirmation_toasts: homeiiEditorI18n$1("ui.show_confirmation_toasts", {}, "Show confirmation messages"),
       mobile_volume_mode: homeiiEditorI18n$1("ui.volume_mode"),
       mobile_volume_step_buttons: homeiiEditorI18n$1("ui.volume_step_buttons"),
       mobile_volume_step_percent: homeiiEditorI18n$1("ui.volume_step_percent"),
@@ -7973,6 +7994,7 @@ function getMobileEditorTexts() {
       night_mode_days: homeiiEditorI18n$1("ui.choose_which_days_the_auto_night_mode_window_applies_to"),
       mobile_show_up_next: homeiiEditorI18n$1("ui.show_or_hide_the_inline_next_track_row_in_now_playing"),
       hotel_mode: homeiiEditorI18n$1("ui.hotel_mode_helper", {}, "Minimal hotel-safe UI with only player controls, volume, search, artwork browsing, and player selection."),
+      show_confirmation_toasts: homeiiEditorI18n$1("ui.show_confirmation_toasts_helper", {}, "Show brief confirmation messages after actions like selecting a player or adding to liked. Disable to suppress these; error messages still appear regardless."),
       mobile_dynamic_theme_mode: homeiiEditorI18n$1("ui.extract_colors_from_the_current_artwork_and_apply_them_to_the_interface"),
       mobile_background_motion_mode: homeiiEditorI18n$1("ui.control_whether_the_card_background_moves_gently_and_how_strong_the_moti"),
       performance_profile: homeiiEditorI18n$1("ui.performance_profile_helper"),
@@ -8245,6 +8267,7 @@ function getMobileCardConfigForm$1() {
               { name: "mobile_show_up_next", selector: { boolean: {} } },
               { name: "rtl", selector: { boolean: {} } },
               { name: "hotel_mode", selector: { boolean: {} } },
+              { name: "show_confirmation_toasts", selector: { boolean: {} } },
               { name: "mobile_compact_mode", selector: { boolean: {} } },
               { name: "mobile_layout_mode", selector: { select: { mode: "dropdown", options: t.options.mobile_layout_mode } } },
               { name: "mobile_compact_widget_mode", selector: { select: { mode: "dropdown", options: t.options.mobile_compact_widget_mode } } },
@@ -21991,6 +22014,9 @@ function createHomeiiBaseMusicCard({
       const text = String(message ?? "").trim();
       if (!text) return;
       const safeVariant = ["success", "error", "info"].includes(variant) ? variant : "info";
+      const stateChoice = this._state?.showConfirmationToasts;
+      const suppress = stateChoice === false || stateChoice !== true && this._config?.show_confirmation_toasts === false;
+      if (suppress && safeVariant !== "error") return;
       const now = Date.now();
       const key = `${safeVariant}:${text}`;
       const lastShown = this._toastHistory?.get(key) || 0;
@@ -25344,6 +25370,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     this._state.mobileLibraryDefaultLayout = this._defaultMobileMediaLayout();
     this._state.mobileMediaLayoutManual = false;
     this._state.mobileShowUpNext = false;
+    this._state.showConfirmationToasts = void 0;
     this._state.mobileRecentHistory = [];
     this._state.mobileRecommendationPlaylists = [];
     this._state.mobileRecommendationPlaylistsFetchedAt = 0;
@@ -25645,6 +25672,11 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     }
     try {
       this._state.mobileShowUpNext = JSON.parse(localStorage.getItem("homeii_music_flow_mobile_show_up_next") ?? "false");
+    } catch (_) {
+    }
+    try {
+      const stored = localStorage.getItem("homeii_music_flow_mobile_show_confirmation_toasts");
+      if (stored !== null) this._state.showConfirmationToasts = JSON.parse(stored) === true;
     } catch (_) {
     }
     try {
@@ -26099,6 +26131,17 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
   }
   _mobileShowUpNextEnabled() {
     return HomeiiStateFoundation.mobileShowUpNextEnabled(this._state);
+  }
+  // Effective value for show_confirmation_toasts. Returns true when
+  // confirmation toasts (info + success) should appear. State takes
+  // precedence (in-card Settings pill), otherwise config is consulted
+  // and defaults to true if unset. Must agree with the gate logic in
+  // base-music-card.js _toast() — change both together.
+  _showConfirmationToasts() {
+    const stateChoice = this._state?.showConfirmationToasts;
+    if (stateChoice === true) return true;
+    if (stateChoice === false) return false;
+    return this._config?.show_confirmation_toasts !== false;
   }
   _mobileDynamicThemeMode() {
     if (this._performanceModeEnabled()) return "off";
@@ -27766,6 +27809,12 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     }
     try {
       localStorage.setItem("homeii_music_flow_mobile_show_up_next", JSON.stringify(this._mobileShowUpNextEnabled()));
+    } catch (_) {
+    }
+    try {
+      if (this._state?.showConfirmationToasts === true || this._state?.showConfirmationToasts === false) {
+        localStorage.setItem("homeii_music_flow_mobile_show_confirmation_toasts", JSON.stringify(this._state.showConfirmationToasts));
+      }
     } catch (_) {
     }
     try {
@@ -53047,6 +53096,12 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
             ${this._settingsPill(this._i18n("ui.enabled"), "on", showUpNext ? "on" : "off", "data-setting-show-up-next")}
             ${this._settingsPill(this._i18n("ui.disabled"), "off", showUpNext ? "on" : "off", "data-setting-show-up-next")}
           </div>
+          <div class="settings-label">${this._i18n("ui.show_confirmation_toasts")}</div>
+          <div class="settings-pills">
+            ${this._settingsPill(this._i18n("ui.enabled"), "on", this._showConfirmationToasts() ? "on" : "off", "data-setting-show-confirmation-toasts")}
+            ${this._settingsPill(this._i18n("ui.disabled"), "off", this._showConfirmationToasts() ? "on" : "off", "data-setting-show-confirmation-toasts")}
+          </div>
+          <div class="settings-hint">${this._i18n("ui.show_confirmation_toasts_helper")}</div>
           <div class="settings-label">${this._i18n("ui.artwork_swipe")}</div>
           <div class="settings-pills">
             ${this._settingsPill(this._i18n("ui.change_song"), "play", this._mobileSwipeMode(), "data-setting-swipe-mode")}
@@ -56826,6 +56881,14 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
       this._state.mobileShowUpNext = showUpNextBtn.dataset.settingShowUpNext === "on";
       this._persistMobileAppearance();
       this._syncMobileUpNextUi(this._mobileUpNextItem());
+      this._reopenSettingsMenuPreservingScroll();
+      return;
+    }
+    const showConfirmToastsBtn = e.target.closest("[data-setting-show-confirmation-toasts]");
+    if (showConfirmToastsBtn?.dataset.settingShowConfirmationToasts) {
+      this._flashInteraction(showConfirmToastsBtn);
+      this._state.showConfirmationToasts = showConfirmToastsBtn.dataset.settingShowConfirmationToasts === "on";
+      this._persistMobileAppearance();
       this._reopenSettingsMenuPreservingScroll();
       return;
     }

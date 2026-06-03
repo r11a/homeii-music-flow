@@ -628,6 +628,8 @@ const messages = Object.freeze({
   "ui.set_the_visual_order_of_quick_actions": "设置显示顺序。只显示已勾选的快捷操作；未勾选的项目会被忽略。",
   "ui.settings": "设置",
   "ui.settings_source": "设置来源",
+  "ui.show_confirmation_toasts": "显示确认消息",
+  "ui.show_confirmation_toasts_helper": "在选择播放器或添加到喜爱等操作后显示简短的确认消息。禁用可抑制这些消息；无论如何，错误消息仍会显示。",
   "ui.show_ma_button": "显示 MA 按钮",
   "ui.show_or_hide_the_inline_next_track_row_in_now_playing": "显示或隐藏正在播放界面中的“即将播放”行。",
   "ui.show_theme_toggle": "显示主题切换",

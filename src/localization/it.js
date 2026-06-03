@@ -636,6 +636,8 @@ const messages = Object.freeze({
   "ui.set_the_visual_order_of_quick_actions": "Imposta l'ordine visivo. Verranno mostrate solo le Azioni Rapide selezionate; gli elementi non selezionati saranno ignorati.",
   "ui.settings": "Impostazioni",
   "ui.settings_source": "Sorgente impostazioni",
+  "ui.show_confirmation_toasts": "Mostra i messaggi di conferma",
+  "ui.show_confirmation_toasts_helper": "Mostra brevi messaggi di conferma dopo azioni come la selezione di un lettore o l'aggiunta ai preferiti. Disattivare per sopprimere questi messaggi; i messaggi di errore appaiono comunque.",
   "ui.show_ma_button": "Mostra pulsante MA",
   "ui.show_or_hide_the_inline_next_track_row_in_now_playing": "Mostra o nascondi la riga integrata del brano successivo in 'In Riproduzione'.",
   "ui.show_theme_toggle": "Mostra interruttore tema",

@@ -333,6 +333,11 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     this._state.mobileLibraryDefaultLayout = this._defaultMobileMediaLayout();
     this._state.mobileMediaLayoutManual = false;
     this._state.mobileShowUpNext = false;
+    // undefined = "fall back to _config.show_confirmation_toasts (default
+    // true)"; once the user toggles the in-card Settings pill, this
+    // becomes a concrete boolean and overrides the YAML default for the
+    // rest of the session and across page reloads via localStorage.
+    this._state.showConfirmationToasts = undefined;
     this._state.mobileRecentHistory = [];
     this._state.mobileRecommendationPlaylists = [];
     this._state.mobileRecommendationPlaylistsFetchedAt = 0;
@@ -540,6 +545,10 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
       this._state.mobileMediaLayout = this._state.mobileLibraryDefaultLayout;
     } catch (_) {}
     try { this._state.mobileShowUpNext = JSON.parse(localStorage.getItem("homeii_music_flow_mobile_show_up_next") ?? "false"); } catch (_) {}
+    try {
+      const stored = localStorage.getItem("homeii_music_flow_mobile_show_confirmation_toasts");
+      if (stored !== null) this._state.showConfirmationToasts = JSON.parse(stored) === true;
+    } catch (_) {}
     try {
       const rawHistory = JSON.parse(localStorage.getItem("homeii_music_flow_mobile_recent_history") || "[]");
       if (Array.isArray(rawHistory)) this._state.mobileRecentHistory = rawHistory.slice(0, 10);
@@ -884,6 +893,18 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
 
   _mobileShowUpNextEnabled() {
     return HomeiiStateFoundation.mobileShowUpNextEnabled(this._state);
+  }
+
+  // Effective value for show_confirmation_toasts. Returns true when
+  // confirmation toasts (info + success) should appear. State takes
+  // precedence (in-card Settings pill), otherwise config is consulted
+  // and defaults to true if unset. Must agree with the gate logic in
+  // base-music-card.js _toast() — change both together.
+  _showConfirmationToasts() {
+    const stateChoice = this._state?.showConfirmationToasts;
+    if (stateChoice === true) return true;
+    if (stateChoice === false) return false;
+    return this._config?.show_confirmation_toasts !== false;
   }
 
   _mobileDynamicThemeMode() {
@@ -2575,6 +2596,13 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     try { localStorage.setItem("homeii_music_flow_mobile_layout_mode", this._mobileLayoutMode()); } catch (_) {}
     try { localStorage.setItem("homeii_music_flow_mobile_library_default_layout", this._defaultMobileMediaLayout()); } catch (_) {}
     try { localStorage.setItem("homeii_music_flow_mobile_show_up_next", JSON.stringify(this._mobileShowUpNextEnabled())); } catch (_) {}
+    try {
+      // Only persist when the user has explicitly toggled it via the
+      // in-card Settings UI; an undefined state means "follow config".
+      if (this._state?.showConfirmationToasts === true || this._state?.showConfirmationToasts === false) {
+        localStorage.setItem("homeii_music_flow_mobile_show_confirmation_toasts", JSON.stringify(this._state.showConfirmationToasts));
+      }
+    } catch (_) {}
     try { localStorage.setItem("homeii_music_flow_mobile_footer_search", JSON.stringify(!!this._state.mobileFooterSearchEnabled)); } catch (_) {}
     try { localStorage.setItem("homeii_music_flow_mobile_studio_shortcut", JSON.stringify(this._mobileStudioShortcutEnabled())); } catch (_) {}
     try { localStorage.setItem("homeii_music_flow_mobile_footer_mode", this._state.mobileFooterMode || "both"); } catch (_) {}
@@ -28300,6 +28328,12 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
             ${this._settingsPill(this._i18n("ui.enabled"), "on", showUpNext ? "on" : "off", "data-setting-show-up-next")}
             ${this._settingsPill(this._i18n("ui.disabled"), "off", showUpNext ? "on" : "off", "data-setting-show-up-next")}
           </div>
+          <div class="settings-label">${this._i18n("ui.show_confirmation_toasts")}</div>
+          <div class="settings-pills">
+            ${this._settingsPill(this._i18n("ui.enabled"), "on", this._showConfirmationToasts() ? "on" : "off", "data-setting-show-confirmation-toasts")}
+            ${this._settingsPill(this._i18n("ui.disabled"), "off", this._showConfirmationToasts() ? "on" : "off", "data-setting-show-confirmation-toasts")}
+          </div>
+          <div class="settings-hint">${this._i18n("ui.show_confirmation_toasts_helper")}</div>
           <div class="settings-label">${this._i18n("ui.artwork_swipe")}</div>
           <div class="settings-pills">
             ${this._settingsPill(this._i18n("ui.change_song"), "play", this._mobileSwipeMode(), "data-setting-swipe-mode")}
@@ -32324,6 +32358,14 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
       this._state.mobileShowUpNext = showUpNextBtn.dataset.settingShowUpNext === "on";
       this._persistMobileAppearance();
       this._syncMobileUpNextUi(this._mobileUpNextItem());
+      this._reopenSettingsMenuPreservingScroll();
+      return;
+    }
+    const showConfirmToastsBtn = e.target.closest("[data-setting-show-confirmation-toasts]");
+    if (showConfirmToastsBtn?.dataset.settingShowConfirmationToasts) {
+      this._flashInteraction(showConfirmToastsBtn);
+      this._state.showConfirmationToasts = showConfirmToastsBtn.dataset.settingShowConfirmationToasts === "on";
+      this._persistMobileAppearance();
       this._reopenSettingsMenuPreservingScroll();
       return;
     }

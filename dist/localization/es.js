@@ -624,6 +624,8 @@ const messages = Object.freeze({
   "ui.set_volume": "Configurar volumen",
   "ui.settings": "Configuración",
   "ui.settings_source": "Origen de la configuración",
+  "ui.show_confirmation_toasts": "Mostrar mensajes de confirmación",
+  "ui.show_confirmation_toasts_helper": "Muestra breves mensajes de confirmación después de acciones como seleccionar un reproductor o añadirlo a favoritos. Desactívelo para suprimirlos; los mensajes de error seguirán apareciendo a pesar de ello.",
   "ui.show_ma_button": "Mostrar botón de MA",
   "ui.show_or_hide_the_inline_next_track_row_in_now_playing": "Muestra u oculta la fila integrada de la siguiente pista en Reproduciendo ahora.",
   "ui.show_theme_toggle": "Mostrar alternancia de tema",

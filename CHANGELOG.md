@@ -4,6 +4,7 @@
 
 ### Added
 
+- Optional `show_confirmation_toasts` setting (YAML / visual editor / in-card Settings panel). Default is `true` (existing behavior). Set to `false` to suppress routine confirmation toasts (info + success variants — "Player Selected", "Added to liked", etc.) that briefly cover other UI controls. Error toasts always show so genuine failures stay visible. The in-card Settings toggle is persisted per browser in `localStorage` and takes precedence over the YAML default, so the user can opt out without editing config. Addresses #54.
 - Danish (`da`) localization. Adds `src/localization/da.js` with all 925 keys translated via DeepL using a glossary that locks brand names (HOMEii Flow, Music Assistant, Sendspin, Spotify, etc.) and music-domain terms (Library, Queue, Playlist, etc.) to consistent renderings. Registered in `src/localization/index.js` and exposed as "Dansk" in the language picker. Native Danish speaker review by submitter (Danish household using the card daily for kids' room dashboards).
 
 ## 5.8.1 - 2026-05-31

@@ -624,6 +624,8 @@ const messages = Object.freeze({
   "ui.set_volume": "Nustatyti garsumą",
   "ui.settings": "Nustatymai",
   "ui.settings_source": "Nustatymų šaltinis",
+  "ui.show_confirmation_toasts": "Rodyti patvirtinimo pranešimus",
+  "ui.show_confirmation_toasts_helper": "Rodo trumpus patvirtinimo pranešimus po tokių veiksmų, kaip grotuvo pasirinkimas ar pridėjimas prie mėgstamų. Išjunkite, kad jie nebūtų rodomi; klaidų pranešimai vis tiek bus rodomi nepriklausomai nuo to.",
   "ui.show_ma_button": "Rodyti MA mygtuką",
   "ui.show_or_hide_the_inline_next_track_row_in_now_playing": "Rodyti/slėpti sekančio kūrinio eilutę grojimo lange.",
   "ui.show_theme_toggle": "Rodyti temos perjungiklį",

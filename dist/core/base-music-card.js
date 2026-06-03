@@ -13664,6 +13664,23 @@ export function createHomeiiBaseMusicCard({
       const text = String(message ?? "").trim();
       if (!text) return;
       const safeVariant = ["success", "error", "info"].includes(variant) ? variant : "info";
+      // Honor `show_confirmation_toasts: false` (default true): suppress
+      // info / success toasts so only routine confirmation feedback is
+      // silenced. Errors always show, so connection failures and action
+      // failures stay visible. The in-card Settings UI sets
+      // `_state.showConfirmationToasts` and takes precedence over the
+      // YAML / visual-editor default.
+      //
+      // Inlined here because `_toast()` lives in the base class and
+      // cannot call the subclass's `_showConfirmationToasts()` helper —
+      // the helper duplicates this precedence in homeii-music-flow.js
+      // for use by the Settings pill. If you change the precedence in
+      // one place, change it in both.
+      const stateChoice = this._state?.showConfirmationToasts;
+      const suppress =
+        stateChoice === false ||
+        (stateChoice !== true && this._config?.show_confirmation_toasts === false);
+      if (suppress && safeVariant !== "error") return;
       const now = Date.now();
       const key = `${safeVariant}:${text}`;
       const lastShown = this._toastHistory?.get(key) || 0;
