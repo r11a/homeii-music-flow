@@ -6,6 +6,11 @@
 
 - Danish (`da`) localization. Adds `src/localization/da.js` with all 925 keys translated via DeepL using a glossary that locks brand names (HOMEii Flow, Music Assistant, Sendspin, Spotify, etc.) and music-domain terms (Library, Queue, Playlist, etc.) to consistent renderings. Registered in `src/localization/index.js` and exposed as "Dansk" in the language picker. Native Danish speaker review by submitter (Danish household using the card daily for kids' room dashboards).
 
+### Fixed
+
+- Danish localization: 20 broken or wrong interpolation placeholders in `src/localization/da.js`. The original DeepL pass translated placeholder tokens themselves into Danish words (e.g. `{minutes}` → `{minutter}`, `{title}` → `{titel}`, `{player}` → `{afspiller}`, `{source}`/`{target}` → `{kilde}`/`{mål}`, `{mood}` → `{stemning}`, etc.) and these slipped past the original native-review pass. The runtime substitutes by exact token name, so the Danish strings showed the bare `{titel}` / `{minutter}` / etc. at runtime instead of the actual value. One key (`ui.player_count_many`) was outright broken: missing closing brace and missing token entirely. All 20 placeholders restored to their English token names, surrounding Danish text preserved.
+- Danish localization: `ui.disabled` corrected from "Handicappet" (means "handicapped") to "Inaktiv" — the right word for a UI off-state.
+
 ## 5.8.1 - 2026-05-31
 
 Focused hotfix release for Music Assistant compatibility and artwork regressions found after 5.8.0.

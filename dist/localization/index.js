@@ -1,5 +1,5 @@
 import en from "./en.js?v=5.8.1-9e122c742b";
-import da from "./da.js?v=5.8.1-ef0757fed6";
+import da from "./da.js?v=5.8.1-0a8ed58837";
 import es from "./es.js?v=5.8.1-f080039ddc";
 import fr from "./fr.js?v=5.8.1-012da49900";
 import he from "./he.js?v=5.8.1-da05e2083c";
