@@ -161,6 +161,7 @@ type: custom:homeii-music-flow
 - If Home Assistant is opened locally over `http://`, a local `http://` Music Assistant URL is usually fine and HOMEii Flow will use `ws://`.
 - Mobile browsers can pause audio and WebSocket work when the app is backgrounded or the phone is locked. HOMEii Flow remembers the active "This device" intent during the current app/browser session and reconnects when the dashboard becomes active again.
 - Optional: a configured `tts.*` entity for text-to-speech announcements.
+- Optional: [Music Assistant Queue Actions](https://github.com/droans/mass_queue) for complete queue lists. Home Assistant's built-in Music Assistant queue action may expose only the current and next items.
 - Optional but recommended: correct Home Assistant internal/external URLs, especially for phones, tablets, and remote access.
 
 ## First Startup Checklist
@@ -172,6 +173,7 @@ If the card loads but feels incomplete, check these first:
 - If you use HOMEii Flow remotely, confirm Home Assistant external/internal URLs are correct. For Direct Music Assistant features, `ma_url` should be reachable from the browser you are using, not only from the local network.
 - If artwork is missing only when away from home, prefer Home Assistant-accessible artwork paths or expose Music Assistant through a secure reachable URL. HOMEii Flow now avoids private-network artwork URLs when the browser is remote, but a local-only MA URL can still limit Direct API artwork.
 - If no players are shown, check Music Assistant player exposure and remove overly strict pinned-player filters from the card settings.
+- If the queue shows only the current and next items, install and configure Music Assistant Queue Actions. HOMEii Flow detects its `mass_queue.get_queue_items` action automatically.
 - Optional automation helper: create an `input_text`, then set `active_player_helper_entity` so automations can read the current HOMEii Flow target.
 
 ## Active Player Helper
