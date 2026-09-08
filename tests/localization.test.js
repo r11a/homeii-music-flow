@@ -16,7 +16,8 @@ describe("localization", () => {
     expect(translate("fr", "ui.home")).toBe("Accueil");
     expect(translate("it", "ui.now_playing")).toBe("In riproduzione");
     expect(translate("zh-CN", "ui.home")).toBe("首页");
-    expect(translate("de", "ui.home")).toBe("Home");
+    expect(translate("de", "ui.home")).toBe("Startseite");
+    expect(translate("nl", "ui.home")).toBe("Home");
     expect(translate("he", "missing.key", {}, "Fallback")).toBe("Fallback");
   });
 
@@ -34,7 +35,9 @@ describe("localization", () => {
     expect(detectLanguage({ configLanguage: "it-IT" })).toBe("it");
     expect(detectLanguage({ configLanguage: "lt" })).toBe("lt");
     expect(detectLanguage({ configLanguage: "zh-CN" })).toBe("zh");
-    expect(detectLanguage({ configLanguage: "de" })).toBe("en");
+    expect(detectLanguage({ configLanguage: "de" })).toBe("de");
+    expect(detectLanguage({ configLanguage: "nl" })).toBe("en");
+    expect(detectLanguage({ configLanguage: "auto", hass: { locale: { language: "de-DE" } } })).toBe("de");
     expect(detectLanguage({ configLanguage: "auto", hass: { locale: { language: "he-IL" } } })).toBe("he");
   });
 
