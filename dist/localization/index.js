@@ -1,6 +1,6 @@
 import en from "./en.js?v=6.0.0-9e51f3a935";
 import da from "./da.js?v=6.0.0-950064eaef";
-import de from "./de.js?v=6.0.0-6f94c5734a";
+import de from "./de.js?v=6.0.0-9b1911c4a1";
 import es from "./es.js?v=6.0.0-e63f029317";
 import fr from "./fr.js?v=6.0.0-30047304f5";
 import he from "./he.js?v=6.0.0-05b55e308e";

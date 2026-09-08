@@ -37,6 +37,7 @@ describe("localization", () => {
     expect(detectLanguage({ configLanguage: "zh-CN" })).toBe("zh");
     expect(detectLanguage({ configLanguage: "de" })).toBe("de");
     expect(detectLanguage({ configLanguage: "de-AT" })).toBe("de");
+    expect(detectLanguage({ configLanguage: "nl" })).toBe("en");
     expect(detectLanguage({ configLanguage: "auto", hass: { locale: { language: "de-DE" } } })).toBe("de");
     expect(detectLanguage({ configLanguage: "auto", hass: { locale: { language: "he-IL" } } })).toBe("he");
   });
