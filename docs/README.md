@@ -1,5 +1,7 @@
 # HOMEii Music Flow Documentation
 
+> **Preparing 6.0.0 Beta:** install Engine `1.0.0-beta.1` first. Read the [breaking upgrade and beta guide](BETA_GUIDE.md) before replacing 5.9.3. No beta release has been published by this preparation.
+
 HOMEii Music Flow is a premium Music Assistant dashboard card for Home Assistant. This documentation is the main place to learn how to install it, configure it, understand every major feature, and troubleshoot real-world Music Assistant setups.
 
 ![HOMEii Music Flow preview](./media/homeii-flow-preview.gif)
@@ -30,7 +32,7 @@ HOMEii Music Flow needs:
 
 - Home Assistant with dashboards/custom cards enabled.
 - Music Assistant installed and connected to Home Assistant.
-- HOMEii Flow Engine `0.7.2` or newer installed and loaded for HOMEii Music Flow 6.0.0 and newer.
+- HOMEii Flow Engine `1.0.0-beta.1` for the prepared 6.0.0 beta pair installed and loaded for HOMEii Music Flow 6.0.0 and newer.
 - At least one Music Assistant player exposed as a Home Assistant `media_player`.
 - HACS, or manual access to `/config/www/community/`.
 - A modern browser: Chrome, Edge, Safari, iOS WebKit, Android WebView, or a current Home Assistant Companion app.

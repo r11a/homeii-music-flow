@@ -47,7 +47,8 @@ jobs:
                 --repo "$GITHUB_REPOSITORY" \
                 --title "$title" \
                 --notes-file "$notes_file" \
-                --prerelease
+                --prerelease \
+                --latest=false
             else
               gh release edit "$TAG_NAME" \
                 --repo "$GITHUB_REPOSITORY" \

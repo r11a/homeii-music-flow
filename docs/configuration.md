@@ -1,5 +1,7 @@
 # Configuration
 
+> **Preparing 6.0.0 Beta:** install Engine `1.0.0-beta.1` first. Read the [breaking upgrade and beta guide](BETA_GUIDE.md) before replacing 5.9.3. No beta release has been published by this preparation.
+
 HOMEii Music Flow can be configured from the Home Assistant visual editor, the in-card settings screen, or YAML.
 
 ## Configuration Sources
@@ -55,7 +57,7 @@ The card does not accept or store `ma_url`, `music_assistant_external_url`, or `
 
 ## HOMEii Flow Engine
 
-HOMEii Music Flow 6 requires the HOMEii Flow Engine Home Assistant integration, version `0.7.2` or newer.
+HOMEii Music Flow 6 requires the HOMEii Flow Engine Home Assistant integration, version `1.0.0-beta.1` for the prepared 6.0.0 beta pair.
 
 The card is now the visual interface only. Playback, players, queue, library, search, artwork, grouping, schedules, timers, statistics, announcements, volume rules, and diagnostics are handled by the Engine. If the Engine is not installed and loaded, the 6.x card shows an Engine-required message instead of using old frontend-only paths.
 

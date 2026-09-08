@@ -1,5 +1,12 @@
 # Changelog
 
+## 6.0.0-beta.1 — preparation, not released
+
+- Label the first card beta and pair it with HOMEii Flow Engine `1.0.0-beta.1`.
+- Add a prominent breaking-upgrade warning from 5.9.3, exact Engine-first installation, requirements, feature/availability tables, migration, rollback and a community test/reporting guide.
+- Add branded repository navigation, cross-repository links, Hebrew upgrade instructions and draft release notes.
+- Keep publication opt-in: future prereleases must not become Latest. No release/tag or production installation is performed by this preparation.
+
 ## 6.0.0 - in progress
 
 Release preparation (2026-09-08, local candidate):

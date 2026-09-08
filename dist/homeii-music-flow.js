@@ -1,4 +1,4 @@
-/*! HOMEII_CARD_VERSION = "6.0.0"; */
+/*! HOMEII_CARD_VERSION = "6.0.0-beta.1"; */
 function Fn(m, e) {
   for (var i = 0; i < e.length; i++) {
     const r = e[i];
@@ -46923,7 +46923,7 @@ function V_() {
   } catch {
   }
 }
-const Xi = "6.0.0", Dn = "homeii-music-flow-browser-editor-v600", Ir = "homeii-music-flow-editor-v600", K_ = "__homeii_ambient_light_pair_player_", Z_ = "__homeii_ambient_light_pair_lights_", fo = Object.freeze({
+const Xi = "6.0.0-beta.1", Dn = "homeii-music-flow-browser-editor-v6001", Ir = "homeii-music-flow-editor-v6001", K_ = "__homeii_ambient_light_pair_player_", Z_ = "__homeii_ambient_light_pair_lights_", fo = Object.freeze({
   isHebrewLanguageTag: sl,
   pickEditorLanguageCandidate: ol,
   detectEditorHebrew: am

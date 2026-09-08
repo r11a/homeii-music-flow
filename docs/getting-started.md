@@ -1,5 +1,7 @@
 # Getting Started
 
+> **Preparing 6.0.0 Beta:** install Engine `1.0.0-beta.1` first. Read the [breaking upgrade and beta guide](BETA_GUIDE.md) before replacing 5.9.3. No beta release has been published by this preparation.
+
 This guide gets HOMEii Music Flow running in Home Assistant for the first time.
 
 ## Before You Install
@@ -8,7 +10,7 @@ Confirm these first:
 
 - Music Assistant is installed and running.
 - Music Assistant is connected to Home Assistant.
-- HOMEii Flow Engine `0.7.2` or newer is installed and loaded when using HOMEii Music Flow 6.0.0 or newer.
+- HOMEii Flow Engine `1.0.0-beta.1` for the prepared 6.0.0 beta pair is installed and loaded when using HOMEii Music Flow 6.0.0 or newer.
 - Home Assistant shows at least one Music Assistant player as a `media_player`.
 - You can control that player from Home Assistant before adding HOMEii Music Flow.
 
