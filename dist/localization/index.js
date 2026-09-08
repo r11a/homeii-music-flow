@@ -1,5 +1,6 @@
 import en from "./en.js?v=5.9.3-bdcaaf4c05";
-import da from "./da.js?v=5.9.3-2fe6231eb2";
+import da from "./da.js?v=5.9.3-a222c48faa";
+import de from "./de.js?v=5.9.3-069fd412b2";
 import es from "./es.js?v=5.9.3-d88a7ebb60";
 import fr from "./fr.js?v=5.9.3-475c4103fb";
 import he from "./he.js?v=5.9.3-9bc87a679f";
@@ -12,6 +13,7 @@ export const DEFAULT_LANGUAGE = "en";
 export const DICTIONARIES = Object.freeze({
   en,
   da,
+  de,
   es,
   fr,
   he,
@@ -26,6 +28,7 @@ export const LANGUAGE_OPTIONS = Object.freeze([
   { value: "auto", label: "Auto" },
   { value: "en", label: "English" },
   { value: "da", label: "Dansk" },
+  { value: "de", label: "Deutsch" },
   { value: "es", label: "Espa\u00f1ol" },
   { value: "fr", label: "Fran\u00e7ais" },
   { value: "he", label: "\u05e2\u05d1\u05e8\u05d9\u05ea / Hebrew" },
