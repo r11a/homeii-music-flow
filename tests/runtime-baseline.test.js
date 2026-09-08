@@ -1303,6 +1303,60 @@ describe("runtime baseline", () => {
     expect(snapshot.items[0].media_item.name).toBe("Track A");
   });
 
+  it("loads and displays large Queue Actions snapshots without the previous 100-item cap", async () => {
+    await import("../src/homeii-music-flow.js?runtime-mass-queue-large-snapshot-baseline");
+    await Promise.resolve();
+    await vi.runAllTimersAsync();
+
+    const CardCtor = globalThis.customElements.get("homeii-music-flow");
+    const card = new CardCtor();
+    const player = {
+      entity_id: "media_player.office",
+      attributes: {
+        media_title: "Track 101",
+        media_artist: "Artist 101",
+      },
+    };
+    const items = Array.from({ length: 691 }, (_, index) => ({
+      queue_item_id: `queue-${index}`,
+      sort_index: index,
+      media_item: {
+        uri: `spotify://track/${index}`,
+        name: `Track ${index}`,
+        media_type: "track",
+        artists: [{ name: `Artist ${index}` }],
+      },
+    }));
+    const sendMessagePromise = vi.fn(async () => ({
+      response: {
+        queue_state: { current_index: 101, items: items.length },
+        items,
+      },
+    }));
+    card._hass = { connection: { sendMessagePromise } };
+    card._hasMassQueueService = vi.fn(() => true);
+
+    const snapshot = await card._fetchMassQueueItemsSnapshot(player);
+
+    expect(sendMessagePromise).toHaveBeenCalledWith({
+      type: "call_service",
+      domain: "mass_queue",
+      service: "get_queue_items",
+      service_data: {
+        entity: player.entity_id,
+        limit: 1000,
+        offset: 0,
+      },
+      return_response: true,
+    });
+    expect(snapshot.items).toHaveLength(691);
+
+    card._state.queueItems = snapshot.items;
+    card._state.maQueueState = snapshot.state;
+    expect(card._getNowPlayingQueueItems()).toHaveLength(590);
+    expect(card._getNowPlayingQueueItems()[0].sort_index).toBe(101);
+  });
+
   it("uses direct Music Assistant queue snapshots only after Home Assistant queue lookups fail", async () => {
     await import("../src/homeii-music-flow.js?runtime-queue-direct-fallback-baseline");
     await Promise.resolve();

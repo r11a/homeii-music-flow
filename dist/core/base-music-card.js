@@ -9219,7 +9219,7 @@ export function createHomeiiBaseMusicCard({
 
     _getNowPlayingQueueItems() {
       const currentIndex = this._state.maQueueState?.current_index ?? -1;
-      return (this._state.queueItems || []).filter((item) => (item.sort_index ?? 0) >= currentIndex).slice(0, 100);
+      return (this._state.queueItems || []).filter((item) => (item.sort_index ?? 0) >= currentIndex).slice(0, 1000);
     }
 
     _queuePanelHtml(queueItems = []) {
@@ -10417,8 +10417,8 @@ export function createHomeiiBaseMusicCard({
           service: "get_queue_items",
           service_data: {
             entity: player.entity_id,
-            limit_before: 20,
-            limit_after: 120,
+            limit: 1000,
+            offset: 0,
           },
           return_response: true,
         });
