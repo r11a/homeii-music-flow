@@ -7,6 +7,8 @@ The raw `PROJECT PICTUERS` folder can stay local as the source capture folder, b
 
 - `homeii-flow-preview.gif`
 - `docs/brand/homeii-flow-logo.svg`
+- `docs/brand/homeii-flow-logo.png`
+- `docs/brand/homeii-flow-icon.png`
 - `hero-main-light.png`
 - `history-light.png`
 - `studio.png`
@@ -28,7 +30,7 @@ The raw `PROJECT PICTUERS` folder can stay local as the source capture folder, b
 - The README should include an HACS install/download link:
   `https://www.hacs.xyz/docs/use/download/download/`
 - The README should explain that the HACS UI calls this repository type `Dashboard`, while the HACS backend/my-link category is `plugin`.
-- The README should mention that `dist/` includes `homeii-music-flow.js`, `sendspin-js/`, `vendor/embla-carousel.umd.js`, and `homeii-flow-logo.svg`.
+- The README should mention that `dist/` includes `homeii-music-flow.js`, `sendspin-js/`, `vendor/embla-carousel.umd.js`, `homeii-flow-logo.svg`, `homeii-flow-logo.png`, and `homeii-flow-icon.png`.
 - The README should include Music Assistant and Sendspin credits.
 
 ## Still worth adding later

@@ -23,6 +23,10 @@ const vendorEmblaPath = path.join(rootDir, "vendor", "embla-carousel.umd.js");
 const distVendorDir = path.join(rootDir, "dist", "vendor");
 const brandLogoPath = path.join(rootDir, "docs", "brand", "homeii-flow-logo.svg");
 const distLogoPath = path.join(rootDir, "dist", "homeii-flow-logo.svg");
+const brandLogoPngPath = path.join(rootDir, "docs", "brand", "homeii-flow-logo.png");
+const distLogoPngPath = path.join(rootDir, "dist", "homeii-flow-logo.png");
+const brandIconPngPath = path.join(rootDir, "docs", "brand", "homeii-flow-icon.png");
+const distIconPngPath = path.join(rootDir, "dist", "homeii-flow-icon.png");
 
 async function collectJavaScriptFiles(dir, prefix = "") {
   const entries = (await readdir(dir, { withFileTypes: true }))
@@ -43,7 +47,7 @@ async function collectJavaScriptFiles(dir, prefix = "") {
 async function buildFileVersionMap(baseDir, files) {
   const fileVersions = new Map();
   for (const file of files) {
-    const text = await readFile(path.join(baseDir, ...file.split("/")), "utf8");
+    const text = (await readFile(path.join(baseDir, ...file.split("/")), "utf8")).replace(/\r\n?/g, "\n");
     fileVersions.set(file, createHash("sha256").update(text).digest("hex").slice(0, 10));
   }
   return fileVersions;
@@ -66,13 +70,19 @@ function versionFolderImports(text, folder, version, fileVersions, fallback) {
 
 const sourceText = await readFile(srcMainPath, "utf8");
 const version = extractCardVersion(sourceText);
+const packageMetadata = JSON.parse(await readFile(path.join(rootDir, "package.json"), "utf8"));
+if (packageMetadata.version !== version) throw new Error("Source and package versions must match before release");
+if (preserveMain && extractCardVersion(await readFile(distMainPath, "utf8")) !== version) {
+  throw new Error("Built bundle version must match the source before release");
+}
 const localizationFiles = (await readdir(srcLocalizationPath))
   .filter((file) => file.endsWith(".js"))
   .sort();
 const localizationFileVersions = new Map();
 const localizationHash = createHash("sha256");
 for (const file of localizationFiles) {
-  const text = await readFile(path.join(srcLocalizationPath, file), "utf8");
+  // Git may check out CRLF on Windows and LF in CI; cache keys must match.
+  const text = (await readFile(path.join(srcLocalizationPath, file), "utf8")).replace(/\r\n?/g, "\n");
   const fileHash = createHash("sha256").update(text).digest("hex").slice(0, 10);
   localizationFileVersions.set(file, fileHash);
   localizationHash.update(file).update("\0").update(text).update("\0");
@@ -129,5 +139,7 @@ await cp(srcSendspinPath, distSendspinPath, { recursive: true });
 await mkdir(distVendorDir, { recursive: true });
 await copyFile(vendorEmblaPath, path.join(distVendorDir, "embla-carousel.umd.js"));
 await copyFile(brandLogoPath, distLogoPath);
+await copyFile(brandLogoPngPath, distLogoPngPath);
+await copyFile(brandIconPngPath, distIconPngPath);
 
 console.log(`Synced Homeii release artifacts for ${version}`);

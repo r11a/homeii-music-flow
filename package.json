@@ -1,6 +1,6 @@
 {
   "name": "homeii-music-flow",
-  "version": "5.9.3",
+  "version": "6.0.0-beta.1",
   "description": "Premium Home Assistant Music Assistant dashboard card with a mobile-first visual player and built-in editor.",
   "private": true,
   "license": "MIT",
@@ -12,6 +12,9 @@
     "music-assistant",
     "dashboard-card"
   ],
+  "dependencies": {
+    "opus-encdec": "^0.1.1"
+  },
   "scripts": {
     "build": "vite build && node ./scripts/release.mjs --preserve-main",
     "release": "vite build && node ./scripts/release.mjs --preserve-main",

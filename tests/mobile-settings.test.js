@@ -162,7 +162,7 @@ describe("mobile settings foundation", () => {
     expect(state.voiceAssistantMode).toBe("assist");
     expect(state.voiceAssistantAgentId).toBe("conversation.home_assistant");
     expect(state.voiceAssistantSpeakFeedback).toBe(true);
-    expect(state.mobileLikedMode).toBe("local");
+    expect(state.mobileLikedMode).toBe("ma");
     expect(state.mobileSwipeMode).toBe("browse");
     expect(state.mobileRadioSourceMode).toBe("ma_first");
     expect(state.mobileRadioBrowserCountry).toBe("il");
@@ -258,7 +258,8 @@ describe("mobile settings foundation", () => {
   it("stabilizes home shortcut, footer, mic, and volume modes", () => {
     expect(normalizeHomeShortcutPath("lovelace/media", { leadingSlash: true })).toBe("/lovelace/media");
     expect(normalizeHomeShortcutPath(" /dashboard ", { leadingSlash: true })).toBe("/dashboard");
-    expect(normalizeMobileFooterMode("invalid")).toBe("both");
+    expect(normalizeMobileFooterMode("invalid")).toBe("icon");
+    expect(normalizeMobileFooterMode("both")).toBe("both");
     expect(normalizeMobileMicMode("OFF")).toBe("off");
     expect(normalizeVoiceAssistantMode("music")).toBe("music");
     expect(normalizeVoiceAssistantMode("bad")).toBe("hybrid");

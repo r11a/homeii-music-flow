@@ -57,4 +57,3 @@ export function getSupportedFormats(codecs) {
     }
     return formats;
 }
-//# sourceMappingURL=codec-support.js.map

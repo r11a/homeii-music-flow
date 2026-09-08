@@ -1,5 +1,116 @@
 # Changelog
 
+## 6.0.0-beta.1 — preparation, not released
+
+- Label the first card beta and pair it with HOMEii Flow Engine `1.0.0-beta.1`.
+- Add a prominent breaking-upgrade warning from 5.9.3, exact Engine-first installation, requirements, feature/availability tables, migration, rollback and a community test/reporting guide.
+- Add branded repository navigation, cross-repository links, Hebrew upgrade instructions and draft release notes.
+- Keep publication opt-in: future prereleases must not become Latest. No release/tag or production installation is performed by this preparation.
+
+## 6.0.0 - in progress
+
+Release preparation (2026-09-08, local candidate):
+
+- Add German from PR #89 by rtreichl, including automatic locale selection and the current action-label translation.
+- Add configurable search section ordering (`search_result_order`, #86).
+- Preserve MA album order when disc/track metadata is incomplete (#85); keep playlist order unchanged (#88).
+- Distinguish failed searches from empty results, retain partial results, and reject stale responses when repeating a query (#83).
+- Add capability-gated library pagination through Engine 0.7.21, with protection against failed or inconsistent later pages (#87).
+- Use Stop for Stop-only streams in both the main player and player list (#75).
+
+Reliability audit (2026-09-07, not a public release):
+
+- Redesign action navigation and media/queue sheets with consistent buttons, dedicated icons, optional labels, and protection against duplicate submissions.
+- Add server-supported global playback preferences for Autoplay, Smart Shuffle and transitions through the Engine, with partial updates and readback verification.
+- Keep unavailable group-member volume unknown instead of displaying a false zero or an incorrect group average.
+- Use MA's native upcoming-queue operation for “Play next”, avoiding stale local position calculations.
+- Prefer real Spotify genre categories through MA browse, with explicit playlist-search fallback for providers without a matching category. Keep discovery and queue options in focused source modules.
+- Add Crossfade with server readback; keep mounted queues visible during background updates and build move-position controls only for the expanded row.
+- Unmute after an acknowledged positive volume change, preserve mute at zero, and report failed unmute commands. Verified on Computer.
+- Confirm sleep-timer deadlines and cancellation in the Engine; roll back failed saves and do not resurrect removed timers. Verified persistence across page reload and cancellation.
+- Unify menu, dialog, lyrics, history, Studio and toast surfaces with translucent graphite/white backgrounds and blur; remove conflicting artwork overlays.
+- Discover by genre across selected music providers, MA genre-tagged library items and radio tags. Share concurrent loads and retain results during player refreshes.
+- Surface failed group disconnections and partial announcement failures; prevent duplicate announcement dispatch and browser-timed volume restoration.
+- Add authenticated HA Sendspin transport with Engine 0.7.7+; the MA token stays on the server. Engine 0.7.9 fixes background callback execution and reuses entity statistics snapshots.
+- Browse individual podcast episodes, preserve episode media types, and surface failed detail requests instead of showing a false empty library.
+- Add queue Autoplay using confirmed MA state; prevent successful batch notifications when a player action failed.
+- Bundle Heebo locally, refine library covers and action icons, reduce repeated branding, and make action labels opt-in through the existing display setting.
+- Fetch lyrics through MA's native metadata API, prefer synchronized lyrics, coalesce requests and permit retries after failure. Direct LRCLIB access remains opt-in.
+- Preserve local Sendspin volume across reconnections; prevent stale player album metadata from contaminating podcast history.
+- Fix narrow-screen heading clipping and logo aspect ratio; align header action icons and touch targets.
+- Restore damaged Hebrew genre labels, search queries, control feedback and voice-command keywords; remove premature Studio volume success notifications.
+- Send volume changes immediately with per-player serialization and latest-value coalescing; roll back failed changes without inventing mute state.
+- Keep player and queue refreshes running during event bursts and refresh player state after acknowledged controls.
+- Preserve Shadow DOM click targets across asynchronous menu handlers so player and media actions reach the selected control.
+- Respect native player availability and coalesce catalog refreshes without keeping removed players indefinitely.
+- Avoid replaying uncertain mutations over HTTP; distinguish queue read failures from confirmed empty queues.
+- Preserve absolute queue indices and explicit current-item metadata in partial snapshots.
+- Add a checksum-verified local deployment script that replaces the card only after the upload finishes.
+- Live installation findings and remaining release checks: [reliability audit](docs/RELIABILITY_AUDIT_2026_09_07_HE.md).
+
+Breaking change:
+
+- HOMEii Music Flow 6 requires HOMEii Flow Engine. The card no longer runs through legacy frontend-only Home Assistant/Music Assistant fallback paths.
+- The card is now the visual interface. HOMEii Flow Engine `0.7.2` or newer is the required backend for players, playback, queue, library, favorites, search, artwork, grouping, schedules, timers, statistics, announcements, diagnostics, and the authenticated Music Assistant API/event bridge.
+- Engine 0.7.2 declares Music Assistant as a required Home Assistant dependency, validates MA 2.10 API schema 65 or newer, probes real library/search/full queue-item contracts before reporting Healthy, caches provider discovery, and exposes MA autoplay and Smart Shuffle queue state.
+- Engine 0.6.1 added aggregated favorites reads and revisioned favorite mutations; the media-tab heart now opens the Liked page instead of acting as an ambiguous favorites-only filter.
+- Browsing previous/next queue artwork now resolves the browsed item's cover instead of reusing the active player's `entity_picture`.
+- Repeated library renders share one foreground request, stale card data remains visible during refresh, and an already-visible library is no longer replaced by a second loading screen.
+- Large queue and library pages now use a bounded recycled DOM window with top/bottom spacers, nearby media details prefetch on intent, duplicate detail requests coalesce, stale renders are discarded, and diagnostics report menu render cost.
+- Music Assistant commands now use one Engine-owned authenticated transport. The obsolete card-owned MA WebSocket/REST command path was removed to eliminate duplicate handshakes and browser token handling.
+- Engine 0.5.3 and card 6.0.0 add last-known-good player, queue, library, and connection behavior, lazy artwork hydration, normalized previous/next queue artwork, and a bounded server-side artwork cache for smoother navigation during Music Assistant reconnects.
+- `homeii_engine_mode` is normalized to `required`; old `auto`/`off` style behavior is intentionally unsupported.
+- Browser-direct Music Assistant access is disabled for core card routing. `ma_url`/`ma_token` remain only for Sendspin/local-device browser playback; Engine MA credentials are configured in the HA integration.
+
+Changed:
+
+- The HACS runtime is now one self-contained JavaScript file: Sendspin, its Opus fallback decoder, and Embla are bundled instead of being loaded from sibling paths that HACS does not install.
+- Removed the Google Fonts stylesheet import; the card now uses the Home Assistant/system font stack and works without a third-party font request.
+- External LRCLIB lookup is now opt-in through `lrclib_lyrics_enabled` (disabled by default), while lyrics embedded by Music Assistant remain available locally. The README documents the endpoint and disclosed listening metadata.
+- Player commands, playback, queue actions, queue transfer, library reads, search, artwork resolution, Music Assistant command calls, and group orchestration now fail closed when HOMEii Flow Engine is missing or too old.
+- The visual editor, in-card diagnostics, and configuration docs now describe the Engine as mandatory instead of optional.
+- Local HA favorite-button, local-liked, and card-side announcement dispatch fallbacks are disabled in Engine-required mode.
+- Engine 0.5.1 now authenticates every MA API request, resolves the active queue with the MA 2.10 contract, merges full queue state with all queue items, proxies authenticated artwork without exposing the MA token, and safely replaces its realtime connection during HA options reload.
+- The card subscribes to Engine-forwarded MA events and debounces queue, player and library refreshes, including automatic reconnect recovery.
+- Engine 0.5.2 prevents local artwork proxy URLs from being registered as new artwork sources, preserves already-decorated queue/library items, and limits cache invalidation to relevant MA events.
+- Progress-only MA events no longer force full queue/player/library renders. Structural events are coalesced, which prevents cover placeholders and visible flicker during playback.
+- An Engine version change now clears stale queue, library, failed-image and blob caches automatically.
+- Music Assistant URL/token fields were removed from the card and are now owned only by the Engine integration. Browser-direct MA and the built-in This Device/Sendspin player are disabled in Engine-only mode.
+- Engine setup/options now accept a preferred internal MA URL and an optional external HTTPS fallback; authenticated realtime reconnect rotates between both addresses without exposing either credential to the card.
+
+## 5.9.4 - 2026-07-12
+
+Local stability candidate. Not published yet.
+
+Fixed:
+
+- Hides raw `media_player.*` entity ids from runtime player cards while keeping them available in configuration/editor flows.
+- Adds a session-scoped queue snapshot cache so a fuller queue can survive dashboard navigation when Home Assistant later returns only a tiny partial queue window.
+- Opens the direct Music Assistant interface from `ma_url` when `ma_interface_url` is still the default `/music-assistant` path.
+- Keeps Library search input aligned to the active LTR/RTL layout.
+- Reduces dynamic-theme aura strength on tablet layouts so the effect does not sit over the controls.
+- Tightens progress calculation by keeping the selected player as the authoritative progress source and safely converting millisecond position values when the duration proves they are milliseconds.
+- Adds Music Assistant 2.9 artwork compatibility by rebasing opaque imageproxy URLs through the configured browser-safe MA URL, avoiding unnecessary authenticated CORS preflights, and retaining the legacy path/provider endpoint as a compatibility fallback.
+- Keeps current Now Playing artwork on Home Assistant's signed media-player proxy when available and does not replace a visible cover until the next candidate has decoded successfully.
+- Preserves an absolute Music Assistant image host from the HA/MA payload instead of always rewriting it to `ma_url`; the configured external URL and legacy endpoint are now fallback candidates.
+- Routes Queue and Library flow artwork through the guarded artwork loader instead of inserting unverified image URLs directly into the DOM.
+- Keeps the center artwork stack on the current player's Home Assistant proxy outside an explicit pending-track transition.
+- Shows and sends Stop instead of Pause for active streams that advertise Home Assistant Stop support without Pause support.
+- Normalizes Home Assistant library items that omit `uri`, and keeps the refreshed Music Assistant favorites list authoritative over stale queue favorite flags so Radio favorites no longer silently no-op or visually roll back after a successful add.
+- Records the Music Assistant server/schema version from the Direct WebSocket greeting for future diagnostics.
+- Uses HOMEii Flow Engine 0.1.33's short-lived, opaque-token same-origin artwork proxy for Queue and Library covers when available, so browser clients no longer need direct Music Assistant image access.
+- Falls back to the Engine's authenticated HTTP read bridge when Home Assistant's custom WebSocket command path stalls, preventing the card from silently dropping back to broken Direct MA artwork URLs.
+- Clears stale Queue/Library artwork caches when the Engine item-artwork proxy becomes available, so old snapshots with failing MA imageproxy URLs do not keep reappearing after a refresh.
+- Historical 5.x compatibility note: this local candidate still carried broad HA/MA compatibility routes. The 6.0.0 breaking-change line above removes those routes and requires HOMEii Flow Engine.
+
+Validation target:
+
+- `node --check src/homeii-music-flow.js`
+- `node --check src/core/base-music-card.js`
+- `npm.cmd run build`
+- Focused Vitest coverage for player-card labels, Music Assistant interface launch, queue snapshot cache, and progress timing.
+- Full Vitest suite passed locally: 26 files, 243 tests.
+
 ## 5.9.3 - 2026-06-20
 
 Focused stability release for queue, search, configured-player selection, Radio favorites, progress timing, and Diagnostics.
@@ -73,7 +184,7 @@ Added:
 - Diagnostic v6 with selected-player source, group-state visibility, queue UI state, and warnings when queue APIs return data but the rendered queue is empty.
 - Diagnostic v6 probes browser artwork loading, authenticated artwork fetch fallback, and rendered artwork DOM health so external-access image failures are tied to the exact display path.
 - Diagnostics now reports the group service path, including `media_player.join`, `media_player.unjoin`, selected/group owner identity, and current members.
-- Optional HOMEii Flow Engine bridge infrastructure for the future Home Assistant integration, including card config, visual-editor fields, WebSocket command helpers, diagnostics, and fallback-safe defaults.
+- Historical note: HOMEii Flow Engine bridge infrastructure was introduced here as optional preparation for a future integration. HOMEii Flow 6.0.0 makes that Engine path mandatory and removes the fallback behavior.
 - Native Music Assistant 2.9 recommendation support for HOMEii recommendations and Studio Mix flows when the direct MA API is available.
 - Screensaver can automatically open Lyrics mode while music is playing, while keeping the normal clock mode when idle.
 - Configurable screensaver Lyrics controls for Sync lyrics, Smaller lyrics, and Larger lyrics when Screensaver controls are explicitly enabled.

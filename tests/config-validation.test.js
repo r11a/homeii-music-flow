@@ -7,15 +7,19 @@ import {
 } from "../src/config/validators.js";
 
 describe("config validators", () => {
+  it("validates configurable search section ordering", () => {
+    expect(()=>validateBaseCardEditorConfig({search_result_order:['artists','albums']})).not.toThrow();
+    expect(()=>validateBaseCardEditorConfig({search_result_order:['invalid']})).toThrow('search_result_order');
+    expect(()=>validateBaseCardEditorConfig({search_result_order:'artists'})).toThrow('array of strings');
+  });
   it("accepts a valid base editor config", () => {
     expect(() =>
       validateBaseCardEditorConfig({
         config_entry_id: "abc",
-        homeii_engine_mode: "auto",
+        homeii_engine_mode: "required",
         homeii_engine_instance_id: "main",
         homeii_engine_profile_id: "living-room",
         homeii_engine_timeout_ms: 3500,
-        music_assistant_external_url: "https://ma.example.com",
         ma_interface_target: "_self",
         height: 800,
         main_opacity: 0.9,
@@ -30,6 +34,7 @@ describe("config validators", () => {
         performance_mode: true,
         show_ma_button: false,
         show_theme_toggle: true,
+        lrclib_lyrics_enabled: true,
       })
     ).not.toThrow();
   });
@@ -51,13 +56,19 @@ describe("config validators", () => {
       validateBaseCardEditorConfig({
         homeii_engine_mode: "always",
       })
-    ).toThrow("homeii_engine_mode must be one of: auto, off, required");
+    ).toThrow("homeii_engine_mode must be one of: required");
 
     expect(() =>
       validateBaseCardEditorConfig({
         homeii_engine_timeout_ms: "fast",
       })
     ).toThrow("homeii_engine_timeout_ms must be a number");
+
+    expect(() =>
+      validateBaseCardEditorConfig({
+        lrclib_lyrics_enabled: "yes",
+      })
+    ).toThrow("lrclib_lyrics_enabled must be a boolean");
   });
 
   it("accepts a valid card_id and rejects malformed ones", () => {
@@ -133,7 +144,6 @@ describe("config validators", () => {
         flow_assistant_response_timeout_ms: 18000,
         flow_assistant_listen_timeout_ms: 12000,
         flow_assistant_auto_close_ms: 4200,
-        mobile_liked_mode: "local",
         mobile_swipe_mode: "browse",
         mobile_library_tabs: ["library", "queue"],
         mobile_library_default_layout: "grid",

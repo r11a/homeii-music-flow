@@ -1,6 +1,7 @@
 // Generated HOMEii Music Flow localization dictionary.
 // Keep keys stable. Translate only the string values.
 const messages = Object.freeze({
+  "ui.action_menu_labels": "Handlingsnavne under ikoner",
   "ui.a_guided_music_wizard": "En guidet musikguide",
   "ui.a_radio_station": "En radiostation",
   "ui.accent_color": "Accentuerende farve",
@@ -30,7 +31,6 @@ const messages = Object.freeze({
   "ui.all_players_2": "Alle Afspillere",
   "ui.all_podcasts": "Alle Podcasts",
   "ui.all_tracks": "Alle spor",
-  "ui.allow_local_likes": "Tillad lokale likes",
   "ui.always_visible": "Altid synlig",
   "ui.announce": "Annoncer",
   "ui.announce_to_all_players": "Giv besked til alle Afspillere",
@@ -214,7 +214,6 @@ const messages = Object.freeze({
   "ui.favorite": "Favorit",
   "ui.favorite_action_failed": "Favorithandling mislykkedes",
   "ui.favorite_action_sent": "Favorithandling sendt",
-  "ui.favorite_button_entity": "Enhed med favoritknap",
   "ui.favorite_center": "Favoritcenter",
   "ui.favorite_center_2": "Favoritcenter",
   "ui.favorite_radio": "Favorit Radio",
@@ -329,7 +328,6 @@ const messages = Object.freeze({
   "ui.main_bar_items_2": "De vigtigste elementer i baren",
   "ui.main_opacity": "Hovedopacitet",
   "ui.mainly_relevant_on_larger_layouts": "Hovedsageligt relevant p\u00e5 st\u00f8rre layouts.",
-  "ui.mass_queue_send_command_fallback": "mass_queue/send_command fallback",
   "ui.matches_the_microphone_setting_from_the_in_card_settings_screen": "Svarer til mikrofonindstillingen fra sk\u00e6rmen med kortindstillinger.",
   "ui.media": "Medier",
   "ui.media_2": "Medier",
