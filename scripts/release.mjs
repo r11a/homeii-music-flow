@@ -47,7 +47,7 @@ async function collectJavaScriptFiles(dir, prefix = "") {
 async function buildFileVersionMap(baseDir, files) {
   const fileVersions = new Map();
   for (const file of files) {
-    const text = await readFile(path.join(baseDir, ...file.split("/")), "utf8");
+    const text = (await readFile(path.join(baseDir, ...file.split("/")), "utf8")).replace(/\r\n?/g, "\n");
     fileVersions.set(file, createHash("sha256").update(text).digest("hex").slice(0, 10));
   }
   return fileVersions;
@@ -81,7 +81,8 @@ const localizationFiles = (await readdir(srcLocalizationPath))
 const localizationFileVersions = new Map();
 const localizationHash = createHash("sha256");
 for (const file of localizationFiles) {
-  const text = await readFile(path.join(srcLocalizationPath, file), "utf8");
+  // Git may check out CRLF on Windows and LF in CI; cache keys must match.
+  const text = (await readFile(path.join(srcLocalizationPath, file), "utf8")).replace(/\r\n?/g, "\n");
   const fileHash = createHash("sha256").update(text).digest("hex").slice(0, 10);
   localizationFileVersions.set(file, fileHash);
   localizationHash.update(file).update("\0").update(text).update("\0");
