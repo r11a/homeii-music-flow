@@ -58,14 +58,12 @@ export function validateBaseCardEditorConfig(config) {
   }
 
   assertCardIdIfDefined(config.card_id, "card_id");
-  assertValueInList(config.homeii_engine_mode, "homeii_engine_mode", ["auto", "off", "required"]);
+  assertStringArrayValuesIfDefined(config.search_result_order, "search_result_order", ["artists", "albums", "tracks", "playlists", "radio", "podcasts"]);
+  assertValueInList(config.homeii_engine_mode, "homeii_engine_mode", ["required"]);
   assertStringIfDefined(config.homeii_engine_instance_id, "homeii_engine_instance_id");
   assertStringIfDefined(config.homeii_engine_profile_id, "homeii_engine_profile_id");
   assertNumberIfDefined(config.homeii_engine_timeout_ms, "homeii_engine_timeout_ms");
   assertStringIfDefined(config.config_entry_id, "config_entry_id");
-  assertStringIfDefined(config.ma_url, "ma_url");
-  assertStringIfDefined(config.music_assistant_external_url, "music_assistant_external_url");
-  assertStringIfDefined(config.ma_token, "ma_token");
   assertStringIfDefined(config.active_player_helper_entity, "active_player_helper_entity");
   assertStringIfDefined(config.ma_interface_url, "ma_interface_url");
   assertValueInList(config.ma_interface_target, "ma_interface_target", ["_self", "_blank"]);
@@ -89,6 +87,7 @@ export function validateBaseCardEditorConfig(config) {
   assertNumberIfDefined(config.ambient_light_transition, "ambient_light_transition");
   assertNumberIfDefined(config.ambient_light_cooldown, "ambient_light_cooldown");
   assertBooleanIfDefined(config.screensaver_enabled, "screensaver_enabled");
+  assertBooleanIfDefined(config.lrclib_lyrics_enabled, "lrclib_lyrics_enabled");
   assertBooleanIfDefined(config.screensaver_auto_lyrics_when_playing, "screensaver_auto_lyrics_when_playing");
   assertBooleanIfDefined(config.screensaver_auto_lyrics, "screensaver_auto_lyrics");
   assertBooleanIfDefined(config.screensaver_controls_enabled, "screensaver_controls_enabled");
@@ -122,9 +121,6 @@ export function validateMobileCardEditorConfig(config) {
   assertValueInList(config.night_mode, "night_mode", ["off", "auto", "on"]);
   assertStringIfDefined(config.night_mode_auto_start, "night_mode_auto_start");
   assertStringIfDefined(config.night_mode_auto_end, "night_mode_auto_end");
-  assertStringIfDefined(config.favorite_button_entity, "favorite_button_entity");
-  assertBooleanIfDefined(config.allow_local_likes, "allow_local_likes");
-  assertBooleanIfDefined(config.use_mass_queue_send_command, "use_mass_queue_send_command");
   assertStringIfDefined(config.mobile_custom_color, "mobile_custom_color");
   assertValueInList(config.mobile_dynamic_theme_mode, "mobile_dynamic_theme_mode", ["off", "auto", "strong"]);
   assertValueInList(config.mobile_background_motion_mode, "mobile_background_motion_mode", ["off", "subtle", "strong", "extreme"]);
@@ -133,6 +129,8 @@ export function validateMobileCardEditorConfig(config) {
   assertNumberIfDefined(config.mobile_icon_scale, "mobile_icon_scale");
   assertBooleanIfDefined(config.mobile_footer_search_enabled, "mobile_footer_search_enabled");
   assertValueInList(config.mobile_footer_mode, "mobile_footer_mode", ["icon", "text", "both"]);
+  assertBooleanIfDefined(config.action_menu_labels, "action_menu_labels");
+  assertValueInList(config.player_design, "player_design", ["classic", "immersive"]);
   assertBooleanIfDefined(config.mobile_studio_shortcut, "mobile_studio_shortcut");
   assertBooleanIfDefined(config.mobile_home_shortcut, "mobile_home_shortcut");
   assertStringIfDefined(config.mobile_home_shortcut_path, "mobile_home_shortcut_path");
@@ -154,7 +152,6 @@ export function validateMobileCardEditorConfig(config) {
   for (let index = 1; index <= 10; index += 1) {
     assertStringIfDefined(config[`mobile_quick_action_${index}`], `mobile_quick_action_${index}`);
   }
-  assertValueInList(config.mobile_liked_mode, "mobile_liked_mode", ["ma", "local"]);
   assertValueInList(config.mobile_radio_source_mode, "mobile_radio_source_mode", ["combined", "ma_first", "ma_only", "radiobrowser_only"]);
   assertValueInList(config.mobile_swipe_mode, "mobile_swipe_mode", ["play", "browse"]);
   assertStringIfDefined(config.mobile_radio_browser_country, "mobile_radio_browser_country");

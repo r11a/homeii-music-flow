@@ -1,4 +1,5 @@
 import * as HomeiiEngineFoundation from "../core/engine-client.js";
+import { ensureInterfaceFont, interfaceStyles } from "../core/theme/interface.js";
 
 export function createHomeiiBaseMusicEditor(deps = {}) {
   const {
@@ -20,6 +21,7 @@ export function createHomeiiBaseMusicEditor(deps = {}) {
 return class HomeiiBaseMusicEditor extends HTMLElement {
   constructor() {
     super();
+    ensureInterfaceFont();
     this._config = HomeiiBaseMusicCard.getStubConfig();
     this._hass = null;
     this._editorRoot = null;
@@ -136,18 +138,6 @@ return class HomeiiBaseMusicEditor extends HTMLElement {
     this._editorSponsorLink.setAttribute("aria-label", label);
   }
 
-  _editorNormalizeUrl(value = "") {
-    return String(value || "").trim().replace(/\/$/, "");
-  }
-
-  _editorMaBrowserUrl() {
-    const internalUrl = this._editorNormalizeUrl(this._config?.ma_url);
-    const externalUrl = this._editorNormalizeUrl(this._config?.music_assistant_external_url || this._config?.ma_external_url);
-    const pageIsHttps = typeof window !== "undefined" && window.location?.protocol === "https:";
-    if (pageIsHttps && externalUrl) return externalUrl;
-    return internalUrl || externalUrl;
-  }
-
   _editorSanitizeDiagnosticUrl(value = "") {
     const raw = String(value || "").trim();
     if (!raw) return "";
@@ -211,14 +201,9 @@ return class HomeiiBaseMusicEditor extends HTMLElement {
     let output = String(text || "").replace(/Bearer\s+[A-Za-z0-9._-]+/g, "Bearer <redacted>");
     [
       this._editorCurrentOrigin(),
-      this._editorMaBrowserUrl(),
     ].filter(Boolean).forEach((url) => {
       output = output.split(String(url)).join(this._editorSanitizeDiagnosticUrl(url));
     });
-    try {
-      const sendspinUrl = this._editorMaBrowserUrl() ? this._editorSendspinWsUrl() : "";
-      if (sendspinUrl) output = output.split(sendspinUrl).join(this._editorSanitizeDiagnosticUrl(sendspinUrl));
-    } catch (_) {}
     return output.replace(/(https?|wss?):\/\/[^\s]+/gi, (match) => this._editorSanitizeDiagnosticUrl(match));
   }
 
@@ -273,57 +258,6 @@ return class HomeiiBaseMusicEditor extends HTMLElement {
     if (/^127\./.test(host) || /^10\./.test(host) || /^192\.168\./.test(host) || /^169\.254\./.test(host)) return true;
     const match = host.match(/^172\.(\d{1,2})\./);
     return !!(match && Number(match[1]) >= 16 && Number(match[1]) <= 31);
-  }
-
-  _editorIsIngressMaUrl(value = "") {
-    const raw = String(value || "").trim();
-    if (!raw) return false;
-    try {
-      const parsed = new URL(raw, typeof window !== "undefined" ? window.location.href : "http://homeii.local");
-      const path = String(parsed.pathname || "").toLowerCase();
-      return /(^|\/)[a-z0-9]+_music_assistant(\/|$)/.test(path) || path.includes("_music_assistant");
-    } catch (_) {
-      return raw.toLowerCase().includes("_music_assistant");
-    }
-  }
-
-  _editorDirectIssue(url = this._editorMaBrowserUrl()) {
-    const value = this._editorNormalizeUrl(url);
-    if (!value) return "";
-    if (this._editorIsIngressMaUrl(value)) return "ma_url points to the Home Assistant Music Assistant ingress page, not the direct Music Assistant API.";
-    if (typeof window !== "undefined" && window.location?.protocol === "https:") {
-      try {
-        const parsed = new URL(value, window.location.href);
-        if (parsed.protocol !== "https:") return "Dashboard is HTTPS but direct Music Assistant URL is HTTP. Integration mode can still work; Direct/Sendspin browser access needs HTTPS, local HTTP HA, or VPN/local access.";
-      } catch (error) {
-        return error?.message || "Could not parse ma_url.";
-      }
-    }
-    return "";
-  }
-
-  _editorAccessDetail(url = "") {
-    const raw = String(url || "").trim();
-    if (!raw) return "Integration mode: the browser talks to Home Assistant only.";
-    try {
-      const parsed = new URL(raw, typeof window !== "undefined" ? window.location.href : "http://homeii.local");
-      const maLocal = this._editorIsPrivateNetworkHost(parsed.hostname);
-      const haHost = typeof window !== "undefined" ? String(window.location?.hostname || "") : "";
-      const haLocal = this._editorIsPrivateNetworkHost(haHost);
-      if (maLocal && haHost && !haLocal) return "Music Assistant URL is local/private while Home Assistant looks external. Direct/Sendspin needs local network, VPN, or an HTTPS external MA URL.";
-      if (maLocal) return "Music Assistant URL is local/private. Direct/Sendspin should work only from the local network or VPN.";
-      return "Music Assistant URL looks externally routable from this browser.";
-    } catch (_) {
-      return "Could not parse Music Assistant URL for local/external access checks.";
-    }
-  }
-
-  _editorSendspinWsUrl() {
-    const baseUrl = this._editorMaBrowserUrl();
-    const base = new URL(baseUrl, typeof window !== "undefined" ? window.location.href : undefined);
-    const protocol = base.protocol === "https:" ? "wss:" : "ws:";
-    const path = base.pathname.replace(/\/$/, "");
-    return `${protocol}//${base.host}${path}/sendspin`;
   }
 
   _editorDiagnosticItem(status, title, detail = "", value = "") {
@@ -387,7 +321,7 @@ return class HomeiiBaseMusicEditor extends HTMLElement {
   async _editorDiagnosticEngineRow(add) {
     const mode = this._editorHomeiiEngineMode();
     if (!HomeiiEngineFoundation.homeiiEngineModeAllowsCalls(mode)) {
-      add("info", "HOMEii Flow Engine", "Engine calls are disabled in this card config. The card is using the normal frontend-only compatibility path.", mode);
+      add("fail", "HOMEii Flow Engine", "HOMEii Flow 6 requires the HOMEii Flow Engine integration. There is no frontend-only compatibility path.", mode);
       return;
     }
     try {
@@ -409,69 +343,13 @@ return class HomeiiBaseMusicEditor extends HTMLElement {
         add(playerCount ? "ok" : "warn", "Engine player state", `${playerCount} Music Assistant player(s), ${playingCount} playing, ${groupedCount} grouped.`);
       }
     } catch (error) {
-      const required = HomeiiEngineFoundation.homeiiEngineModeRequiresEngine(mode);
-      const detail = required
-        ? "Engine mode is Required, but the Home Assistant integration did not answer. Future Engine-backed features will not be available until the integration is installed and loaded."
-        : "Engine was not detected. This is OK: the card will continue using the current Home Assistant/Music Assistant frontend path.";
+      const detail = "Engine mode is Required, but the Home Assistant integration did not answer. HOMEii Flow 6 will not run until the integration is installed, loaded, and refreshed.";
       const suffix = error?.message ? ` Last error: ${error.message}` : "";
-      add(required ? "fail" : "info", "HOMEii Flow Engine", `${detail}${suffix}`, mode);
+      add("fail", "HOMEii Flow Engine", `${detail}${suffix}`, mode);
     }
-  }
-
-  async _editorCallDirectMaCommand(command, args = {}) {
-    const maUrl = this._editorMaBrowserUrl();
-    if (!maUrl) throw new Error("Direct Music Assistant API is not configured.");
-    const directIssue = this._editorDirectIssue(maUrl);
-    if (directIssue) throw new Error(directIssue);
-    if (typeof fetch !== "function") throw new Error("fetch is not available in this editor context.");
-    const headers = {
-      "Content-Type": "application/json",
-      "Accept": "application/json",
-    };
-    if (this._config?.ma_token) headers.Authorization = `Bearer ${this._config.ma_token}`;
-    const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
-    const timeout = controller ? setTimeout(() => controller.abort(), 8000) : null;
-    let response;
-    try {
-      response = await fetch(`${maUrl}/api`, {
-        method: "POST",
-        credentials: "include",
-        mode: "cors",
-        headers,
-        signal: controller?.signal,
-        body: JSON.stringify({
-          message_id: `editor_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-          command,
-          args,
-        }),
-      });
-    } finally {
-      if (timeout) clearTimeout(timeout);
-    }
-    const rawText = await response.text().catch(() => "");
-    let raw = {};
-    try {
-      raw = rawText ? JSON.parse(rawText) : {};
-    } catch (_) {
-      raw = { error: rawText || `${command} failed` };
-    }
-    if (!response.ok || raw?.error_code) {
-      throw new Error(raw?.details || raw?.error || `${command} failed (${response.status})`);
-    }
-    return raw?.result ?? raw;
-  }
-
-  _editorDirectApiFailureDetail(error = null) {
-    const detail = String(error?.message || error || "").trim();
-    const lower = detail.toLowerCase();
-    if (lower.includes("failed to fetch") || lower.includes("networkerror") || lower.includes("cors") || lower.includes("preflight")) {
-      return "Direct Music Assistant API is blocked by the browser before HOMEii receives a response. This is usually CORS/preflight or local-network browser access. Core playback can still work through the Home Assistant integration; leave ma_url empty unless you need Direct API or Sendspin.";
-    }
-    return detail || "Direct API request failed.";
   }
 
   _editorDiagnosticsReportText(items = []) {
-    const maUrl = this._editorMaBrowserUrl();
     const lines = [
       "HOMEii Music Flow Editor Diagnostics",
       "Diagnostics: v7",
@@ -483,10 +361,7 @@ return class HomeiiBaseMusicEditor extends HTMLElement {
       "Privacy: external/private hostnames are redacted by default.",
       `HA URL: ${this._editorCurrentOrigin() ? this._editorSanitizeDiagnosticUrl(this._editorCurrentOrigin()) : ""}`,
       `HA URL detail: ${this._editorDiagnosticUrlDescription(this._editorCurrentOrigin())}`,
-      `ma_url: ${maUrl ? this._editorSanitizeDiagnosticUrl(maUrl) : "(empty)"}`,
-      `ma_url detail: ${this._editorDiagnosticUrlDescription(maUrl)}`,
-      `access_path: ${this._editorAccessDetail(maUrl)}`,
-      `ma_token configured: ${this._config?.ma_token ? "yes" : "no"}`,
+      "music_assistant_transport: HOMEii Flow Engine",
       `config_entry_id configured: ${String(this._config?.config_entry_id || "").trim() ? "yes" : "no"}`,
       `homeii_engine_mode: ${this._editorHomeiiEngineMode()}`,
       `homeii_engine_instance_id configured: ${this._config?.homeii_engine_instance_id ? "yes" : "no"}`,
@@ -502,7 +377,7 @@ return class HomeiiBaseMusicEditor extends HTMLElement {
     const list = Array.isArray(items) ? items : [];
     const failures = list.filter((item) => item.status === "fail").length;
     const warnings = list.filter((item) => item.status === "warn").length;
-    if (!list.length) return "Run diagnostics to check the current browser, HA integration, Direct API, and Sendspin readiness.";
+    if (!list.length) return "Run diagnostics to check the current browser, Home Assistant integration, and HOMEii Flow Engine readiness.";
     if (failures) return `${failures} check${failures === 1 ? "" : "s"} need attention.`;
     if (warnings) return `${warnings} check${warnings === 1 ? "" : "s"} need review.`;
     return "All visible setup checks passed.";
@@ -542,8 +417,6 @@ return class HomeiiBaseMusicEditor extends HTMLElement {
   async _runEditorDiagnostics() {
     const items = [];
     const add = (status, title, detail = "", value = "") => items.push(this._editorDiagnosticItem(status, title, detail, value));
-    const maUrl = this._editorMaBrowserUrl();
-    const directIssue = maUrl ? this._editorDirectIssue(maUrl) : "";
     const services = Object.keys(this._hass?.services?.music_assistant || {});
     const states = this._hass?.states || {};
     const entities = this._hass?.entities || {};
@@ -561,9 +434,9 @@ return class HomeiiBaseMusicEditor extends HTMLElement {
     add("info", "Diagnostic privacy", "External/private hostnames are redacted in visible and copied diagnostic output.");
     add(this._hass ? "ok" : "fail", "Home Assistant frontend", this._hass ? "Editor has a Home Assistant frontend object." : "Editor does not have a Home Assistant frontend object.");
     add(services.length ? "ok" : "fail", "Music Assistant services", services.length ? `${services.length} service(s) are exposed by Home Assistant.` : "No music_assistant services are exposed by Home Assistant.");
-    add(services.length ? "ok" : "warn", "Integration mode", services.length ? "Core card features can run through Home Assistant. HTTP/HTTPS only affects optional Direct/Sendspin browser access." : "Home Assistant does not expose music_assistant services.");
+    add(services.length ? "ok" : "warn", "Engine backend mode", services.length ? "HOMEii Flow 6 uses HOMEii Flow Engine as the required backend. Browser-direct Music Assistant access is not used for core card routing." : "Home Assistant does not expose music_assistant services for HOMEii Flow Engine.");
     await this._editorDiagnosticEngineRow(add);
-    add(services.length || maUrl ? "ok" : "fail", "Integration signal", `services ${services.length ? "yes" : "no"}, direct ${maUrl ? "configured" : "empty"}`);
+    add(services.length ? "ok" : "fail", "Integration signal", `services ${services.length ? "yes" : "no"}, authenticated transport HOMEii Flow Engine`);
     add(players.length ? "ok" : (services.length && genericPlayers.length ? "warn" : "fail"), "Music Assistant players", players.length ? `${players.length} strict MA player(s), ${genericPlayers.length} generic HA media_player(s).` : `${genericPlayers.length} generic HA media_player(s), but no strict Music Assistant player markers were detected.`);
     add("info", "Player filters", `${pinned.length} pinned, ${excluded.length} excluded.`);
 
@@ -586,44 +459,7 @@ return class HomeiiBaseMusicEditor extends HTMLElement {
       add("warn", "Music Assistant config entry", "Home Assistant connection API is not available in this editor context.");
     }
 
-    if (!maUrl) {
-      add(services.length ? "ok" : "info", "ma_url", "Empty is OK for normal Home Assistant integration mode. Direct API and Sendspin need a separate direct Music Assistant URL.", "(empty)");
-    } else if (directIssue) {
-      add(services.length ? "warn" : "fail", "ma_url", directIssue, this._editorSanitizeDiagnosticUrl(maUrl));
-    } else {
-      add("ok", "ma_url", `Direct Music Assistant URL is configured. Browser reachability is checked separately. ${this._editorDiagnosticUrlDescription(maUrl)}`, this._editorSanitizeDiagnosticUrl(maUrl));
-    }
-    add(maUrl ? (this._editorAccessDetail(maUrl).includes("looks external") ? "ok" : "warn") : "info", "Access path", this._editorAccessDetail(maUrl));
-
-    if (maUrl && !directIssue) {
-      try {
-        const rawPlayers = await this._editorCallDirectMaCommand("players/all", { return_unavailable: true, return_disabled: false });
-        const count = Array.isArray(rawPlayers) ? rawPlayers.length : (Array.isArray(rawPlayers?.players) ? rawPlayers.players.length : 0);
-        add("ok", "Direct Music Assistant API", `Direct API responded with ${count} player(s).`);
-      } catch (error) {
-        add(services.length ? "warn" : "fail", "Direct Music Assistant API", this._editorDirectApiFailureDetail(error));
-      }
-    } else {
-      add("info", "Direct Music Assistant API", maUrl ? "Skipped because ma_url needs attention." : "Skipped because ma_url is empty.");
-    }
-
-    const win = typeof window !== "undefined" ? window : {};
-    const hasWebSocket = typeof WebSocket !== "undefined" || typeof win.WebSocket !== "undefined";
-    const hasAudioContext = typeof AudioContext !== "undefined" || typeof win.AudioContext !== "undefined" || typeof win.webkitAudioContext !== "undefined";
-    add(hasWebSocket ? "ok" : "fail", "Sendspin browser support", `WebSocket ${hasWebSocket ? "yes" : "no"}, AudioContext ${hasAudioContext ? "yes" : "no"}`);
-    if (!maUrl) {
-      add("info", "Sendspin endpoint", "This-device Sendspin playback needs a direct Music Assistant URL and token. Integration mode can still work normally.", services.length ? "integration mode" : "(empty)");
-    } else if (directIssue) {
-      add(services.length ? "warn" : "fail", "Sendspin endpoint", `Direct browser access is not ready: ${directIssue}`, this._editorSanitizeDiagnosticUrl(maUrl));
-    } else if (!this._config?.ma_token) {
-      add("warn", "Sendspin endpoint", "Direct Music Assistant URL is available, but ma_token is missing.");
-    } else {
-      try {
-        add(hasWebSocket ? "ok" : "fail", "Sendspin endpoint", "Computed Sendspin WebSocket endpoint. This readiness check does not open a socket.", this._editorSanitizeDiagnosticUrl(this._editorSendspinWsUrl()));
-      } catch (error) {
-        add("fail", "Sendspin endpoint", error?.message || "Could not compute Sendspin WebSocket endpoint.");
-      }
-    }
+    add("ok", "Music Assistant transport", "URL selection, authentication, event streaming, caching, and artwork proxying are owned by HOMEii Flow Engine. No MA token or server URL is stored in the card.");
 
     this._editorDiagnosticsItems = items;
     this._editorDiagnosticsReport = this._editorDiagnosticsReportText(items);
@@ -696,6 +532,7 @@ return class HomeiiBaseMusicEditor extends HTMLElement {
     const root = this.attachShadow({ mode: "open" });
     root.innerHTML = `
       <style>
+        ${interfaceStyles}
         :host {
           display:block;
           direction:${this._isHebrew() ? "rtl" : "ltr"};

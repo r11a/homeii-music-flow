@@ -13,6 +13,7 @@ const browserGlobals = {
 export default [
   {
     ignores: [
+      ".release/**",
       "BACKUP/**",
       "backups/**",
       "mobile/**",

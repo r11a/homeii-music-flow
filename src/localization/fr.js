@@ -1,6 +1,7 @@
 // Generated HOMEii Music Flow localization dictionary.
 // Keep keys stable. Translate only the string values.
 const messages = Object.freeze({
+  "ui.action_menu_labels": "Noms des actions sous les icônes",
   "ui.a_guided_music_wizard": "Un assistant musical guidé",
   "ui.a_radio_station": "Une station de radio",
   "ui.accent_color": "Couleur d'accentuation",
@@ -30,7 +31,6 @@ const messages = Object.freeze({
   "ui.all_players_2": "tous les lecteurs",
   "ui.all_podcasts": "Tous les Podcasts",
   "ui.all_tracks": "Toutes les pistes",
-  "ui.allow_local_likes": "Autoriser les titres préférés locaux",
   "ui.always_visible": "Toujours visible",
   "ui.announce": "Faire une annonce",
   "ui.announce_to_all_players": "Faire une annonce à tous les lecteurs",
@@ -212,7 +212,6 @@ const messages = Object.freeze({
   "ui.favorite": "Favoris",
   "ui.favorite_action_failed": "Échec de l'ajout aux favoris",
   "ui.favorite_action_sent": "Action d'ajout aux favoris envoyées",
-  "ui.favorite_button_entity": "Entité du bouton favoris",
   "ui.favorite_center": "centre des favoris",
   "ui.favorite_center_2": "Centre des Favoris",
   "ui.favorite_radio": "Radio préférée",
@@ -327,7 +326,6 @@ const messages = Object.freeze({
   "ui.main_bar_items_2": "Items de la barre principale",
   "ui.main_opacity": "Transparence générale",
   "ui.mainly_relevant_on_larger_layouts": "Applicable principalement aux affichages larges.",
-  "ui.mass_queue_send_command_fallback": "mass_queue/send_command fallback",
   "ui.matches_the_microphone_setting_from_the_in_card_settings_screen": "Utilise le même réglage de microphone que les paramètres intégrés.",
   "ui.media": "Média",
   "ui.media_2": "Média",

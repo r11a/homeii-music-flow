@@ -23,6 +23,10 @@ const vendorEmblaPath = path.join(rootDir, "vendor", "embla-carousel.umd.js");
 const distVendorDir = path.join(rootDir, "dist", "vendor");
 const brandLogoPath = path.join(rootDir, "docs", "brand", "homeii-flow-logo.svg");
 const distLogoPath = path.join(rootDir, "dist", "homeii-flow-logo.svg");
+const brandLogoPngPath = path.join(rootDir, "docs", "brand", "homeii-flow-logo.png");
+const distLogoPngPath = path.join(rootDir, "dist", "homeii-flow-logo.png");
+const brandIconPngPath = path.join(rootDir, "docs", "brand", "homeii-flow-icon.png");
+const distIconPngPath = path.join(rootDir, "dist", "homeii-flow-icon.png");
 
 async function collectJavaScriptFiles(dir, prefix = "") {
   const entries = (await readdir(dir, { withFileTypes: true }))
@@ -66,6 +70,11 @@ function versionFolderImports(text, folder, version, fileVersions, fallback) {
 
 const sourceText = await readFile(srcMainPath, "utf8");
 const version = extractCardVersion(sourceText);
+const packageMetadata = JSON.parse(await readFile(path.join(rootDir, "package.json"), "utf8"));
+if (packageMetadata.version !== version) throw new Error("Source and package versions must match before release");
+if (preserveMain && extractCardVersion(await readFile(distMainPath, "utf8")) !== version) {
+  throw new Error("Built bundle version must match the source before release");
+}
 const localizationFiles = (await readdir(srcLocalizationPath))
   .filter((file) => file.endsWith(".js"))
   .sort();
@@ -129,5 +138,7 @@ await cp(srcSendspinPath, distSendspinPath, { recursive: true });
 await mkdir(distVendorDir, { recursive: true });
 await copyFile(vendorEmblaPath, path.join(distVendorDir, "embla-carousel.umd.js"));
 await copyFile(brandLogoPath, distLogoPath);
+await copyFile(brandLogoPngPath, distLogoPngPath);
+await copyFile(brandIconPngPath, distIconPngPath);
 
 console.log(`Synced Homeii release artifacts for ${version}`);

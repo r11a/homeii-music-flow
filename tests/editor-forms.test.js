@@ -37,8 +37,13 @@ describe("editor forms", () => {
       { value: "en", label: "English" },
       { value: "he", label: "Hebrew" },
     ]);
-    expect(JSON.stringify(form.schema.find((section) => section.name === "connection_section"))).toContain("homeii_engine_mode");
-    expect(form.computeLabel({ name: "ma_url" })).toBe("ui.music_assistant_url");
+    const connectionSchema = JSON.stringify(form.schema.find((section) => section.name === "connection_section"));
+    expect(connectionSchema).toContain("homeii_engine_mode");
+    expect(connectionSchema).not.toContain("ma_url");
+    expect(connectionSchema).not.toContain("ma_token");
+    expect(connectionSchema).not.toContain("music_assistant_external_url");
+    expect(connectionSchema).toContain("lrclib_lyrics_enabled");
+    expect(form.computeHelper({ name: "lrclib_lyrics_enabled" })).toContain("https://lrclib.net");
     expect(form.computeLabel({ name: "homeii_engine_mode" })).toBe("HOMEii Flow Engine");
     expect(() => form.assertConfig(null)).toThrow("Card config must be an object");
   });
@@ -51,7 +56,7 @@ describe("editor forms", () => {
     expect(texts.options.mobile_quick_action_slots[0]).toEqual({ value: "", label: "ui.none" });
     expect(texts.options.mobile_quick_actions.some((option) => option.value === "voice")).toBe(true);
     expect(texts.options.mobile_quick_actions.some((option) => option.value === "queue_flow")).toBe(true);
-    expect(texts.options.homeii_engine_mode.map((option) => option.value)).toEqual(["auto", "off", "required"]);
+    expect(texts.options.homeii_engine_mode.map((option) => option.value)).toEqual(["required"]);
     expect(texts.options.mobile_layout_mode.map((option) => option.value)).toEqual(["auto", "full", "edge_to_edge"]);
     expect(texts.options.mobile_radio_source_mode.map((option) => option.value)).toEqual(["combined", "ma_first", "ma_only", "radiobrowser_only"]);
     expect(texts.options.screensaver_control_buttons.some((option) => option.value === "lyrics")).toBe(true);
@@ -71,9 +76,12 @@ describe("editor forms", () => {
     expect(form.schema.some((section) => section.name === "voice_assistant_section")).toBe(true);
     expect(form.schema.some((section) => section.name === "screensaver_section")).toBe(true);
     expect(JSON.stringify(form.schema.find((section) => section.name === "screensaver_section"))).toContain("screensaver_auto_lyrics_when_playing");
+    expect(JSON.stringify(form.schema)).toContain("lrclib_lyrics_enabled");
     expect(JSON.stringify(form.schema.find((section) => section.name === "smart_home_section"))).not.toContain("screensaver_enabled");
     expect(JSON.stringify(form.schema)).toContain("mobile_layout_mode");
     expect(JSON.stringify(form.schema)).toContain("homeii_engine_mode");
+    expect(JSON.stringify(form.schema)).not.toContain("ma_url");
+    expect(JSON.stringify(form.schema)).not.toContain("ma_token");
     expect(JSON.stringify(form.schema)).toContain("mobile_cover_flow");
     expect(JSON.stringify(form.schema)).toContain("mobile_radio_source_mode");
     expect(JSON.stringify(form.schema)).not.toContain('"mobile_queue_flow"');
@@ -81,6 +89,7 @@ describe("editor forms", () => {
     expect(form.computeHelper({ name: "mobile_layout_mode" })).toContain("Edge to edge opens");
     expect(form.computeHelper({ name: "mobile_cover_flow" })).toContain("main artwork area");
     expect(form.computeHelper({ name: "homeii_engine_mode" })).toContain("HOMEii Flow Engine");
+    expect(form.computeHelper({ name: "lrclib_lyrics_enabled" })).toContain("Disabled by default");
   });
 
   it("builds radio browser country selector options through the shared country module", () => {

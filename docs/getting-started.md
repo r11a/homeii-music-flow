@@ -8,10 +8,11 @@ Confirm these first:
 
 - Music Assistant is installed and running.
 - Music Assistant is connected to Home Assistant.
+- HOMEii Flow Engine `0.7.2` or newer is installed and loaded when using HOMEii Music Flow 6.0.0 or newer.
 - Home Assistant shows at least one Music Assistant player as a `media_player`.
 - You can control that player from Home Assistant before adding HOMEii Music Flow.
 
-HOMEii Music Flow is a frontend card. It does not replace Music Assistant and it does not create players by itself.
+HOMEii Music Flow 6.0.0 is a visual frontend for HOMEii Flow Engine. It does not replace Music Assistant and it does not create players by itself, but it also does not run without the Engine.
 
 ## Install With HACS
 
@@ -52,7 +53,7 @@ If HACS does not add the resource automatically, add:
 3. Add this Dashboard resource:
 
 ```text
-/local/community/homeii-music-flow/homeii-music-flow.js?v=5.9.3
+/local/community/homeii-music-flow/homeii-music-flow.js?v=6.0.0
 ```
 
 4. Add the card:

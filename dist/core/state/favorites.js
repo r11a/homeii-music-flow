@@ -219,14 +219,14 @@ export function resolveCurrentMediaFavoriteState(
   if (override?.uri === uri && Number(now || 0) - Number(override?.ts || 0) < CURRENT_MEDIA_FAVORITE_OVERRIDE_WINDOW_MS) {
     return !!override.liked;
   }
+  if (useMaLikedMode && Array.isArray(likedItems)) {
+    return likedItems.some((item) => compareMediaRefsFn(String(item?.uri || "").trim(), uri, item?.media_type || "track"))
+      || !!matchFavoriteLibraryItemFn(currentEntry || {}, likedItems, currentEntry?.media_type || "track");
+  }
   const queueFavorite = queueItem?.media_item?.favorite;
   if (typeof queueFavorite === "boolean") return queueFavorite;
   if (typeof queueItem?.favorite === "boolean") return queueItem.favorite;
   if (useMaLikedMode) {
-    if (Array.isArray(likedItems)) {
-      return likedItems.some((item) => compareMediaRefsFn(String(item?.uri || "").trim(), uri, item?.media_type || "track"))
-        || !!matchFavoriteLibraryItemFn(currentEntry || {}, likedItems, currentEntry?.media_type || "track");
-    }
     return false;
   }
   if (localLikedUris instanceof Set) return localLikedUris.has(uri);

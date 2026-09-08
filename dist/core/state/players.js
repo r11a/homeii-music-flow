@@ -144,6 +144,11 @@ export function getThisDevicePlayer(players = [], rememberedId = "") {
   return (Array.isArray(players) ? players : []).find((player) => player?.entity_id === target) || null;
 }
 
+export function isPlayerAvailable(player = null) {
+  return !!player && player.available !== false && player.attributes?.available !== false
+    && !["unavailable", "unknown"].includes(String(player.state || "").toLowerCase());
+}
+
 export function resolvePinnedPlayerEntities(preferredIds = [], players = []) {
   const validIds = new Set((Array.isArray(players) ? players : []).map((player) => String(player?.entity_id || "").toLowerCase()));
   return (Array.isArray(preferredIds) ? preferredIds : [])
@@ -168,7 +173,7 @@ export function resolvePreferredFrontPlayerEntity(players = [], {
   const orderIndex = new Map((Array.isArray(orderedEntityIds) ? orderedEntityIds : [])
     .map((entityId, index) => [String(entityId || "").trim(), index])
     .filter(([entityId]) => !!entityId));
-  const usable = (player) => !!player?.entity_id && !isExternalBrowserPlayerFn(player);
+  const usable = (player) => !!player?.entity_id && isPlayerAvailable(player) && !isExternalBrowserPlayerFn(player);
   const usableById = (entityId) => {
     const player = byId.get(String(entityId || "").trim());
     return usable(player) ? player : null;
@@ -328,12 +333,22 @@ export function playerGroupMemberNames(player = null, players = []) {
 export function groupAverageVolume(player = null, players = []) {
   const ids = playerGroupMemberIds(player);
   const byId = new Map((Array.isArray(players) ? players : []).map((entry) => [entry?.entity_id, entry]));
-  const volumes = ids
-    .map((entityId) => byId.get(entityId)?.attributes?.volume_level)
-    .map((value) => Number(value))
-    .filter((value) => Number.isFinite(value));
-  if (!volumes.length) return Math.round((player?.attributes?.volume_level || 0) * 100);
+  const volumes = ids.length ? ids.map((entityId) => playerVolumeValue(byId.get(entityId))) : [playerVolumeValue(player)];
+  if (volumes.some((value) => value === null)) return null;
   return Math.round((volumes.reduce((sum, value) => sum + value, 0) / volumes.length) * 100);
+}
+
+export function playerVolumeValue(player = null) {
+  const raw = player?.attributes?.volume_level;
+  if (raw === null || raw === undefined || raw === "") return null;
+  const value = Number(raw);
+  return Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : null;
+}
+
+export function playerCanSetVolume(player = null) {
+  if (playerVolumeValue(player) === null || player?.available === false || player?.attributes?.available === false) return false;
+  const features = player?.attributes?.supported_features;
+  return !Array.isArray(features) || features.includes("volume_set");
 }
 
 export function groupedPlayerIds(players = []) {

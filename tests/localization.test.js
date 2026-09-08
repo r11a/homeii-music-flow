@@ -16,7 +16,8 @@ describe("localization", () => {
     expect(translate("fr", "ui.home")).toBe("Accueil");
     expect(translate("it", "ui.now_playing")).toBe("In riproduzione");
     expect(translate("zh-CN", "ui.home")).toBe("首页");
-    expect(translate("de", "ui.home")).toBe("Home");
+    expect(translate("de", "ui.home")).toBe("Startseite");
+    expect(translate("nl", "ui.home")).toBe("Home");
     expect(translate("he", "missing.key", {}, "Fallback")).toBe("Fallback");
   });
 
@@ -34,11 +35,14 @@ describe("localization", () => {
     expect(detectLanguage({ configLanguage: "it-IT" })).toBe("it");
     expect(detectLanguage({ configLanguage: "lt" })).toBe("lt");
     expect(detectLanguage({ configLanguage: "zh-CN" })).toBe("zh");
-    expect(detectLanguage({ configLanguage: "de" })).toBe("en");
+    expect(detectLanguage({ configLanguage: "de" })).toBe("de");
+    expect(detectLanguage({ configLanguage: "de-AT" })).toBe("de");
+    expect(detectLanguage({ configLanguage: "auto", hass: { locale: { language: "de-DE" } } })).toBe("de");
     expect(detectLanguage({ configLanguage: "auto", hass: { locale: { language: "he-IL" } } })).toBe("he");
   });
 
   it("offers community languages in the language picker options", () => {
+    expect(LANGUAGE_OPTIONS).toContainEqual({value:"de",label:"Deutsch"});
     expect(LANGUAGE_OPTIONS).toContainEqual({
       value: "da",
       label: "Dansk",
@@ -76,6 +80,11 @@ describe("localization", () => {
     const englishKeys = Object.keys(DICTIONARIES.en).sort();
     for (const [language, dictionary] of Object.entries(DICTIONARIES)) {
       expect(Object.keys(dictionary).sort(), language).toEqual(englishKeys);
+    }
+  });
+  it("preserves every German interpolation placeholder", () => {
+    for (const [key,value] of Object.entries(DICTIONARIES.en)) {
+      expect((DICTIONARIES.de[key].match(/\{\w+\}/g) || []).sort(),key).toEqual((value.match(/\{\w+\}/g) || []).sort());
     }
   });
 });

@@ -25,7 +25,7 @@ https://github.com/user-attachments/assets/a0076e6e-0352-40f8-ac37-35737e717a80
 </p>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/r11a/homeii-music-flow/main/docs/brand/homeii-flow-logo.svg" alt="HOMEii Flow logo" width="280">
+  <img src="https://raw.githubusercontent.com/r11a/homeii-music-flow/main/docs/brand/homeii-flow-logo.png" alt="HOMEii Flow logo" width="360">
 </p>
 
 <p align="center">
@@ -73,6 +73,18 @@ https://github.com/user-attachments/assets/a0076e6e-0352-40f8-ac37-35737e717a80
 HOMEii Flow is a custom Home Assistant Dashboard card for Music Assistant. It turns music control into a polished listening surface: visual, fast, personal, and comfortable on both wall tablets and phones.
 
 HOMEii Flow started from my own daily use of Home Assistant and Music Assistant. I wanted it to feel less like a technical dashboard widget and more like a real music app inside Home Assistant, so a lot of thought went into the flow, touch interactions, Hebrew/RTL comfort, wall-tablet behavior, mobile details, and the small moments that make choosing music feel natural at home.
+
+## 6.0.0 Engine-First Architecture
+
+HOMEii Flow 6.0.0 is a breaking-change generation.
+
+Starting with 6.0.0, the card requires the **HOMEii Flow Engine** Home Assistant integration, version `0.7.6` or newer. The card is the visual interface; the Engine is the required backend for players, playback, revisioned queue/library/favorites state, search, artwork, grouping, schedules, timers, statistics, announcements, diagnostics, and the authenticated Music Assistant API/event bridge.
+
+For 6.0.0 the Engine is also the only authenticated Music Assistant transport. Library shelves and media details use persistent stale-while-revalidate caches, artwork uses stable same-origin proxy URLs, and long queue/library pages are rendered incrementally. This keeps credentials out of the browser and avoids duplicate WebSocket handshakes.
+
+The current reliability audit and live validation limits are documented in [the September 7 audit](docs/RELIABILITY_AUDIT_2026_09_07_HE.md). This working build is not yet approved for a public 6.0.0 release.
+
+There is no legacy frontend-only fallback in 6.0.0. Users who do not want to install the Engine should stay on the latest 5.9.x release.
 
 ## 5.9.3 Stability Release
 
@@ -152,14 +164,10 @@ type: custom:homeii-music-flow
 
 - Home Assistant with Dashboard custom cards enabled.
 - Music Assistant installed, running, and connected to Home Assistant.
+- HOMEii Flow Engine `0.6.1` or newer installed and loaded for HOMEii Flow 6.0.0 and newer.
 - At least one Music Assistant player exposed as a Home Assistant `media_player`.
 - HACS for the easiest install path, or manual access to `/config/www/community/`.
 - A modern browser for the dashboard: Chrome, Edge, Safari, or a modern Android/iOS browser.
-- For the local Sendspin browser player: a direct Music Assistant URL and Music Assistant token configured in the card settings.
-- For best Sendspin performance: the browser device and Music Assistant should be on the same local network.
-- Sendspin URL security must match the dashboard: if Home Assistant is opened over `https://`, configure Music Assistant with an `https://` URL so HOMEii Flow can use `wss://`; browsers block `http://` / `ws://` Sendspin from an HTTPS dashboard.
-- If Home Assistant is opened locally over `http://`, a local `http://` Music Assistant URL is usually fine and HOMEii Flow will use `ws://`.
-- Mobile browsers can pause audio and WebSocket work when the app is backgrounded or the phone is locked. HOMEii Flow remembers the active "This device" intent during the current app/browser session and reconnects when the dashboard becomes active again.
 - Optional: a configured `tts.*` entity for text-to-speech announcements.
 - Optional but recommended: correct Home Assistant internal/external URLs, especially for phones, tablets, and remote access.
 
@@ -169,8 +177,8 @@ If the card loads but feels incomplete, check these first:
 
 - Music Assistant is installed, running, and exposes at least one player as a Home Assistant `media_player`.
 - The Dashboard resource points to `/hacsfiles/homeii-music-flow/homeii-music-flow.js` for HACS, or to the copied `/local/community/...` file for manual installs.
-- If you use HOMEii Flow remotely, confirm Home Assistant external/internal URLs are correct. For Direct Music Assistant features, `ma_url` should be reachable from the browser you are using, not only from the local network.
-- If artwork is missing only when away from home, prefer Home Assistant-accessible artwork paths or expose Music Assistant through a secure reachable URL. HOMEii Flow now avoids private-network artwork URLs when the browser is remote, but a local-only MA URL can still limit Direct API artwork.
+- If you use HOMEii Flow remotely, confirm Home Assistant external/internal URLs are correct. The browser communicates only with Home Assistant; the Engine communicates with Music Assistant.
+- If artwork is missing only when away from home, verify the Engine artwork proxy in Diagnostics. The browser should not need direct access to Music Assistant.
 - If no players are shown, check Music Assistant player exposure and remove overly strict pinned-player filters from the card settings.
 - Optional automation helper: create an `input_text`, then set `active_player_helper_entity` so automations can read the current HOMEii Flow target.
 
@@ -281,34 +289,7 @@ Rules:
 
 HOMEii Flow includes a local browser player flow powered by Sendspin. In the card this appears as **This device**.
 
-What it does:
-
-- connects the current browser directly to Music Assistant through Sendspin
-- registers the phone, tablet, PC browser, or wall panel as a playable Music Assistant target
-- lets the device appear in the player list once Music Assistant publishes it back to Home Assistant
-- keeps a HOMEii-specific player identity so the card does not accidentally pick a random browser player from another tab
-- keeps the active local player alive at dashboard/tab level while moving between Dashboard pages in the same Home Assistant session
-- removes the HOMEii local player immediately when **Disconnect this device** is used
-- packages the required `sendspin-js` runtime in `dist/sendspin-js/`
-
-What you need:
-
-1. Music Assistant running and reachable from the device.
-2. `ma_url` configured in the card settings.
-3. `ma_token` configured in the card settings.
-4. Press **Connect this device** from the player screen.
-5. Select the new HOMEii browser player when it appears.
-
-Notes:
-
-- Sendspin is built into Music Assistant and the provider is enabled by default.
-- Sendspin is still a technical preview in Music Assistant, so behavior can change over time.
-- Local network playback is preferred. Remote playback depends on Music Assistant, browser, WebRTC, and network conditions.
-- HTTPS matters: an HTTPS Home Assistant dashboard cannot open an insecure `ws://` Sendspin connection. Use an HTTPS Music Assistant URL, or open Home Assistant locally over HTTP when testing on the same network.
-- Mobile lifecycle matters: iOS, Android, and WebView-based apps can suspend browser audio/WebSocket work when the app is backgrounded or the phone is locked. HOMEii Flow will reconnect the HOMEii Sendspin player when the dashboard becomes active again, but it cannot force the operating system to keep a locked/backgrounded browser alive forever.
-- Dashboard navigation is handled inside HOMEii Flow: the local Sendspin audio element and connection intent are kept outside the card instance, so moving between dashboard pages should not require reconnecting.
-- Use **Disconnect this device** in the player screen when you want HOMEii Flow to stop reconnecting the local browser player.
-- Mobile browsers may require a user gesture before audio playback is allowed after a reconnect.
+HOMEii Flow 6 does not expose Music Assistant credentials to the browser. The built-in **This device** Sendspin player is therefore disabled in Engine-only mode. Existing Music Assistant speaker/player entities remain fully supported.
 
 ## Screenshots
 
@@ -428,6 +409,12 @@ Notes:
 - Lyrics font size controls with `+`, `-`, and reset
 - Lyrics cache and unavailable states
 - Mobile/tablet layout fixes for long song and artist names
+
+#### External lyrics and privacy
+
+Lyrics embedded in Music Assistant metadata stay inside the Home Assistant/Music Assistant connection. The optional LRCLIB fallback is disabled by default.
+
+If you explicitly enable `lrclib_lyrics_enabled: true`, and Music Assistant has not supplied embedded lyrics, the browser sends the current track title, artist, album, and duration to `https://lrclib.net/api/get` and may then use `https://lrclib.net/api/search`. This exposes those listening details and the browser's public IP address to LRCLIB. Leave the option disabled for a fully local lyrics path.
 
 ### Timers, Schedules, And Night Mode
 
@@ -802,23 +789,17 @@ show_theme_toggle: true
 active_player_helper_entity: input_text.homeii_flow_active_player
 ```
 
-### Sendspin / This Device Configuration
-
-```yaml
-type: custom:homeii-music-flow
-ma_url: "http://YOUR_MUSIC_ASSISTANT_HOST:8095"
-ma_token: "YOUR_MUSIC_ASSISTANT_TOKEN"
-```
-
 Use the visual editor or in-card settings whenever possible.
 
 ## Project Structure
 
 ```text
-dist/homeii-music-flow.js             HACS/manual runtime
-dist/sendspin-js/                     packaged local Sendspin browser player files
-dist/vendor/embla-carousel.umd.js     packaged swipe support
-dist/homeii-flow-logo.svg             packaged brand asset
+dist/homeii-music-flow.js             self-contained HACS/manual runtime (includes Sendspin and Embla)
+dist/sendspin-js/                     source/license copy; not loaded by the production bundle
+dist/vendor/embla-carousel.umd.js     source/license copy; not loaded by the production bundle
+dist/homeii-flow-logo.svg             packaged legacy brand asset
+dist/homeii-flow-logo.png             packaged transparent HOMEii Flow logo
+dist/homeii-flow-icon.png             packaged HOMEii Flow app icon
 src/homeii-music-flow.js              source snapshot for the card
 src/sendspin-js/                      source copy of Sendspin browser player files
 vendor/embla-carousel.umd.js          source copy of Embla used by the release package
@@ -833,7 +814,7 @@ docs/media/                           GitHub/HACS README screenshots and GIF
 docs/qa-matrix.md                     viewport/theme/interaction release gate
 ```
 
-HACS plugin repositories must expose the dashboard JavaScript in `dist/` or the repository root. HOMEii Flow keeps the full installable runtime in `dist/` because the local Sendspin player, Embla, and logo asset are required at runtime.
+HACS installs the single `dist/homeii-music-flow.js` dashboard resource. The production bundle inlines the Sendspin browser player and Embla carousel, does not load sibling JavaScript files, and does not fetch external web fonts. The extra files in `dist/` support manual inspection, licensing, and legacy manual installs; they are not runtime dependencies for HACS.
 
 ## Development
 
@@ -854,9 +835,8 @@ Before publishing a release:
 - Run `npm run lint`.
 - Run `npm test`.
 - Confirm `dist/homeii-music-flow.js` exists.
-- Confirm `dist/sendspin-js/` exists.
-- Confirm `dist/vendor/embla-carousel.umd.js` exists.
-- Confirm `dist/homeii-flow-logo.svg` exists.
+- Confirm the built file contains no runtime references to `./sendspin-js/`, `./vendor/`, or `fonts.googleapis.com`.
+- Confirm `dist/homeii-flow-logo.svg`, `dist/homeii-flow-logo.png`, and `dist/homeii-flow-icon.png` exist.
 - Confirm the README renders all screenshots.
 - Create a GitHub release, not only a tag.
 - Install through HACS as a custom repository and verify the resource path.

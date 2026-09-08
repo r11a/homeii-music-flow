@@ -89,6 +89,12 @@ Available for:
 
 Artist-album and radio wheel pages open as dedicated full-screen browsing stages, with clear captions such as album year or station name.
 
+## Lyrics Privacy
+
+Lyrics embedded in Music Assistant metadata are used locally. The LRCLIB fallback is opt-in and disabled by default.
+
+Enabling `lrclib_lyrics_enabled: true` allows the browser to send the current title, artist, album, and duration to `https://lrclib.net/api/get`, followed by `https://lrclib.net/api/search` when needed. Keep it disabled if listening details must not leave the Home Assistant/Music Assistant environment.
+
 ## Reusable Dashboard Features
 
 HOMEii Music Flow supports reusable dashboard patterns.
@@ -144,7 +150,7 @@ Use it for:
 - a desktop browser player
 - quick local playback without a separate speaker entity
 
-It requires a direct Music Assistant URL and token. See [Configuration](./configuration.md#sendspin--this-device).
+This feature is disabled in HOMEii Flow 6 Engine-only mode so the card never stores or receives Music Assistant credentials.
 
 ## FLOW Guided Wizard
 

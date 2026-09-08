@@ -13,11 +13,14 @@ import {
   imageProxyUrl,
   imageProxyIdUrl,
   imageUrl,
+  legacyImageProxyFallbackUrl,
   normalizeImageProxySize,
+  normalizeImageProxyUrl,
   normalizeMediaItem,
   parsePlaybackTimestampMs,
   parseLrcLyrics,
   qualityBadgeLabel,
+  rebaseImageProxyUrl,
   sourceProviderMeta,
   stripLyricsTimestamps,
 } from "../src/core/media/presentation.js";
@@ -97,12 +100,27 @@ describe("media presentation foundation", () => {
       "https://ma.local/imageproxy?path=https%3A%2F%2Fcovers.example%2Fartist.jpg&size=512",
     );
     expect(imageProxyIdUrl("a".repeat(64), 300, "https://ma.local")).toBe(
-      `https://ma.local/imageproxy/${"a".repeat(64)}?size=512&fmt=jpeg`,
+      `https://ma.local/imageproxy/${"a".repeat(64)}?size=512`,
     );
     expect(imageProxyIdUrl("not-a-proxy-id", 300, "https://ma.local")).toBe(null);
     expect(imageUrl({ proxy_id: "b".repeat(64), path: "legacy/path.jpg", provider: "spotify" }, 120, { maUrl: "https://ma.local" })).toBe(
-      `https://ma.local/imageproxy/${"b".repeat(64)}?size=160&fmt=jpeg`,
+      `https://ma.local/imageproxy/${"b".repeat(64)}?size=160`,
     );
+    expect(legacyImageProxyFallbackUrl(
+      { proxy_id: "b".repeat(64), path: "legacy/path.jpg", provider: "spotify" },
+      120,
+      { maUrl: "https://ma.local" },
+    )).toBe("https://ma.local/imageproxy?path=legacy%2Fpath.jpg&provider=spotify&size=160");
+    expect(normalizeImageProxyUrl(
+      `http://192.168.1.20:8097/imageproxy/${"d".repeat(64)}?size=500`,
+      300,
+      "https://music.example.com/ma",
+    )).toBe(`http://192.168.1.20:8097/imageproxy/${"d".repeat(64)}?size=512`);
+    expect(rebaseImageProxyUrl(
+      `http://192.168.1.20:8097/imageproxy/${"d".repeat(64)}?size=500`,
+      300,
+      "https://music.example.com/ma",
+    )).toBe(`https://music.example.com/ma/imageproxy/${"d".repeat(64)}?size=512`);
     expect(imageUrl({ proxy_id: "short", path: "legacy/path.jpg", provider: "spotify" }, 120, { maUrl: "https://ma.local" })).toBe(
       "https://ma.local/imageproxy?path=legacy%2Fpath.jpg&provider=spotify&size=160",
     );
@@ -129,6 +147,20 @@ describe("media presentation foundation", () => {
       media_item: { image: { path: "queue/path.png", provider: "library" } },
     }, "https://ma.local")).toBe(
       "https://ma.local/imageproxy?path=queue%2Fpath.png&provider=library&size=512",
+    );
+    expect(artUrl({
+      homeii_artwork_url: "/api/homeii_flow/artwork/item/opaque-token",
+      image: "https://ma.local/imageproxy?path=legacy.jpg",
+    }, "https://ma.local")).toBe(
+      "/api/homeii_flow/artwork/item/opaque-token",
+    );
+    expect(artUrl({
+      media_item: {
+        homeii_artwork_url: "/api/homeii_flow/artwork/item/nested-token",
+        image: "https://ma.local/imageproxy/old",
+      },
+    }, "https://ma.local")).toBe(
+      "/api/homeii_flow/artwork/item/nested-token",
     );
     expect(artUrl({
       thumbnail: { path: "thumb/path.png", provider: "library" },

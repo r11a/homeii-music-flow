@@ -8,6 +8,8 @@ import {
   getBrowserPlayers,
   getThisDevicePlayer,
   groupAverageVolume,
+  playerVolumeValue,
+  playerCanSetVolume,
   groupedPlayerIds,
   isLikelyBrowserPlayer,
   isMusicAssistantPlayer,
@@ -24,6 +26,31 @@ import {
 } from "../src/core/state/players.js";
 
 describe("players foundation", () => {
+  it("preserves unknown volume and never averages a missing member as zero", () => {
+    const owner = { entity_id: "owner", attributes: { group_members: ["owner", "member"], volume_level: .49 } };
+    const member = { entity_id: "member", attributes: { volume_level: null } };
+    expect(groupAverageVolume(owner, [owner, member])).toBe(null);
+    expect(playerVolumeValue(member)).toBe(null);
+    expect(playerCanSetVolume(member)).toBe(false);
+    member.attributes.volume_level = 0;
+    expect(playerVolumeValue(member)).toBe(0);
+    expect(groupAverageVolume(owner, [owner, member])).toBe(25);
+    member.attributes.volume_level = .2;
+    member.attributes.supported_features = ["set_members"];
+    expect(playerCanSetVolume(member)).toBe(false);
+    member.attributes.supported_features = ["volume_set"];
+    expect(playerCanSetVolume(member)).toBe(true);
+    member.available = false;
+    expect(playerCanSetVolume(member)).toBe(false);
+  });
+  it("never prefers an offline native player over an available speaker", () => {
+    const offline = { entity_id: "media_player.iphone", state: "idle", available: false, attributes: { active_queue: "iphone" } };
+    const online = { entity_id: "media_player.kitchen", state: "idle", available: true };
+    expect(resolvePreferredFrontPlayerEntity([offline, online], {
+      currentEntityId: offline.entity_id, defaultEntityId: offline.entity_id,
+      isPlayerActiveFn: (player) => !!player.attributes?.active_queue,
+    })).toBe(online.entity_id);
+  });
   const livingRoom = {
     entity_id: "media_player.living_room",
     state: "playing",

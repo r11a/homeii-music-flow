@@ -1,6 +1,7 @@
 // Generated HOMEii Music Flow localization dictionary.
 // Keep keys stable. Translate only the string values.
 const messages = Object.freeze({
+  "ui.action_menu_labels": "Veiksmų pavadinimai po piktogramomis",
   "ui.a_guided_music_wizard": "Valdomas muzikos vedlys",
   "ui.a_radio_station": "Radijo stotis",
   "ui.accent_color": "Akcento spalva",
@@ -30,7 +31,6 @@ const messages = Object.freeze({
   "ui.all_players_2": "visi grotuvai",
   "ui.all_podcasts": "Visos tinklalaidės",
   "ui.all_tracks": "Visi kūriniai",
-  "ui.allow_local_likes": "Leisti vietinius pamėgtus",
   "ui.always_visible": "Visada matoma",
   "ui.announce": "Pranešti",
   "ui.announce_to_all_players": "Pranešti per visus grotuvus",
@@ -204,7 +204,6 @@ const messages = Object.freeze({
   "ui.favorite": "Mėgstamiausias",
   "ui.favorite_action_failed": "Mėgstamiausio veiksmas nepavyko",
   "ui.favorite_action_sent": "Mėgstamiausio veiksmas išsiųstas",
-  "ui.favorite_button_entity": "Mėgstamiausių mygtuko objektas",
   "ui.favorite_center": "mėgstamiausių centras",
   "ui.favorite_center_2": "Mėgstamiausių centras",
   "ui.favorite_radio": "Mėgstamiausių radijas",
@@ -319,7 +318,6 @@ const messages = Object.freeze({
   "ui.main_bar_items_2": "Pagrindinės juostos elementai",
   "ui.main_opacity": "Pagrindinis permatomumas",
   "ui.mainly_relevant_on_larger_layouts": "Aktualu didesniuose ekranuose.",
-  "ui.mass_queue_send_command_fallback": "mass_queue/send_command atsarginis variantas",
   "ui.matches_the_microphone_setting_from_the_in_card_settings_screen": "Atitinka mikrofono nustatymą iš kortelės nustatymų.",
   "ui.media": "Medija",
   "ui.media_2": "Medija",

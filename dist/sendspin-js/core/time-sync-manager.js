@@ -151,4 +151,3 @@ export class TimeSyncManager {
         return clientTimeUs;
     }
 }
-//# sourceMappingURL=time-sync-manager.js.map

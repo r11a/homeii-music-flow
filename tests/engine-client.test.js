@@ -13,15 +13,16 @@ import {
 } from "../src/core/engine-client.js";
 
 describe("HOMEii Flow Engine client foundation", () => {
-  it("normalizes Engine modes without breaking frontend-only defaults", () => {
-    expect(normalizeHomeiiEngineMode()).toBe("auto");
+  it("normalizes Engine modes with required defaults for HOMEii Flow 6", () => {
+    expect(normalizeHomeiiEngineMode()).toBe("required");
     expect(normalizeHomeiiEngineMode("required")).toBe("required");
-    expect(normalizeHomeiiEngineMode("OFF")).toBe("off");
-    expect(normalizeHomeiiEngineMode("unknown")).toBe("auto");
-    expect(homeiiEngineModeAllowsCalls("off")).toBe(false);
+    expect(normalizeHomeiiEngineMode("OFF")).toBe("required");
+    expect(normalizeHomeiiEngineMode("unknown")).toBe("required");
+    expect(homeiiEngineModeAllowsCalls("off")).toBe(true);
     expect(homeiiEngineModeAllowsCalls("auto")).toBe(true);
     expect(homeiiEngineModeRequiresEngine("required")).toBe(true);
-    expect(homeiiEngineModeRequiresEngine("auto")).toBe(false);
+    expect(homeiiEngineModeRequiresEngine("auto")).toBe(true);
+    expect(homeiiEngineModeRequiresEngine()).toBe(true);
   });
 
   it("builds stable Home Assistant WebSocket command types", () => {

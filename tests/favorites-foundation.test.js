@@ -101,6 +101,14 @@ describe("favorites foundation", () => {
     })).toBe(true);
 
     expect(resolveCurrentMediaFavoriteState({
+      currentUri: "radiobrowser://radio/s354122",
+      queueItem: { media_item: { favorite: false } },
+      currentEntry: { uri: "radiobrowser://radio/s354122", media_type: "radio", name: "Radio Romanian Colinde" },
+      useMaLikedMode: true,
+      likedItems: [{ uri: "library://radio/42", media_type: "radio", name: "Radio Romanian Colinde" }],
+    })).toBe(true);
+
+    expect(resolveCurrentMediaFavoriteState({
       currentUri: "spotify://track/123",
       localLikedUris: new Set(["spotify://track/123"]),
     })).toBe(true);

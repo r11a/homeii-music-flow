@@ -275,4 +275,3 @@ export { SendspinDecoder } from "./audio/decoder.js";
 export { AudioScheduler } from "./audio/scheduler.js";
 // Export platform detection utilities
 export { detectIsAndroid, detectIsIOS, detectIsMobile, detectIsCastRuntime, getDefaultSyncDelay, };
-//# sourceMappingURL=index.js.map

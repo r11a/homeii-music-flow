@@ -104,21 +104,24 @@ export function extractCurrentLyricsRawText(queueItem = null) {
   const media = currentQueueItem.media_item || {};
   const metadata = media.metadata || currentQueueItem.metadata || {};
   const candidates = [
+    currentQueueItem.lrc_lyrics,
+    media.lrc_lyrics,
+    metadata.lrc_lyrics,
+    currentQueueItem.syncedLyrics,
+    currentQueueItem.synced_lyrics,
+    media.syncedLyrics,
+    media.synced_lyrics,
+    metadata.syncedLyrics,
+    metadata.synced_lyrics,
     currentQueueItem.lyrics,
     currentQueueItem.plainLyrics,
     currentQueueItem.plain_lyrics,
-    currentQueueItem.syncedLyrics,
-    currentQueueItem.synced_lyrics,
     media.lyrics,
     media.plainLyrics,
     media.plain_lyrics,
-    media.syncedLyrics,
-    media.synced_lyrics,
     metadata.lyrics,
     metadata.plainLyrics,
     metadata.plain_lyrics,
-    metadata.syncedLyrics,
-    metadata.synced_lyrics,
   ];
   for (const candidate of candidates) {
     const text = coerceLyricsRawText(candidate);
@@ -154,14 +157,16 @@ export function normalizeImageProxySize(size = 300) {
   return 1024;
 }
 
-export function imageProxyIdUrl(proxyId = "", size = 300, maUrl = "", format = "jpeg") {
+export function imageProxyIdUrl(proxyId = "", size = 300, maUrl = "", format = "") {
   const raw = String(proxyId || "").trim();
   if (!raw || !maUrl) return null;
   if (!/^[0-9a-f]{64}$/i.test(raw)) return null;
   const baseUrl = String(maUrl || "").replace(/\/$/, "");
   const normalizedId = raw.toLowerCase();
-  const normalizedFormat = String(format || "jpeg").trim().toLowerCase() || "jpeg";
-  return `${baseUrl}/imageproxy/${encodeURIComponent(normalizedId)}?size=${normalizeImageProxySize(size)}&fmt=${encodeURIComponent(normalizedFormat)}`;
+  const normalizedFormat = String(format || "").trim().toLowerCase();
+  const params = new URLSearchParams({ size: String(normalizeImageProxySize(size)) });
+  if (normalizedFormat) params.set("fmt", normalizedFormat);
+  return `${baseUrl}/imageproxy/${encodeURIComponent(normalizedId)}?${params.toString()}`;
 }
 
 function imageDataUrlFromEncoded(value = "") {
@@ -183,13 +188,31 @@ export function normalizeImageProxyUrl(value = "", size = 300, maUrl = "") {
   const baseUrl = maUrl || "http://homeii.local";
   try {
     const parsed = new URL(raw, baseUrl);
-    if (!parsed.pathname.includes("/imageproxy")) return raw;
+    if (!parsed.pathname.toLowerCase().includes("/imageproxy")) return raw;
     parsed.searchParams.set("size", String(normalizeImageProxySize(size)));
-    if (/\/imageproxy\/[^/]+/.test(parsed.pathname) && !parsed.searchParams.has("fmt")) {
-      parsed.searchParams.set("fmt", "jpeg");
-    }
     if (isAbsolute || maUrl) return parsed.toString();
     return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+  } catch {
+    return raw;
+  }
+}
+
+export function rebaseImageProxyUrl(value = "", size = 300, maUrl = "") {
+  const raw = String(value || "").trim();
+  const configuredRaw = String(maUrl || "").trim();
+  if (!raw || !configuredRaw || !/^https?:\/\//i.test(configuredRaw)) return raw;
+  try {
+    const parsed = new URL(raw, configuredRaw);
+    const proxyIndex = parsed.pathname.toLowerCase().indexOf("/imageproxy");
+    if (proxyIndex < 0) return raw;
+    const configured = new URL(configuredRaw);
+    const basePath = configured.pathname.replace(/\/$/, "");
+    const proxyPath = parsed.pathname.slice(proxyIndex);
+    const resolved = new URL(`${basePath}${proxyPath}`, configured);
+    resolved.search = parsed.search;
+    resolved.hash = parsed.hash;
+    resolved.searchParams.set("size", String(normalizeImageProxySize(size)));
+    return resolved.toString();
   } catch {
     return raw;
   }
@@ -223,7 +246,7 @@ export function imageUrl(value, size = 300, { maUrl = "", seen = new Set(), dept
   if (value.url) return imageUrl(value.url, size, { maUrl, seen, depth: depth + 1 });
 
   const proxyId = value.proxy_id || value.proxyId || value.image_id || value.imageId || value.image_proxy_id || value.imageProxyId;
-  const proxyResolved = proxyId ? imageProxyIdUrl(proxyId, size, maUrl, value.format || value.fmt || "jpeg") : null;
+  const proxyResolved = proxyId ? imageProxyIdUrl(proxyId, size, maUrl, value.format || value.fmt || "") : null;
   if (proxyResolved) return proxyResolved;
 
   const rawPath = value.path || value.image_path || value.imagePath || value.thumb_path || value.thumbnail_path || value.cover_path || value.coverPath;
@@ -237,6 +260,7 @@ export function imageUrl(value, size = 300, { maUrl = "", seen = new Set(), dept
   }
 
   const priorityKeys = [
+    "homeii_artwork_url",
     "image",
     "images",
     "image_url",
@@ -279,8 +303,48 @@ export function imageUrl(value, size = 300, { maUrl = "", seen = new Set(), dept
   return null;
 }
 
+export function legacyImageProxyFallbackUrl(value, size = 300, { maUrl = "", seen = new Set(), depth = 0 } = {}) {
+  if (!value || depth > 5 || typeof value !== "object") return null;
+  if (seen.has(value)) return null;
+  seen.add(value);
+
+  if (Array.isArray(value)) {
+    for (const entry of value) {
+      const resolved = legacyImageProxyFallbackUrl(entry, size, { maUrl, seen, depth: depth + 1 });
+      if (resolved) return resolved;
+    }
+    return null;
+  }
+
+  const proxyId = value.proxy_id || value.proxyId || value.image_id || value.imageId || value.image_proxy_id || value.imageProxyId;
+  const rawPath = value.path || value.image_path || value.imagePath || value.thumb_path || value.thumbnail_path || value.cover_path || value.coverPath;
+  if (/^[0-9a-f]{64}$/i.test(String(proxyId || "").trim()) && rawPath) {
+    return imageProxyUrl(
+      rawPath,
+      value.provider || value.provider_id || value.provider_instance || value.provider_domain || value.provider_name || "",
+      size,
+      maUrl,
+    );
+  }
+
+  const priorityKeys = [
+    "homeii_artwork_url", "image", "images", "image_url", "imageUrl", "media_image", "media_image_url",
+    "local_image", "local_image_url", "preview_image", "preview_image_url",
+    "thumb", "thumbnail", "cover", "cover_image", "artwork", "picture",
+    "album", "media_item", "metadata",
+  ];
+  for (const key of priorityKeys) {
+    const resolved = legacyImageProxyFallbackUrl(value[key], size, { maUrl, seen, depth: depth + 1 });
+    if (resolved) return resolved;
+  }
+  return null;
+}
+
 export function artUrl(item = null, maUrl = "", size = 300) {
-  return imageUrl(item?.image_url, size, { maUrl })
+  return imageUrl(item?.homeii_artwork_url, size, { maUrl })
+    || imageUrl(item?.media_item?.homeii_artwork_url, size, { maUrl })
+    || imageUrl(item?.album?.homeii_artwork_url, size, { maUrl })
+    || imageUrl(item?.image_url, size, { maUrl })
     || imageUrl(item?.image, size, { maUrl })
     || imageUrl(item?.thumbnail, size, { maUrl })
     || imageUrl(item?.thumb, size, { maUrl })

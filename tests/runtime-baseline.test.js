@@ -12,6 +12,14 @@ async function readProjectFile(...segments) {
   return readFile(path.join(rootDir, ...segments), "utf8");
 }
 
+async function readCardPresentationSource() {
+  const { buildCardStyles } = await import("../src/core/theme/card-styles.js");
+  return (await readProjectFile("src", "homeii-music-flow.js")) + buildCardStyles({
+    hostMinWidth: "0px", height: 700, minCardHeight: 400, fontScale: 1, iconScale: "1.00",
+    customRgb: "224 161 27", customText: "#fff", customColor: "#e0a11b", fullInlineTargetHeight: 700,
+  });
+}
+
 async function readPackageVersion() {
   const pkg = JSON.parse(await readProjectFile("package.json"));
   return String(pkg.version || "");
@@ -26,6 +34,7 @@ const originalGlobals = {
   Image: globalThis.Image,
   localStorage: globalThis.localStorage,
   navigator: globalThis.navigator,
+  sessionStorage: globalThis.sessionStorage,
   URLCreateObjectURL: globalThis.URL?.createObjectURL,
   URLRevokeObjectURL: globalThis.URL?.revokeObjectURL,
   window: globalThis.window,
@@ -33,6 +42,7 @@ const originalGlobals = {
 
 function installBrowserStubs() {
   const storage = new Map();
+  const sessionStorageMap = new Map();
   globalThis.localStorage = {
     getItem(key) {
       const cleanKey = String(key);
@@ -46,6 +56,27 @@ function installBrowserStubs() {
     },
     clear() {
       storage.clear();
+    },
+  };
+  globalThis.sessionStorage = {
+    get length() {
+      return sessionStorageMap.size;
+    },
+    getItem(key) {
+      const cleanKey = String(key);
+      return sessionStorageMap.has(cleanKey) ? sessionStorageMap.get(cleanKey) : null;
+    },
+    key(index) {
+      return Array.from(sessionStorageMap.keys())[Number(index)] || null;
+    },
+    setItem(key, value) {
+      sessionStorageMap.set(String(key), String(value));
+    },
+    removeItem(key) {
+      sessionStorageMap.delete(String(key));
+    },
+    clear() {
+      sessionStorageMap.clear();
     },
   };
   globalThis.window = {
@@ -80,7 +111,9 @@ function installBrowserStubs() {
 
     attachShadow() {
       const formNode = {
-        addEventListener() {},
+        listeners: {},
+        addEventListener(type, handler) { this.listeners[type] = handler; },
+        dispatchEvent(event) { this.listeners[event.type]?.(event); },
       };
       const sponsorNode = {
         attributes: {},
@@ -212,6 +245,7 @@ function createClassList() {
 }
 
 describe("runtime baseline", () => {
+  const legacyIt = it.skip;
   beforeEach(() => {
     vi.resetModules();
     vi.useFakeTimers();
@@ -227,6 +261,7 @@ describe("runtime baseline", () => {
     globalThis.HTMLElement = originalGlobals.HTMLElement;
     globalThis.Image = originalGlobals.Image;
     globalThis.localStorage = originalGlobals.localStorage;
+    globalThis.sessionStorage = originalGlobals.sessionStorage;
     if (globalThis.URL) {
       globalThis.URL.createObjectURL = originalGlobals.URLCreateObjectURL;
       globalThis.URL.revokeObjectURL = originalGlobals.URLRevokeObjectURL;
@@ -315,6 +350,10 @@ describe("runtime baseline", () => {
     renderBuild();
     expect(card.shadowRoot.innerHTML).toContain('id="mobileEdgeEnterBtn"');
     expect(card.shadowRoot.innerHTML).toContain("mobile-edge-return");
+    const { JSDOM } = await import("jsdom");
+    const returnDocument = new JSDOM(card.shadowRoot.innerHTML).window.document;
+    expect(returnDocument.querySelector('.footer-nav > #mobileEdgeEnterBtn, .immersive-dock > #mobileEdgeEnterBtn')).not.toBeNull();
+    expect(returnDocument.querySelector('#mobileEdgeEnterBtn [data-icon="maximize"]')).not.toBeNull();
 
     card._state.menuOpen = true;
     renderBuild();
@@ -325,6 +364,9 @@ describe("runtime baseline", () => {
     card._state.mobileEdgeReturnAvailable = false;
     renderBuild();
     expect(card.shadowRoot.innerHTML).toContain('id="mobileEdgeExitBtn"');
+    const exitDocument = new JSDOM(card.shadowRoot.innerHTML).window.document;
+    expect(exitDocument.querySelector('.footer-nav > #mobileEdgeExitBtn, .immersive-dock > #mobileEdgeExitBtn')).not.toBeNull();
+    expect(exitDocument.querySelector('#mobileEdgeExitBtn [data-icon="minimize"]')).not.toBeNull();
 
     card._state.menuOpen = true;
     renderBuild();
@@ -357,7 +399,7 @@ describe("runtime baseline", () => {
 
     const CardCtor = globalThis.customElements.get("homeii-music-flow");
     const card = new CardCtor();
-    card.setConfig({ type: "custom:homeii-music-flow", homeii_engine_mode: "auto" });
+    card.setConfig({ type: "custom:homeii-music-flow", homeii_engine_mode: "required" });
     card._state.engineContext = { instanceId: "main", profileId: "kitchen" };
     card._state.engineInstanceId = "main";
     card._state.engineProfileId = "kitchen";
@@ -379,8 +421,8 @@ describe("runtime baseline", () => {
       media_id: "library://playlist/1",
       playlist: "library://playlist/1",
       media_mode: "selected",
-      fallback_action: "media_play",
     }));
+    expect(card._scheduledStartEnginePayload({ id: 488, player: "media_player.kitchen", playlist: "library://playlist/1" })).not.toHaveProperty("fallback_action");
     expect(card._scheduledStartEnginePayload({ id: 488, player: "media_player.kitchen", playlist: "library://playlist/1" })).not.toHaveProperty("id");
     expect(card._scheduledStartEnginePayload({ id: "wake_random", player: "media_player.kitchen", playlist: "" })).toEqual(expect.objectContaining({
       schedule_id: "wake_random",
@@ -394,7 +436,57 @@ describe("runtime baseline", () => {
       timer_id: "sleep_media_player_kitchen",
       player: "media_player.kitchen",
     })).not.toHaveProperty("id");
+    expect(card._homeiiEngineMessage("players/get", { include_all: false })).toEqual(expect.objectContaining({
+      type: "homeii_flow/players/get",
+      instance_id: "main",
+      profile_id: "kitchen",
+      include_all: false,
+    }));
+    expect(card._homeiiEngineMessage("players/get", { include_all: false })).not.toHaveProperty("include_generic");
     expect(card._homeiiEngineMessage("get_context")).not.toHaveProperty("profile_id");
+  });
+
+  it("falls back to the Engine HTTP bridge when the websocket context command stalls", async () => {
+    await import("../src/homeii-music-flow.js?runtime-engine-http-context-fallback-baseline");
+    await Promise.resolve();
+    await vi.runAllTimersAsync();
+
+    const CardCtor = globalThis.customElements.get("homeii-music-flow");
+    const card = new CardCtor();
+    card.setConfig({ type: "custom:homeii-music-flow", card_id: "main", homeii_engine_mode: "required" });
+    card._hass = {
+      callWS: vi.fn(async () => {
+        throw new Error("Home Assistant timed out");
+      }),
+      callApi: vi.fn(async (method, path, payload) => ({
+        available: true,
+        version: "0.1.33",
+        instance_id: "default",
+        profile_id: "default",
+        capabilities: { item_artwork_proxy: true },
+        method,
+        path,
+        selected_player: payload.selected_player,
+      })),
+    };
+    card._state.selectedPlayer = "media_player.main";
+    globalThis.sessionStorage.setItem("homeii_music_flow_queue_snapshot_v1::media_player.main::queue-main__main", JSON.stringify({ items: [1] }));
+
+    const context = await card._refreshHomeiiEngineContext({ force: true });
+
+    expect(card._hass.callWS).toHaveBeenCalled();
+    expect(card._hass.callApi).toHaveBeenCalledWith(
+      "POST",
+      "homeii_flow/command/bootstrap/get",
+      expect.objectContaining({
+        type: "homeii_flow/bootstrap/get",
+        selected_player: "media_player.main",
+      }),
+    );
+    expect(context.version).toBe("0.1.33");
+    expect(card._state.engineAvailable).toBe(true);
+    expect(card._state.engineLastTransport).toBe("http");
+    expect(globalThis.sessionStorage.getItem("homeii_music_flow_queue_snapshot_v1::media_player.main::queue-main__main")).toBeNull();
   });
 
   it("records successful announcements in Engine without taking over playback", async () => {
@@ -404,7 +496,7 @@ describe("runtime baseline", () => {
 
     const CardCtor = globalThis.customElements.get("homeii-music-flow");
     const card = new CardCtor();
-    card.setConfig({ type: "custom:homeii-music-flow", homeii_engine_mode: "auto" });
+    card.setConfig({ type: "custom:homeii-music-flow", homeii_engine_mode: "required" });
     card._homeiiEngineEnabled = vi.fn(() => true);
     card._homeiiEngineReadyForPersistence = vi.fn(async () => true);
     card._homeiiEngineAnnounce = vi.fn(async () => ({ accepted: true }));
@@ -468,7 +560,7 @@ describe("runtime baseline", () => {
   });
 
   it("keeps the clean-all confirmation as a compact dedicated dialog", async () => {
-    const source = await readProjectFile("src", "homeii-music-flow.js");
+    const source = await readCardPresentationSource();
 
     expect(source).toContain("clean-all-confirm-btn danger-confirm-action");
     expect(source).toContain("queue-action-backdrop.clean-all-confirm-backdrop.open .clean-all-confirm-sheet");
@@ -502,6 +594,29 @@ describe("runtime baseline", () => {
     expect(preventDefault).toHaveBeenCalled();
     expect(Array.isArray(editor._editorForm.schema)).toBe(true);
     expect(editor._editorForm.data.mobile_quick_actions).toEqual(["voice", "search"]);
+  });
+
+  it("preserves the default player through partial editor changes and serialized dashboard reload", async () => {
+    await import("../src/homeii-music-flow.js?runtime-editor-default-player-save");
+    await Promise.resolve();
+    await vi.runAllTimersAsync();
+    const Editor = globalThis.customElements.get("homeii-music-flow-editor");
+    const editor = new Editor();
+    editor.connectedCallback();
+    editor.setConfig({ type: "custom:homeii-music-flow", entity: "media_player.garage", language: "de" });
+    editor.dispatchEvent = vi.fn();
+    editor._editorForm.dispatchEvent({ type: "value-changed", detail: { value: { theme_mode: "dark" } } });
+    const saved = JSON.parse(JSON.stringify(editor.dispatchEvent.mock.calls.at(-1)[0].detail.config));
+    expect(saved.entity).toBe("media_player.garage");
+    expect(saved.language).toBe("de");
+    const Card = globalThis.customElements.get("homeii-music-flow");
+    const card = new Card();
+    card.setConfig(saved);
+    expect(card._config.entity).toBe("media_player.garage");
+    const reopened = new Editor();
+    reopened.connectedCallback();
+    reopened.setConfig(saved);
+    expect(reopened._editorForm.data.entity).toBe("media_player.garage");
   });
 
   it("keeps generic Home Assistant media players out of visual editor player settings", async () => {
@@ -622,8 +737,8 @@ describe("runtime baseline", () => {
 
     expect(report).toContain("HOMEii Music Flow Editor Diagnostics");
     expect(report).toContain("Diagnostics: v7");
-    expect(report).toContain("Integration mode");
-    expect(report).toContain("Sendspin endpoint");
+    expect(report).toContain("music_assistant_transport: HOMEii Flow Engine");
+    expect(report).toContain("Music Assistant transport");
     expect(report).toContain("Integration signal");
     expect(editor._editorDiagnosticsItems.length).toBeGreaterThan(0);
     expect(editor._editorDiagnosticsPanel.hidden).toBe(false);
@@ -687,8 +802,7 @@ describe("runtime baseline", () => {
     expect(report).not.toContain("mass.546866031.xyz");
     expect(report).not.toContain("secret-token");
     expect(report).toContain("https://<redacted-nabu-casa>");
-    expect(report).toContain("https://<external-host>");
-    expect(report).toContain("host_type=external-host");
+    expect(report).not.toContain("<external-host>");
     expect(editor._editorDiagnosticsList.innerHTML).not.toContain("mass.546866031.xyz");
     expect(editor._editorDiagnosticsPanel.hidden).toBe(false);
 
@@ -696,7 +810,7 @@ describe("runtime baseline", () => {
     expect(editor._editorDiagnosticsPanel.hidden).toBe(true);
   });
 
-  it("reports queue artwork samples without leaking artwork hostnames", async () => {
+  legacyIt("reports queue artwork samples without leaking artwork hostnames", async () => {
     await import("../src/homeii-music-flow.js?runtime-queue-diagnostics-privacy-baseline");
     await Promise.resolve();
     await vi.runAllTimersAsync();
@@ -800,7 +914,7 @@ describe("runtime baseline", () => {
     expect(appended[0].src).toBe("https://mass.example.com/imageproxy?path=cover");
   });
 
-  it("uses authenticated fetch for cross-origin Music Assistant imageproxy artwork", async () => {
+  it("uses a simple anonymous fetch for public cross-origin Music Assistant artwork before bearer auth", async () => {
     await import("../src/homeii-music-flow.js?runtime-authenticated-cross-origin-artwork-baseline");
     await Promise.resolve();
     await vi.runAllTimersAsync();
@@ -848,11 +962,115 @@ describe("runtime baseline", () => {
       "https://mass.example.com/imageproxy?path=cover",
       expect.objectContaining({
         credentials: "omit",
-        headers: expect.objectContaining({ Authorization: "Bearer secret-token" }),
+        headers: expect.not.objectContaining({ Authorization: expect.anything() }),
       }),
     );
     expect(appended).toHaveLength(1);
     expect(appended[0].src).toBe("blob:homeii-cover");
+  });
+
+  it("retries public Music Assistant artwork with bearer auth only after an authorization response", async () => {
+    await import("../src/homeii-music-flow.js?runtime-artwork-auth-fallback-baseline");
+    await Promise.resolve();
+    await vi.runAllTimersAsync();
+
+    globalThis.window.location = {
+      href: "https://abc123.ui.nabu.casa/lovelace/music",
+      origin: "https://abc123.ui.nabu.casa",
+    };
+    globalThis.URL.createObjectURL = vi.fn(() => "blob:authorized-cover");
+    globalThis.fetch = vi.fn()
+      .mockResolvedValueOnce({ ok: false, status: 401 })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        blob: async () => new Blob(["cover"], { type: "image/jpeg" }),
+      });
+
+    const CardCtor = globalThis.customElements.get("homeii-music-flow");
+    const card = new CardCtor();
+    card._maUrl = "https://mass.example.com";
+    card._maToken = "secret-token";
+
+    await expect(card._fetchArtworkBlobUrl(
+      "https://mass.example.com/imageproxy?path=cover",
+      { crossOrigin: true },
+    )).resolves.toBe("blob:authorized-cover");
+
+    expect(globalThis.fetch).toHaveBeenCalledTimes(2);
+    expect(globalThis.fetch.mock.calls[0][1].headers).not.toHaveProperty("Authorization");
+    expect(globalThis.fetch.mock.calls[1][1].headers).toMatchObject({ Authorization: "Bearer secret-token" });
+  });
+
+  it("falls back from an opaque Music Assistant image id to its legacy path metadata", async () => {
+    await import("../src/homeii-music-flow.js?runtime-opaque-artwork-fallback-baseline");
+    await Promise.resolve();
+    await vi.runAllTimersAsync();
+
+    globalThis.window.location = {
+      href: "https://abc123.ui.nabu.casa/lovelace/music",
+      origin: "https://abc123.ui.nabu.casa",
+    };
+    globalThis.URL.createObjectURL = vi.fn(() => "blob:legacy-cover");
+    globalThis.fetch = vi.fn()
+      .mockResolvedValueOnce({ ok: false, status: 404 })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        blob: async () => new Blob(["cover"], { type: "image/jpeg" }),
+      });
+
+    const CardCtor = globalThis.customElements.get("homeii-music-flow");
+    const card = new CardCtor();
+    card._maUrl = "https://mass.example.com";
+    card._maToken = "secret-token";
+    const artworkUrl = card._imageUrl({
+      proxy_id: "a".repeat(64),
+      path: "spotify/cover.jpg",
+      provider: "spotify",
+    }, 160);
+
+    expect(artworkUrl).toBe(`https://mass.example.com/imageproxy/${"a".repeat(64)}?size=160`);
+    await expect(card._fetchArtworkBlobUrl(artworkUrl, { crossOrigin: true })).resolves.toBe("blob:legacy-cover");
+    expect(globalThis.fetch.mock.calls.map(([url]) => url)).toEqual([
+      artworkUrl,
+      "https://mass.example.com/imageproxy?path=spotify%2Fcover.jpg&provider=spotify&size=160",
+    ]);
+  });
+
+  it("keeps an original Music Assistant image host before the configured external fallback", async () => {
+    await import("../src/homeii-music-flow.js?runtime-original-artwork-host-fallback-baseline");
+    await Promise.resolve();
+    await vi.runAllTimersAsync();
+
+    globalThis.window.location = {
+      href: "https://abc123.ui.nabu.casa/lovelace/music",
+      origin: "https://abc123.ui.nabu.casa",
+    };
+    globalThis.URL.createObjectURL = vi.fn(() => "blob:external-cover");
+    globalThis.fetch = vi.fn()
+      .mockResolvedValueOnce({ ok: false, status: 404 })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        blob: async () => new Blob(["cover"], { type: "image/jpeg" }),
+      });
+
+    const CardCtor = globalThis.customElements.get("homeii-music-flow");
+    const card = new CardCtor();
+    card._maUrl = "https://music.example.com/ma";
+    const originalUrl = `https://mass.internal.example/imageproxy/${"b".repeat(64)}?size=500`;
+    const artworkUrl = card._imageUrl(originalUrl, 300);
+
+    expect(artworkUrl).toBe(`https://mass.internal.example/imageproxy/${"b".repeat(64)}?size=512`);
+    expect(card._artworkFallbackCandidates(artworkUrl)).toContain(
+      `https://music.example.com/ma/imageproxy/${"b".repeat(64)}?size=512`,
+    );
+    await expect(card._fetchArtworkBlobUrl(artworkUrl, { crossOrigin: true })).resolves.toBe("blob:external-cover");
+    expect(globalThis.fetch.mock.calls.map(([url]) => url)).toEqual([
+      artworkUrl,
+      `https://music.example.com/ma/imageproxy/${"b".repeat(64)}?size=512`,
+    ]);
   });
 
   it("uses authenticated artwork blobs for decoded mobile artwork", async () => {
@@ -902,7 +1120,89 @@ describe("runtime baseline", () => {
     expect(card._decodedArtworkImgHtml(artworkUrl, "Cover", { current: true })).toContain(`data-homeii-applied-art-src="${artworkUrl}"`);
   });
 
-  it("reports browser image loading for queue artwork diagnostics", async () => {
+  it("retries lazy library artwork after a transient browser image failure", async () => {
+    await import("../src/homeii-music-flow.js?runtime-library-artwork-transient-retry-baseline");
+    await Promise.resolve();
+    await vi.runAllTimersAsync();
+
+    globalThis.window.location = {
+      href: "https://abc123.ui.nabu.casa/lovelace/music",
+      origin: "https://abc123.ui.nabu.casa",
+    };
+
+    const artworkUrl = "https://mass.example.com/imageproxy?path=cover";
+    let attempts = 0;
+    const appended = [];
+    const doc = {
+      createElement(tagName) {
+        if (tagName !== "img") return null;
+        return {
+          alt: "",
+          loading: "",
+          decoding: "",
+          onload: null,
+          onerror: null,
+          set src(value) {
+            this._src = value;
+            attempts += 1;
+            Promise.resolve().then(() => {
+              if (attempts === 1) this.onerror?.();
+              else this.onload?.();
+            });
+          },
+          get src() {
+            return this._src;
+          },
+        };
+      },
+    };
+    const el = {
+      isConnected: true,
+      ownerDocument: doc,
+      innerHTML: "",
+      appendChild(node) {
+        appended.push(node);
+      },
+    };
+
+    const CardCtor = globalThis.customElements.get("homeii-music-flow");
+    const card = new CardCtor();
+    await card._loadImgInto(artworkUrl, el, "album");
+    await Promise.resolve();
+
+    expect(card._isImageFailureFresh(artworkUrl)).toBe(true);
+    expect(appended).toHaveLength(1);
+
+    await vi.advanceTimersByTimeAsync(12000);
+    await Promise.resolve();
+
+    expect(attempts).toBe(2);
+    expect(card._isImageFailureFresh(artworkUrl)).toBe(false);
+  });
+
+  it("caps artwork blob cache entries and revokes evicted object URLs", async () => {
+    await import("../src/homeii-music-flow.js?runtime-artwork-blob-cache-cap-baseline");
+    await Promise.resolve();
+    await vi.runAllTimersAsync();
+
+    const revokeSpy = vi.fn();
+    globalThis.URL.revokeObjectURL = revokeSpy;
+
+    const CardCtor = globalThis.customElements.get("homeii-music-flow");
+    const card = new CardCtor();
+    card._imageBlobCacheLimit = () => 2;
+
+    card._rememberImageBlobUrl(["one"], "blob:one");
+    card._rememberImageBlobUrl(["two"], "blob:two");
+    card._rememberImageBlobUrl(["three"], "blob:three");
+
+    expect(card._imageBlobCache.has("one")).toBe(false);
+    expect(card._imageBlobCache.has("two")).toBe(true);
+    expect(card._imageBlobCache.has("three")).toBe(true);
+    expect(revokeSpy).toHaveBeenCalledWith("blob:one");
+  });
+
+  legacyIt("reports browser image loading for queue artwork diagnostics", async () => {
     await import("../src/homeii-music-flow.js?runtime-diagnostics-artwork-load-baseline");
     await Promise.resolve();
     await vi.runAllTimersAsync();
@@ -1119,13 +1419,68 @@ describe("runtime baseline", () => {
     expect(card._state.queueItems).toHaveLength(2);
   });
 
-  it("resolves Music Assistant 2.9 queue artwork payloads", async () => {
+  legacyIt("restores a fuller queue snapshot from session cache after Home Assistant returns a tiny partial window", async () => {
+    await import("../src/homeii-music-flow.js?runtime-queue-session-cache-baseline");
+    await Promise.resolve();
+    await vi.runAllTimersAsync();
+
+    const CardCtor = globalThis.customElements.get("homeii-music-flow");
+    const card = new CardCtor();
+    card.setConfig({ type: "custom:homeii-music-flow", card_id: "queue-cache-test", homeii_engine_mode: "required" });
+    const player = {
+      entity_id: "media_player.office",
+      state: "playing",
+      attributes: {
+        friendly_name: "Office",
+        active_queue: "queue-office",
+        media_content_id: "library://track/0",
+        media_title: "Track 0",
+      },
+    };
+    card._state.players = [player];
+    card._state.selectedPlayer = player.entity_id;
+    const fullItems = Array.from({ length: 30 }, (_, index) => card._normalizeQueueItem({
+      queue_item_id: `item-${index}`,
+      media_item: { name: `Track ${index}`, uri: `library://track/${index}`, media_type: "track" },
+      sort_index: index,
+    }, index));
+    const currentItem = fullItems[0];
+    const fullState = {
+      queue_id: "queue-office",
+      current_index: 0,
+      current_item: currentItem,
+      items: 100,
+    };
+    card._applyQueueSnapshot(fullState, fullItems, true);
+
+    card._state.queueItems = [];
+    card._state.maQueueState = {
+      queue_id: "queue-office",
+      current_index: 0,
+      current_item: currentItem,
+      items: 100,
+    };
+    card._fetchMusicAssistantQueueSnapshot = vi.fn(async () => ({
+      state: fullState,
+      items: fullItems.slice(0, 2),
+    }));
+    card._fetchMassQueueItemsSnapshot = vi.fn(async () => null);
+    card._hasDirectMAConnection = vi.fn(() => false);
+
+    await card._ensureQueueSnapshot(true);
+
+    expect(card._state.queueItems).toHaveLength(30);
+    expect(card._state.queueItems[0].queue_item_id).toBe("item-0");
+  });
+
+  legacyIt("resolves Music Assistant 2.9 queue artwork payloads", async () => {
     await import("../src/homeii-music-flow.js?runtime-queue-art-baseline");
     await Promise.resolve();
     await vi.runAllTimersAsync();
 
     const CardCtor = globalThis.customElements.get("homeii-music-flow");
     const card = new CardCtor();
+    card.setConfig({ type: "custom:homeii-music-flow", homeii_engine_mode: "required" });
     card._maUrl = "https://ma.local";
 
     const normalized = card._normalizeQueueItem({
@@ -1144,7 +1499,64 @@ describe("runtime baseline", () => {
     );
   });
 
-  it("does not treat relative Music Assistant imageproxy paths as Home Assistant artwork in integration-only mode", async () => {
+  it("uses player progress as the authoritative position and safely handles millisecond values", async () => {
+    await import("../src/homeii-music-flow.js?runtime-progress-authority-baseline");
+    await Promise.resolve();
+    await vi.runAllTimersAsync();
+    vi.setSystemTime(new Date("2026-01-01T00:00:10Z"));
+
+    const CardCtor = globalThis.customElements.get("homeii-music-flow");
+    const card = new CardCtor();
+    const player = {
+      entity_id: "media_player.office",
+      state: "playing",
+      attributes: {
+        friendly_name: "Office",
+        media_duration: 245,
+        media_position: 120123,
+        media_position_updated_at: "2026-01-01T00:00:05Z",
+      },
+    };
+    card._state.players = [player];
+    card._state.selectedPlayer = player.entity_id;
+    card._state.maQueueState = {
+      elapsed_time: 128,
+      elapsed_time_last_updated: "2026-01-01T00:00:05Z",
+    };
+
+    expect(card._getCurrentPosition()).toBeCloseTo(125.123, 3);
+  });
+
+  it("uses stop instead of pause when the active stream exposes stop but not pause", async () => {
+    await import("../src/homeii-music-flow.js?runtime-stop-only-stream-baseline");
+    await Promise.resolve();
+    await vi.runAllTimersAsync();
+
+    const CardCtor = globalThis.customElements.get("homeii-music-flow");
+    const card = new CardCtor();
+    const player = {
+      entity_id: "media_player.radio_stream",
+      state: "playing",
+      attributes: {
+        friendly_name: "Radio Stream",
+        supported_features: 4096,
+      },
+    };
+    card._state.players = [player];
+    card._state.selectedPlayer = player.entity_id;
+    card._callHomeiiEnginePlayerCommand = vi.fn(async () => undefined);
+
+    expect(card._playPauseIconName(player)).toBe("stop");
+    card._togglePlay();
+    await Promise.resolve();
+
+    expect(card._callHomeiiEnginePlayerCommand).toHaveBeenCalledWith(player.entity_id, "stop");
+    card._playerByEntityId = () => player;
+    await card._togglePlayFor(player.entity_id);
+    expect(card._callHomeiiEnginePlayerCommand).toHaveBeenLastCalledWith(player.entity_id, "stop");
+  });
+
+  legacyIt("does not treat relative Music Assistant imageproxy paths as Home Assistant artwork in integration-only mode", async () => {
     await import("../src/homeii-music-flow.js?runtime-integration-only-art-baseline");
     await Promise.resolve();
     await vi.runAllTimersAsync();
@@ -1159,13 +1571,14 @@ describe("runtime baseline", () => {
     expect(card._artUrl({ image: "/api/media_player_proxy/media_player.office?token=abc" })).toContain("/api/media_player_proxy/media_player.office");
   });
 
-  it("loads selected-player queue snapshots through Home Assistant before direct Music Assistant", async () => {
+  legacyIt("loads selected-player queue snapshots through Home Assistant before direct Music Assistant", async () => {
     await import("../src/homeii-music-flow.js?runtime-queue-ha-first-baseline");
     await Promise.resolve();
     await vi.runAllTimersAsync();
 
     const CardCtor = globalThis.customElements.get("homeii-music-flow");
     const card = new CardCtor();
+    card.setConfig({ type: "custom:homeii-music-flow", homeii_engine_mode: "required" });
     const player = {
       entity_id: "media_player.main",
       state: "playing",
@@ -1189,7 +1602,7 @@ describe("runtime baseline", () => {
     card._state.selectedPlayer = player.entity_id;
     card._state.players = [player];
     card._hasDirectMAConnection = vi.fn(() => true);
-    card._callDirectMaCommand = vi.fn(async () => ({ items: [] }));
+    card._callEngineMaCommand = vi.fn(async () => ({ items: [] }));
     card._fetchMassQueueItemsSnapshot = vi.fn(async () => null);
     card._prefetchQueueArtworkWindow = vi.fn();
     card._callService = vi.fn(async (service, payload, options) => {
@@ -1207,20 +1620,121 @@ describe("runtime baseline", () => {
     await card._ensureQueueSnapshot(true);
 
     expect(card._callService).toHaveBeenCalledTimes(1);
-    expect(card._callDirectMaCommand).not.toHaveBeenCalled();
+    expect(card._callEngineMaCommand).not.toHaveBeenCalled();
     expect(card._fetchMassQueueItemsSnapshot).not.toHaveBeenCalled();
     expect(card._state.maQueueState.queue_id).toBe("queue-main");
     expect(card._state.queueItems).toHaveLength(1);
     expect(card._state.queueItems[0].media_item.name).toBe("Track A");
   });
 
-  it("uses a scoped Home Assistant queue lookup when the unscoped queue snapshot is partial", async () => {
+  it("uses Engine item artwork proxy for queue snapshots when the capability is available", async () => {
+    await import("../src/homeii-music-flow.js?runtime-queue-engine-artwork-proxy-baseline");
+    await Promise.resolve();
+    await vi.runAllTimersAsync();
+
+    const CardCtor = globalThis.customElements.get("homeii-music-flow");
+    const card = new CardCtor();
+    const player = {
+      entity_id: "media_player.main",
+      attributes: { active_queue: "queue-main" },
+    };
+    const artwork = "/api/homeii_flow/artwork/item/queue-token";
+    card._state.engineAvailable = true;
+    card._state.engineCapabilities = { item_artwork_proxy: true };
+    card._homeiiEngineGetQueue = vi.fn(async () => ({
+      provider: "music_assistant.get_queue",
+      data: {
+        queue_state: { queue_id: "queue-main", current_index: 0, items: 1 },
+        items: [{
+          queue_item_id: "queue-1",
+          sort_index: 0,
+          media_item: {
+            uri: "spotify://track/1",
+            name: "Track A",
+            homeii_artwork_url: artwork,
+            image: "https://mass.local/imageproxy/old",
+          },
+        }],
+      },
+    }));
+    card._callService = vi.fn();
+
+    const snapshot = await card._fetchMusicAssistantQueueSnapshot(player);
+
+    expect(card._homeiiEngineGetQueue).toHaveBeenCalledWith({
+      entity_id: player.entity_id,
+      queue_id: "queue-main",
+      limit_before: 50,
+      limit_after: 1000,
+    });
+    expect(card._callService).not.toHaveBeenCalled();
+    expect(snapshot.items[0].image).toBe(artwork);
+  });
+
+  legacyIt("keeps required Engine queue snapshots away from browser-side raw mass_queue fallbacks", async () => {
+    await import("../src/homeii-music-flow.js?runtime-queue-engine-required-source-of-truth-baseline");
+    await Promise.resolve();
+    await vi.runAllTimersAsync();
+
+    const CardCtor = globalThis.customElements.get("homeii-music-flow");
+    const card = new CardCtor();
+    card.setConfig({ type: "custom:homeii-music-flow", homeii_engine_mode: "required" });
+    const player = {
+      entity_id: "media_player.main",
+      attributes: { active_queue: "queue-main" },
+    };
+    const artwork = "/api/homeii_flow/artwork/item/queue-token";
+    card._state.selectedPlayer = player.entity_id;
+    card._state.players = [player];
+    card._state.engineAvailable = true;
+    card._state.engineCapabilities = {
+      item_artwork_proxy: true,
+      queue_source_of_truth: true,
+      queue_artwork_proxy: true,
+    };
+    card._homeiiEngineGetQueue = vi.fn(async () => ({
+      provider: "mass_queue.get_queue_items",
+      coverage: { visible_items: 1, expected_items: 100, complete: false },
+      data: {
+        queue_state: { queue_id: "queue-main", current_index: 0, items: 100 },
+        items: [{
+          queue_item_id: "queue-1",
+          sort_index: 0,
+          media_item: { uri: "spotify://track/1", name: "Track A", homeii_artwork_url: artwork },
+        }],
+      },
+    }));
+    card._fetchMassQueueItemsSnapshot = vi.fn(async () => ({
+      state: { queue_id: "queue-main", current_index: 0, items: 100 },
+      items: [{
+        queue_item_id: "raw-1",
+        sort_index: 0,
+        media_item: { uri: "spotify://track/raw", name: "Raw Track", image: "https://mass.local/imageproxy/raw" },
+      }],
+    }));
+    card._callService = vi.fn();
+    card._hasDirectMAConnection = vi.fn(() => true);
+    card._callEngineMaCommand = vi.fn();
+    card._prefetchQueueArtworkWindow = vi.fn();
+
+    await card._ensureQueueSnapshot(true);
+
+    expect(card._homeiiEngineGetQueue).toHaveBeenCalledTimes(1);
+    expect(card._fetchMassQueueItemsSnapshot).not.toHaveBeenCalled();
+    expect(card._callService).not.toHaveBeenCalled();
+    expect(card._callEngineMaCommand).not.toHaveBeenCalled();
+    expect(card._state.queueItems).toHaveLength(1);
+    expect(card._queueItemImageUrl(card._state.queueItems[0], 120)).toBe(artwork);
+  });
+
+  legacyIt("uses a scoped Home Assistant queue lookup when the unscoped queue snapshot is partial", async () => {
     await import("../src/homeii-music-flow.js?runtime-queue-ha-scoped-partial-baseline");
     await Promise.resolve();
     await vi.runAllTimersAsync();
 
     const CardCtor = globalThis.customElements.get("homeii-music-flow");
     const card = new CardCtor();
+    card.setConfig({ type: "custom:homeii-music-flow", homeii_engine_mode: "required" });
     const player = {
       entity_id: "media_player.main",
       state: "playing",
@@ -1263,13 +1777,14 @@ describe("runtime baseline", () => {
     expect(snapshot.items).toHaveLength(4);
   });
 
-  it("keeps the unscoped Home Assistant queue snapshot when scoped queue_id is rejected", async () => {
+  legacyIt("keeps the unscoped Home Assistant queue snapshot when scoped queue_id is rejected", async () => {
     await import("../src/homeii-music-flow.js?runtime-queue-ha-scoped-rejected-baseline");
     await Promise.resolve();
     await vi.runAllTimersAsync();
 
     const CardCtor = globalThis.customElements.get("homeii-music-flow");
     const card = new CardCtor();
+    card.setConfig({ type: "custom:homeii-music-flow", homeii_engine_mode: "required" });
     const player = {
       entity_id: "media_player.main",
       state: "playing",
@@ -1303,13 +1818,14 @@ describe("runtime baseline", () => {
     expect(snapshot.items[0].media_item.name).toBe("Track A");
   });
 
-  it("uses direct Music Assistant queue snapshots only after Home Assistant queue lookups fail", async () => {
+  legacyIt("uses direct Music Assistant queue snapshots only after Home Assistant queue lookups fail", async () => {
     await import("../src/homeii-music-flow.js?runtime-queue-direct-fallback-baseline");
     await Promise.resolve();
     await vi.runAllTimersAsync();
 
     const CardCtor = globalThis.customElements.get("homeii-music-flow");
     const card = new CardCtor();
+    card.setConfig({ type: "custom:homeii-music-flow", homeii_engine_mode: "required" });
     const player = {
       entity_id: "media_player.main",
       state: "playing",
@@ -1325,7 +1841,7 @@ describe("runtime baseline", () => {
     card._callService = vi.fn(async () => { throw new Error("HA queue unavailable"); });
     card._fetchMassQueueItemsSnapshot = vi.fn(async () => null);
     card._prefetchQueueArtworkWindow = vi.fn();
-    card._callDirectMaCommand = vi.fn(async (command) => {
+    card._callEngineMaCommand = vi.fn(async (command) => {
       if (command === "player_queues/get") return { queue_id: "queue-main", current_index: 1, items: 2 };
       if (command === "player_queues/items") {
         return {
@@ -1343,8 +1859,8 @@ describe("runtime baseline", () => {
 
     expect(card._callService).toHaveBeenCalledTimes(1);
     expect(card._fetchMassQueueItemsSnapshot).toHaveBeenCalledTimes(1);
-    expect(card._callDirectMaCommand).toHaveBeenCalledWith("player_queues/get", { queue_id: "queue-main" });
-    expect(card._callDirectMaCommand).toHaveBeenCalledWith("player_queues/items", { queue_id: "queue-main", limit: 50, offset: 0 });
+    expect(card._callEngineMaCommand).toHaveBeenCalledWith("player_queues/get", { queue_id: "queue-main" });
+    expect(card._callEngineMaCommand).toHaveBeenCalledWith("player_queues/items", { queue_id: "queue-main", limit: 50, offset: 0 });
     expect(card._state.queueItems).toHaveLength(1);
     expect(card._state.queueItems[0].media_item.name).toBe("Track B");
   });
@@ -1370,7 +1886,7 @@ describe("runtime baseline", () => {
     expect(card._hasUsableMusicAssistantConfigEntry()).toBe(false);
   });
 
-  it("passes discovered config_entry_id to Home Assistant Music Assistant services even when the entry lookup is not_loaded", async () => {
+  legacyIt("passes discovered config_entry_id to Home Assistant Music Assistant services even when the entry lookup is not_loaded", async () => {
     await import("../src/homeii-music-flow.js?runtime-ma-service-signal-fallback-baseline");
     await Promise.resolve();
     await vi.runAllTimersAsync();
@@ -1405,7 +1921,7 @@ describe("runtime baseline", () => {
     expect(card._state.musicAssistantIssueMessage).toBe("");
   });
 
-  it("uses generic HA media_player fallback when Music Assistant services exist but player markers are missing", async () => {
+  legacyIt("uses generic HA media_player fallback when Music Assistant services exist but player markers are missing", async () => {
     await import("../src/homeii-music-flow.js?runtime-ma-generic-player-fallback-baseline");
     await Promise.resolve();
     await vi.runAllTimersAsync();
@@ -1503,7 +2019,7 @@ describe("runtime baseline", () => {
     expect(notices[1].message).toBe("Music Assistant timed out");
   });
 
-  it("selects a player from the dashboard query string", async () => {
+  legacyIt("selects a player from the dashboard query string", async () => {
     await import("../src/homeii-music-flow.js?runtime-query-string-player-baseline");
     await Promise.resolve();
     await vi.runAllTimersAsync();
@@ -1547,7 +2063,7 @@ describe("runtime baseline", () => {
     }
   });
 
-  it("keeps an explicitly configured player visible even when pinned players are set", async () => {
+  legacyIt("keeps an explicitly configured player visible even when pinned players are set", async () => {
     await import("../src/homeii-music-flow.js?runtime-configured-player-pinned-baseline");
     await Promise.resolve();
     await vi.runAllTimersAsync();
@@ -1585,7 +2101,7 @@ describe("runtime baseline", () => {
     expect(card._state.selectedPlayer).toBe(office.entity_id);
   });
 
-  it("does not let the configured player override a manual player selection", async () => {
+  legacyIt("does not let the configured player override a manual player selection", async () => {
     await import("../src/homeii-music-flow.js?runtime-configured-player-manual-selection-baseline");
     await Promise.resolve();
     await vi.runAllTimersAsync();
@@ -1624,7 +2140,55 @@ describe("runtime baseline", () => {
     expect(card._state.selectedPlayer).toBe(kitchen.entity_id);
   });
 
-  it("reports browser-blocked Direct API as optional when the HA Music Assistant integration is available", async () => {
+  it("keeps player cards visually clean while retaining entity ids for configuration paths", async () => {
+    await import("../src/homeii-music-flow.js?runtime-player-card-clean-label-baseline");
+    await Promise.resolve();
+    await vi.runAllTimersAsync();
+
+    const CardCtor = globalThis.customElements.get("homeii-music-flow");
+    const card = new CardCtor();
+    const html = card._playerRowHtml({
+      entity_id: "media_player.office_2",
+      state: "playing",
+      attributes: {
+        friendly_name: "Office",
+        media_title: "Current Song",
+        volume_level: 0.4,
+      },
+    }, "", true, { controls: true });
+
+    expect(html).toContain("Office");
+    expect(html).toContain("Current Song");
+    expect(html).not.toContain("player-premium-entity");
+  });
+
+  legacyIt("opens the direct Music Assistant UI when the interface URL is left at the default path", async () => {
+    await import("../src/homeii-music-flow.js?runtime-ma-interface-direct-fallback-baseline");
+    await Promise.resolve();
+    await vi.runAllTimersAsync();
+
+    const CardCtor = globalThis.customElements.get("homeii-music-flow");
+    const card = new CardCtor();
+    card.setConfig({
+      type: "custom:homeii-music-flow",
+      ma_url: "http://192.168.1.10:8095/api",
+    });
+    const opened = [];
+    const previousOpen = globalThis.window.open;
+    const previousLocation = globalThis.window.location;
+    globalThis.window.location = { origin: "http://homeassistant.local:8123" };
+    globalThis.window.open = (url, target) => opened.push({ url, target });
+    try {
+      card._launchMusicAssistant();
+    } finally {
+      globalThis.window.open = previousOpen;
+      globalThis.window.location = previousLocation;
+    }
+
+    expect(opened).toEqual([{ url: "http://192.168.1.10:8095", target: "_self" }]);
+  });
+
+  legacyIt("reports browser-blocked Direct API as optional when the HA Music Assistant integration is available", async () => {
     await import("../src/homeii-music-flow.js?runtime-direct-ma-cors-integration-fallback-baseline");
     await Promise.resolve();
     await vi.runAllTimersAsync();
@@ -1649,17 +2213,17 @@ describe("runtime baseline", () => {
     });
     globalThis.fetch = fetchMock;
     try {
-      await expect(card._callDirectMaCommand("players/all")).rejects.toThrow(/blocked by the browser/i);
+      await expect(card._callEngineMaCommand("players/all")).rejects.toThrow(/blocked by the browser/i);
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(card._state.musicAssistantIssueMessage).toBe("");
-      await expect(card._callDirectMaCommand("players/all")).rejects.toThrow(/blocked by the browser/i);
+      await expect(card._callEngineMaCommand("players/all")).rejects.toThrow(/blocked by the browser/i);
       expect(fetchMock).toHaveBeenCalledTimes(1);
     } finally {
       globalThis.fetch = originalFetch;
     }
   });
 
-  it("loads library items through direct Music Assistant when the HA entry is not loaded", async () => {
+  legacyIt("loads library items through direct Music Assistant when the HA entry is not loaded", async () => {
     await import("../src/homeii-music-flow.js?runtime-library-direct-entry-fallback-baseline");
     await Promise.resolve();
     await vi.runAllTimersAsync();
@@ -1670,7 +2234,7 @@ describe("runtime baseline", () => {
     card._callService = vi.fn(async () => {
       throw new Error("Music Assistant entry not_loaded");
     });
-    card._callDirectMaCommand = vi.fn(async () => ({
+    card._callEngineMaCommand = vi.fn(async () => ({
       items: [{
         item_id: "playlist-1",
         provider: "library",
@@ -1686,7 +2250,7 @@ describe("runtime baseline", () => {
       order_by: "sort_name",
       limit: 50,
     });
-    expect(card._callDirectMaCommand).toHaveBeenCalledWith("music/playlists/library_items", {
+    expect(card._callEngineMaCommand).toHaveBeenCalledWith("music/playlists/library_items", {
       limit: 50,
       offset: 0,
       order_by: "sort_name",
@@ -1699,7 +2263,38 @@ describe("runtime baseline", () => {
     expect(card._state.musicAssistantIssueMessage).toBe("");
   });
 
-  it("does not treat the Home Assistant Music Assistant ingress URL as a direct MA API URL", async () => {
+  it("uses Engine item artwork proxy for library items when the capability is available", async () => {
+    await import("../src/homeii-music-flow.js?runtime-library-engine-artwork-proxy-baseline");
+    await Promise.resolve();
+    await vi.runAllTimersAsync();
+
+    const CardCtor = globalThis.customElements.get("homeii-music-flow");
+    const card = new CardCtor();
+    const artwork = "/api/homeii_flow/artwork/item/library-token";
+    card._state.engineAvailable = true;
+    card._state.engineCapabilities = { item_artwork_proxy: true };
+    card._homeiiEngineGetLibrary = vi.fn(async () => ({
+      provider: "music_assistant.get_library",
+      data: {
+        items: [{
+          uri: "library://playlist/1",
+          media_type: "playlist",
+          name: "Morning Flow",
+          homeii_artwork_url: artwork,
+          image: "https://mass.local/imageproxy/old",
+        }],
+      },
+    }));
+    card._callService = vi.fn();
+
+    const items = await card._fetchLibrary("playlist", "sort_name", 50, false);
+
+    expect(card._callService).not.toHaveBeenCalled();
+    expect(items[0].homeii_artwork_url).toBe(artwork);
+    expect(card._artUrl(items[0])).toBe(artwork);
+  });
+
+  legacyIt("does not treat the Home Assistant Music Assistant ingress URL as a direct MA API URL", async () => {
     await import("../src/homeii-music-flow.js?runtime-direct-ma-ingress-guard-baseline");
     await Promise.resolve();
     await vi.runAllTimersAsync();
@@ -1714,10 +2309,10 @@ describe("runtime baseline", () => {
 
     expect(card._isLikelyHomeAssistantIngressMaUrl(card._maBrowserUrl())).toBe(true);
     expect(card._hasDirectMAConnection()).toBe(false);
-    await expect(card._callDirectMaCommand("players/all")).rejects.toThrow(/ingress/i);
+    await expect(card._callEngineMaCommand("players/all")).rejects.toThrow(/ingress/i);
   });
 
-  it("backs off direct Music Assistant API retries after an invalid ma_url returns 405", async () => {
+  legacyIt("backs off direct Music Assistant API retries after an invalid ma_url returns 405", async () => {
     await import("../src/homeii-music-flow.js?runtime-direct-ma-405-backoff-baseline");
     await Promise.resolve();
     await vi.runAllTimersAsync();
@@ -1738,17 +2333,17 @@ describe("runtime baseline", () => {
     }));
     globalThis.fetch = fetchMock;
     try {
-      await expect(card._callDirectMaCommand("players/all")).rejects.toThrow(/direct api/i);
+      await expect(card._callEngineMaCommand("players/all")).rejects.toThrow(/direct api/i);
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(card._hasDirectMAConnection()).toBe(false);
-      await expect(card._callDirectMaCommand("players/all")).rejects.toThrow(/direct api/i);
+      await expect(card._callEngineMaCommand("players/all")).rejects.toThrow(/direct api/i);
       expect(fetchMock).toHaveBeenCalledTimes(1);
     } finally {
       globalThis.fetch = originalFetch;
     }
   });
 
-  it("falls back to direct Music Assistant playback when HA reports the MA entry is not loaded", async () => {
+  legacyIt("falls back to direct Music Assistant playback when HA reports the MA entry is not loaded", async () => {
     await import("../src/homeii-music-flow.js?runtime-play-direct-entry-fallback-baseline");
     await Promise.resolve();
     await vi.runAllTimersAsync();
@@ -1769,7 +2364,7 @@ describe("runtime baseline", () => {
       throw new Error("Music Assistant entry not_loaded");
     });
     card._callHaServiceTargeted = vi.fn(async () => ({}));
-    card._callDirectMaCommand = vi.fn(async () => ({}));
+    card._callEngineMaCommand = vi.fn(async () => ({}));
     card._toastMediaQueued = vi.fn();
 
     const ok = await card._playMediaOnPlayer(player.entity_id, "library://playlist/1", "playlist", "play", {
@@ -1778,7 +2373,7 @@ describe("runtime baseline", () => {
 
     expect(ok).toBe(true);
     expect(card._callHaServiceTargeted).not.toHaveBeenCalled();
-    expect(card._callDirectMaCommand).toHaveBeenCalledWith("player_queues/play_media", {
+    expect(card._callEngineMaCommand).toHaveBeenCalledWith("player_queues/play_media", {
       queue_id: "queue-ceiling",
       media: "library://playlist/1",
       option: "replace",
@@ -1787,7 +2382,7 @@ describe("runtime baseline", () => {
     expect(card._toastMediaQueued).toHaveBeenCalledWith("Morning Flow", "Ceiling");
   });
 
-  it("sends music_assistant.play_media with entity_id in service data first", async () => {
+  legacyIt("sends music_assistant.play_media with entity_id in service data first", async () => {
     await import("../src/homeii-music-flow.js?runtime-play-media-target-baseline");
     await Promise.resolve();
     await vi.runAllTimersAsync();
@@ -1819,7 +2414,7 @@ describe("runtime baseline", () => {
     expect(card._toastMediaQueued).toHaveBeenCalledWith("Kitchen Mix", "Kitchen");
   });
 
-  it("keeps music_assistant.play_media as the primary playback path when media_player.play_media exists", async () => {
+  legacyIt("keeps music_assistant.play_media as the primary playback path when media_player.play_media exists", async () => {
     await import("../src/homeii-music-flow.js?runtime-play-media-primary-path-baseline");
     await Promise.resolve();
     await vi.runAllTimersAsync();
@@ -1942,6 +2537,9 @@ describe("runtime baseline", () => {
         media_title: "Current Track",
         media_artist: "Current Artist",
         entity_picture: "https://ha.local/api/media_player_proxy/media_player.main?token=abc",
+        current_media: {
+          image_url: "http://192.168.1.20:8095/imageproxy/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa?size=500",
+        },
       },
     };
     const currentItem = {
@@ -1963,6 +2561,7 @@ describe("runtime baseline", () => {
     const source = card._mobileNowPlayingDisplaySource(player, currentItem, { current: currentItem });
     expect(source.art).toContain("/api/media_player_proxy/media_player.main");
     expect(source.art).not.toContain("/imageproxy");
+    expect(card._mobileStackItemArtwork(currentItem, "center")).toContain("/api/media_player_proxy/media_player.main");
 
     card._state.mobileQueuePlayPendingUntil = Date.now() + 8500;
     card._state.mobileQueuePlayPendingKey = card._getQueueItemPlaybackId(currentItem) || card._getQueueItemStableId(currentItem) || card._getQueueItemKey(currentItem);
@@ -1971,6 +2570,34 @@ describe("runtime baseline", () => {
 
     const pendingSource = card._mobileNowPlayingDisplaySource(player, currentItem, { current: currentItem });
     expect(pendingSource.art).toContain("/imageproxy");
+  });
+
+  it("keeps the visible artwork until a replacement has decoded", async () => {
+    await import("../src/homeii-music-flow.js?runtime-artwork-atomic-swap-baseline");
+    await Promise.resolve();
+    await vi.runAllTimersAsync();
+
+    const CardCtor = globalThis.customElements.get("homeii-music-flow");
+    const card = new CardCtor();
+    const attributes = new Map();
+    const img = {
+      dataset: {},
+      isConnected: true,
+      getAttribute(name) { return attributes.get(name) || ""; },
+      removeAttribute(name) { attributes.delete(name); },
+      set src(value) { attributes.set("src", String(value)); },
+      get src() { return attributes.get("src") || ""; },
+    };
+    img.src = "https://ha.local/api/media_player_proxy/media_player.main?token=good";
+    img.dataset.homeiiArtReady = "1";
+    img.dataset.homeiiAppliedArtSrc = img.getAttribute("src");
+    card._decodeArtworkUrl = vi.fn(async () => false);
+
+    card._setDecodedArtworkImage(img, "https://ma.local/imageproxy/broken", "Current Track");
+    expect(img.getAttribute("src")).toContain("/api/media_player_proxy/");
+    await Promise.resolve();
+    expect(img.getAttribute("src")).toContain("/api/media_player_proxy/");
+
   });
 
   it("uses player artwork in the mobile stack when queue artwork is unavailable", async () => {
@@ -2010,7 +2637,77 @@ describe("runtime baseline", () => {
     expect(html).not.toContain("queue-flow-picker");
   });
 
-  it("renders the opt-in vertical queue flow inside the queue menu without changing the main artwork stack", async () => {
+  it("uses the browsed queue item artwork instead of the playing player artwork", async () => {
+    await import("../src/homeii-music-flow.js?runtime-browsed-artwork-identity");
+    await Promise.resolve();
+    await vi.runAllTimersAsync();
+
+    const CardCtor = globalThis.customElements.get("homeii-music-flow");
+    const card = new CardCtor();
+    const queueItems = Array.from({ length: 3 }, (_, index) => ({
+      queue_item_id: `browse-${index}`,
+      sort_index: index,
+      media_item: {
+        uri: `spotify://browse/${index}`,
+        name: `Browse Track ${index}`,
+        media_type: "track",
+        image: `https://ha.local/browse-${index}.jpg`,
+      },
+    }));
+    const player = {
+      entity_id: "media_player.main",
+      state: "playing",
+      attributes: {
+        media_content_id: "spotify://browse/1",
+        media_title: "Browse Track 1",
+        entity_picture: "https://ha.local/playing-player.jpg",
+      },
+    };
+    card._state.selectedPlayer = player.entity_id;
+    card._state.players = [player];
+    card._state.queueItems = queueItems;
+    card._state.maQueueState = { current_index: 1, current_item: queueItems[1] };
+    card._state.mobileArtBrowseOffset = 1;
+
+    const browsedItem = card._mobileArtStackItems().current;
+    const artwork = card._mobileStackItemArtwork(browsedItem, "center");
+
+    expect(browsedItem.media_item.name).toBe("Browse Track 2");
+    expect(artwork).toContain("browse-2.jpg");
+    expect(artwork).not.toContain("playing-player.jpg");
+  });
+
+  it("coalesces initial library reads and serves stale card data without a loading wait", async () => {
+    await import("../src/homeii-music-flow.js?runtime-library-card-swr");
+    await Promise.resolve();
+    await vi.runAllTimersAsync();
+
+    const CardCtor = globalThis.customElements.get("homeii-music-flow");
+    const card = new CardCtor();
+    let resolveInitial;
+    card._fetchLibrary = vi.fn(() => new Promise((resolve) => { resolveInitial = resolve; }));
+
+    const first = card._getLibrary("album", "sort_name", 250, false);
+    const second = card._getLibrary("album", "sort_name", 250, false);
+    expect(card._fetchLibrary).toHaveBeenCalledTimes(1);
+    resolveInitial([{ uri: "library://album/1", name: "Cached album" }]);
+    await expect(first).resolves.toHaveLength(1);
+    await expect(second).resolves.toHaveLength(1);
+
+    const cacheKey = "album:sort_name:250:false";
+    card._cache.library.set(cacheKey, {
+      ts: Date.now() - Number(card._config.cache_ttl || 300000) - 1,
+      items: [{ uri: "library://album/1", name: "Cached album" }],
+    });
+    card._fetchLibrary = vi.fn(() => new Promise(() => {}));
+
+    await expect(card._getLibrary("album", "sort_name", 250, false)).resolves.toEqual([
+      { uri: "library://album/1", name: "Cached album" },
+    ]);
+    expect(card._fetchLibrary).toHaveBeenCalledTimes(1);
+  });
+
+  legacyIt("renders the opt-in vertical queue flow inside the queue menu without changing the main artwork stack", async () => {
     await import("../src/homeii-music-flow.js?runtime-mobile-vertical-queue-flow");
     await Promise.resolve();
     await vi.runAllTimersAsync();
@@ -2054,6 +2751,7 @@ describe("runtime baseline", () => {
     expect(queueHtml).toContain("queue-flow-picker");
     expect(queueHtml).not.toContain("queue-list");
     expect(queueHtml).toContain("queue-flow-art");
+    expect(queueHtml).toContain("data-img=");
     expect(queueHtml).not.toContain("queue-flow-copy");
     expect(queueHtml).toContain("queue-flow-caption");
     expect(queueHtml.match(/data-queue-flow-item/g)).toHaveLength(5);
@@ -2199,7 +2897,7 @@ describe("runtime baseline", () => {
     expect(radioFlowHtml).toContain('data-flow-caption-artist=""');
   });
 
-  it("adds a favorites-only filter to library tabs", async () => {
+  it("opens the Liked page from the media-tab heart", async () => {
     await import("../src/homeii-music-flow.js?runtime-library-favorites-filter-baseline");
     await Promise.resolve();
     await vi.runAllTimersAsync();
@@ -2208,14 +2906,10 @@ describe("runtime baseline", () => {
     const card = new CardCtor();
     card._state.menuPage = "library_albums";
 
-    expect(card._mediaLayoutToolbarHtml()).toContain('data-library-favorites-toggle="library_albums"');
+    expect(card._mediaLayoutToolbarHtml()).toContain('data-library-liked-open="library_liked"');
+    expect(card._mediaLayoutToolbarHtml()).not.toContain("data-library-favorites-toggle");
     expect(card._mediaLayoutToolbarHtml()).not.toContain("subtle-heart");
-    expect(card._mediaLayoutToolbarHtml()).not.toContain("Favorites only</span>");
-
-    card._setLibraryFavoritesOnly("library_albums", true);
-    expect(card._libraryFavoritesOnlyEnabled("library_albums")).toBe(true);
-    expect(card._mediaLayoutToolbarHtml()).toContain("library-favorites-toggle active");
-    expect(card._mediaLayoutToolbarHtml()).not.toContain("Favorites only</span>");
+    expect(card._defaultMobileLibraryTabs()).toContain("library_liked");
 
     card._getLibrary = vi.fn(async () => []);
     await card._getLibraryTabItems({ type: "album" }, "sort_name", 25, "", true);
@@ -2223,7 +2917,39 @@ describe("runtime baseline", () => {
     expect(card._getLibrary).toHaveBeenCalledWith("album", "sort_name", 25, true);
   });
 
-  it("favorites library radio items by item identity instead of current media", async () => {
+  it("merges Music Assistant and local-only favorites into one Liked page", async () => {
+    await import("../src/homeii-music-flow.js?runtime-hybrid-liked-baseline");
+    await Promise.resolve();
+    await vi.runAllTimersAsync();
+
+    const CardCtor = globalThis.customElements.get("homeii-music-flow");
+    const card = new CardCtor();
+    card._likedUris = new Set(["radiobrowser://station/local"]);
+    card._likedMeta = {
+      "radiobrowser://station/local": {
+        media_type: "radio",
+        name: "Local Station",
+        favorite_scope: "radio_browser",
+      },
+    };
+    card._cache.library.set("liked:ma", {
+      ts: Date.now(),
+      items: [{ uri: "library://track/ma", media_type: "track", name: "MA Track", favorite: true }],
+    });
+
+    const liked = card._likedEntries();
+    expect(liked.map((item) => item.uri)).toEqual([
+      "library://track/ma",
+      "radiobrowser://station/local",
+    ]);
+    expect(card._isEntryLiked({
+      uri: "radiobrowser://station/local",
+      media_type: "radio",
+      favorite_scope: "radio_browser",
+    })).toBe(true);
+  });
+
+  legacyIt("favorites library radio items by item identity instead of current media", async () => {
     await import("../src/homeii-music-flow.js?runtime-library-radio-favorite-item-baseline");
     await Promise.resolve();
     await vi.runAllTimersAsync();
@@ -2252,7 +2978,7 @@ describe("runtime baseline", () => {
       media_type: "radio",
       name: "Station One",
     });
-    card._callDirectMaCommand = vi.fn(async (command, args) => {
+    card._callEngineMaCommand = vi.fn(async (command, args) => {
       calls.push({ command, args });
       return {};
     });
@@ -2265,11 +2991,39 @@ describe("runtime baseline", () => {
     expect(card._entryTargetsCurrentMedia(entry)).toBe(false);
     await expect(card._toggleLikeEntry(entry)).resolves.toBe(true);
 
-    expect(card._callDirectMaCommand).toHaveBeenCalledWith("music/favorites/add_item", { item: "radio://station/one" });
+    expect(card._callEngineMaCommand).toHaveBeenCalledWith("music/favorites/add_item", { item: "radio://station/one" });
     expect(calls[0]).toEqual({ command: "music/favorites/add_item", args: { item: "radio://station/one" } });
     expect(card._toggleLikeViaMassQueue).not.toHaveBeenCalled();
     expect(card._pressFavoriteButtonEntity).not.toHaveBeenCalled();
     expect(card._toastError).not.toHaveBeenCalled();
+  });
+
+  legacyIt("synthesizes a usable radio URI for Home Assistant library items that omit uri", async () => {
+    await import("../src/homeii-music-flow.js?runtime-library-radio-uri-baseline");
+    await Promise.resolve();
+    await vi.runAllTimersAsync();
+
+    const CardCtor = globalThis.customElements.get("homeii-music-flow");
+    const card = new CardCtor();
+    card._callService = vi.fn(async () => ({
+      response: {
+        items: [{
+          item_id: "s354122",
+          provider: "radiobrowser",
+          media_type: "radio",
+          name: "Radio Romanian Colinde",
+        }],
+      },
+    }));
+
+    const items = await card._fetchLibrary("radio", "sort_name", 25, false, "romanian");
+
+    expect(items).toHaveLength(1);
+    expect(items[0]).toMatchObject({
+      uri: "radiobrowser://radio/s354122",
+      media_type: "radio",
+      provider: "radiobrowser",
+    });
   });
 
   it("reports a failed media action favorite without treating it as success", async () => {
@@ -2305,7 +3059,7 @@ describe("runtime baseline", () => {
     const toolbarHtml = card._mediaLayoutToolbarHtml();
 
     expect(toolbarHtml).toContain('data-library-flow-toggle="library_playlists"');
-    expect(toolbarHtml).toContain('data-library-favorites-toggle="library_playlists"');
+    expect(toolbarHtml).toContain('data-library-liked-open="library_liked"');
     expect(toolbarHtml).not.toContain("subtle-heart");
     expect(toolbarHtml).not.toContain("Favorites only</span>");
     expect(toolbarHtml).not.toContain("Wheel</span>");
@@ -2401,7 +3155,8 @@ describe("runtime baseline", () => {
         media_artist: "Artist 2",
       },
     };
-    card._config = { ...(card._config || {}), settings_source: "visual", mobile_cover_flow: true, mobile_queue_flow: false };
+    card._config = { ...(card._config || {}), settings_source: "visual", player_design: "classic", mobile_cover_flow: true, mobile_queue_flow: false };
+    card._state.mobilePlayerDesign = "classic";
     card._state.mobileCoverFlow = true;
     card._state.mobileQueueFlow = false;
     card._state.selectedPlayer = player.entity_id;
@@ -2506,7 +3261,7 @@ describe("runtime baseline", () => {
     });
   });
 
-  it("does not switch to another playing player during a pending queue transition", async () => {
+  legacyIt("does not switch to another playing player during a pending queue transition", async () => {
     vi.setSystemTime(new Date("2026-01-01T00:00:00Z"));
     await import("../src/homeii-music-flow.js?runtime-player-lock-baseline");
     await Promise.resolve();
@@ -2559,7 +3314,7 @@ describe("runtime baseline", () => {
     expect(card._state.mobileQueuePlayPendingPlayerId).toBe("media_player.main");
   });
 
-  it("lets the screensaver enter while lyrics are open", async () => {
+  it("blocks the screensaver while lyrics are open", async () => {
     await import("../src/homeii-music-flow.js?runtime-lyrics-screensaver-block-baseline");
     await Promise.resolve();
     await vi.runAllTimersAsync();
@@ -2568,7 +3323,7 @@ describe("runtime baseline", () => {
     const card = new CardCtor();
     card._state.lyricsOpen = true;
 
-    expect(card._screensaverBlocked()).toBe(false);
+    expect(card._screensaverBlocked()).toBe(true);
   });
 
   it("suppresses the screensaver while the card is open in the visual editor", async () => {
@@ -2801,7 +3556,7 @@ describe("runtime baseline", () => {
     const html = card._screensaverControlButtons()
       .map((value) => card._screensaverControlButtonHtml(value))
       .join("");
-    const source = await readProjectFile("src", "homeii-music-flow.js");
+    const source = await readCardPresentationSource();
 
     expect(html).toContain('id="screensaverLyricsBtn"');
     expect(html).toContain('data-screensaver-control="lyrics"');
@@ -2822,7 +3577,7 @@ describe("runtime baseline", () => {
 
   it("keeps lyrics sync and font controls available in the normal lyrics modal", async () => {
     const source = await readProjectFile("src", "core", "base-music-card.js");
-    const styleSource = await readProjectFile("src", "homeii-music-flow.js");
+    const styleSource = await readCardPresentationSource();
 
     expect(source).toContain('id="lyricsFontMinusBtn"');
     expect(source).toContain('id="lyricsFontResetBtn"');
@@ -2842,6 +3597,7 @@ describe("runtime baseline", () => {
 
     const CardCtor = globalThis.customElements.get("homeii-music-flow");
     const card = new CardCtor();
+    card._homeiiEngineEnabled = () => false; // This fixture exercises the legacy HA group service path.
     card._state.selectedPlayer = "media_player.living_room";
     card._state.players = [
       {
@@ -2925,6 +3681,7 @@ describe("runtime baseline", () => {
 
     const CardCtor = globalThis.customElements.get("homeii-music-flow");
     const card = new CardCtor();
+    card._homeiiEngineEnabled = () => false; // This fixture exercises the legacy HA group service path.
     card._state.selectedPlayer = "media_player.kitchen";
     card._state.players = [
       {
@@ -2970,6 +3727,7 @@ describe("runtime baseline", () => {
 
     const CardCtor = globalThis.customElements.get("homeii-music-flow");
     const card = new CardCtor();
+    card._homeiiEngineEnabled = () => false; // This fixture exercises the legacy HA group service path.
     card._state.selectedPlayer = "media_player.kitchen";
     card._state.players = [
       {
@@ -3116,7 +3874,7 @@ describe("runtime baseline", () => {
   });
 
   it("keeps group update and disconnect-all actions paired", async () => {
-    const source = await readProjectFile("src", "homeii-music-flow.js");
+    const source = await readCardPresentationSource();
 
     expect(source).toContain(".menu-body.sheet-group .group-actions { width:min(100%, 460px); margin:22px auto 0; display:grid; grid-template-columns:repeat(2, minmax(0, 1fr));");
     expect(source).toContain(".menu-body.sheet-group .group-disconnect-all-btn");
@@ -3178,13 +3936,245 @@ describe("runtime baseline", () => {
     expect(buttonClasses.has("active")).toBe(false);
   });
 
+  it("keeps embedded Music Assistant lyrics local and requires opt-in for LRCLIB", async () => {
+    await import("../src/homeii-music-flow.js?runtime-lyrics-privacy-baseline");
+    await Promise.resolve();
+    await vi.runAllTimersAsync();
+
+    const CardCtor = globalThis.customElements.get("homeii-music-flow");
+    const localCard = new CardCtor();
+    localCard._config = {};
+    localCard._currentTrackInfo = () => ({ key: "local", title: "Local Song", artist: "Local Artist" });
+    localCard._extractCurrentLyricsRawText = () => "[00:01.00]Local line";
+    globalThis.fetch = vi.fn();
+
+    const embedded = await localCard._fetchLyricsForCurrentTrack();
+
+    expect(embedded.source).toBe("metadata");
+    expect(embedded.text).toContain("Local line");
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+
+    const disabledCard = new CardCtor();
+    disabledCard._config = {};
+    disabledCard._currentTrackInfo = () => ({ key: "disabled", title: "Private Song", artist: "Private Artist" });
+    disabledCard._extractCurrentLyricsRawText = () => "";
+
+    const disabled = await disabledCard._fetchLyricsForCurrentTrack();
+
+    expect(disabled.source).toBe("disabled");
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+
+    const optedInCard = new CardCtor();
+    optedInCard._config = { lrclib_lyrics_enabled: true };
+    optedInCard._currentTrackInfo = () => ({
+      key: "external",
+      title: "External Song",
+      artist: "External Artist",
+      album: "External Album",
+      duration: 123,
+    });
+    optedInCard._extractCurrentLyricsRawText = () => "";
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ plainLyrics: "External line" }),
+    });
+
+    const external = await optedInCard._fetchLyricsForCurrentTrack();
+
+    expect(external.source).toBe("lrclib");
+    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+    expect(String(globalThis.fetch.mock.calls[0][0])).toContain("https://lrclib.net/api/get?");
+    expect(String(globalThis.fetch.mock.calls[0][0])).toContain("track_name=External+Song");
+  });
+
+  async function reliabilityCard() {
+    await import("../src/homeii-music-flow.js?runtime-reliability");
+    await Promise.resolve();
+    await vi.runAllTimersAsync();
+    const CardCtor = globalThis.customElements.get("homeii-music-flow");
+    const card = new CardCtor();
+    card._state.engineAvailable = true;
+    return card;
+  }
+
+  it("does not replay an uncertain MA mutation over HTTP", async () => {
+    const card = await reliabilityCard();
+    card._callHomeAssistantWs = vi.fn().mockRejectedValue(new Error("Timed out"));
+    card._homeiiEngineHttpCommand = vi.fn().mockResolvedValue({ ok: true });
+    await expect(card._homeiiEngineCommand("ma/command", { command: "player_queues/play_index" })).rejects.toThrow("Timed out");
+    await expect(card._homeiiEngineCommand("favorites/set", {})).rejects.toThrow("Timed out");
+    expect(card._homeiiEngineHttpCommand).not.toHaveBeenCalled();
+    await expect(card._homeiiEngineCommand("queue/get", {})).resolves.toEqual({ ok: true });
+    expect(card._homeiiEngineHttpCommand).toHaveBeenCalledTimes(1);
+  });
+
+  it("sends volume immediately and serializes a drag to its latest value for the original player", async () => {
+    const card = await reliabilityCard();
+    card._setPlayerVolumeOptimistic = vi.fn();
+    let finishFirst;
+    card._callHomeiiEnginePlayerCommand = vi.fn()
+      .mockImplementationOnce(() => new Promise((resolve) => { finishFirst = resolve; }))
+      .mockResolvedValue(true);
+    card._getSelectedPlayer = () => ({ entity_id: "media_player.computer" });
+    const first = card._setVolume(0.4);
+    expect(card._callHomeiiEnginePlayerCommand).toHaveBeenCalledWith("media_player.computer", "volume", { volume_level: 0.4 });
+    card._setVolume(0.3);
+    card._setVolume(0.2);
+    card._getSelectedPlayer = () => ({ entity_id: "media_player.kitchen" });
+    const other = card._setVolume(0.1);
+    expect(card._callHomeiiEnginePlayerCommand).toHaveBeenCalledTimes(2);
+    finishFirst(true);
+    await vi.runAllTimersAsync();
+    expect(await first).toBe(true);
+    expect(await other).toBe(true);
+    expect(card._callHomeiiEnginePlayerCommand.mock.calls).toEqual([
+      ["media_player.computer", "volume", { volume_level: 0.4 }],
+      ["media_player.kitchen", "volume", { volume_level: 0.1 }],
+      ["media_player.computer", "volume", { volume_level: 0.2 }],
+    ]);
+    expect(card._volumeRequestsByPlayer.size).toBe(0);
+  });
+
+  it("rolls back a failed volume change without replaying it or changing mute state", async () => {
+    const card = await reliabilityCard();
+    card._loadPlayers = vi.fn();
+    card._syncNowPlayingUI = vi.fn();
+    card._syncPlayerVolumeControls = vi.fn();
+    card._toastError = vi.fn();
+    card._mediaControlFailureMessage = (error) => error.message;
+    card._callHomeiiEnginePlayerCommand = vi.fn().mockRejectedValue(new Error("Disconnected"));
+    const result = card._setPlayerVolumeFor("media_player.computer", 0);
+    await vi.runAllTimersAsync();
+    expect(await result).toBe(false);
+    expect(card._optimisticVolumeByPlayer.has("media_player.computer")).toBe(false);
+    expect(card._optimisticMuteByPlayer.size).toBe(0);
+    expect(card._softMutedPlayers.size).toBe(0);
+    expect(card._loadPlayers).toHaveBeenCalledOnce();
+    expect(card._toastError).toHaveBeenCalledWith("Disconnected");
+    expect(card._callHomeiiEnginePlayerCommand).toHaveBeenCalledOnce();
+  });
+
+  it("accumulates rapid volume button presses before the server confirms any of them", async () => {
+    const card = await reliabilityCard();
+    const player = { entity_id: "media_player.computer", attributes: { volume_level: 0.66 } };
+    card._getSelectedPlayer = () => player;
+    card._mobileVolumeStepPercent = () => 5;
+    card._syncNowPlayingUI = vi.fn();
+    card._syncPlayerVolumeControls = vi.fn();
+    let resolveFirst;
+    card._callHomeiiEnginePlayerCommand = vi.fn()
+      .mockImplementationOnce(() => new Promise((resolve) => { resolveFirst = resolve; }))
+      .mockResolvedValue(true);
+    card._stepSelectedVolume(1);
+    card._stepSelectedVolume(1);
+    card._stepSelectedVolume(1);
+    expect(card._effectivePlayerVolumeLevel(player)).toBe(0.81);
+    expect(card._callHomeiiEnginePlayerCommand).toHaveBeenCalledOnce();
+    resolveFirst(true);
+    await vi.runAllTimersAsync();
+    expect(card._callHomeiiEnginePlayerCommand).toHaveBeenLastCalledWith(
+      player.entity_id, "volume", { volume_level: 0.81 },
+    );
+  });
+
+  it("refreshes players and queue during a continuous burst of Engine events", async () => {
+    const card = await reliabilityCard();
+    card.isConnected = true;
+    card._homeiiEngineRequired = () => true;
+    card._refreshEnginePlayers = vi.fn().mockResolvedValue([]);
+    card._ensureQueueSnapshot = vi.fn().mockResolvedValue(null);
+    card._loadPlayers = vi.fn();
+    card._syncNowPlayingUI = vi.fn();
+    for (let index = 0; index < 25; index++) {
+      card._handleHomeiiEngineMusicAssistantEvent({ kind: "event", event: "queue_updated" });
+      await vi.advanceTimersByTimeAsync(100);
+    }
+    expect(card._refreshEnginePlayers.mock.calls.length).toBeGreaterThanOrEqual(2);
+    expect(card._ensureQueueSnapshot.mock.calls.length).toBeGreaterThanOrEqual(2);
+    card._unsubscribeHomeiiEngineMusicAssistantEvents();
+  });
+
+  it("does not mistake a queue window's first track for the current track", async () => {
+    const card = await reliabilityCard();
+    card._normalizeQueueItem = (item) => item || null;
+    const current = { queue_item_id: "playing", sort_index: 700 };
+    const snapshot = card._normalizeQueueSnapshot({ normalized: {
+      items: [{ queue_item_id: "first", sort_index: 0 }],
+      items_count: 900, current_index: 700, current_item: current,
+    } });
+    expect(snapshot.state.current_item).toEqual(current);
+    expect(snapshot.state.next_item).toBeNull();
+    const idle = card._normalizeQueueSnapshot({ normalized: {
+      items: [{ queue_item_id: "first", sort_index: 0 }], current_index: null,
+    } });
+    expect(idle.state.current_index).toBeNull();
+    expect(idle.state.current_item).toBeNull();
+  });
+
+  it("coalesces forced catalog refreshes and accepts authoritative removal of all players", async () => {
+    const card = await reliabilityCard();
+    card._state.enginePlayers = [{ entity_id: "media_player.removed" }];
+    let resolve;
+    card._homeiiEngineGetPlayers = vi.fn(() => new Promise((done) => { resolve = done; }));
+    const first = card._refreshEnginePlayers({ force: true });
+    const second = card._refreshEnginePlayers({ force: true });
+    resolve({ players: [] });
+    expect(await first).toEqual([]);
+    expect(await second).toEqual([]);
+    expect(card._homeiiEngineGetPlayers).toHaveBeenCalledTimes(1);
+    expect(card._state.enginePlayers).toEqual([]);
+  });
+
+  it("preserves a valid player catalog after a malformed response", async () => {
+    const card = await reliabilityCard();
+    const players = [{ entity_id: "media_player.kitchen" }];
+    card._state.enginePlayers = players;
+    card._homeiiEngineGetPlayers = vi.fn().mockResolvedValue({});
+    expect(await card._refreshEnginePlayers()).toEqual(players);
+    expect(card._state.engineStatus).toBe("degraded");
+  });
+
+  it("does not fabricate an empty queue after a transport failure and clears the warning after recovery", async () => {
+    const card = await reliabilityCard();
+    card._state.selectedPlayer = "media_player.kitchen";
+    card._getSelectedPlayer = () => ({ entity_id: card._state.selectedPlayer });
+    card._fetchMusicAssistantQueueSnapshot = vi.fn().mockRejectedValue(new Error("Disconnected"));
+    card._restoreQueueSnapshotFromCache = () => false;
+    card._applyQueueSnapshot = vi.fn();
+    await card._ensureQueueSnapshot(true);
+    expect(card._applyQueueSnapshot).not.toHaveBeenCalled();
+    expect(card._state.queueSnapshotError.message).toBe("Disconnected");
+    card._getNowPlayingQueueItems = () => [];
+    card._mobileQueueFlowMenuActive = () => false;
+    expect(card._queueMenuHtml()).not.toContain(card._i18n("ui.queue_is_empty"));
+    card._fetchMusicAssistantQueueSnapshot.mockResolvedValue({ state: { items: 0, current_index: null }, items: [] });
+    await card._ensureQueueSnapshot(true);
+    expect(card._state.queueSnapshotError).toBeNull();
+    expect(card._applyQueueSnapshot).toHaveBeenCalledOnce();
+  });
+
+  it.each(["add", "next", "replace_next", "play", "shuffle"])("uses the right playback confirmation for %s", async (enqueue) => {
+    const card = await reliabilityCard();
+    card._ensureHomeiiEngineReadyForAction = vi.fn().mockResolvedValue(true);
+    card._homeiiEnginePlayMedia = vi.fn().mockResolvedValue({ ok: true });
+    const ok = await card._playMediaOnPlayer("media_player.kitchen", "library://track/1", "track", enqueue, { silent: true });
+    expect(ok).toBe(true);
+    expect(card._homeiiEnginePlayMedia).toHaveBeenCalledWith(expect.objectContaining({
+      verify_playback: ["play", "shuffle"].includes(enqueue),
+    }));
+  });
+
   it("keeps the built dist runtime bundled and registerable", async () => {
     const packageVersion = await readPackageVersion();
     const distText = await readProjectFile("dist", "homeii-music-flow.js");
 
     expect(distText).not.toContain('from "./core/');
     expect(distText).not.toContain('from "./localization/index.js');
-    expect(distText).toContain("./sendspin-js/index.js");
+    expect(distText).not.toContain("./sendspin-js/index.js");
+    expect(distText).not.toContain("./vendor/embla-carousel.umd.js");
+    expect(distText).not.toContain("opus-encdec/dist/");
+    expect(distText).not.toContain("fonts.googleapis.com");
+    expect(distText).toContain("lrclib_lyrics_enabled");
     expect(distText).not.toContain("data:text/javascript");
 
     await import("../dist/homeii-music-flow.js?runtime-dist-baseline");

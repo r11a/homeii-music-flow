@@ -9,7 +9,7 @@ There are two kinds of configuration:
 - **YAML / visual editor config:** saved in the Home Assistant dashboard.
 - **In-card settings:** saved in browser storage for the current browser/device.
 
-Use the visual editor for structural options such as Music Assistant URL, helper entities, card id, and default player. Use in-card settings for personal UI choices such as theme, layout, pinned players, quick actions, and phone behavior.
+Use the visual editor for structural options such as helper entities, card id, and default player. Configure the Music Assistant URL and token only in HOMEii Flow Engine. Use in-card settings for personal UI choices such as theme, layout, pinned players, quick actions, and phone behavior.
 
 ## Minimal YAML
 
@@ -27,61 +27,43 @@ theme_mode: auto
 phone_display_mode: auto
 ```
 
-## Music Assistant Connection Modes
+## Language and Search Ordering
 
-HOMEii Music Flow can work through two paths.
+German is available as `language: de`, in the language picker, or automatically when Home Assistant uses German (`language: auto`). The German dictionary incorporates [PR #89](https://github.com/r11a/homeii-music-flow/pull/89), contributed by rtreichl, and includes the current action-label setting.
 
-### Home Assistant Integration Path
-
-This is the normal mode.
-
-The browser talks to Home Assistant, and Home Assistant talks to Music Assistant through the Music Assistant integration.
-
-This mode is enough for:
-
-- playback controls
-- player selection
-- library browsing
-- queue controls
-- artwork through Home Assistant or Music Assistant paths
-- most normal dashboard use
-
-You can leave `ma_url` empty when you only need the Home Assistant integration path.
-
-### Direct Music Assistant Path
-
-This is optional.
-
-Set `ma_url` and `ma_token` when the browser itself must talk directly to Music Assistant.
-
-This is needed for:
-
-- This device / Sendspin browser playback
-- direct Music Assistant API checks
-- direct realtime WebSocket checks
-- some remote artwork paths depending on your setup
-
-Example:
+Search section order can be configured in YAML. Omitted sections retain their default relative order after the configured sections; sections with no results remain hidden.
 
 ```yaml
-type: custom:homeii-music-flow
-ma_url: "https://music.example.com"
-ma_token: "YOUR_MUSIC_ASSISTANT_TOKEN"
+search_result_order:
+  - artists
+  - albums
+  - tracks
+  - playlists
+  - radio
+  - podcasts
 ```
 
-If Home Assistant is opened through HTTPS, the direct Music Assistant URL should also be HTTPS. Browsers block mixed HTTP/WebSocket access from an HTTPS dashboard.
+Large-library “Load more” controls require Engine 0.7.21 or newer and its `library_pagination` capability. Older Engines retain the existing first-page behavior.
 
-## HOMEii Flow Engine Bridge
+## Music Assistant Connection
 
-HOMEii Music Flow includes optional card-side infrastructure for the HOMEii Flow Engine Home Assistant integration.
+HOMEii Music Flow 6 has one supported backend path: **HOMEii Flow Engine**.
 
-This is not required for normal card usage. If the integration is not installed, the card continues to use the current Home Assistant / Music Assistant frontend paths.
+The card is the visual interface. The Engine talks to Home Assistant and Music Assistant, owns the queue/library/search/artwork/playback data path, and returns normalized data to the card. The card does not fall back to the old frontend-only Home Assistant/Music Assistant paths.
+
+The card does not accept or store `ma_url`, `music_assistant_external_url`, or `ma_token` in 6.0.0. Existing legacy values are ignored and removed the next time the visual editor saves the card.
+
+## HOMEii Flow Engine
+
+HOMEii Music Flow 6 requires the HOMEii Flow Engine Home Assistant integration, version `0.7.2` or newer.
+
+The card is now the visual interface only. Playback, players, queue, library, search, artwork, grouping, schedules, timers, statistics, announcements, volume rules, and diagnostics are handled by the Engine. If the Engine is not installed and loaded, the 6.x card shows an Engine-required message instead of using old frontend-only paths.
 
 Supported card options:
 
 ```yaml
 type: custom:homeii-music-flow
-homeii_engine_mode: auto
+homeii_engine_mode: required
 homeii_engine_timeout_ms: 3500
 homeii_engine_instance_id: ""
 homeii_engine_profile_id: ""
@@ -89,30 +71,13 @@ homeii_engine_profile_id: ""
 
 `homeii_engine_mode` supports:
 
-- `auto`: default. Use the Engine only when it is installed and responsive.
-- `off`: disable Engine checks and use the normal frontend-only card behavior.
-- `required`: diagnostics reports a failure when the Engine is unavailable. This is mainly for testing Engine-backed deployments.
+- `required`: the only supported HOMEii Flow 6 mode. The card will not run without the Engine.
 
-The bridge can use Engine-backed player state, playback proxy, queue/library proxying, queue transfer, grouping, scheduling, timers, statistics, announcements, volume rules, and Sendspin status checks. These hooks are intentionally optional so existing dashboards keep working with or without the integration.
+Users who want to keep the previous frontend/Home Assistant/Music Assistant behavior should stay on HOMEii Music Flow 5.9.x.
 
 ## Sendspin / This Device
 
-To use the current browser, phone, tablet, or wall panel as a Music Assistant player:
-
-```yaml
-type: custom:homeii-music-flow
-ma_url: "https://music.example.com"
-ma_token: "YOUR_MUSIC_ASSISTANT_TOKEN"
-```
-
-Then open the Players screen and choose **This device**.
-
-Important notes:
-
-- The URL must be reachable from the browser device.
-- Remote users usually need an HTTPS Music Assistant URL.
-- Mobile systems can pause browser audio when the app is backgrounded or the phone locks.
-- Diagnostics can check browser support, computed Sendspin endpoint, and current local runtime state.
+The browser-based **This device** player is disabled in 6.0.0 Engine-only mode. Direct Sendspin authentication requires exposing an MA credential to the browser, which conflicts with the single secure Engine-owned connection model. Existing Music Assistant players continue to work normally.
 
 ## Reusable Dashboards
 

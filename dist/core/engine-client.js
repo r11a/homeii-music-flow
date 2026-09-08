@@ -1,16 +1,16 @@
 export const HOMEII_ENGINE_COMMAND_PREFIX = "homeii_flow";
-export const HOMEII_ENGINE_MODES = Object.freeze(["auto", "off", "required"]);
+export const HOMEII_ENGINE_MODES = Object.freeze(["required"]);
 
-export function normalizeHomeiiEngineMode(value = "auto") {
+export function normalizeHomeiiEngineMode(value = "required") {
   const mode = String(value || "").trim().toLowerCase();
-  return HOMEII_ENGINE_MODES.includes(mode) ? mode : "auto";
+  return HOMEII_ENGINE_MODES.includes(mode) ? mode : "required";
 }
 
-export function homeiiEngineModeAllowsCalls(value = "auto") {
+export function homeiiEngineModeAllowsCalls(value = "required") {
   return normalizeHomeiiEngineMode(value) !== "off";
 }
 
-export function homeiiEngineModeRequiresEngine(value = "auto") {
+export function homeiiEngineModeRequiresEngine(value = "required") {
   return normalizeHomeiiEngineMode(value) === "required";
 }
 

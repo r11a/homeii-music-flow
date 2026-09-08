@@ -16,4 +16,3 @@ export var MessageType;
     MessageType["STREAM_END"] = "stream/end";
     MessageType["GROUP_UPDATE"] = "group/update";
 })(MessageType || (MessageType = {}));
-//# sourceMappingURL=types.js.map

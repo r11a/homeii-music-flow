@@ -30,16 +30,17 @@ HOMEii Music Flow needs:
 
 - Home Assistant with dashboards/custom cards enabled.
 - Music Assistant installed and connected to Home Assistant.
+- HOMEii Flow Engine `0.7.2` or newer installed and loaded for HOMEii Music Flow 6.0.0 and newer.
 - At least one Music Assistant player exposed as a Home Assistant `media_player`.
 - HACS, or manual access to `/config/www/community/`.
 - A modern browser: Chrome, Edge, Safari, iOS WebKit, Android WebView, or a current Home Assistant Companion app.
 
 Optional features need optional setup:
 
-- **This device / Sendspin browser player:** direct Music Assistant URL and token.
+- **This device / Sendspin browser player:** disabled in 6.0.0 Engine-only mode so MA credentials remain server-side.
 - **Announcements:** a working Home Assistant TTS entity.
 - **Automation helper:** an `input_text` helper for the active HOMEii player.
-- **Remote artwork and Direct API:** a browser-reachable Music Assistant URL, preferably HTTPS when Home Assistant is opened through HTTPS.
+- **Remote artwork:** served through the authenticated HOMEii Flow Engine artwork proxy; the browser does not need a Music Assistant URL.
 
 ## Documentation Map
 
@@ -64,10 +65,12 @@ For the most polished experience:
 
 ## Current Documentation Target
 
-Current documentation target: **HOMEii Music Flow 5.9.3**
+Current documentation target: **HOMEii Music Flow 6.0.0 in progress**
 
-5.9.3 documentation highlights:
+6.0.0 documentation highlights:
 
+- Required HOMEii Flow Engine backend.
+- Card as visual interface, Engine as source of truth for players, queue, library, search, artwork, playback, schedules, timers, statistics, and diagnostics.
 - [Reusable dashboards with `card_id`](./configuration.md#card_id)
 - [Open a dashboard directly to a player with URL parameters](./configuration.md#open-a-dashboard-directly-to-a-player)
 - [Library Wheel and Queue Wheel](./features.md#library-wheel)
@@ -78,8 +81,8 @@ Current documentation target: **HOMEii Music Flow 5.9.3**
 
 Release notes:
 
-- [HOMEii Music Flow 5.9.3](../RELEASE_NOTES_5.9.3.md)
 - [Changelog](../CHANGELOG.md)
+- [HOMEii Music Flow 5.9.3](../RELEASE_NOTES_5.9.3.md)
 
 ## Community And Credits
 

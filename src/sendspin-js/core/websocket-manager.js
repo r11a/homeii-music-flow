@@ -232,4 +232,3 @@ export class WebSocketManager {
         return this.ws ? this.ws.readyState : WebSocket.CLOSED;
     }
 }
-//# sourceMappingURL=websocket-manager.js.map
