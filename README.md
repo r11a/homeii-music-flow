@@ -11,6 +11,30 @@
 > [!IMPORTANT]
 > **Public beta: card `6.0.0-beta.1` + Engine `1.0.0-beta.1`.** These are opt-in prereleases, not stable updates. [5.9.3 remains the stable release](https://github.com/r11a/homeii-music-flow/releases/tag/v5.9.3). Read the installation guide before downloading.
 
+## Recommended immersive setup
+
+After installing and configuring the Engine, add a Manual card and paste:
+
+```yaml
+type: custom:homeii-music-flow
+homeii_engine_mode: required
+player_design: immersive
+layout_mode: auto
+mobile_layout_mode: auto
+mobile_edge_to_edge: true
+mobile_compact_mode: false
+mobile_dynamic_theme_mode: auto
+mobile_background_motion_mode: subtle
+fan_theme: adaptive
+volume_wheel: true
+mobile_queue_flow: true
+mobile_library_default_layout: grid
+performance_profile: full
+performance_mode: false
+```
+
+This explicitly enables the immersive edge-to-edge presentation and full visual effects. Use a dedicated dashboard view for a full-screen player. Existing settings are not reset by this example; replace or edit the relevant fields in your own card configuration. On weaker devices, select a lower performance profile in the visual editor instead of forcing full effects. Engine setup and an available Music Assistant player are still required.
+
 ## See it in motion
 
 [Watch the 60-second HOMEii Flow film](artifacts/HOMEii-Flow-Film-60s.mp4). Edited interface demonstration with staged playback; see [production notes](artifacts/VIDEO-NOTES.md).
@@ -879,6 +903,7 @@ Credit and thanks:
 ## German translation
 
 Thank you to [Richard Treichl (@rtreichl)](https://github.com/rtreichl) for contributing German language support in [PR #89](https://github.com/r11a/homeii-music-flow/pull/89).
+
 
 
 
