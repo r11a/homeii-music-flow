@@ -1,4 +1,4 @@
-<p align="center"><img src="src/homeii-flow-logo-v2.png" alt="HOMEii Flow" width="360"></p>
+<p align="center"><img src="artifacts/HOMEii-Flow-Beta-Launch.png" alt="HOMEii Flow 6 — Your music. Within reach. Public beta." width="1200"></p>
 <h1 align="center">HOMEii Music Flow</h1>
 <p align="center"><strong>Make your Home Assistant dashboard feel like a place for music.</strong><br>Artwork-driven atmosphere, contextual controls and your Music Assistant library — across the screens in your home.</p>
 <p align="center"><img alt="Card beta candidate" src="https://img.shields.io/badge/Card-6.0.0--beta.1-c89b56"><img alt="Matching Engine" src="https://img.shields.io/badge/Engine-1.0.0--beta.1-41BDF5"><img alt="Public beta" src="https://img.shields.io/badge/Status-PUBLIC_BETA-c89b56"></p>
@@ -879,5 +879,6 @@ Credit and thanks:
 ## German translation
 
 Thank you to [Richard Treichl (@rtreichl)](https://github.com/rtreichl) for contributing German language support in [PR #89](https://github.com/r11a/homeii-music-flow/pull/89).
+
 
 
