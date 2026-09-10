@@ -4,6 +4,16 @@ import { normalizeWaveform, waveformPath, syncWaveform } from "../src/core/media
 const { document } = globalThis;
 
 describe("MA waveform", () => {
+  it("retries a transient failure during the same track without request flooding", async () => {
+    const progress=document.createElement('div');
+    const command=vi.fn().mockRejectedValueOnce(new Error('timeout')).mockResolvedValue([.2,.8]);
+    const card={_config:{},_getCurrentMediaUri:()=> 'spotify://track/one',_getCurrentDuration:()=>100,$:()=>progress,_callEngineMaCommand:command};
+    syncWaveform(card,progress,10);await Promise.all(card._waveformPending.values());
+    syncWaveform(card,progress,11);expect(command).toHaveBeenCalledOnce();
+    card._waveformCache.get(':spotify://track/one').ts-=16000;
+    syncWaveform(card,progress,20);await Promise.all(card._waveformPending.values());
+    expect(command).toHaveBeenCalledTimes(2);expect(progress.classList.contains('has-waveform')).toBe(true);
+  });
   it("uses only valid finite analysis bins", () => {
     expect(normalizeWaveform(null)).toBeNull();
     expect(normalizeWaveform([1, NaN])).toBeNull();
@@ -45,4 +55,14 @@ describe("MA waveform", () => {
     expect(progress.querySelector(".waveform-played").style.clipPath).toBe("inset(0 50% 0 0)");
     expect(card._callEngineMaCommand).toHaveBeenCalledOnce();
   });
+});
+
+it('resolves a library track through its real provider when MA returns no library analysis', async () => {
+ const progress=document.createElement('div');
+ const command=vi.fn().mockResolvedValueOnce(null).mockResolvedValueOnce([.2,.8,.4]);
+ const uri='library://track/1044';
+ const card={_config:{},_state:{maQueueState:{current_item:{media_item:{uri,provider_mappings:[{item_id:'spotify-id',provider_instance:'spotify--account',available:true}]}}}},_getCurrentMediaUri:()=>uri,$:()=>progress,_callEngineMaCommand:command};
+ syncWaveform(card,progress,25);await Promise.all(card._waveformPending.values());
+ expect(command).toHaveBeenNthCalledWith(2,'audio_analysis/wave_form',{item_id:'spotify-id',provider_instance_id_or_domain:'spotify--account'});
+ expect(progress.classList.contains('has-waveform')).toBe(true);
 });

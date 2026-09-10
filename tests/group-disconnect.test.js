@@ -16,6 +16,49 @@ describe("screensaver inactivity delay", () => {
   });
 });
 describe("group disconnect failure", () => {
+  it("removes the child volume wheel when leaving its group screen", () => {
+    const root = globalThis.document.createElement("div");
+    root.innerHTML = '<section class="volume-wheel-popover"></section>';
+    const card = {_state: {menuOpen:true, menuPage:"group_volume"}, shadowRoot:root,
+      $:()=>null, _shortenManualFrontPlayerHold:()=>{}, _manualFrontDefaultHoldMs:()=>0,
+      _closeMobileQueueActionMenu:()=>{}, _closeSmartVoiceConfirm:()=>{}, _syncCompactMenuOverlayState:()=>{}};
+    prototype._closeMobileMenu.call(card);
+    expect(root.querySelector(".volume-wheel-popover")).toBeNull();
+    expect(card._state.menuOpen).toBe(false);
+  });
+  it("settles all group volume writes and reports only failed players", async () => {
+    const players=[{entity_id:'leader'},{entity_id:'child'}];
+    let finish;
+    const card={_state:{players},_playerGroupMemberIds:()=>['leader','child','child'],
+      _isStaticGroupPlayer:()=>false,
+      _setPlayerVolumeFor:vi.fn(id=>id==='leader'?new Promise(resolve=>{finish=resolve;}):Promise.reject(new Error('Offline'))),
+      _controlRoomPlayerName:id=>id,_toastError:vi.fn(),_m:en=>en,_schedulePlayerStateRefresh:vi.fn()};
+    card._runControlRoomPlayerBatch=(ids,action)=>prototype._runControlRoomPlayerBatch.call(card,ids,action);
+    const pending=prototype._setGroupVolumeFor.call(card,'leader',0.3);
+    expect(card._setPlayerVolumeFor).toHaveBeenCalledTimes(2);
+    expect(card._toastError).not.toHaveBeenCalled();
+    finish(true);
+    expect(await pending).toBe(false);
+    expect(card._toastError).toHaveBeenCalledWith('The action failed for: child');
+    expect(card._schedulePlayerStateRefresh).toHaveBeenCalledWith(0);
+  });
+  it("opens group volume directly rather than group membership", () => {
+    const card={_getSelectedPlayer:()=>({entity_id:'leader'}),_selectedSpeakerGroupCount:()=>2,_openMobileMenu:vi.fn()};
+    prototype._openGroupVolumeShortcut.call(card);
+    expect(card._openMobileMenu).toHaveBeenCalledWith('group_volume');
+  });
+  it("disconnects an unavailable follower through its reachable leader", async () => {
+    const leader={entity_id:'leader'},child={entity_id:'child',state:'unavailable'};
+    const card={_state:{players:[leader,child]},_currentSpeakerGroupOwnerId:()=> 'leader',
+      _playerByEntityId:id=>id==='leader'?leader:child,_isStaticGroupPlayer:()=>false,
+      _currentSpeakerGroupMemberIds:()=>['leader','child'],_homeiiEngineEnabled:()=>true,
+      _homeiiEngineApplyGroup:vi.fn(async()=>{}),_callHaMediaPlayerService:vi.fn(),
+      _waitForSpeakerGroupConfirmation:vi.fn(async()=>({ok:true})),_clearLocalGroupState:vi.fn(),
+      _loadPlayers:vi.fn(),_refreshGroupingState:vi.fn()};
+    expect(await prototype._clearSpeakerGroupFor.call(card,'leader')).toBe(true);
+    expect(card._homeiiEngineApplyGroup).toHaveBeenCalledWith({owner:'leader',entity_id:'leader',members:[],remove_members:['child']});
+    expect(card._callHaMediaPlayerService).not.toHaveBeenCalled();
+  });
   it("retains cached players for display but rejects them as command confirmation", async () => {
     const card=new (globalThis.customElements.get("homeii-music-flow"))();
     const cached=[{entity_id:'media_player.computer',state:'idle'}];
@@ -47,7 +90,9 @@ describe("group disconnect failure", () => {
     const card={_hass:{states:{}},_homeiiEngineRequired:()=>true,_loadPlayers:vi.fn(),
       _refreshEnginePlayers:vi.fn(async()=>{members=["leader","child"];}),
       _currentSpeakerGroupMemberIds:()=>members,_sameSpeakerGroupMembers:prototype._sameSpeakerGroupMembers};
-    const result=await prototype._waitForSpeakerGroupConfirmation.call(card,"leader",["leader","child"]);
+    const pending=prototype._waitForSpeakerGroupConfirmation.call(card,"leader",["leader","child"]);
+    await vi.advanceTimersByTimeAsync(5600);
+    const result=await pending;
     expect(card._refreshEnginePlayers).toHaveBeenCalledWith({force:true,requireFresh:true}); expect(result.ok).toBe(true);
   });
   it("does not confirm cached membership when the server refresh fails", async () => {
@@ -56,6 +101,15 @@ describe("group disconnect failure", () => {
       _currentSpeakerGroupMemberIds:()=>['leader','child'],_sameSpeakerGroupMembers:prototype._sameSpeakerGroupMembers};
     const pending=prototype._waitForSpeakerGroupConfirmation.call(card,'leader',['leader','child'],{timeoutMs:700,intervalMs:350});
     await vi.advanceTimersByTimeAsync(700);
+    expect((await pending).ok).toBe(false);
+  });
+  it("rejects a group that disappears at the next device poll", async () => {
+    const start=Date.now();
+    const card={_hass:{states:{}},_loadPlayers:vi.fn(),
+      _currentSpeakerGroupMemberIds:()=>Date.now()-start<5000?['leader','child']:['leader'],
+      _sameSpeakerGroupMembers:prototype._sameSpeakerGroupMembers};
+    const pending=prototype._waitForSpeakerGroupConfirmation.call(card,'leader',['leader','child']);
+    await vi.advanceTimersByTimeAsync(8400);
     expect((await pending).ok).toBe(false);
   });
   it("does not replay a failed Engine group mutation through a second command path", async () => {

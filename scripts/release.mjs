@@ -140,6 +140,7 @@ await mkdir(distVendorDir, { recursive: true });
 await copyFile(vendorEmblaPath, path.join(distVendorDir, "embla-carousel.umd.js"));
 await copyFile(brandLogoPath, distLogoPath);
 await copyFile(brandLogoPngPath, distLogoPngPath);
+await copyFile(path.join(rootDir, "src", "homeii-flow-logo-v2.png"), path.join(rootDir, "dist", "homeii-flow-logo-v2.png"));
 await copyFile(brandIconPngPath, distIconPngPath);
 
 console.log(`Synced Homeii release artifacts for ${version}`);

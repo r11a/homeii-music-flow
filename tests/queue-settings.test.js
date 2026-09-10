@@ -103,6 +103,13 @@ describe("action hub", () => {
     expect(body.querySelector("svg").getAttribute("stroke-width")).toBe("1.7");
     expect(body.querySelector("svg").getAttribute("aria-hidden")).toBe("true");
     expect(actionIconSvg(card, "queue_replace")).toContain('data-icon="queue_replace"');
+    for (const [a,b] of [["crossfade","shuffle"],["library","queue"],["playlist_add","queue_add"],["info","album"]]) {
+      body.innerHTML = actionIconSvg(card,a);
+      const first = body.querySelector("svg").innerHTML;
+      body.innerHTML = actionIconSvg(card,b);
+      expect(body.querySelector("svg").innerHTML).not.toBe(first);
+      expect(body.querySelector("svg").getAttribute("stroke-width")).toBe("1.7");
+    }
   });
   it("preserves the selected playlist when its catalog fails to load", async () => {
     const { card, body } = setup();

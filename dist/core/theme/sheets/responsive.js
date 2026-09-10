@@ -903,8 +903,8 @@ export default function() {
   .card:not(.layout-tablet) .sleep-timer-menu{grid-auto-flow:row;position:absolute;inset-block-start:36px;right:0;left:auto;inset-inline-start:auto;inset-inline-end:0;}
   .history-toggle-fab.left-edge{inset-inline-start:2px!important;}
   .history-toggle-fab.right-edge{inset-inline-end:2px!important;}
-  .history-drawer.left-edge{inset-inline-start:14px;transform:translateX(calc(-100% - 14px));}
-  .history-drawer.right-edge{inset-inline-end:14px;transform:translateX(calc(100% + 14px));}
+  .history-drawer.left-edge{left:14px;right:auto;transform:translateX(calc(-100% - 14px));}
+  .history-drawer.right-edge{right:14px;left:auto;transform:translateX(calc(100% + 14px));}
   .history-drawer.open{transform:translateX(0);}
 }
 `;

@@ -1,8 +1,12 @@
 import { syncScreenDock } from "./core/media/screen-dock.js";
-import { playerVolumeControlsHtml } from "./core/media/player-volume.js";
+import { playerVolumeControlsHtml, openVolumeWheel, closeVolumeWheel } from "./core/media/player-volume.js";
 import { bindQueueDrag } from "./core/media/queue-drag.js";
+import { renderListeningTools, refreshArtworkLighting, setArtworkLighting, applyInterfacePreferences, saveNightPreferences } from "./core/media/listening-tools.js";
 import { renderAiRadio } from "./core/media/ai-radio.js";
-import { playerChoiceHtml } from "./core/media/player-choice.js";
+import { playerChoiceHtml, bindPlayerGrouping } from "./core/media/player-choice.js";
+import { renderSavedPlaylists } from "./core/media/playlist-actions.js";
+import { mountLiveDiagnostics } from "./core/media/live-diagnostics.js";
+import { renderVolumeRules } from "./core/media/volume-rules.js";
 import { actionIconSvg, actionMenuHtml, mediaActionSheetHtml, handleMediaActionClick } from "./core/media/action-menu.js";
 import { immersivePlayerEnabled, immersivePlayerStage, bindImmersivePlayer, syncImmersivePlayer, commitImmersiveSwipe, reconcileImmersiveCovers } from "./core/media/immersive-player.js";
 import { loadQueueSettings, saveQueueSettings, updateQueueSettingVisibility } from "./core/media/queue-settings.js";
@@ -355,7 +359,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     this._state.controlRoomRevealThisDevicePending = false;
     this._state.mobileLyricsSyncEnabled = true;
     this._state.mobileLyricsSyncOffsetMs = 0;
-    this._state.mobileLyricsFontScale = 1;
+    this._state.mobileLyricsFontScale = 1.4;
     this._state.mobileCompactMode = false;
     this._state.mobileCompactWidgetMode = "auto";
     this._state.mobileCompactEdgeToEdge = true;
@@ -597,7 +601,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     }
     try { this._state.mobileLyricsSyncEnabled = JSON.parse(localStorage.getItem(this._lsKey("homeii_music_flow_mobile_lyrics_sync")) ?? "true"); } catch (_) {}
     try { this._state.mobileLyricsSyncOffsetMs = Math.max(-10000, Math.min(10000, Number(localStorage.getItem(this._lsKey("homeii_music_flow_mobile_lyrics_offset_ms")) || 0) || 0)); } catch (_) {}
-    try { this._state.mobileLyricsFontScale = Math.max(0.75, Math.min(1.4, Number(localStorage.getItem(this._lsKey("homeii_music_flow_mobile_lyrics_font_scale")) || 1) || 1)); } catch (_) {}
+    try { this._state.mobileLyricsFontScale = Math.max(0.75, Math.min(1.4, Number(localStorage.getItem(this._lsKey("homeii_music_flow_mobile_lyrics_font_scale")) || 1.4) || 1)); } catch (_) {}
     try { this._state.mobileCompactMode = JSON.parse(localStorage.getItem(this._lsKey("homeii_music_flow_mobile_compact_mode")) ?? "false"); } catch (_) {}
     try { this._state.mobileCompactWidgetMode = HomeiiMobileSettingsFoundation.normalizeMobileCompactWidgetMode(localStorage.getItem(this._lsKey("homeii_music_flow_mobile_compact_widget_mode")) || "auto"); } catch (_) {}
     try { this._state.mobileCompactEdgeToEdge = JSON.parse(localStorage.getItem(this._lsKey("homeii_music_flow_mobile_compact_edge_to_edge")) ?? "true"); } catch (_) {}
@@ -757,6 +761,8 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
       action_menu_labels: true,
       player_design: "immersive",
       mobile_studio_shortcut: true,
+      volume_wheel: true,
+      fan_theme: "adaptive",
       mobile_home_shortcut: false,
       mobile_home_shortcut_path: "/",
       mobile_volume_mode: "button",
@@ -1823,7 +1829,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     ];
     return players.filter((player) => {
       const entityId = String(player?.entity_id || "").trim();
-      if (!entityId || seen.has(entityId)) return false;
+      if (!entityId || seen.has(entityId) || !HomeiiPlayersFoundation.isPlayerAvailable(player)) return false;
       const strict = this._isDirectMaPlayer?.(player)
         || HomeiiPlayersFoundation.isMusicAssistantPlayer(player, this._hass?.entities?.[entityId]);
       if (!strict) return false;
@@ -3318,6 +3324,8 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     this._state.engineRequiredConnections = context.raw?.required_connections || context.raw?.connections || null;
     this._state.engineInstanceId = context.instanceId;
     this._state.engineProfileId = context.profileId;
+    this._state.engineInterfacePreferences = context.raw?.interface_preferences || {};
+    applyInterfacePreferences(this, this._state.engineInterfacePreferences);
     this._state.engineLastError = "";
     const bootstrapPlayers = context.raw?.player_snapshot;
     const bootstrapPlayerSource = Array.isArray(bootstrapPlayers?.music_assistant_players)
@@ -3768,7 +3776,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     const remainingLabel = this._sleepTimerFooterLabel();
     const active = !!remainingLabel && this._sleepTimerChipVisible();
     const timerConfigured = this._mobileQuickActions().includes("timer");
-    const needsTemporaryTimerUi = active && !timerConfigured && (
+    const needsTemporaryTimerUi = !immersivePlayerEnabled(this) && active && !timerConfigured && (
       (card?.classList.contains("layout-tablet") && !this.$("sleepTimerCorner"))
       || (!card?.classList.contains("layout-tablet") && !this.$("mobileTimerBtn"))
     );
@@ -3960,6 +3968,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
   }
 
   _ambientLightEnabled() {
+    if (this._state.engineCapabilities?.artwork_lighting) return this._state.artworkLighting?.rules?.[this._state.selectedPlayer]?.enabled === true;
     return this._state.ambientLightEnabled === true;
   }
 
@@ -4256,6 +4265,11 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
   }
 
   _syncAmbientLightForCurrentMedia(reason = "") {
+    if (this._state.engineCapabilities?.artwork_lighting) {
+      if (reason === "settings") setArtworkLighting(this, this._ambientLightEnabled(), {useLocalMapping:true}).catch(error => this._toastError(this._mediaControlFailureMessage(error)));
+      else refreshArtworkLighting(this).catch(() => {});
+      return;
+    }
     if (!this._ambientLightEnabled() || !this._hass?.callService) return;
     const player = this._getSelectedPlayer();
     if (!player || player.state !== "playing") return;
@@ -4411,6 +4425,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
       this._screensaverSuppressedByEditor()
       || this._state.menuOpen
       || this._state.lyricsOpen
+      || this.shadowRoot?.querySelector(".fan-catalogue,.volume-wheel-popover,.player-picker-fan:not([hidden])")
       || this.$("immersiveActionsToggle")?.getAttribute("aria-expanded") === "true"
       || this._state.controlRoomOpen
       || this._state.mobileHistoryDrawerOpen
@@ -4966,7 +4981,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     (Array.isArray(extraPlayers) ? extraPlayers : []).forEach(add);
     (this._state.configurableMusicAssistantPlayers || []).forEach(add);
     (this._state.players || []).forEach(add);
-    return this._sortPlayerList(Array.from(byId.values()));
+    return this._sortPlayerList(Array.from(byId.values()).filter(HomeiiPlayersFoundation.isPlayerAvailable));
   }
 
   _resolvedPinnedPlayerEntities(players = this._state.players || []) {
@@ -5398,7 +5413,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     if (raw === "all") return "all";
     const eligible = this._announcementEligiblePlayers();
     if (eligible.some((player) => player.entity_id === raw)) return raw;
-    return this._state.selectedPlayer || eligible[0]?.entity_id || "";
+    return eligible.find((player) => player.entity_id === this._state.selectedPlayer)?.entity_id || eligible[0]?.entity_id || "";
   }
 
   _announcementVolumePct() {
@@ -5620,7 +5635,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     const el = this._libraryInteractionTarget(target);
     if (!el) return null;
     const loading = options.loading === true;
-    if (options.press !== false) this._flashInteraction(el);
+    if (options.press !== false) this._hapticTap(6);
     el.classList.add("library-action-feedback");
     clearTimeout(el._homeiiLibraryFeedbackTimer);
     el._homeiiLibraryFeedbackTimer = setTimeout(() => {
@@ -5628,6 +5643,13 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     }, Math.max(140, Number(options.pressMs || 220) || 220));
     if (loading) {
       el.classList.add("library-action-loading");
+      if (!el.querySelector(".library-playback-loader")) {
+        const loader = document.createElement("span");
+        loader.className = "empty-playback-loader library-playback-loader";
+        loader.setAttribute("aria-hidden", "true");
+        loader.innerHTML = "<span></span><span></span><span></span>";
+        (el.querySelector(".recommendation-art") || el).appendChild(loader);
+      }
       el.dataset.homeiiLibraryActionBusy = "1";
       el.setAttribute("aria-busy", "true");
       clearTimeout(el._homeiiLibraryLoadingTimer);
@@ -5647,6 +5669,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     el._homeiiLibraryFeedbackTimer = null;
     el._homeiiLibraryLoadingTimer = null;
     el.classList.remove("library-action-feedback", "library-action-loading");
+    el.querySelector(".library-playback-loader")?.remove();
     if (el.dataset?.homeiiLibraryActionBusy === "1") {
       delete el.dataset.homeiiLibraryActionBusy;
       el.removeAttribute("aria-busy");
@@ -5748,7 +5771,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
   _hideEmptyPlaybackLoading() {
     clearTimeout(this._emptyPlaybackLoaderTimer);
     this._emptyPlaybackLoaderTimer = null;
-    this.shadowRoot?.querySelectorAll?.(".empty-playback-loader")?.forEach((loader) => loader.remove());
+    this.shadowRoot?.querySelectorAll?.(".empty-playback-loader:not(.library-playback-loader)")?.forEach((loader) => loader.remove());
   }
 
   _cycleActivePlayer(step = 1) {
@@ -5978,13 +6001,13 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
         return !this._isStaticGroupPlayer(target);
       })
       : [entityId];
-    targets.forEach((id) => this._setPlayerVolumeFor(id, level));
+    return this._runControlRoomPlayerBatch([...new Set(targets)], (id) => this._setPlayerVolumeFor(id, level));
   }
 
   async _toggleMuteFor(entityId) {
     const player = this._playerByEntityId(entityId);
     if (!player) return;
-    return this._setPlayerMutedFor(entityId, !this._isMuted(player));
+    return this._setPlayerMutedFor(entityId, !(this._muteTargetsByPlayer?.has(entityId) ? this._muteTargetsByPlayer.get(entityId) : this._isMuted(player)));
   }
 
   async _runControlRoomPlayerBatch(playerIds, action) {
@@ -6007,7 +6030,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     });
     const shouldMute = targets.some((id) => {
       const target = (this._state.players || []).find((p) => p.entity_id === id) || this._hass?.states?.[id];
-      return !this._isMuted(target);
+      return !(this._muteTargetsByPlayer?.has(id) ? this._muteTargetsByPlayer.get(id) : this._isMuted(target));
     });
     await Promise.all(targets.map((id) => this._setPlayerMutedFor(id, shouldMute)));
     setTimeout(() => this._renderMobileMenu(), 120);
@@ -6341,11 +6364,9 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
   }
 
   _mobileArtFallbackHtml() {
-    const fallbackIcon = "brand";
     return `
-      <div class="art-stack-fallback static-fallback ${fallbackIcon === "brand" ? "brand-fallback" : ""}">
-        <div class="fallback-aura"></div>
-        <div class="fallback-disc">${fallbackIcon === "brand" ? this._tabletBrandSignatureHtml("art-stack-brand-logo") : this._iconSvg(fallbackIcon)}</div>
+      <div class="art-stack-fallback static-fallback art-idle" aria-hidden="true">
+        ${this._tabletBrandSignatureHtml("art-idle-logo")}
       </div>
     `;
   }
@@ -7251,7 +7272,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     }
     const layoutMode = this._layoutModeConfig({ compactPopup: compactPopupLayoutMode, width: compactWindowPopupMode ? compactWindowWidth : 0 });
     const visualEditorContext = this._isVisualEditorContext();
-    const mobileEdgeToEdgeMode = !visualEditorContext && !compactPopupLayoutMode && !compactTileMode && layoutMode === "mobile" && this._mobileEdgeToEdgeEnabled();
+    const mobileEdgeToEdgeMode = !visualEditorContext && !compactPopupLayoutMode && !compactTileMode && this._mobileEdgeToEdgeEnabled();
     const mobileIconScale = this._mobileIconScale();
     const allocatedHeight = compactEdgeToEdgePopupMode
       ? viewportHeight
@@ -7299,7 +7320,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     const fullInlineTargetHeight = this._fullMobileInlineTargetHeight();
     const height = Math.max(280, Math.min(2200, Math.round(allocatedHeight || (mobileLayoutMode === "full" ? fullInlineTargetHeight : fallbackHeight))));
     const minCardHeight = layoutProfile.heightSize === "short" ? 280 : (layoutMode === "tablet" ? 420 : 360);
-    const hostMinWidth = layoutMode === "tablet" ? "min(calc(100vw - 32px), 720px)" : "0px";
+    const hostMinWidth = layoutMode === "tablet" && !immersiveDesign ? "min(calc(100vw - 32px), 720px)" : "0px";
     const screensaverClockSize = this._screensaverClockSize();
     const screensaverClockX = this._screensaverClockX();
     const screensaverClockY = this._screensaverClockY();
@@ -7415,7 +7436,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     const mobileEdgeExitHtml = mobileEdgeToEdgeMode && !mobileEdgeOverlayOpen
       ? `<button class="mobile-edge-corner-btn mobile-edge-exit ${mobileEdgeCornerClass}" id="mobileEdgeExitBtn" title="${this._esc(this._m("Exit edge-to-edge", "יציאה מקצה לקצה"))}" aria-label="${this._esc(this._m("Exit edge-to-edge", "יציאה מקצה לקצה"))}">${actionIconSvg(this, "minimize")}</button>`
       : ``;
-    const mobileEdgeReturnHtml = !mobileEdgeOverlayOpen && !visualEditorContext && !compactPopupLayoutMode && !compactTileMode && layoutMode === "mobile" && !mobileEdgeToEdgeMode && this._mobileLayoutMode() === "full" && this._state.mobileEdgeReturnAvailable === true
+    const mobileEdgeReturnHtml = !mobileEdgeOverlayOpen && !visualEditorContext && !compactPopupLayoutMode && !compactTileMode && !mobileEdgeToEdgeMode && this._mobileLayoutMode() === "full" && (this._state.mobileEdgeReturnAvailable === true || layoutMode === "tablet")
       ? `<button class="mobile-edge-corner-btn mobile-edge-return ${mobileEdgeCornerClass}" id="mobileEdgeEnterBtn" title="${this._esc(this._m("Back to edge-to-edge", "חזרה לקצה לקצה"))}" aria-label="${this._esc(this._m("Back to edge-to-edge", "חזרה לקצה לקצה"))}">${actionIconSvg(this, "maximize")}</button>`
       : ``;
     const homeShortcutFabHtml = ``;
@@ -7643,7 +7664,6 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
         </div>
         <div class="queue-action-backdrop clean-all-confirm-backdrop" id="cleanAllConfirmModal">
           <div class="queue-action-sheet clean-all-confirm-sheet" role="dialog" aria-modal="true" aria-labelledby="cleanAllConfirmTitle">
-            <button class="clean-all-confirm-close" id="cleanAllConfirmCloseBtn" title="${this._esc(this._i18n("ui.close"))}" aria-label="${this._esc(this._i18n("ui.close"))}">×</button>
             <div class="clean-all-confirm-head">
               <span class="clean-all-confirm-icon danger-confirm-icon" aria-hidden="true">${this._iconSvg("close")}</span>
               <div class="clean-all-confirm-copy">
@@ -8273,6 +8293,10 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
         e.preventDefault();
         e.stopPropagation();
         const action = dockBtn.dataset.roomSelectionAction;
+        if (action === "close_panel") {
+          this._toggleControlRoomPanel(this._state.controlRoomPanel);
+          return;
+        }
         const selectedIds = this._controlRoomActionTargetIds();
         if (action === "browse_library") {
           this._pressUiButton(dockBtn);
@@ -8533,7 +8557,8 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
         this._toast(this._i18n("ui.player_is_pinned_from_settings"));
         return;
       }
-      this._openMobileMenu("players");
+      if (immersivePlayerEnabled(this) && this._openPlayerFan) this._openPlayerFan();
+      else this._openMobileMenu("players");
     });
     this.$("activePlayerPrevBtn")?.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -8611,8 +8636,10 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
       this._persistSettingsAccordionOpen(set);
     }, true);
     this._bindProgressSeekBar(this.$("progressBar"));
+    // Sheets retain the selected design even when the player collapses to a compact tile.
+    this.shadowRoot.querySelector(".card")?.classList.toggle("player-design-immersive", immersivePlayerEnabled(this));
     bindImmersivePlayer(this);
-    this.$("mobileVolPctLabel")?.addEventListener("click", () => this._openMobileVolumePresets());
+    this.$("mobileVolPctLabel")?.addEventListener("click", () => this._config.volume_wheel !== false ? openVolumeWheel(this) : this._openMobileVolumePresets());
     this.$("volSlider")?.addEventListener("input", (e) => {
       const pct = Number(e.target.value || 0);
       e.target.style.setProperty("--vol-pct", `${pct}%`);
@@ -9404,6 +9431,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
   }
 
   _syncNowPlayingUI() {
+    this.shadowRoot?.querySelector(".volume-wheel-popover")?._refreshVolumeState?.();
     if (this.$("immersiveActionsToggle")) queueMicrotask(() => syncImmersivePlayer(this));
     this._syncSleepTimerState();
     this._syncNightModeUi();
@@ -9910,6 +9938,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     }
     const wasOpen = !!this._state.menuOpen;
     const previousPage = this._state.menuPage || "main";
+    if (!wasOpen || previousPage !== nextPage) closeVolumeWheel(this);
     if (nextPage === "simple_wizard" && previousPage !== "simple_wizard") this._resetSimpleWizardState();
     if (nextPage === "discovery" && previousPage !== "discovery") this._startDiscoverySession();
     if (wasOpen) this._rememberMobileMenuScroll(previousPage);
@@ -9967,6 +9996,8 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
   }
 
   _closeMobileMenu() {
+    this._screenPlayerReturn = null;
+    closeVolumeWheel(this);
     this._state.menuOpen = false;
     this._state.menuPage = "main";
     this._state.menuStack = [];
@@ -9991,6 +10022,18 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
   }
 
   _backMobileMenu() {
+    if (this._screenPlayerReturn && ["players", "players_active"].includes(this._state.menuPage)) {
+      const restore = this._screenPlayerReturn;
+      this._screenPlayerReturn = null;
+      return restore();
+    }
+    closeVolumeWheel(this);
+    if (this._state.mobileLibraryFlowPage || this._state.mobileQueueFlowQuickOpen) {
+      this._state.mobileLibraryFlowPage = "";
+      this._state.mobileQueueFlowQuickOpen = false;
+      this._renderMobileMenu();
+      return;
+    }
     if (this._state.menuPage === "media_detail" && Array.isArray(this._state.mobileLibraryDetailStack) && this._state.mobileLibraryDetailStack.length) {
       const previousDetail = this._state.mobileLibraryDetailStack.pop();
       const scrollSnapshot = previousDetail?._homeiiScrollSnapshot || null;
@@ -10060,6 +10103,18 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
       "group",
       "ungroup_all",
       "stop_all",
+      "recommendations",
+      "smart",
+      "lighting",
+      "playback_stats",
+      "favorite_radios",
+      "system_screensaver",
+      "night_preferences",
+      "saved_playlists",
+      "volume_rules",
+      "settings",
+      "discovery",
+      "ai_radio",
     ]).has(String(page || ""));
   }
 
@@ -10121,6 +10176,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     const pinnedEntities = new Set(this._resolvedPinnedPlayerEntities(players));
     return players
       .filter((player) => player?.entity_id)
+      .filter(HomeiiPlayersFoundation.isPlayerAvailable)
       .filter((player) => !(typeof this._isLikelyBrowserPlayer === "function" && this._isLikelyBrowserPlayer(player)))
       .filter((player) => !pinnedEntities.size || pinnedEntities.has(player.entity_id) || this._isLocalSendspinPlayer(player));
   }
@@ -11164,10 +11220,10 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
 
   _playersActionHubHtml(options = {}) {
     if (immersivePlayerEnabled(this)) {
-      const players = this._state.players || [];
+      const players = (this._state.players || []).filter(HomeiiPlayersFoundation.isPlayerAvailable);
       const playing = players.filter((p) => p.state === "playing").length;
-      const available = players.filter((p) => HomeiiPlayersFoundation.isPlayerAvailable(p)).length;
-      return `<div class="player-choice-summary"><span>${available} ${this._m("available", "זמינים")} · ${playing} ${this._m("playing", "מנגנים")}</span><button data-menu-action="${this._esc(options.thisDeviceActionName || "connect_this_device")}">${this._esc(options.thisDeviceTitle || this._i18n("ui.player_on_this_device"))}</button></div>`;
+      const available = players.length;
+      return `<div class="player-choice-summary"><div class="player-choice-counts" dir="${this._isHebrew() ? "rtl" : "ltr"}"><span>${this._m("Available", "זמינים")}: <bdi>${available}</bdi></span><span>${this._m("Playing now", "מנגנים כעת")}: <bdi>${playing}</bdi></span></div><button data-menu-action="${this._esc(options.thisDeviceActionName || "connect_this_device")}">${this._esc(options.thisDeviceTitle || this._i18n("ui.player_on_this_device"))}</button></div>`;
     }
     const queueCount = this._getNowPlayingQueueItems().length || Number(this._state.maQueueState?.items || 0) || 0;
     return `
@@ -13574,6 +13630,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
             <span class="media-detail-title">${this._esc(title)}</span>
             <span class="media-detail-sub">${this._esc(trackCount || subtitle || "—")}${kindLabel ? `<span class="media-detail-kind-badge">${this._esc(kindLabel)}</span>` : ``}</span>
             <span class="media-detail-player-actions media-detail-hero-actions">
+              <button class="chip-btn media-detail-play-btn" data-media-more="${this._esc(detailEntry.uri || "")}" ${detailDataAttrs} title="${this._esc(this._i18n("ui.actions_2"))}" aria-label="${this._esc(this._i18n("ui.actions_2"))}">${this._iconSvg("more")}</button>
               <button class="chip-btn media-detail-play-btn subtle" data-media-detail-action="add" ${detailDataAttrs} title="${this._esc(this._i18n("ui.add_to_queue"))}" aria-label="${this._esc(this._i18n("ui.add_to_queue"))}">${this._iconSvg("queue_add")}</button>
               <button class="chip-btn media-detail-play-btn" data-media-detail-action="play" ${detailDataAttrs} title="${this._esc(this._i18n("ui.play_now"))}" aria-label="${this._esc(this._i18n("ui.play_now"))}">${this._iconSvg("play")}</button>
             </span>
@@ -13783,7 +13840,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
       <div class="media-results quick-search-recommendations">
         <div>
           <div class="media-section-title">${this._esc(this._i18n("ui.recommended"))}</div>
-          ${this._mediaItemsListHtml(items, "track", { layout: "list", openDetails: false })}
+          ${this._mediaItemsListHtml(items, "track", { layout: "grid", openDetails: false })}
         </div>
       </div>
     `;
@@ -13973,6 +14030,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
   _voiceAssistantPlayerPool() {
     this._loadPlayers();
     return (this._state.players || [])
+      .filter(HomeiiPlayersFoundation.isPlayerAvailable)
       .filter((player) => this._isMusicAssistantPlayer(player))
       .filter((player) => !this._isLikelyBrowserPlayer(player) || this._isLocalSendspinPlayer(player))
       .filter((player) => this._isAvailableThisDevicePlayer(player));
@@ -15516,6 +15574,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
   }
 
   _mediaSearchSectionsHtml(results = {}, options = {}) {
+    const layout = "grid";
     const sections = [
       ["radio", this._i18n("ui.radio"), results.radio || []],
       ["playlists", this._i18n("ui.playlists"), results.playlists || []],
@@ -15532,7 +15591,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     return `<div class="media-results">${used.map(([type, title, items]) => `
       <div>
         <div class="media-section-title">${this._esc(title)}</div>
-        ${this._mediaItemsListHtml(items.slice(0, 8), type === "tracks" ? "track" : type === "playlists" ? "playlist" : type === "albums" ? "album" : type === "artists" ? "artist" : type === "podcasts" ? "podcast" : "radio", { layout: "list", openDetails: options.openDetails !== false })}
+        ${this._mediaItemsListHtml(items.slice(0, 8), type === "tracks" ? "track" : type === "playlists" ? "playlist" : type === "albums" ? "album" : type === "artists" ? "artist" : type === "podcasts" ? "podcast" : "radio", { layout, openDetails: options.openDetails !== false })}
       </div>
     `).join("")}</div>`;
   }
@@ -16073,6 +16132,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
           ${!groupVolumeAvailable ? `<div class="player-volume-unavailable" role="status">${this._esc(this._m("Not all members report a volume. Use the available player controls below.", "לא כל חברי הקבוצה מדווחים עוצמה. ניתן להשתמש בשליטה הזמינה לכל נגן בהמשך."))}</div>` : `          <div class="player-volume-row">
             <button class="player-mini-mute ${this._isGroupMuted(selected) ? "active" : ""}" data-group-mute="${this._esc(selected?.entity_id || "")}" title="${this._esc(this._i18n("ui.mute"))}">${this._iconSvg(this._isGroupMuted(selected) ? "volume_mute" : this._volumeIconName(selected))}</button>
             <input class="player-mini-volume" data-group-volume="${this._esc(selected?.entity_id || "")}" type="range" min="0" max="100" value="${groupVol}" style="--vol-pct:${groupVol}%">
+            <button type="button" class="player-mini-value player-volume-percent" data-group-volume-wheel="${this._esc(selected?.entity_id || "")}" aria-label="${this._esc(this._i18n("ui.group_volume"))}">${groupVol}%</button>
           </div>`}
 
         </details>
@@ -16090,10 +16150,10 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
         const activePlayback = available && (p?.state === "playing" || (connected && this._playerByEntityId(ownerId)?.state === "playing"));
         const track = p.attributes?.media_title || p.attributes?.media_artist || "";
         return `
-          <div class="group-player-card ${checked ? "checked" : ""} ${statusClass}" data-group-connected="${connected ? "true" : "false"}" data-group-owner="${isOwner ? "true" : "false"}">
+          <div data-group-player="${this._esc(p.entity_id)}" class="group-player-card ${checked ? "checked" : ""} ${statusClass}" data-group-connected="${connected ? "true" : "false"}" data-group-owner="${isOwner ? "true" : "false"}">
             <label class="group-player-row player-premium-head ${checked ? "checked" : ""}">
               <span class="group-player-toggle ${checked ? "checked" : ""}" aria-hidden="true">${this._iconSvg(this._groupPlayerStatusIcon(checked, connected, isOwner))}</span>
-              <span class="player-premium-art">
+              <span class="player-premium-art" ${available ? 'data-group-drag-art draggable="true"' : ''} title="${this._esc(this._m("Drag onto another player to connect","גרור לנגן אחר לחיבור"))}">
                 ${art ? this._imgHtml(art, "", { loading: "lazy", fetchpriority: "low" }) : this._iconSvg("speaker")}
                 ${playerGroupCount ? `<span class="player-group-badge">${this._esc(playerGroupCount)}</span>` : ``}
               </span>
@@ -16107,6 +16167,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
               </span>
               <input class="group-player-check" type="checkbox" data-menu-group-player="${this._esc(p.entity_id)}" data-group-owner="${isOwner ? "true" : "false"}" ${checked ? "checked" : ""} ${!available && !connected ? "disabled" : ""}>
             </label>
+            ${available && !isOwner ? `<button type="button" class="group-quick-connect" data-group-quick="${this._esc(p.entity_id)}">${actionIconSvg(this, connected ? "group_remove" : "group_add")}<span>${this._esc(connected ? this._m("Disconnect","ניתוק") : this._m("Connect","חיבור"))}</span></button>` : ""}
             ${available ? playerVolumeControlsHtml(this, p, { inline: true }) : ""}
           </div>
         `;
@@ -16535,6 +16596,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     const finishMenuRender = () => {
       if (!isCurrentRender()) return false;
       body.dataset.menuPage = page;
+      if (["players","players_active","group","group_volume"].includes(page)) bindPlayerGrouping(this, body);
       syncScreenDock(this, body.parentElement, page);
       if (page === "queue") body.dataset.queueSignature = this._queueRenderSignature();
       if (scrollSnapshot) this._restoreMobileMenuScrollSnapshot(scrollSnapshot, page);
@@ -16644,6 +16706,9 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
       sheet?.classList.add(sheetClass);
     }
 
+    // Keep navigation reachable while a screen waits for its backend data.
+    syncScreenDock(this, body.parentElement, page);
+
     if (page === "main") {
       this._setMobileMenuHeader(this._i18n("ui.actions_2"), this._menuPageIcon(page));
       body.innerHTML = this._mainMenuHtml();
@@ -16700,7 +16765,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     }
     if (page === "diagnostics") {
       this._setMobileMenuHeader(this._m("Diagnostics", "אבחון"), this._menuPageIcon(page));
-      body.innerHTML = this._diagnosticsMenuHtml();
+      mountLiveDiagnostics(this, body);
       finishMenuRender();
       return;
     }
@@ -16754,7 +16819,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
       const favoritesOnly = this._libraryFavoritesOnlyEnabled(page);
       const limitKey = `${page}:${orderBy}:${favoritesOnly}:${tabSearchQuery.toLowerCase()}`;
       const limit = this._state.engineCapabilities?.library_pagination
-        ? (this._state.libraryVisibleLimits?.[limitKey] || limitMap[meta.type] || 250)
+        ? (this._state.libraryVisibleLimits?.[limitKey] || 60)
         : (limitMap[meta.type] || 250);
       const loadMoreHtml = count => this._state.engineCapabilities?.library_pagination && count >= limit
         ? `<button type="button" class="chip-btn" data-library-load-more="${this._esc(limitKey)}" data-library-current-limit="${limit}">${this._esc(this._m("Load more from Music Assistant", "טען עוד מ־Music Assistant"))}</button>` : "";
@@ -17036,7 +17101,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
                 ${this._mobileFooterMode() === "icon" ? "" : `<span class="queue-head-transfer-label">${this._esc(this._queueFlowLabel())}</span>`}
               </button>` : ``}
             <button class="queue-head-transfer-btn" data-menu-nav="transfer" title="${this._esc(this._i18n("ui.transfer_queue_2"))}">
-              ${this._iconSvg("repeat")}
+              ${actionIconSvg(this, "queue_transfer")}
               ${this._mobileFooterMode() === "icon" ? "" : `<span class="queue-head-transfer-label">${this._esc(this._i18n("ui.transfer_queue_3"))}</span>`}
             </button>
           </div>
@@ -17060,6 +17125,20 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
       body.innerHTML = this._sleepTimerMenuHtml();
     }
     else if (page === "transfer") body.innerHTML = this._transferMenuHtml();
+    else if (page === "saved_playlists" || page === "volume_rules") {
+      this._setMobileMenuHeader(page === "volume_rules" ? this._m("Volume limits","מגבלות ווליום") : this._m("Engine playlists","רשימות במנוע"), page === "volume_rules" ? "volume" : "playlist");
+      if (page === "volume_rules") await renderVolumeRules(this, body);
+      else await renderSavedPlaylists(this, body);
+      if (isCurrentRender()) finishMenuRender();
+      return;
+    }
+    else if (["playback_stats", "group_volume", "lighting", "favorite_radios", "smart", "recommendations", "system_screensaver", "night_preferences"].includes(page)) {
+      const headings = {night_preferences:["Night display", "תצוגת לילה", "settings"], system_screensaver:["System screensaver", "שומר מסך מערכתי", "clock"], smart:["Smart", "חכם", "studio"], recommendations:["Recommendations", "המלצות", "compass"], playback_stats:["Listening statistics", "סטטיסטיקות האזנה", "stats"], lighting:["Lighting", "תאורה", "lightbulb"], group_volume:["Group volume", "ווליום משותף", "speaker_group"], favorite_radios:["Favorite stations", "תחנות מועדפות", "radio"]};
+      const [en, he, icon] = headings[page];
+      this._setMobileMenuHeader(this._m(en, he), icon);
+      await renderListeningTools(this, body, page);
+      if (!isCurrentRender()) return;
+    }
     else if (page === "ai_radio") {
       this._setMobileMenuHeader(this._m("AI Radio", "רדיו AI"), "radio");
       await renderAiRadio(this, body);
@@ -17562,7 +17641,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
       }
       if (action.dataset.menuAction === "apply_group") {
         const ok = await this._runMenuButtonLoading(action, this._m("Updating group", "מעדכן קבוצה"), () => this._applySpeakerGroup(), { kind: "connect" });
-        if (ok) return this._closeMobileMenu();
+        if (ok) return this._state.menuPage === "group_volume" ? this._renderMobileMenu() : this._closeMobileMenu();
         return;
       }
       if (action.dataset.menuAction === "clear_group") {
@@ -17570,6 +17649,12 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
         if (ok) return this._closeMobileMenu();
         return;
       }
+    }
+    const volumeWheelBtn = eventTarget.closest("[data-player-volume-wheel],[data-group-volume-wheel]");
+    if (volumeWheelBtn) {
+      e.preventDefault(); e.stopPropagation();
+      openVolumeWheel(this,{entityId:volumeWheelBtn.dataset.playerVolumeWheel || volumeWheelBtn.dataset.groupVolumeWheel,group:volumeWheelBtn.hasAttribute("data-group-volume-wheel")});
+      return;
     }
     const playerMuteBtn = eventTarget.closest("[data-player-mute]");
     if (playerMuteBtn?.dataset.playerMute) {
@@ -17684,10 +17769,23 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     const ambientLightBtn = eventTarget.closest("[data-setting-ambient-light]");
     if (ambientLightBtn?.dataset.settingAmbientLight) {
       this._flashInteraction(ambientLightBtn);
+      if (this._state.engineCapabilities?.artwork_lighting) {
+        if (this._lightingSaving) return;
+        this._lightingSaving = true;
+        ambientLightBtn.setAttribute("aria-busy", "true");
+        try {
+          await setArtworkLighting(this, ambientLightBtn.dataset.settingAmbientLight === "on");
+          this._toastSuccess(this._m("Lighting preference saved in Engine", "העדפת התאורה נשמרה במנוע"));
+          if (["lighting", "settings"].includes(this._state.menuPage)) await this._renderMobileMenu();
+        } catch (error) { this._toastError(this._mediaControlFailureMessage(error)); }
+        finally { this._lightingSaving = false; ambientLightBtn.removeAttribute("aria-busy"); }
+        return;
+      }
       this._state.ambientLightEnabled = ambientLightBtn.dataset.settingAmbientLight === "on";
       this._persistMobileAppearance();
       this._syncAmbientLightForCurrentMedia("settings");
-      this._reopenSettingsMenuPreservingScroll();
+      if (this._state.menuPage === "lighting") this._renderMobileMenu();
+      else this._reopenSettingsMenuPreservingScroll();
       return;
     }
     const screensaverBtn = eventTarget.closest("[data-setting-screensaver]");
@@ -17742,17 +17840,20 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     }
     const nightModeBtn = eventTarget.closest("[data-setting-night-mode]");
     if (nightModeBtn?.dataset.settingNightMode) {
+      const previousNight = {night_mode:this._mobileNightMode(),night_start:this._state.mobileNightModeStart,night_end:this._state.mobileNightModeEnd,night_days:[...this._nightModeDays()]};
       this._state.mobileScheduleControlActiveUntil = 0;
       this._flashInteraction(nightModeBtn);
       this._state.mobileNightMode = ["off", "auto", "on"].includes(nightModeBtn.dataset.settingNightMode)
         ? nightModeBtn.dataset.settingNightMode
         : "auto";
+      if (!(await saveNightPreferences(this, previousNight))) return;
       this._persistMobileAppearance();
       this._rebuildMobileUi({ reopenPage: this._state.menuOpen ? (this._state.menuPage || "sleep_timer") : "sleep_timer", reopenStudio: this._state.controlRoomOpen });
       return;
     }
     const nightWindowSaveBtn = eventTarget.closest("[data-setting-night-window-save]");
     if (nightWindowSaveBtn) {
+      const previousNight = {night_mode:this._mobileNightMode(),night_start:this._state.mobileNightModeStart,night_end:this._state.mobileNightModeEnd,night_days:[...this._nightModeDays()]};
       this._state.mobileScheduleControlActiveUntil = 0;
       this._flashInteraction(nightWindowSaveBtn);
       const startInput = this.$("mobileNightStartInput");
@@ -17763,6 +17864,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
       this._state.mobileNightModeStart = this._normalizeClockTime(startInput?.value || "22:00", "22:00");
       this._state.mobileNightModeEnd = this._normalizeClockTime(endInput?.value || "06:00", "06:00");
       this._state.mobileNightModeDays = this._normalizeNightModeDays(checkedDays);
+      if (!(await saveNightPreferences(this, previousNight))) return;
       this._persistMobileAppearance();
       this._toastSuccess(this._i18n("ui.night_schedule_updated"));
       this._build();
@@ -18254,6 +18356,11 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     if (playerBtn) {
       this._selectPlayer(playerBtn.dataset.menuPlayer, true);
       this._toast(this._i18n("ui.player_selected"), "info", { position: "top" });
+      if (this._screenPlayerReturn) {
+        const restore = this._screenPlayerReturn;
+        this._screenPlayerReturn = null;
+        return restore();
+      }
       const previousPage = this._state.menuStack[this._state.menuStack.length - 1];
       if (String(previousPage || "").startsWith("library_") || previousPage === "media_detail" || previousPage === "discovery") {
         this._state.menuPage = this._state.menuStack.pop();
@@ -18602,6 +18709,14 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
         status.textContent = this._groupPlayerStatusText(checkbox.checked, connected, isOwner);
       }
       this._syncMobileGroupActionState();
+      if (this._state.menuPage === "group_volume") {
+        if (this._groupVolumeMembershipPending) return;
+        this._groupVolumeMembershipPending = true;
+        this.$("mobileMenuBody")?.querySelectorAll("[data-menu-group-player]").forEach(input => {input.disabled=true;});
+        try { await this._applySpeakerGroup(); }
+        catch(error) { this._toastError(this._mediaControlFailureMessage(error)); }
+        finally { this._groupVolumeMembershipPending = false; if(this._state.menuPage === "group_volume") await this._renderMobileMenu(); }
+      }
       return;
     }
     if (e.target?.id === "mobileCustomColorPicker") {

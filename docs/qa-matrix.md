@@ -1,4 +1,37 @@
+## QA105 follow-up — 2026-09-09
+
+- Repeat/shuffle now call the existing handlers directly; legacy synthetic clicks no longer bubble into the outside-click listener. Verified in local browser: both operations leave the fan expanded. Confirmed states remain derived from player data.
+- Library feedback no longer jumps or flashes: restrained accent outline and a slower glass loading indicator; busy accessibility state preserved.
+- Group confirmation must survive 5.5 seconds of fresh membership observations, rejecting a fleeting optimistic group.
+- 423 tests passed / 34 skipped; 50 files; lint and build passed.
+- MA was upgraded/restarted by the user during the initial test. Do not attribute that disconnect to closing the group screen.
+- Repeated direct MA test on 2.11.0b2: original Computer/Kitchen IDs (now named מרכז/מטבח) remained grouped and playing at every 5-second observation through 30 seconds. Removed only Kitchen test membership afterwards; Computer continued playing. Card acceptance also passed: apply via QA105, leave the group screen, then direct MA read still reports both playing and grouped. Reopening players shows group volume/count 2. Remaining upstream inconsistency: Kitchen reports `available:false` while `playback_state:playing` and `synced_to` references Computer; its tile is therefore hidden under the user’s unavailable-player rule. Do not fabricate availability.
+- QA105 file copied over local SMB and verified SHA256: `6ef4bbb5c3219ac305a951f98f3902d765fa948c601b3f7de12d80f51fba16ef`. Resource activated and fresh browser DOM confirms `homeii-music-flow-qa105.js?v=6ef4bbb5`. QA104 preserved.
+
+## QA104 — local installation, 2026-09-09
+
+- Card resource verified in a fresh browser DOM: `/local/community/homeii-music-flow/homeii-music-flow-qa104.js?v=f3c832ae`.
+- SHA256: `f3c832aef1093bf5ea01fa7ac0833d27f4d2c65319af55174daf8d7dd4a50731`.
+- 28 Engine files copied and verified through `\\192.168.1.171\config`; HA integration UI shows version `1.0.0-beta.1`, 1 device and 41 entities after restart.
+- HA configuration check succeeded before restart. File transfer was local SMB; UI activation/restart used the existing authenticated external HA URL because local port 8123 was unreachable.
+- Backup: `.homeii-backups/qa104-20260909-000546`, including prior Engine, QA103 card and Engine storage.
+- Automated: card 422 passed / 34 skipped; Engine 65 passed; lint/build passed.
+- Browser preview: 390px card stays within its container; fan reveal animation verified by computed style; light-mode fan resolves to rgba(250,251,252,.86) with blur(48px), final opacity 1. Search/library targets 44×44.
+- Group persistence FAILED: initial group UI briefly showed Computer + Kitchen, but the user reported disappearance. A direct MA `players/cmd/set_members` test with only those two players showed Kitchen idle/ungrouped at 5, 10, 15 and 20 seconds. Do not consider grouping fixed. No global Stop All test.
+- Missing 88FM logo: exact Radio Browser station UUID `29b28a1a-e60d-4b1a-b57d-e7d46b95f36c` returned an empty favicon in the upstream public directory. Do not claim every MA-library radio logo is fixed.
+
 # QA Matrix
+
+## QA103 card-only installation — 2026-09-08
+
+- Installed the locally tested `6.0.0-beta.1` card as `/homeassistant/www/community/homeii-music-flow/homeii-music-flow-qa103.js` through File editor. Previous QA102 and main files remain unchanged for rollback.
+- Updated the existing HA JavaScript resource to `/local/community/homeii-music-flow/homeii-music-flow-qa103.js?v=96871c6d`; resource UI and the script element in a freshly opened dashboard both confirmed this URL.
+- Local SHA256: `96871c6d28a04594b8b7a88d423bac4cafd524c756a24ab6e9c703d6980e8fd1`. Remote file listing showed 3801.1 KiB. Direct external checksum fetch returned HTTP 403, so byte-for-byte remote hash verification was not completed.
+- Fresh dashboard rendered artwork, track metadata, progress and volume 51%, with working Engine data. No playback changes were commanded. This is installation/startup verification, not full acceptance testing.
+- Engine remains at its installed version (0.7.21); no HA restart, repository upload or release. Local Engine changes remain undeployed.
+- Initial terminal reconnect was blocked by automatic approval review because Return could execute unknown pending input. No terminal command was executed; installation used the File editor UI instead. The earlier uploaded `/homeassistant/homeii-card-qa103.zip` is staging only.
+- Rollback resource: `/local/community/homeii-music-flow/homeii-music-flow-qa102.js?v=f8ddc902`.
+
 
 ## QA102 live installation — 2026-09-08
 
@@ -153,3 +186,93 @@ This matrix is the release gate for the `4.9.x` stabilization cycle. Every relea
 - Live grouping comparison only touched Computer/Kitchen: both card-created and native-MA-created groups initially displayed two members and later reverted to separate players. Last native MA view showed Computer alone and Kitchen unchecked. No playback or volume commands were sent. Root cause and durable grouping remain open; freshness fix is not evidence that delayed group loss is solved.
 - Isolated npm ci verification did not complete: offline cache miss, then npm internal exit-handler failure online. CI itself has not run. These remain release gates, not successful clean-install evidence.
 - Current release checklist and limitations: [RELEASE_READINESS_6.0.0_HE.md](RELEASE_READINESS_6.0.0_HE.md). No tag, push, public release or claim of complete release readiness.
+
+
+## Post-QA105 — regression and native LinkPlay investigation (2026-09-09, local)
+
+- Media action feedback now reuses the shelf three-dot glass animation. Pending commands cannot be dispatched twice; failures leave the action screen open; controls restore their previous disabled state. Both success/failure regressions pass.
+- Playlist detail no longer first sends the invalid `provider_instance_or_domain` argument. The valid `provider_instance_id_or_domain` path remains; this removes one guaranteed failed attempt observed in MA logs.
+- Group disconnect uses the reachable leader's MA set_members command. A follower that withdraws its AirPlay endpoint no longer receives an ignored unjoin. Both master-removal runtime tests now exercise the Engine contract; legacy fallback failure tests remain.
+- Group volume opens its dedicated view, deduplicates member targets, awaits all writes and reports partial failures by player name. It does not declare all members updated when one fails.
+- Native LinkPlay live repeat: Computer/Kitchen initially idle and ungrouped. Six samples over 30 seconds showed Kitchen synced to Computer and playing, but available=false. During this period the native HA LinkPlay Kitchen entity reported playing and source=Follower, yet its group_members was empty. This is conflicting availability/group metadata, not evidence that all native group controls work. No fabricated availability override added.
+- Temporary group removed through leader; test-started playback stopped and test-created queue cleared. No other players targeted. Native audio audibility, follower volume, reopening the group UI and longer soak remain release gates.
+- Full initial run: 425 passed, 2 failed, 34 skipped. The failures were two old HA-unjoin test contracts. After adapting these to Engine dispatch and adding group-volume coverage, affected suites passed: 103 passed, 27 skipped. The 49 other suites passed in the initial run. Engine: 65 passed. Lint and production build passed (release packaging succeeded on retry after a transient file-open failure).
+- New source/bundle is local, not installed or published. QA105 remains the activated HA resource. UI polish is not yet visually accepted on this new build.
+
+### 5.9.3 reported-regression release gates
+
+| Area | Required acceptance before marking resolved |
+|---|---|
+| Queue (#68/#79, large queues #84) | 691 items with correct order/current item; remote changes and empty queue reflected; player switch/transfer never mixes queue identities; drag under latency and disconnect. |
+| Artwork/radio (#65) | Same station updates track artwork; missing/proxy/broken image fallback; late old image cannot overwrite new track; favorites consistent across screens. |
+| Player selection (#69/#75/#77) | Editor-save-reload preserves chosen player; unavailable players disappear and return; correct stop/pause capability; reported DLNA hardware reproduction still required. |
+| Search/library (#83/#85/#87/#88) | Cold provider response/error is distinct from empty; late results cannot replace a new search; full pagination and album/playlist order preserved. |
+| Transport/performance | One mutation per gesture; no retry of uncertain writes on a second transport; bounded/coalesced reads; fresh state after reconnect; no unhandled partial group-volume failure. |
+| UI | Phone/tablet/desktop, light/dark, E2E, small card, all-action sheets: no hidden essential controls, stale feedback, clipped navigation or visible unwanted scrollbars. |
+
+Automated passes are not substitutions for provider/hardware-specific live acceptance. Existing report statuses must not be closed from architectural changes alone.
+
+
+### QA106 activation
+
+- Activated the existing HA resource through the authenticated Resources UI: `/local/community/homeii-music-flow/homeii-music-flow-qa106.js?v=7bfcd690`. No duplicate resource added. QA105 file retained for rollback.
+- SHA256: `7BFCD69093BAA922B27C469FF3457ADB739CBCF4342D00B64F9AA07AB495CEA2`. Engine unchanged; no HA restart needed. Native LinkPlay availability remains unresolved.
+
+
+## Native LinkPlay root cause and correction — 2026-09-09
+
+- Reproduced automatic member removal in official MA UI and in direct MA commands. Exact MA 2.11.0b2 `players/controller.py` removes memberships when a player becomes unavailable; this was not established as another browser sending a removal.
+- Existing DLNA provider was disabled. Native generic LinkPlay follower loses AirPlay availability while grouped; without another available protocol MA marked it unavailable and removed it. Enabled the existing DLNA provider in official MA settings.
+- After correction, six direct MA samples over 30 seconds showed Kitchen available=true, playing, and synced to Computer, with reciprocal leader members. AirPlay was unavailable but DLNA remained available. Direct test group was removed normally.
+- Created the same two-player group through QA106 card. MA confirmed it; card displayed both playing. Kitchen mute=true then mute=false were independently verified through MA. Exiting the group screen did not remove membership. No other player was targeted; existing Computer queue and volume were preserved.
+- Removed experimental Engine native_linkplay fallback entirely after diagnosing the configuration cause. Restored pre-experiment runtime, removed helper/tests, and passed all 65 Engine tests. Restored runtime installed through local SMB with hash verification; normal HA restart requested.
+- Post-restart acceptance passed: HA reconnected; group remained present on reopening; group-volume shortcut opened its dedicated slider. Card Kitchen mute=true/false and volume 20 -> 19 -> 20 were verified independently in MA, without experimental fallback. Group remains connected for user listening. Longer soak and audible synchronization remain (cannot be inferred from API state).
+
+### Generic LinkPlay troubleshooting
+
+For Up2Stream/Rakoit generic LinkPlay devices with MA 2.11.0b2, check Settings > Providers > DLNA if grouping immediately disappears. Ensure DLNA discovers the same physical devices and stays available while AirPlay enters follower mode. Native grouping is still LinkPlay; DLNA supplies an available protocol/control route. Do not create duplicate players or fake availability. Verify other hardware and MA versions separately.
+
+
+## Customizable wheels and Smart screens — 2026-09-09, local candidate
+
+- One action catalogue now powers the wheel and its complete screen. Per-card browser preferences hide shortcuts only, preserve complete available actions, and support explicit Save/Cancel, checkbox selection, drag handles and keyboard reorder. Preferences remain when capabilities temporarily disappear. Main and contextual wheels share this component; player picker and player screen share player shortcut preferences.
+- Main player chip opens a players-only wheel (available players, artwork/icon/name), with a separate Players screen button. Selected state outlines the symbol only. Replaced wand graphic with an orbital Flow mark.
+- Recommendations is a full page of MA `music/recommendations` folders. Loading/error/empty are distinct; late responses do not overwrite another screen.
+- Smart hub links announcements, timers/wake-up, schedules, listening stats, lighting, system screensaver and shared night preferences. Screensaver and lighting forms use existing Engine commands; night preferences add validated profile-scoped `interface/get`, `interface/set` and HA `set_interface_preferences`, stored in the existing Engine store and returned in context. Display night mode does not change music volume.
+- Group volume view reuses group/member controls, retains disconnected members for reconnection within the same leader session, and applies membership changes through the existing group path. No group operation was tested on physical devices in this candidate yet.
+- Optional `volume_wheel` editor toggle opens a rotary-style control with wheel/touch/keyboard and mute, using existing volume commands.
+- Engine lighting status includes last applied timestamp and media title. A backend-only test verifies different track colors without any browser, plus existing stale-track/disable/conflict tests. Live card shows a configured light named מזנון, but selected player was idle. Physical background-follow verification remains outstanding.
+- Visual local checks: full catalogue and editor, light phone and dark wide layout, available-only player wheel. Not a complete device matrix. Local HA ports 445 and 8095 were unreachable in the final check; this candidate is NOT installed. QA106 remains the installed version.
+
+Validation: 435 card tests passed, 34 pre-existing skipped; affected suites rechecked after final fixes. Engine: 68 tests passed. ESLint and production build passed. New candidate remains local, not deployed or published.
+
+
+### QA107 external installation — 2026-09-09
+- Installed card and Engine via authorized external HA File editor/Terminal. All 30 file hashes verified; Python sources compiled before replacement.
+- Backup: `/homeassistant/.homeii-backups/qa107-20260909-114033`; previous QA106 card retained.
+- HA core check passed, restart completed, resource QA107 active. Live all-actions editor entry, Smart hub, and Engine-backed night-preferences capability verified.
+- Physical lighting and group playback not retested during installation. Other dashboard resources emit unrelated loading/duplicate-element errors.
+
+
+### QA108 — installed externally, 2026-09-09
+- Rotary volume follows angular pointer movement including the +/-pi seam. Default enabled; wheel/keyboard controls retained. Regression test added.
+- MA 2.11 recommendations require `music/recommendations/items` per folder. Added bounded concurrent hydration shared with history recommendations; live shelves now populate. Source: https://github.com/music-assistant/server/blob/2.11.0b2/music_assistant/controllers/music/recommendations/controller.py
+- Missing waveform analysis retries after 10 seconds; never fabricates bins. MA returns null until analysis exists.
+- Immersive resize within the same layout no longer rebuilds the card; Studio forced refresh does not replace identical HTML. Physical tablet flicker still needs device verification.
+- Smart forms, RTL, group-volume floating rectangle and fan themes (adaptive default/dark/light) updated. Editor hides identified classic-only controls and immersive-only fields for the opposite design. Full cross-screen RTL audit remains incomplete.
+- Lyrics default is 140% for unset preferences; existing saved preferences retained. Karaoke toggle is visibly selected and its wheel remains open; active-line treatment is clearer. Word timing still requires Enhanced LRC, not synthetic timing.
+- Full suite: 437 passed / 34 skipped. Subsequent affected suites: 102 passed / 27 skipped. Lint/build passed.
+- Live QA108 hash 5bdf3179a9a1624df2dd4f49c5d5138cc4f99ac908cace2d3231b4af5c913bdd; QA107 retained. Engine unchanged from QA107. Physical group controls, startup waveform completion and karaoke playback are not yet acceptance-tested.
+
+
+## QA110 — 2026-09-09: library latency and shared UI
+
+- Card: first paginated library request is 60 items; existing Load more remains. Non-pagination backends retain previous limits.
+- Fresh larger library cache entries serve smaller reads while preserving sort/favorite boundaries.
+- Artist albums stop successful fallback chains; no unconditional 2,000-album scan. Artist playlist recommendations enrich the same cached detail asynchronously with navigation/cache guards.
+- Engine: six first-page shelves warm with concurrency capped at two, rather than large sequential collections; persistent cache retained.
+- Shared immersive headings, tabs, action/chip buttons and fields normalized. Phone recommendations classified as fullscreen; shelf widths use card dimensions.
+- Artist/album specificity conflicts corrected; album mobile areas stack, track rows share one scroll flow, scrollbars hidden without disabling scrolling.
+- Validation: lint/build passed, card 439 passed / 34 skipped; Engine 69 passed. New tests cover nonblocking artist content, cache isolation and slow-shelf warm-up concurrency.
+- Local visual review used demo data: album/artist, library tabs, recommendations, players, group/transfer, queue, schedules, announcements, settings, diagnostics, discovery, search, smart tools and light/dark representative layouts. It is not proof of every live provider result, every nested editor or physical phone/tablet gesture. Studio/lyrics/history fixture navigation needs a separate isolated verification; not counted as fully verified.
+- Install: QA110 card plus Engine runtime only, SHA-256 verified; previous runtime backed up. HA configuration check passed. Live restart verification recorded separately.

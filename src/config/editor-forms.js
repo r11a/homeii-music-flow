@@ -248,6 +248,8 @@ export function getMobileEditorTexts() {
       mobile_footer_search_enabled: homeiiEditorI18n("ui.footer_search"),
       mobile_mic_mode: homeiiEditorI18n("ui.microphone_2"),
       mobile_footer_mode: homeiiEditorI18n("ui.footer_style_2"),
+      fan_theme: HomeiiEditorLocale.detectEditorHebrew() ? "מראה המניפה" : "Fan appearance",
+      volume_wheel: HomeiiEditorLocale.detectEditorHebrew() ? "גלגל עוצמה" : "Volume wheel",
       action_menu_labels: homeiiEditorI18n("ui.action_menu_labels", {}, "Action menu labels"),
       player_design: HomeiiEditorLocale.detectEditorHebrew() ? "עיצוב הנגן" : "Player design",
       mobile_studio_shortcut: homeiiEditorI18n("ui.studio_shortcut"),
@@ -599,6 +601,11 @@ export function getMobileCardConfigForm() {
   const t = getMobileEditorTexts();
   return {
     schema: [
+      { name: "player_design", selector: { select: { mode: "dropdown", options: [
+        { value: "immersive", label: HomeiiEditorLocale.detectEditorHebrew() ? "Immersive — עטיפה גדולה ומניפת פעולות" : "Immersive — artwork and action fan" },
+        { value: "classic", label: HomeiiEditorLocale.detectEditorHebrew() ? "קלאסי — העיצוב הקיים" : "Classic — current design" },
+      ] } } },
+      { name: "performance_profile", selector: { select: { mode: "dropdown", options: t.options.performance_profile } } },
       {
         type: "expandable",
         name: "general_section",
@@ -652,7 +659,6 @@ export function getMobileCardConfigForm() {
               { name: "main_opacity", selector: { number: { min: 0.3, max: 1, step: 0.02, mode: "slider" } } },
               { name: "popup_opacity", selector: { number: { min: 0.4, max: 1, step: 0.02, mode: "slider" } } },
               { name: "mobile_custom_color", selector: { text: { type: "color" } } },
-              { name: "performance_profile", selector: { select: { mode: "dropdown", options: t.options.performance_profile } } },
               { name: "mobile_dynamic_theme_mode", selector: { select: { mode: "dropdown", options: t.options.mobile_dynamic_theme_mode } } },
               { name: "mobile_background_motion_mode", selector: { select: { mode: "dropdown", options: t.options.mobile_background_motion_mode } } },
               { name: "mobile_custom_text_tone", selector: { select: { mode: "dropdown", options: t.options.mobile_custom_text_tone } } },
@@ -660,10 +666,9 @@ export function getMobileCardConfigForm() {
               { name: "mobile_icon_scale", selector: { number: { min: 0.8, max: 1.25, step: 0.05, mode: "slider" } } },
               { name: "mobile_footer_mode", selector: { select: { mode: "dropdown", options: t.options.mobile_footer_mode } } },
               { name: "action_menu_labels", selector: { boolean: {} } },
-              { name: "player_design", selector: { select: { mode: "dropdown", options: [
-                { value: "classic", label: HomeiiEditorLocale.detectEditorHebrew() ? "קלאסי — העיצוב הקיים" : "Classic — current design" },
-                { value: "immersive", label: HomeiiEditorLocale.detectEditorHebrew() ? "Immersive — עטיפה גדולה ומניפת פעולות" : "Immersive — artwork and action fan" },
-              ] } } },
+              { name: "volume_wheel", selector: { boolean: {} } },
+              { name: "fan_theme", selector: { select: { mode: "dropdown", options: [{value:"adaptive",label:HomeiiEditorLocale.detectEditorHebrew() ? "מותאם לעטיפה" : "Artwork"},{value:"dark",label:HomeiiEditorLocale.detectEditorHebrew() ? "כהה" : "Dark"},{value:"light",label:HomeiiEditorLocale.detectEditorHebrew() ? "בהיר" : "Light"}] } } },
+
             ],
           },
         ],

@@ -269,11 +269,12 @@ export function favoriteButtonDeviceId(entityId = "", hassEntities = {}) {
 export function announcementEligiblePlayers(players = []) {
   return (Array.isArray(players) ? players : [])
     .filter((player) => player?.entity_id)
+    .filter(isPlayerAvailable)
     .filter((player) => !isLikelyBrowserPlayer(player));
 }
 
 export function mobileNavigableActivePlayers(players = [], pinnedEntityIds = [], isPlayerActiveFn = () => false) {
-  const sourcePlayers = Array.isArray(players) ? players : [];
+  const sourcePlayers = (Array.isArray(players) ? players : []).filter(isPlayerAvailable);
   const preferred = Array.isArray(pinnedEntityIds) ? pinnedEntityIds.filter(Boolean) : [];
   if (preferred.length) {
     return preferred

@@ -72,3 +72,10 @@ jobs:
                 --latest
             fi
           fi
+          gh release upload "$TAG_NAME" \
+            dist/homeii-music-flow.js \
+            dist/homeii-flow-icon.png \
+            dist/homeii-flow-logo-v2.png \
+            artifacts/HOMEii-Flow-Film-60s.mp4 \
+            --repo "$GITHUB_REPOSITORY" --clobber
+

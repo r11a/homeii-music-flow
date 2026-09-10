@@ -1,0 +1,18 @@
+name: Beta feedback or feature request
+description: Share a usability insight or a focused feature suggestion.
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What would you like to improve?
+      description: Describe your use case and the current difficulty.
+    validations:
+      required: true
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggested behavior
+  - type: input
+    id: version
+    attributes:
+      label: Card and Engine versions

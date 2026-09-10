@@ -247,4 +247,13 @@ describe("players foundation", () => {
       () => false,
     )).toEqual([kitchen, browserPlayer]);
   });
+  it("hides offline players from announcements and pinned navigation until they return", () => {
+    const offline = {...kitchen, available:false};
+    const unknown = {...livingRoom,state:"unknown"};
+    expect(announcementEligiblePlayers([offline, unknown])).toEqual([]);
+    expect(mobileNavigableActivePlayers([offline], [offline.entity_id], () => true)).toEqual([]);
+    offline.available=true;
+    expect(announcementEligiblePlayers([offline])).toEqual([offline]);
+    expect(mobileNavigableActivePlayers([offline], [offline.entity_id], () => true)).toEqual([offline]);
+  });
 });

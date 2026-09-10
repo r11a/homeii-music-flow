@@ -105,7 +105,7 @@ const messages = Object.freeze({
   "ui.choose_music_assistant_players_only_the_in_card_pinning_list_shows_only": "Wähle nur Music-Assistant-Player. Um Verwechslungen zu vermeiden, zeigt die Liste zum Anheften in der Karte ausschließlich Music-Assistant-Player.",
   "ui.choose_one_clear_option": "Wähle eine eindeutige Option",
   "ui.choose_player": "Player wählen",
-  "ui.choose_something_from_the_quick_shelf_or_tap_the_wand_for_a_random_playl": "Wähle etwas aus der Schnellauswahl oder tippe auf den Zauberstab für eine zufällige Playlist.",
+  "ui.choose_something_from_the_quick_shelf_or_tap_the_wand_for_a_random_playl": "Wähle etwas aus der Schnellauswahl oder tippe auf Überraschung für eine zufällige Playlist.",
   "ui.choose_source": "Quelle wählen",
   "ui.choose_target": "Ziel wählen",
   "ui.choose_target_player": "Zielplayer wählen",

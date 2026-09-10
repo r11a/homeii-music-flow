@@ -1,7 +1,7 @@
-<p align="center"><img src="docs/brand/homeii-flow-logo.png" alt="HOMEii Flow" width="360"></p>
+<p align="center"><img src="src/homeii-flow-logo-v2.png" alt="HOMEii Flow" width="360"></p>
 <h1 align="center">HOMEii Music Flow</h1>
 <p align="center"><strong>Make your Home Assistant dashboard feel like a place for music.</strong><br>Artwork-driven atmosphere, contextual controls and your Music Assistant library — across the screens in your home.</p>
-<p align="center"><img alt="Card beta candidate" src="https://img.shields.io/badge/Card-6.0.0--beta.1-c89b56"><img alt="Matching Engine" src="https://img.shields.io/badge/Engine-1.0.0--beta.1-41BDF5"><img alt="Preparation only" src="https://img.shields.io/badge/Status-not_released-555555"></p>
+<p align="center"><img alt="Card beta candidate" src="https://img.shields.io/badge/Card-6.0.0--beta.1-c89b56"><img alt="Matching Engine" src="https://img.shields.io/badge/Engine-1.0.0--beta.1-41BDF5"><img alt="Public beta" src="https://img.shields.io/badge/Status-PUBLIC_BETA-c89b56"></p>
 <p align="center"><a href="docs/BETA_GUIDE.md">Beta guide</a> · <a href="docs/BETA_UPGRADE_HE.md">שדרוג בעברית</a> · <a href="https://github.com/r11a/homeii-flow-engine">Required Engine</a> · <a href="docs/features.md">Features</a> · <a href="https://github.com/r11a/homeii-music-flow/issues">Feedback</a></p>
 
 > [!WARNING]
@@ -9,7 +9,13 @@
 > Music Flow 6 requires HOMEii Flow Engine. Updating only the JavaScript card can leave your dashboard without working music controls. Back up HA, your dashboard and current card resource. Configure and verify the Engine before replacing the card. Read the [complete upgrade and rollback guide](docs/BETA_GUIDE.md#safe-upgrade-from-593).
 
 > [!IMPORTANT]
-> **This is beta preparation, not a published beta release.** Planned pair: card **`6.0.0-beta.1`** and Engine **`1.0.0-beta.1`**. Source branches and documentation are available for review; no beta tag/Release is being published now. [5.9.3 remains the stable release](https://github.com/r11a/homeii-music-flow/releases/tag/v5.9.3). The Engine repository is currently private; access/public packaging must be resolved before community downloads open.
+> **Public beta: card `6.0.0-beta.1` + Engine `1.0.0-beta.1`.** These are opt-in prereleases, not stable updates. [5.9.3 remains the stable release](https://github.com/r11a/homeii-music-flow/releases/tag/v5.9.3). Read the installation guide before downloading.
+
+## See it in motion
+
+[Watch the 60-second HOMEii Flow film](artifacts/HOMEii-Flow-Film-60s.mp4). Edited interface demonstration with staged playback; see [production notes](artifacts/VIDEO-NOTES.md).
+
+[Tester checklist and reporting](docs/BETA_TESTING.md) · [Report a beta bug](https://github.com/r11a/homeii-music-flow/issues/new?template=beta_bug.yml)
 
 ## A new listening experience, with a backend built for HA
 
@@ -29,6 +35,9 @@ The matching [HOMEii Flow Engine](https://github.com/r11a/homeii-flow-engine) ru
 Features depend on MA, the provider, player and browser. Group persistence, some device layouts and mobile background playback still need beta testing. The [capability table and known limitations](docs/BETA_GUIDE.md#what-makes-this-beta-different) describe what is implemented and where support is conditional.
 
 ## Start with the right pair
+
+**New to custom cards? Follow the [complete beginner installation and 5.9.3 upgrade walkthrough](docs/INSTALL_STEP_BY_STEP.md).**
+
 
 1. Read the [breaking-change checklist](docs/BETA_GUIDE.md#safe-upgrade-from-593), especially if using 5.9.3.
 2. Install/configure [Engine `1.0.0-beta.1`](https://github.com/r11a/homeii-flow-engine), then restart and verify HA.
@@ -864,3 +873,11 @@ Credit and thanks:
 - [QA matrix](./docs/qa-matrix.md)
 - [Repo assets checklist](./docs/repo-assets-checklist.md)
 - [Changelog](./CHANGELOG.md)
+
+
+
+## German translation
+
+Thank you to [Richard Treichl (@rtreichl)](https://github.com/rtreichl) for contributing German language support in [PR #89](https://github.com/r11a/homeii-music-flow/pull/89).
+
+

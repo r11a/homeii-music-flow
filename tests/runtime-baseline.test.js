@@ -305,6 +305,20 @@ describe("runtime baseline", () => {
     expectHomeiiRuntimeRegistered(packageVersion);
   });
 
+  it("counts playing players only within the available population and separates RTL labels", async () => {
+    await import("../src/homeii-music-flow.js?runtime-player-counts");
+    const CardCtor = globalThis.customElements.get("homeii-music-flow");
+    const card = new CardCtor();
+    card._state.mobilePlayerDesign = "immersive";
+    card._state.players = [{state:"playing"}, {state:"idle"}, {state:"playing",available:false}];
+    card._isHebrew = () => true;
+    const html = card._playersActionHubHtml();
+    expect(html).toContain('dir="rtl"');
+    expect(html).toContain('<bdi>2</bdi>');
+    expect(html).toContain('<bdi>1</bdi>');
+    expect(html).not.toContain('<bdi>3</bdi>');
+  });
+
   it("suppresses phone edge-to-edge while the card is rendered in the visual editor", async () => {
     await import("../src/homeii-music-flow.js?runtime-mobile-edge-editor-baseline");
     await Promise.resolve();
@@ -596,6 +610,23 @@ describe("runtime baseline", () => {
     expect(editor._editorForm.data.mobile_quick_actions).toEqual(["voice", "search"]);
   });
 
+  it("shows one editor category without dropping settings from other categories", async () => {
+    await import("../src/homeii-music-flow.js?runtime-editor-categories");
+    await Promise.resolve(); await vi.runAllTimersAsync();
+    const Editor = globalThis.customElements.get("homeii-music-flow-editor");
+    const editor = new Editor(); editor.connectedCallback();
+    editor.setConfig({type:"custom:homeii-music-flow", language:"he", fan_theme:"adaptive"});
+    const full = editor._withDynamicEditorSchema(editor._currentBaseEditorSchema());
+    for (const section of full.filter(item => item.type === "expandable")) {
+      editor._editorSection = section.name;
+      editor._editorLastSchemaKey = "";
+      editor._render();
+      expect(editor._editorForm.schema).toEqual(section.schema);
+      expect(editor._editorForm.data.fan_theme).toBe("adaptive");
+      expect(editor._editorForm.data.language).toBe("he");
+    }
+  });
+
   it("preserves the default player through partial editor changes and serialized dashboard reload", async () => {
     await import("../src/homeii-music-flow.js?runtime-editor-default-player-save");
     await Promise.resolve();
@@ -617,6 +648,19 @@ describe("runtime baseline", () => {
     reopened.connectedCallback();
     reopened.setConfig(saved);
     expect(reopened._editorForm.data.entity).toBe("media_player.garage");
+  });
+
+  it("filters interface-specific settings without discarding stored classic preferences", async () => {
+    await import("../src/homeii-music-flow.js?runtime-editor-interface-filter");
+    await Promise.resolve(); await vi.runAllTimersAsync();
+    const Editor = globalThis.customElements.get("homeii-music-flow-editor");
+    const editor = new Editor(); editor.connectedCallback();
+    editor.setConfig({type:"custom:homeii-music-flow", player_design:"immersive", mobile_volume_mode:"button"});
+    const schema = [{name:"mobile_volume_mode"},{name:"fan_theme"},{name:"performance_profile"}];
+    expect(editor._withDynamicEditorSchema(schema).map(item=>item.name)).toEqual(["fan_theme","performance_profile"]);
+    expect(editor._config.mobile_volume_mode).toBe("button");
+    editor.setConfig({...editor._config, player_design:"classic"});
+    expect(editor._withDynamicEditorSchema(schema).map(item=>item.name)).toEqual(["mobile_volume_mode","performance_profile"]);
   });
 
   it("keeps generic Home Assistant media players out of visual editor player settings", async () => {
@@ -3326,6 +3370,23 @@ describe("runtime baseline", () => {
     expect(card._screensaverBlocked()).toBe(true);
   });
 
+  it("blocks the screensaver for a visible player picker but allows a hidden picker", async () => {
+    await import("../src/homeii-music-flow.js?runtime-player-picker-screensaver");
+    await Promise.resolve();
+    await vi.runAllTimersAsync();
+    const CardCtor = globalThis.customElements.get("homeii-music-flow");
+    const card = new CardCtor();
+    card._screensaverSuppressedByEditor = () => false;
+    card.$ = () => null;
+    let visible = true;
+    card.shadowRoot = {
+      querySelector: (selector) => visible && selector.includes(".player-picker-fan:not([hidden])") ? {} : null,
+    };
+    expect(card._screensaverBlocked()).toBe(true);
+    visible = false;
+    expect(card._screensaverBlocked()).toBe(false);
+  });
+
   it("suppresses the screensaver while the card is open in the visual editor", async () => {
     await import("../src/homeii-music-flow.js?runtime-screensaver-edit-mode-block-baseline");
     await Promise.resolve();
@@ -3802,11 +3863,8 @@ describe("runtime baseline", () => {
         attributes: { friendly_name: "Terrace" },
       },
     ];
-    const serviceCalls = [];
-    card._callHaMediaPlayerService = vi.fn(async (entityId, service, serviceData = {}) => {
-      serviceCalls.push({ entityId, service, serviceData });
-      return {};
-    });
+    card._callHaMediaPlayerService = vi.fn();
+    card._homeiiEngineApplyGroup = vi.fn(async () => ({}));
     card._loadPlayers = vi.fn(async () => {});
     card._renderMobileMenu = vi.fn(async () => {});
     card._syncControlRoomUi = vi.fn();
@@ -3816,11 +3874,11 @@ describe("runtime baseline", () => {
     const ok = await card._applySpeakerGroupFor("media_player.kitchen", card._state.pendingGroupSelections);
 
     expect(ok).toBe(true);
-    expect(serviceCalls).toEqual([
-      { entityId: "media_player.living_room", service: "unjoin", serviceData: {} },
-      { entityId: "media_player.kitchen", service: "unjoin", serviceData: {} },
-      { entityId: "media_player.terrace", service: "unjoin", serviceData: {} },
-    ]);
+    expect(card._homeiiEngineApplyGroup).toHaveBeenCalledWith({
+      owner: "media_player.living_room", entity_id: "media_player.living_room",
+      members: [], remove_members: ["media_player.kitchen", "media_player.terrace"],
+    });
+    expect(card._callHaMediaPlayerService).not.toHaveBeenCalled();
   });
 
   it("disconnects the group when the selected master is unchecked", async () => {
@@ -3851,11 +3909,8 @@ describe("runtime baseline", () => {
         attributes: { friendly_name: "Terrace" },
       },
     ];
-    const serviceCalls = [];
-    card._callHaMediaPlayerService = vi.fn(async (entityId, service, serviceData = {}) => {
-      serviceCalls.push({ entityId, service, serviceData });
-      return {};
-    });
+    card._callHaMediaPlayerService = vi.fn();
+    card._homeiiEngineApplyGroup = vi.fn(async () => ({}));
     card._loadPlayers = vi.fn(async () => {});
     card._renderMobileMenu = vi.fn(async () => {});
     card._syncControlRoomUi = vi.fn();
@@ -3866,11 +3921,11 @@ describe("runtime baseline", () => {
     const ok = await card._applySpeakerGroupFor("media_player.living_room", card._state.pendingGroupSelections);
 
     expect(ok).toBe(true);
-    expect(serviceCalls).toEqual([
-      { entityId: "media_player.living_room", service: "unjoin", serviceData: {} },
-      { entityId: "media_player.kitchen", service: "unjoin", serviceData: {} },
-      { entityId: "media_player.terrace", service: "unjoin", serviceData: {} },
-    ]);
+    expect(card._homeiiEngineApplyGroup).toHaveBeenCalledWith({
+      owner: "media_player.living_room", entity_id: "media_player.living_room",
+      members: [], remove_members: ["media_player.kitchen", "media_player.terrace"],
+    });
+    expect(card._callHaMediaPlayerService).not.toHaveBeenCalled();
   });
 
   it("keeps group update and disconnect-all actions paired", async () => {

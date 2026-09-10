@@ -5,6 +5,13 @@ import { validateMobileCardEditorConfig } from "../src/config/validators.js";
 const { document, KeyboardEvent, MouseEvent, WheelEvent } = globalThis;
 
 afterEach(() => document.body.replaceChildren());
+
+it("opens the player/style/play wizard from Music Flow rather than queue covers", () => {
+  const {card,root,open}=fixture();open();
+  root.querySelector('[data-immersive-action="music_flow"]').click();
+  expect(card._openMobileMenu).toHaveBeenCalledWith('simple_wizard');
+  expect(root.querySelector('[data-immersive-action="queue_flow"]')).toBeNull();
+});
 function fixture() {
   const host = document.createElement("div"); document.body.append(host);
   const shadowRoot = host.attachShadow({ mode: "open" });
@@ -16,6 +23,7 @@ function fixture() {
     _getSelectedPlayer: () => player, _getCurrentMediaUri: () => "library://track/1", _currentMediaFavoriteState: () => false,
     _isHotelMode: () => false, _discoveryModeEnabled: () => true,
     _openMobileMenu: vi.fn(), _openTabletLyricsScreensaver: () => false, _openLyricsModal: vi.fn(),
+    _toggleShuffle: vi.fn(), _toggleRepeat: vi.fn(),
     _toggleLikeCurrentMedia: vi.fn(async () => {}), _toast: vi.fn(), _toastError: vi.fn(), _mediaControlFailureMessage: (e) => e.message,
     _getCurrentDuration: () => 200, _fmtDur: (n) => `${n}s`, _seekFromProgress: vi.fn(),
     $: (id) => shadowRoot.getElementById(id),
@@ -25,6 +33,49 @@ function fixture() {
   return { card, player, root: shadowRoot, open: () => card.$("immersiveActionsToggle").click() };
 }
 describe("optional immersive player", () => {
+  it("shows confirmed shuffle and repeat states without closing the wheel", () => {
+    const {card, player, root, open} = fixture();
+    // Real legacy controls live outside the wheel; clicking them used to bubble
+    // into the outside-click handler and silently dismiss the wheel.
+    const legacy = document.createElement("button"); legacy.id = "mobileRepeatBtn";
+    root.querySelector(".card").append(legacy);
+    player.attributes.shuffle = true; player.attributes.repeat = "one";
+    open();
+    expect(root.querySelector('[data-immersive-action="shuffle"]').getAttribute("aria-pressed")).toBe("true");
+    expect(root.querySelector('[data-immersive-action="repeat"]').getAttribute("aria-label")).toBe("Repeat track");
+    root.querySelector('[data-immersive-action="repeat"]').click();
+    expect(card._toggleRepeat).toHaveBeenCalledOnce();
+    root.querySelector('[data-immersive-action="shuffle"]').click();
+    expect(card._toggleShuffle).toHaveBeenCalledOnce();
+    expect(card.$("immersiveActionFan").hidden).toBe(false);
+    player.attributes.repeat="off"; player.attributes.shuffle=false;
+    card.$("immersiveActionFan")._refreshAvailableActions();
+    expect(root.querySelector('[data-immersive-action="shuffle"]').getAttribute("aria-pressed")).toBe("false");
+    expect(root.querySelector('[data-immersive-action="repeat"]').getAttribute("aria-pressed")).toBe("false");
+  });
+  it("opens configured home and studio shortcuts through their existing handlers", () => {
+    const {card,root,open}=fixture();
+    expect(immersiveActionPages(card).flat().some(item=>item.id==='home')).toBe(false);
+    card._mobileHomeShortcutEnabled=()=>true; card._goHomeAssistantDashboard=vi.fn();
+    card._controlRoomEnabled=()=>true; card._openControlRoom=vi.fn();
+    open(); root.querySelector('[data-immersive-action="home"]').click();
+    expect(card._goHomeAssistantDashboard).toHaveBeenCalledOnce();
+    open(); root.querySelector('[data-immersive-action="studio"]').click();
+    expect(card._openControlRoom).toHaveBeenCalledOnce();
+  });
+  it("refreshes changed artwork for the same queue item without replacing the image node", () => {
+    const host = document.createElement("div");
+    const markup = (src, alt) => `<div class="art-stack-container"><div data-uri="library://track/1" data-queue-item-id="1"><div class="art-stack-card"><img src="${src}" alt="${alt}"></div></div></div>`;
+    host.innerHTML = markup("old.jpg", "Old title");
+    const image = host.querySelector("img");
+    reconcileImmersiveCovers(host, markup("new.jpg", "New title"));
+    expect(host.querySelector("img")).toBe(image);
+    expect(image.getAttribute("src")).toBe("new.jpg");
+    expect(image.alt).toBe("New title");
+    const replace = vi.spyOn(host.querySelector(".art-stack-container"), "replaceChildren");
+    reconcileImmersiveCovers(host, markup("new.jpg", "New title"));
+    expect(replace).not.toHaveBeenCalled();
+  });
   it("restores player actions automatically when availability returns", () => {
     const {card,player,root,open}=fixture(); open();
     expect(root.querySelector('[data-immersive-action="queue"]')).not.toBeNull();
@@ -66,6 +117,21 @@ describe("optional immersive player", () => {
       expect(card._toastError).toHaveBeenCalledWith("Offline");
     } finally { vi.useRealTimers(); vi.unstubAllGlobals(); }
   });
+  it("does not apply a delayed cover swipe to a newly selected player", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("requestAnimationFrame", (callback) => callback());
+    try {
+      const {card,root}=fixture();
+      const art=document.createElement("div");art.id="npArt";root.append(art);
+      card._setArtDragOffset=vi.fn();card._clearArtDragOffset=vi.fn();
+      card._state.selectedPlayer="computer";
+      const command=vi.fn();const pending=commitImmersiveSwipe(card,"next",command);
+      card._state.selectedPlayer="kitchen";
+      await vi.advanceTimersByTimeAsync(200);await pending;
+      expect(command).not.toHaveBeenCalled();
+      expect(card._immersiveSwipePending).toBe(false);
+    } finally {vi.useRealTimers();vi.unstubAllGlobals();}
+  });
   it("defaults to immersive and preserves an explicit classic choice", () => {
     expect(immersivePlayerEnabled({ _config: {} })).toBe(true);
     expect(immersivePlayerEnabled({ _config: { player_design: "classic" } })).toBe(false);
@@ -87,7 +153,8 @@ describe("optional immersive player", () => {
     root.querySelector('[data-fan-step="1"]').click();
     expect(root.querySelector('[data-immersive-action="transfer"]')).not.toBeNull();
     root.querySelector('[data-immersive-action="more"]').click();
-    expect(card._openMobileMenu).toHaveBeenCalledWith("main");
+    expect(root.querySelector(".fan-catalogue")).not.toBeNull();
+    root.querySelector("[data-catalogue-back]").click();
     open();
     root.querySelector(".immersive-dock").dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
     expect(card.$("immersiveActionFan").hidden).toBe(true);
@@ -124,6 +191,15 @@ describe("optional immersive player", () => {
     expect(event.defaultPrevented).toBe(true);
     expect(root.querySelector('[data-immersive-action="transfer"]')).not.toBeNull();
     expect(card._openMobileMenu).not.toHaveBeenCalled();
+  });
+  it("keeps actions visible after more than a hundred full wheel rotations", () => {
+    const { card, root, open } = fixture(); open();
+    const fan = card.$("immersiveActionFan");
+    const buttons = [...root.querySelectorAll(".immersive-fan-actions button")];
+    const before = buttons.map(button => button.style.visibility);
+    fan.dispatchEvent(new WheelEvent("wheel", { deltaY: buttons.length * 90 * 201, bubbles: true, cancelable: true }));
+    expect(buttons.map(button => button.style.visibility)).toEqual(before);
+    expect(buttons.some(button => button.style.visibility === "visible")).toBe(true);
   });
   it("moves the same buttons along the arc before pointer release without triggering actions", () => {
     const { card, root, open } = fixture(); open();
@@ -172,4 +248,14 @@ describe("optional immersive player", () => {
     expect(bar.getAttribute("aria-disabled")).toBe("true");
     expect(card.$("immersiveLiveStatus").hidden).toBe(false);
   });
+});
+
+it('rotation retains queue choices and never dispatches another toggle', () => {
+ const {card,player,root,open}=fixture();player.attributes.shuffle=true;player.attributes.repeat='all';open();
+ const fan=card.$('immersiveActionFan');
+ fan.dispatchEvent(new WheelEvent('wheel',{deltaY:270,bubbles:true,cancelable:true}));
+ fan._refreshAvailableActions();
+ expect(root.querySelector('[data-immersive-action="shuffle"]').getAttribute('aria-pressed')).toBe('true');
+ expect(root.querySelector('[data-immersive-action="repeat"]').getAttribute('aria-pressed')).toBe('true');
+ expect(card._toggleShuffle).not.toHaveBeenCalled();expect(card._toggleRepeat).not.toHaveBeenCalled();
 });

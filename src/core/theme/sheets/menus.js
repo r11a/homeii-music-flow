@@ -1055,11 +1055,11 @@ export default function() {
           transition:transform .24s ease, opacity .2s ease;
         }
         .history-drawer.left-edge {
-          inset-inline-start:66px;
+          left:66px; right:auto;
           transform:translateX(calc(-100% - 18px));
         }
         .history-drawer.right-edge {
-          inset-inline-end:66px;
+          right:66px; left:auto;
           transform:translateX(calc(100% + 18px));
         }
         .history-drawer.open {
@@ -1365,10 +1365,17 @@ export default function() {
           max-height:100%;
           grid-template-rows:minmax(0,1fr);
         }
+        .menu-body.search-mode {
+          min-height:0;
+          overflow:hidden;
+          grid-template-rows:minmax(0,1fr);
+        }
+        .menu-body.search-mode .quick-search-shell,
         .menu-body.search-mode .library-shell,
         .menu-body.search-mode .media-home-shell {
           min-height:0;
           height:100%;
+          overflow:hidden;
         }
         .menu-body.search-mode .media-home-shell {
           grid-template-rows:auto minmax(0,1fr);

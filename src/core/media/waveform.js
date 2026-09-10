@@ -25,19 +25,33 @@ export function syncWaveform(card, progress, percent) {
   const uri = card._getCurrentMediaUri?.() || "";
   const ref = parseMediaReference(uri);
   const key = `${card._config?.homeii_engine_instance_id || ""}:${uri}`;
-  const valid = ref.media_type === "track" && ref.item_id && ref.provider && card._getCurrentDuration() > 0;
+  const valid = ref.media_type === "track" && ref.item_id && ref.provider;
   const clear = () => { progress.classList.remove("has-waveform"); progress.querySelector(".immersive-waveform")?.remove(); delete progress.dataset.waveformRender; };
   if (!valid || !card._callEngineMaCommand) { clear(); return; }
   card._waveformCache ||= new Map();
   card._waveformPending ||= new Map();
   const cached = card._waveformCache.get(key);
-  if (!cached || Date.now() - cached.ts > (cached.bins ? 3600000 : 300000)) {
+  if (!cached || Date.now() - cached.ts > (cached.bins ? 3600000 : (cached.retryMs || 300000))) {
     clear();
     if (!card._waveformPending.has(key) && card._waveformPending.size < 2) {
-      const task = Promise.resolve().then(() => card._callEngineMaCommand("audio_analysis/wave_form", { item_id: ref.item_id, provider_instance_id_or_domain: ref.provider }))
-        .then((value) => normalizeWaveform(value)).catch(() => null)
+      let failed = false;
+      const media = card._state?.maQueueState?.current_item?.media_item;
+      const mappings = media?.uri === uri ? (media.provider_mappings || []) : [];
+      const refs = [{ item_id: ref.item_id, provider_instance_id_or_domain: ref.provider },
+        ...mappings.filter(m => m.available !== false && m.item_id && (m.provider_instance || m.provider_domain))
+          .map(m => ({ item_id: m.item_id, provider_instance_id_or_domain: m.provider_instance || m.provider_domain }))];
+      const unique = refs.filter((r, i) => refs.findIndex(other => other.item_id === r.item_id && other.provider_instance_id_or_domain === r.provider_instance_id_or_domain) === i).slice(0, 3);
+      const task = Promise.resolve().then(async () => {
+        for (const args of unique) {
+          try {
+            const bins = normalizeWaveform(await card._callEngineMaCommand("audio_analysis/wave_form", args));
+            if (bins) return bins;
+          } catch { failed = true; }
+        }
+        return null;
+      })
         .then((bins) => {
-          card._waveformCache.set(key, { bins, ts: Date.now() });
+          card._waveformCache.set(key, { bins, ts: Date.now(), retryMs: failed ? 15000 : 10000 });
           while (card._waveformCache.size > 24) card._waveformCache.delete(card._waveformCache.keys().next().value);
         }).finally(() => {
           card._waveformPending.delete(key);
@@ -48,7 +62,7 @@ export function syncWaveform(card, progress, percent) {
     return;
   }
   if (!cached.bins) { clear(); return; }
-  const width = Math.round(progress.clientWidth || 300);
+  const width = Math.min(card._performanceModeEnabled?.() ? 150 : Infinity, Math.round(progress.clientWidth || 300));
   const renderKey = `${key}:${width}:${cached.ts}`;
   if (progress.dataset.waveformRender !== renderKey) {
     clear();

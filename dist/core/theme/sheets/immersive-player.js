@@ -117,13 +117,13 @@ export const immersivePlayerStyles = `
 .card.player-design-immersive :is(#btnMute,#mobileVolPctLabel,.volume-step-btn) { flex:none; min-width:44px!important; min-height:44px!important; width:auto!important; height:44px!important; padding:0 4px!important; border:0!important; background:transparent!important; box-shadow:none!important; }
 .card.player-design-immersive #mobileVolPctLabel { font-size:15px!important; font-weight:500; font-variant-numeric:tabular-nums; }
 .card.player-design-immersive #btnMute svg { width:25px!important; height:25px!important; }
-.card.player-design-immersive .progress-line { direction:ltr; display:grid!important; grid-template-columns:1fr 1fr!important; grid-template-rows:28px 18px; gap:2px 0!important; min-height:48px; width:100%; }
+.card.player-design-immersive .progress-line { direction:ltr; display:grid!important; grid-template-columns:1fr 1fr!important; grid-template-rows:44px 18px; gap:2px 0!important; min-height:64px; width:100%; }
 .card.player-design-immersive #progressBar { grid-column:1 / -1; grid-row:1; width:100%!important; min-width:0!important; position:relative; }
 .card.player-design-immersive #bigCurTime { grid-column:1; grid-row:2; text-align:left; }
 .card.player-design-immersive #bigTotalTime { grid-column:2; grid-row:2; text-align:right; }
 .card.player-design-immersive .progress-time { width:auto!important; font-size:12px!important; font-variant-numeric:tabular-nums; color:var(--homeii-surface-muted); }
-.card.player-design-immersive #progressBar { min-height:24px!important; height:24px!important; border:0!important; box-shadow:none!important; border-radius:12px!important; background:transparent!important; overflow:visible!important; display:flex; align-items:center; touch-action:none; }
-.card.player-design-immersive #progressBar::before { content:""; position:absolute; inset-inline:0; top:10px; height:4px; background:color-mix(in srgb,currentColor 20%,transparent); border-radius:8px; }
+.card.player-design-immersive #progressBar { min-height:44px!important; height:44px!important; border:0!important; box-shadow:none!important; border-radius:12px!important; background:transparent!important; overflow:visible!important; display:flex; align-items:center; touch-action:none; }
+.card.player-design-immersive #progressBar::before { content:""; position:absolute; inset-inline:0; top:20px; height:4px; background:color-mix(in srgb,currentColor 20%,transparent); border-radius:8px; }
 .card.player-design-immersive #progressFill { height:4px!important; position:relative!important; border-radius:8px; background:linear-gradient(90deg,rgba(var(--dynamic-glow-rgb,180 180 190)/.65),rgb(var(--dynamic-glow-rgb,220 220 228)))!important; color:rgb(var(--dynamic-glow-rgb,220 220 228)); box-shadow:0 0 10px rgba(var(--dynamic-glow-rgb,180 180 190)/.12); }
 .card.player-design-immersive #progressBar:is(:hover,:focus-visible,.immersive-seeking) #progressFill { height:6px!important; }
 .card.player-design-immersive #progressBar:is(:hover,:focus-visible,.immersive-seeking) #progressFill::after { top:-2px; }
@@ -146,6 +146,8 @@ export const immersivePlayerStyles = `
 .immersive-dock button { font:inherit; cursor:pointer; color:inherit; }
 .immersive-dock > button { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:7px; width:76px; min-height:64px; border:0; border-radius:24px; background:transparent; font-size:11px; }
 .immersive-dock svg { width:24px; height:24px; flex:none; }
+.immersive-library-shortcuts { display:flex;align-items:center;justify-content:center;gap:2px;min-width:0; }
+.immersive-library-shortcuts button { display:grid;place-items:center;min-width:44px;min-height:44px;padding:8px;border:0;border-radius:50%;background:transparent; }
 #immersiveActionsToggle > svg { fill:none; padding:12px; box-sizing:content-box; border:1px solid var(--homeii-surface-border); border-radius:50%; background:var(--homeii-surface); }
 #immersiveActionsToggle[aria-expanded=true] > svg { background:color-mix(in srgb,currentColor 15%,transparent); }
 .immersive-fan { position:absolute; bottom:calc(100% + 8px); left:50%; width:min(440px,100%); height:220px; box-sizing:border-box; transform:translateX(-50%); display:block; padding:0 12px 6px; border:1px solid var(--homeii-surface-border); border-radius:50% 50% 18px 18px / 94% 94% 18px 18px; background:rgba(20,22,26,.84); backdrop-filter:blur(48px) saturate(.85); -webkit-backdrop-filter:blur(48px) saturate(.85); box-shadow:0 16px 48px #0004,inset 0 1px 0 #ffffff12; color:var(--homeii-surface-text); touch-action:pan-y; }
@@ -161,8 +163,18 @@ export const immersivePlayerStyles = `
 .immersive-page-status { font-size:11px; color:var(--homeii-surface-muted); direction:ltr; }
 .immersive-fan button:disabled { opacity:.35; cursor:default; }
 .immersive-fan[hidden] { display:none!important; }
+@media (prefers-reduced-motion:no-preference) {
+  .immersive-fan:not([hidden]) { transform-origin:50% 100%; animation:homeii-fan-reveal .22s cubic-bezier(.2,.8,.2,1); }
+  @keyframes homeii-fan-reveal {
+    from { opacity:0; transform:translateX(-50%) translateY(10px) scale(.94); }
+    to { opacity:1; transform:translateX(-50%) translateY(0) scale(1); }
+  }
+}
 .immersive-fan button { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; min-height:72px; min-width:0; border:0; border-radius:18px; background:transparent; font-size:12px; }
 .immersive-fan button:is(:hover,:focus-visible) { background:color-mix(in srgb,currentColor 9%,transparent); }
+.immersive-fan button[aria-pressed="true"] { color:inherit; background:transparent; box-shadow:none; }
+.immersive-fan button[aria-pressed="true"] > :is(svg,.fan-player-art,.fan-value) { border-radius:50%; outline:2px solid var(--ma-accent,#ffa83b); outline-offset:6px; }
+
 .immersive-dock button:focus-visible { outline:2px solid currentColor; outline-offset:3px; }
 .card.player-design-immersive .mobile-brand-signature { display:none!important; }
 .card.player-design-immersive .immersive-controls { min-width:0; }
@@ -173,8 +185,12 @@ export const immersivePlayerStyles = `
 .card.player-design-immersive .immersive-dock > button > svg { width:25px!important; height:25px!important; flex-basis:25px!important; }
 .card.player-design-immersive #immersiveActionsToggle > svg { border:0; background:transparent; padding:9px!important; border-radius:14px; }
 @container (max-width:320px) { .immersive-fan { width:100%; } .immersive-fan .immersive-fan-actions button { width:52px; font-size:10px; } }
-@media(prefers-reduced-motion:no-preference) { .immersive-fan:not([hidden]) { animation:homeii-fan-enter .18s ease-out; } @keyframes homeii-fan-enter { from { opacity:0; transform:translate(-50%,6px); } to { opacity:1; transform:translate(-50%,0); } } }
 @media(prefers-reduced-motion:no-preference) { .card.player-design-immersive #progressBar:not(.immersive-seeking) #progressFill { transition:width .8s linear,height .15s ease; } }
+@media(prefers-reduced-motion:reduce) {
+  .card.player-design-immersive .art-stack-slide,
+  .immersive-fan,.immersive-fan-actions,.immersive-fan-actions button,
+  .card.player-design-immersive #progressFill { transition:none!important; animation:none!important; }
+}
 @container (max-height:560px) {
   .card.player-design-immersive .immersive-layout { grid-template-rows:minmax(0,1fr) auto auto 52px; gap:6px; }
   .card.player-design-immersive #activePlayerChip { min-height:44px!important; padding:5px 12px!important; }

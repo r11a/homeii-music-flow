@@ -50,6 +50,7 @@ export function qualityBadgeLabel(values = []) {
 export function stripLyricsTimestamps(text = "") {
   return String(text || "")
     .replace(/\r/g, "")
+    .replace(/<\d{1,3}:\d{2}(?:[.:]\d{1,3})?>/g, "")
     .replace(/^\[[a-z]+:[^\]]*\]\s*$/gim, "")
     .replace(/\[\d{1,3}:\d{2}(?:[.:]\d{1,3})?\]\s*/g, "")
     .trim();
@@ -83,7 +84,10 @@ export function parseLrcLyrics(text = "") {
   raw.split("\n").forEach((line) => {
     const tags = [...line.matchAll(timeTag)];
     if (!tags.length) return;
-    const lyric = line.replace(/\[[^\]]+\]/g, "").trim();
+    const content = line.replace(/\[[^\]]+\]/g, "").trim();
+    const wordPattern = /<(\d{1,3}):(\d{2})(?:[.:](\d{1,3}))?>([^<]*)/g;
+    const words = [...content.matchAll(wordPattern)].map(match => ({time:Number(match[1])*60+Number(match[2])+Number((match[3] || "0").padEnd(3,"0"))/1000,text:match[4]})).filter(word => word.text.length);
+    const lyric = content.replace(/<\d{1,3}:\d{2}(?:[.:]\d{1,3})?>/g, "");
     if (!lyric) return;
     tags.forEach((tag) => {
       const minutes = Number(tag[1]);
@@ -91,7 +95,8 @@ export function parseLrcLyrics(text = "") {
       const fraction = String(tag[3] || "0");
       const millis = Number(fraction.padEnd(3, "0").slice(0, 3));
       const time = minutes * 60 + seconds + millis / 1000;
-      if (Number.isFinite(time)) rows.push({ time, text: lyric });
+      const validWords = tags.length === 1 && words.length && words.map(word=>word.text).join("") === lyric && words.every((word, index) => word.time >= time && (!index || word.time >= words[index - 1].time));
+      if (Number.isFinite(time)) rows.push({ time, text: lyric, ...(validWords ? {words} : {}) });
     });
   });
   return rows
@@ -413,6 +418,18 @@ export function parsePlaybackTimestampMs(value, { now = Date.now() } = {}) {
     Math.abs(candidate - now) < Math.abs(best - now) ? candidate : best
   ), candidates[0]);
   return Number.isFinite(parsed) ? parsed : 0;
+}
+
+// Position and timestamp must come from the same snapshot (WiiM keeps an old
+// player-level clock while current_media carries the active track's clock).
+export function playbackPositionPair(raw = {}) {
+  const media = raw.current_media || raw.media || {};
+  const candidates = [raw, media].flatMap(source => {
+    const position = source.elapsed_time ?? source.media_position;
+    if (position === undefined || position === null || position === "" || !Number.isFinite(Number(position))) return [];
+    return [{position:Math.max(0,Number(position)), updatedAt:parsePlaybackTimestampMs(source.elapsed_time_last_updated ?? source.media_position_updated_at)}];
+  });
+  return candidates.sort((a,b)=>b.updatedAt-a.updatedAt)[0] || {position:0,updatedAt:0};
 }
 
 export function formatDuration(sec) {

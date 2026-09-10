@@ -1,5 +1,7 @@
+import { groupFeedback } from "./feedback.js";
 // Group membership and commands. The existing card remains the state owner.
 import { isPlayerAvailable } from "../state/players.js";
+
 export function _getAvailableGroupPlayers() {
   return (this._state.players || [])
     .filter(isPlayerAvailable)
@@ -65,9 +67,8 @@ export function _openGroupVolumeShortcut() {
     this._toast?.(this._m("No active group for this player.", "אין קבוצה פעילה לנגן הזה."));
     return;
   }
-  const layoutMode = typeof this._layoutModeConfig === "function" ? this._layoutModeConfig() : "";
-  if (layoutMode && layoutMode !== "desktop" && typeof this._openMobileMenu === "function") {
-    this._openMobileMenu("group");
+  if (typeof this._openMobileMenu === "function") {
+    this._openMobileMenu("group_volume");
     return;
   }
   this._openGroupModal();
@@ -135,6 +136,10 @@ export async function _waitForSpeakerGroupConfirmation(ownerId, expectedMembers 
   const timeoutMs = Math.max(700, Number(options.timeoutMs || 8000) || 8000);
   const intervalMs = Math.max(150, Number(options.intervalMs || 350) || 350);
   const deadline = Date.now() + timeoutMs;
+  // Native players can briefly publish optimistic membership before their next
+  // device poll rejects it. Require membership to survive that poll.
+  const stableMs = expected.length > 1 ? 5500 : 0;
+  let matchedSince = null;
   let latest = [];
   do {
     let refreshed = false;
@@ -144,11 +149,12 @@ export async function _waitForSpeakerGroupConfirmation(ownerId, expectedMembers 
       refreshed = true;
     } catch (_) {}
     latest = this._currentSpeakerGroupMemberIds(leaderId);
-    if (refreshed && expected.length <= 1) {
-      if (latest.length <= 1) return { ok: true, skipped: false, members: latest };
-    } else if (refreshed && this._sameSpeakerGroupMembers(latest, expected)) {
-      return { ok: true, skipped: false, members: latest };
-    }
+    const matches = refreshed && (expected.length <= 1
+      ? latest.length <= 1 : this._sameSpeakerGroupMembers(latest, expected));
+    if (matches) {
+      matchedSince ??= Date.now();
+      if (Date.now() - matchedSince >= stableMs) return { ok: true, skipped: false, members: latest };
+    } else matchedSince = null;
     await new Promise((resolve) => setTimeout(resolve, intervalMs));
   } while (Date.now() < deadline);
   return { ok: false, skipped: false, members: latest };
@@ -221,6 +227,14 @@ export function _handleGroupChange(e) {
 }
 
 export async function _applySpeakerGroupFor(entityId, groupMembers = []) {
+  const current=this._currentSpeakerGroupMemberIds?.(entityId) || [];
+  const removed=current.filter(id=>id!==entityId && !groupMembers.includes(id));
+  const disconnect=removed.length>0 && groupMembers.every(id=>current.includes(id));
+  const added=groupMembers.filter(id=>!current.includes(id));
+  return groupFeedback(this, disconnect ? "disconnect" : "connect", () => applySpeakerGroupFor.call(this, entityId, groupMembers), [entityId,...(disconnect ? removed : added)]);
+}
+
+async function applySpeakerGroupFor(entityId, groupMembers = []) {
   const primaryId = String(entityId || "").trim();
   if (!primaryId) return false;
   const { owner, current, desired: members, added, removed } = this._groupSelectionDelta(primaryId, groupMembers);
@@ -355,11 +369,23 @@ export function _clearLocalGroupState(entityId) {
 }
 
 export async function _clearSpeakerGroupFor(entityId) {
+  return groupFeedback(this, "disconnect", () => clearSpeakerGroupFor.call(this, entityId), this._currentSpeakerGroupMemberIds?.(entityId) || []);
+}
+
+async function clearSpeakerGroupFor(entityId) {
   const requestedId = String(entityId || "").trim();
   const ownerId = this._currentSpeakerGroupOwnerId(requestedId) || requestedId;
   const player = this._playerByEntityId(ownerId) || this._playerByEntityId(requestedId);
   if (!player) return;
   const disconnect = async (targets) => {
+    if (this._homeiiEngineEnabled?.() && typeof this._homeiiEngineApplyGroup === "function") {
+      // A native LinkPlay follower may withdraw its AirPlay endpoint while
+      // grouped. MA ignores unjoin addressed to that unavailable endpoint;
+      // remove members through the reachable leader's native group API instead.
+      await this._homeiiEngineApplyGroup({owner:ownerId, entity_id:ownerId,
+        members:[], remove_members:targets.filter(id => id !== ownerId)});
+      return;
+    }
     const results = await Promise.allSettled(targets.map((id) => this._callHaMediaPlayerService(id, "unjoin")));
     const failed = targets.filter((_, index) => results[index].status === "rejected");
     if (failed.length) throw new Error(`${this._m("Could not disconnect", "לא ניתן לנתק")}: ${failed.map((id) => this._playerByEntityId(id)?.attributes?.friendly_name || id).join(", ")}`);
@@ -414,4 +440,5 @@ export async function _clearSpeakerGroup() {
   this._closeGroupModal();
   return true;
 }
+
 

@@ -13,6 +13,13 @@ function fixture() {
   return {card,body,emit};
 }
 describe("queue handle drag",()=>{
+  it("does not move to an old target after dragging back to the source",()=>{
+    const {card,body,emit}=fixture();
+    emit("pointerdown",30);emit("pointermove",150);emit("pointermove",31);emit("pointerup",31);
+    expect(card._handleQueueAction).not.toHaveBeenCalled();
+    expect(body.querySelector(".queue-drop-target")).toBeNull();
+    expect(card._queueDragActive).toBe(false);
+  });
   it("moves through the existing queue command once, on release",()=>{
     const {card,emit}=fixture(); emit("pointerdown",30);emit("pointermove",150);
     expect(card._handleQueueAction).not.toHaveBeenCalled(); emit("pointerup",150);

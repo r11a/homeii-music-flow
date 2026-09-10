@@ -9,6 +9,18 @@ const { document, customElements, MouseEvent } = globalThis;
 afterEach(() => document.body.replaceChildren());
 
 describe("menu actions across a real shadow event boundary", () => {
+  it.each([['library_albums', 'mobileLibraryFlowPage', 'library_albums'], ['queue', 'mobileQueueFlowQuickOpen', true]])('returns from the %s wheel without leaving its screen', (page, key, value) => {
+    const card = document.createElement('homeii-music-flow');
+    card._state.menuPage = page;
+    card._state.menuStack = ['main'];
+    card._state[key] = value;
+    card._renderMobileMenu = vi.fn();
+    card._backMobileMenu();
+    expect(card._state[key]).toBeFalsy();
+    expect(card._state.menuPage).toBe(page);
+    expect(card._state.menuStack).toEqual(['main']);
+    expect(card._renderMobileMenu).toHaveBeenCalledOnce();
+  });
   it("advances virtualization from the inner media scroller and remembers its position", () => {
     const card = document.createElement("homeii-music-flow");
     const body = document.createElement("div");

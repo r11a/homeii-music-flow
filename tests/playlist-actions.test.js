@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { openPlaylistDestination } from "../src/core/media/playlist-actions.js";
+import { handleMediaActionClick } from "../src/core/media/action-menu.js";
 const { document } = globalThis;
 afterEach(() => document.body.replaceChildren());
 function fixture() {
@@ -13,6 +14,33 @@ function fixture() {
   return {sheet,card,entry};
 }
 describe("playlist destination",()=>{
+  it.each([false, true])("keeps action feedback pending, prevents duplicate dispatch and restores disabled controls (failure=%s)", async (failure) => {
+    const sheet = document.createElement("div");
+    sheet.className = "queue-action-sheet";
+    sheet.innerHTML = '<button data-media-popup="play">Play</button><button disabled>Unavailable</button>';
+    document.body.append(sheet);
+    const button = sheet.firstElementChild;
+    let resolve, reject;
+    const card = {_state:{mobileQueueActionEntry:{uri:"track"},mobileActionContext:"media"},
+      _handleMobileMediaAction:vi.fn(()=>new Promise((yes,no)=>{resolve=yes;reject=no;})),
+      _showLibraryInteractionFeedback:vi.fn(()=>button),_clearLibraryInteractionFeedback:vi.fn(),
+      _closeMobileQueueActionMenu:vi.fn(),_toastError:vi.fn(),_mediaControlFailureMessage:String};
+    const pending = handleMediaActionClick(card,{target:button});
+    await handleMediaActionClick(card,{target:button});
+    expect(card._handleMobileMediaAction).toHaveBeenCalledOnce();
+    expect(button.getAttribute("aria-busy")).toBe("true");
+    expect(card._showLibraryInteractionFeedback).toHaveBeenCalledWith(button,{loading:true,hold:true});
+    expect(card._closeMobileQueueActionMenu).not.toHaveBeenCalled();
+    if (failure) reject(new Error("Offline")); else resolve(true);
+    await pending;
+    expect(card._clearLibraryInteractionFeedback).toHaveBeenCalledWith(button);
+    expect(button.hasAttribute("aria-busy")).toBe(false);
+    expect(button.disabled).toBe(false);
+    expect(sheet.lastElementChild.disabled).toBe(true);
+    expect(card._mobileQueueActionPending).toBe(false);
+    expect(card._closeMobileQueueActionMenu).toHaveBeenCalledTimes(failure ? 0 : 1);
+    expect(card._toastError).toHaveBeenCalledTimes(failure ? 1 : 0);
+  });
   it("loads editable destinations without writing, then submits exactly the chosen playlist once",async()=>{
     const {sheet,card,entry}=fixture(); await openPlaylistDestination(card,entry);
     expect([...sheet.querySelectorAll("option")].map(item=>item.textContent)).toEqual(["Mine"]);

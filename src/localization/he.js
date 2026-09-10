@@ -104,7 +104,7 @@ const messages = Object.freeze({
   "ui.choose_music_assistant_players_only_the_in_card_pinning_list_shows_only": "בחר רק נגני Music Assistant. בתוך הכרטיס יוצגו לקיבוע רק נגני Music Assistant כדי למנוע בלבול.",
   "ui.choose_one_clear_option": "בחר אפשרות אחת ברורה",
   "ui.choose_player": "בחר נגן",
-  "ui.choose_something_from_the_quick_shelf_or_tap_the_wand_for_a_random_playl": "בחר משהו מהמדף המהיר או לחץ על השרביט לפלייליסט אקראי.",
+  "ui.choose_something_from_the_quick_shelf_or_tap_the_wand_for_a_random_playl": "בחר משהו מהמדף המהיר או לחץ על כפתור ההפתעה לפלייליסט אקראי.",
   "ui.choose_source": "בחר מקור",
   "ui.choose_target": "בחר יעד",
   "ui.choose_target_player": "בחר נגן יעד",

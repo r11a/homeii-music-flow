@@ -67,3 +67,12 @@ describe("confirmed sleep timer persistence", () => {
     expect(card._toast).not.toHaveBeenCalled();
   });
 });
+
+it("does not rebuild the immersive card for a classic-only timer button", () => {
+  const card={_state:{mobilePlayerDesign:"immersive"},shadowRoot:{querySelector:()=>({classList:{contains:()=>false,toggle:vi.fn()}})},
+    _sleepTimerFooterLabel:()=>"15 min",_sleepTimerChipVisible:()=>true,_mobileQuickActions:()=>[],
+    $:()=>null,_syncMobileTimerAction:vi.fn(),_rebuildMobileUi:vi.fn()};
+  prototype._syncSleepTimerChip.call(card);
+  expect(card._rebuildMobileUi).not.toHaveBeenCalled();
+  expect(card._syncMobileTimerAction).toHaveBeenCalledOnce();
+});

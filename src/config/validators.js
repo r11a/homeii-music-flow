@@ -129,6 +129,8 @@ export function validateMobileCardEditorConfig(config) {
   assertNumberIfDefined(config.mobile_icon_scale, "mobile_icon_scale");
   assertBooleanIfDefined(config.mobile_footer_search_enabled, "mobile_footer_search_enabled");
   assertValueInList(config.mobile_footer_mode, "mobile_footer_mode", ["icon", "text", "both"]);
+  assertBooleanIfDefined(config.volume_wheel, "volume_wheel");
+  assertValueInList(config.fan_theme, "fan_theme", ["adaptive", "dark", "light"]);
   assertBooleanIfDefined(config.action_menu_labels, "action_menu_labels");
   assertValueInList(config.player_design, "player_design", ["classic", "immersive"]);
   assertBooleanIfDefined(config.mobile_studio_shortcut, "mobile_studio_shortcut");

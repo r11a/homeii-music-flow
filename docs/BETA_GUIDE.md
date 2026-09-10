@@ -32,7 +32,7 @@ HOMEii Flow brings a music-focused interface to the dashboard: the current artwo
 | Discover | Genre-based discovery combining available provider results, MA library matches and radio sources | This is not unrestricted access to Spotify editorial catalogs; provider capabilities govern available results |
 | Lyrics | MA metadata lookup, synchronized lyrics when supplied and an artwork-aware view | Lyrics are not guaranteed for every track; direct LRCLIB lookup is opt-in |
 | This device | Sendspin playback through an authenticated HA/Engine transport | Requires MA support and browser audio permission/user interaction; mobile background behavior varies |
-| Multi-room | Player selection, group operations and queue transfer | Group persistence is still under investigation on the test setup; do not assume every player combination is stable |
+| Multi-room | Player selection, group operations and queue transfer | Grouping has been exercised on development speakers; do not assume every player/protocol combination behaves identically |
 | Smart playback | MA Autoplay, crossfade, playback preferences and spoken-media speed controls | Only when supported; speed applies to supported podcasts/audiobooks, not ordinary music |
 | AI Radio DJ | Select/configure the queue DJ from hosts already set up in MA | Requires the corresponding MA 2.11 beta APIs/plugin/configuration. Model, voice and host setup stays in MA; provider costs may apply |
 | HA automation | Engine schedules, timers, volume policies, announcements, entities and diagnostic services | Actions can affect real speakers even while the card is closed; test with one selected player |
@@ -132,3 +132,4 @@ Before beta version labeling, the card candidate passed 392 tests plus lint/buil
 Before publishing: verify the exact numbered packages, public Engine access or packaging, the upgrade/rollback path, download contents and checksums, and the Pre-release/not-Latest flags. Do not announce a download until the actual assets are available.
 
 [Detailed configuration](configuration.md) · [Feature reference](features.md) · [Diagnostics](diagnostics.md) · [Hebrew upgrade guide](BETA_UPGRADE_HE.md)
+

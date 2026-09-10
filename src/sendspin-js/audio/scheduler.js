@@ -447,7 +447,7 @@ export class AudioScheduler {
             this.recorrectionMonitor.start();
     }
     async resumeAudioContext() {
-        if (this.audioContext && this.audioContext.state === "suspended") {
+        if (this.audioContext && ["suspended", "interrupted"].includes(this.audioContext.state)) {
             try {
                 await this.audioContext.resume();
                 console.log("Sendspin: AudioContext resumed");
@@ -561,14 +561,6 @@ export class AudioScheduler {
         if (this.queueProcessScheduled)
             return;
         this.queueProcessScheduled = true;
-        if (typeof globalThis.setTimeout === "function") {
-            this.scheduleTimeout = globalThis.setTimeout(() => {
-                this.scheduleTimeout = null;
-                this.queueProcessScheduled = false;
-                this.processAudioQueue();
-            }, 15);
-            return;
-        }
         const run = () => {
             this.queueProcessScheduled = false;
             this.processAudioQueue();

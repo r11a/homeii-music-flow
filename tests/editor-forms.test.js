@@ -27,6 +27,13 @@ function configureTestEditorForms() {
 }
 
 describe("editor forms", () => {
+  it("puts the interface choice first without duplicating the saved setting", () => {
+    configureTestEditorForms();
+    const form=getMobileCardConfigForm();
+    expect(form.schema[0].name).toBe("player_design");
+    expect(form.schema[0].selector.select.options.map(option=>option.value)).toEqual(["immersive","classic"]);
+    expect(JSON.stringify(form.schema).match(/"name":"player_design"/g)).toHaveLength(1);
+  });
   it("builds the base card form from injected editor dependencies", () => {
     configureTestEditorForms();
     const form = getBaseCardConfigForm();
@@ -99,4 +106,10 @@ describe("editor forms", () => {
     expect(options[0]).toEqual({ value: "all", label: "All" });
     expect(options.some((option) => option.value === "IL")).toBe(true);
   });
+});
+
+it('keeps interface and performance selection together at the top',()=>{
+ configureTestEditorForms();const form=getMobileCardConfigForm();
+ expect(form.schema.slice(0,2).map(item=>item.name)).toEqual(['player_design','performance_profile']);
+ expect(JSON.stringify(form.schema).match(/"name":"performance_profile"/g)).toHaveLength(1);
 });

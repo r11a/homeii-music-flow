@@ -18,6 +18,7 @@ import {
   normalizeImageProxyUrl,
   normalizeMediaItem,
   parsePlaybackTimestampMs,
+  playbackPositionPair,
   parseLrcLyrics,
   qualityBadgeLabel,
   rebaseImageProxyUrl,
@@ -26,6 +27,14 @@ import {
 } from "../src/core/media/presentation.js";
 
 describe("media presentation foundation", () => {
+  it("uses supplied word timing and keeps untimed lyrics as lines", () => {
+    const enhanced = "[00:10.00]<00:10.00>Hello <00:10.500>world";
+    expect(stripLyricsTimestamps(enhanced)).toBe("Hello world");
+    expect(parseLrcLyrics(enhanced)).toEqual([{time:10, text:"Hello world", words:[{time:10,text:"Hello "},{time:10.5,text:"world"}]}]);
+    expect(parseLrcLyrics("[00:10]Hello world")).toEqual([{time:10,text:"Hello world"}]);
+    expect(parseLrcLyrics("[00:10]<00:11>Hello <00:10.5>world")).toEqual([{time:10,text:"Hello world"}]);
+    expect(parseLrcLyrics("[00:10][00:20]<00:10>Hello")).toEqual([{time:10,text:"Hello"},{time:20,text:"Hello"}]);
+  });
   it("builds track info from player and queue item", () => {
     expect(buildCurrentTrackInfo({
       player: {
@@ -191,4 +200,13 @@ describe("media presentation foundation", () => {
     expect(spaceSeparatedUtc).toBe(Date.UTC(2026, 4, 27, 12, 0, 0, 123));
     expect(parsePlaybackTimestampMs(1800000000)).toBe(1800000000000);
   });
+});
+
+it("keeps the newest WiiM playback position and timestamp together, including zero", () => {
+ const raw={elapsed_time:0,elapsed_time_last_updated:1788988205,current_media:{elapsed_time:2,elapsed_time_last_updated:1788992080}};
+ expect(playbackPositionPair(raw)).toEqual({position:2,updatedAt:1788992080000});
+ raw.current_media.elapsed_time=0;
+ expect(playbackPositionPair(raw)).toEqual({position:0,updatedAt:1788992080000});
+ raw.elapsed_time=45;raw.elapsed_time_last_updated=1788992090;
+ expect(playbackPositionPair(raw)).toEqual({position:45,updatedAt:1788992090000});
 });

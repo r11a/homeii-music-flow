@@ -14,6 +14,37 @@ function context(command = vi.fn(async () => {})) {
   };
 }
 describe("consistent player mute", () => {
+  it("stops, disconnects and clears all queues through the existing clean-all action", async () => {
+    const player={entity_id:'computer'};
+    const card={_state:{players:[player],selectedPlayer:'computer'},_activePlaybackPlayers:()=>[player],_groupedPlayerIds:()=>[],_isStopClearTarget:()=>true,_isLocalSendspinDesired:()=>false,
+      _hapticTap:vi.fn(),_disconnectPlayerGroups:vi.fn(async()=>({ok:true,failed:false})),_stopPlayer:vi.fn(async()=>{}),_clearQueueForPlayer:vi.fn(async()=>{}),_clearLocalPlaybackStateForPlayers:vi.fn(),
+      _toastError:vi.fn(),_toastSuccess:vi.fn(),_i18n:s=>s,_m:s=>s,_syncNowPlayingUI:vi.fn(),_updateNowPlayingState:vi.fn()};
+    await prototype._stopAllPlayers.call(card);
+    expect(card._stopPlayer).toHaveBeenCalledWith('computer');
+    expect(card._disconnectPlayerGroups).toHaveBeenCalledOnce();
+    expect(card._clearQueueForPlayer).toHaveBeenCalledOnce();
+    expect(card._clearLocalPlaybackStateForPlayers).toHaveBeenCalledOnce();
+  });
+  it("honors a second toggle while the first mute command is waiting", async () => {
+    let resolveFirst;
+    const command=vi.fn().mockImplementationOnce(()=>new Promise(resolve=>{resolveFirst=resolve;})).mockResolvedValue(undefined);
+    const card=context(command);
+    card._getSelectedPlayer=()=>card._playerByEntityId();card._isMuted=()=>false;
+    card._setPlayerMutedFor=(...args)=>prototype._setPlayerMutedFor.apply(card,args);
+    const first=prototype._toggleMute.call(card);
+    const second=prototype._toggleMute.call(card);
+    expect(command).toHaveBeenCalledTimes(1);
+    resolveFirst();await Promise.all([first,second]);
+    expect(command.mock.calls.map(args=>args[2].is_volume_muted)).toEqual([true,false]);
+    expect(card._muteTargetsByPlayer.size).toBe(0);
+  });
+  it("does not restore an outdated volume when mute completes", async () => {
+    let finish;const card=context(vi.fn(()=>new Promise(resolve=>{finish=resolve;})));
+    const player={entity_id:'computer',attributes:{volume_level:.49}};card._playerByEntityId=()=>player;
+    const pending=prototype._setPlayerMutedFor.call(card,'computer',true);
+    player.attributes.volume_level=.2;finish();await pending;
+    expect(card._setPlayerVolumeOptimistic).toHaveBeenLastCalledWith('computer',.2,true);
+  });
   function volumeContext(failUnmute = false) {
     const player = { entity_id: "computer", attributes: { volume_level: .49, is_volume_muted: true } };
     const card = context();
@@ -85,4 +116,12 @@ describe("consistent player mute", () => {
     await Promise.all([first, second]);
     expect(card._muteRequestsByPlayer.size).toBe(0);
   });
+});
+
+it('keeps confirmed queue modes when player fields are stale', () => {
+ const card={_state:{selectedPlayer:'center',maQueueState:{queue_id:'q',shuffle_enabled:true,repeat_mode:'all'}},_playerByEntityId:()=>({entity_id:'center',attributes:{active_queue:'q',shuffle:false,repeat:'off'}}),_applyOptimisticPlayerVolumeState:p=>p};
+ const player=prototype._getSelectedPlayer.call(card);
+ expect(player.attributes.shuffle).toBe(true);expect(player.attributes.repeat).toBe('all');
+ card._state.maQueueState.queue_id='another-player';
+ expect(prototype._getSelectedPlayer.call(card).attributes.shuffle).toBe(false);
 });

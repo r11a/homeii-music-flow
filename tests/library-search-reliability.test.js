@@ -26,7 +26,7 @@ describe('search failure and late response handling',()=>{
     expect(card._search).toHaveBeenCalledExactlyOnceWith('music',{providerOnly:true,strict:true,limit:60});
   });
   it('allows a preferred section order without hiding unspecified sections or changing defaults',()=>{
-    const card={_config:{},_i18n:String,_esc:String,_mediaItemsListHtml:(items,type)=>`<p>${type}</p>`};
+    const card={_config:{},_layoutModeConfig:()=> 'mobile',_i18n:String,_esc:String,_mediaItemsListHtml:(items,type)=>`<p>${type}</p>`};
     const input={radio:[{}],artists:[{}],tracks:[{}]};
     const html=()=>prototype._mediaSearchSectionsHtml.call(card,input);
     expect(html().indexOf('<p>radio')).toBeLessThan(html().indexOf('<p>artist'));
@@ -34,6 +34,12 @@ describe('search failure and late response handling',()=>{
     expect(html().indexOf('<p>track')).toBeLessThan(html().indexOf('<p>artist'));
     expect(html().indexOf('<p>artist')).toBeLessThan(html().indexOf('<p>radio'));
     expect(html().match(/<p>track/g)).toHaveLength(1);
+  });
+  it.each([['tablet','grid'],['mobile','grid']])('uses the %s search layout without losing item actions', (mode,layout)=>{
+    const render=vi.fn(()=> 'items');
+    const card={_config:{},_layoutModeConfig:()=>mode,_i18n:String,_esc:String,_mediaItemsListHtml:render};
+    prototype._mediaSearchSectionsHtml.call(card,{albums:[{uri:'library://album/1'}]});
+    expect(render).toHaveBeenCalledWith([{uri:'library://album/1'}],'album',{layout,openDetails:true});
   });
   it('shows a retryable failure instead of an authoritative empty result',async()=>{
     const {body,render}=fixture(async()=>{throw new Error('Offline');});

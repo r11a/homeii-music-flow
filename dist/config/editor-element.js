@@ -41,6 +41,7 @@ return class HomeiiBaseMusicEditor extends HTMLElement {
     this._editorBound = false;
     this._editorLastConfigKey = "";
     this._editorLastSchemaKey = "";
+    this._editorSection = "general_section";
   }
 
   connectedCallback() {
@@ -750,6 +751,10 @@ return class HomeiiBaseMusicEditor extends HTMLElement {
         ha-form {
           display:block;
         }
+        .editor-section-nav { display:grid; gap:8px; margin:16px 0; }
+        .editor-section-nav label { font:500 13px var(--primary-font-family, Heebo, sans-serif); color:var(--secondary-text-color); }
+        .editor-section-nav select { width:100%; min-height:44px; padding:10px 12px; border:1px solid var(--divider-color); border-radius:12px; background:var(--card-background-color); color:var(--primary-text-color); font:inherit; }
+        .editor-section-nav select:focus-visible { outline:2px solid var(--primary-color); outline-offset:2px; }
       </style>
       <div class="editor-shell">
         <div class="editor-header">
@@ -785,6 +790,8 @@ return class HomeiiBaseMusicEditor extends HTMLElement {
           </div>
           <div class="editor-diagnostics-list" id="editorDiagnosticsList"></div>
         </div>
+        <ha-form id="editorBasics"></ha-form>
+        <div class="editor-section-nav"><label for="editorSection"></label><select id="editorSection"></select></div>
         <ha-form id="editorForm"></ha-form>
       </div>
     `;
@@ -827,7 +834,12 @@ return class HomeiiBaseMusicEditor extends HTMLElement {
         this._render();
         this._dispatchConfig();
       });
-      this._editorForm?.addEventListener("value-changed", (event) => {
+      root.querySelector("#editorSection")?.addEventListener("change", (event) => {
+        this._editorSection = event.target.value;
+        this._editorLastSchemaKey = "";
+        this._render();
+      });
+      const onFormChanged = (event) => {
         const nextValue = event.detail?.value;
         if (!nextValue || typeof nextValue !== "object") return;
         const nextConfigValue = this._normalizeEditorFormValue(nextValue);
@@ -840,7 +852,9 @@ return class HomeiiBaseMusicEditor extends HTMLElement {
         this._dispatchConfig();
         const nextSchemaKey = JSON.stringify(this._withDynamicEditorSchema(this._currentBaseEditorSchema()));
         if (previousSchemaKey !== nextSchemaKey) queueMicrotask(() => this._render());
-      });
+      };
+      this._editorForm?.addEventListener("value-changed", onFormChanged);
+      root.querySelector("#editorBasics")?.addEventListener("value-changed", onFormChanged);
     }
   }
 
@@ -1011,6 +1025,7 @@ return class HomeiiBaseMusicEditor extends HTMLElement {
     };
 
     for (const value of candidates) {
+      if (/^player_order_entity_\d+$/.test(String(value))) continue;
       const playerInfo = matchPairField(value, AMBIENT_LIGHT_PAIR_PLAYER_PREFIX, "player");
       if (playerInfo) return playerInfo;
       const lightsInfo = matchPairField(value, AMBIENT_LIGHT_PAIR_LIGHTS_PREFIX, "lights");
@@ -1227,12 +1242,17 @@ return class HomeiiBaseMusicEditor extends HTMLElement {
   _withDynamicEditorSchema(schema = []) {
     const pinnedOptions = this._editorPinnedPlayerOptions();
     const colorLightOptions = this._editorColorLightOptions();
+    const immersive = (this._config?.player_design || "immersive") === "immersive";
+    const classicOnly = new Set(["mobile_footer_mode", "mobile_main_bar_items", "mobile_quick_actions", "mobile_cover_flow", "mobile_show_up_next", "mobile_volume_mode"]);
+    const immersiveOnly = new Set(["volume_wheel", "fan_theme"]);
     const cloneItem = (item) => {
+      if (immersive && (classicOnly.has(item?.name) || /^mobile_quick_action_\d+$/.test(item?.name || ""))) return null;
+      if (!immersive && immersiveOnly.has(item?.name)) return null;
       if (!item || typeof item !== "object") return item;
       if (item.name === "ambient_light_player_map") return this._ambientLightPlayerPairSchema();
       if (item.name === "player_order_grid") return this._playerOrderSchema();
       const next = { ...item };
-      if (Array.isArray(item.schema)) next.schema = item.schema.map(cloneItem).filter(Boolean);
+      if (Array.isArray(item.schema)) { next.schema = item.schema.map(cloneItem).filter(Boolean); if (!next.schema.length) return null; }
       if (item.name === "pinned_player_entities" || item.name === "excluded_player_entities") {
         next.selector = {
           select: {
@@ -1251,7 +1271,21 @@ return class HomeiiBaseMusicEditor extends HTMLElement {
       }
       return next;
     };
-    return (Array.isArray(schema) ? schema : []).map(cloneItem).filter(Boolean);
+    const result = (Array.isArray(schema) ? schema : []).map(cloneItem).filter(Boolean);
+    const connection = result.find(item => item.name === "connection_section");
+    if (connection) connection.title = this._isHebrew() ? "מנוע והגדרות מתקדמות" : "Engine & advanced";
+    const general = result.find(item => item.name === "general_section");
+    const generalGrid = general?.schema?.find(item => item.name === "general_grid");
+    if (generalGrid) {
+      const names = new Set(["pinned_player_entities", "excluded_player_entities", "player_sort_mode"]);
+      const players = generalGrid.schema.filter(item => names.has(item.name));
+      generalGrid.schema = generalGrid.schema.filter(item => !names.has(item.name));
+      const order = general.schema.find(item => item.name === "player_order_grid");
+      general.schema = general.schema.filter(item => item.name !== "player_order_grid");
+      if (order) players.push(order);
+      if (players.length) result.splice(result.indexOf(general) + 1, 0, {type:"expandable",name:"players_section",title:this._isHebrew() ? "נגנים" : "Players",flatten:true,schema:players});
+    }
+    return result;
   }
 
   _render() {
@@ -1286,8 +1320,26 @@ return class HomeiiBaseMusicEditor extends HTMLElement {
       this._editorForm.computeLabel = computeEditorLabel;
       this._editorForm.computeHelper = computeEditorHelper;
       const schemaKey = JSON.stringify(schema);
+      const sections = schema.filter(item => item.type === "expandable");
+      const selectedSection = sections.find(item => item.name === this._editorSection) || sections[0];
+      this._editorSection = selectedSection?.name || "";
+      const selector = this._editorRoot.querySelector("#editorSection");
+      const basics = this._editorRoot.querySelector("#editorBasics");
+      if (selector) {
+        const options = sections.map(item => `<option value="${this._esc(item.name)}">${this._esc(item.title || computeEditorLabel(item))}</option>`).join("");
+        if (selector.innerHTML !== options) selector.innerHTML = options;
+        selector.value = this._editorSection;
+        this._editorRoot.querySelector(".editor-section-nav label").textContent = this._isHebrew() ? "מה תרצה להתאים?" : "What would you like to adjust?";
+      }
+      if (basics) {
+        basics.hass = this._hass;
+        basics.computeLabel = computeEditorLabel;
+        basics.computeHelper = computeEditorHelper;
+        if (this._editorLastSchemaKey !== schemaKey) basics.schema = schema.filter(item => item.type !== "expandable");
+        basics.data = formData;
+      }
       if (this._editorLastSchemaKey !== schemaKey) {
-        this._editorForm.schema = schema;
+        this._editorForm.schema = selectedSection?.schema || [];
         this._editorLastSchemaKey = schemaKey;
       }
       const configKey = JSON.stringify(formData);
