@@ -8,7 +8,6 @@ const MOBILE_COMPACT_WIDGET_MODES = ["auto", "full", "mini"];
 const MOBILE_LAYOUT_MODES = ["auto", "full", "edge_to_edge", "compact"];
 const MOBILE_LIBRARY_LAYOUT_MODES = ["grid", "list"];
 const MOBILE_MIC_MODES = ["on", "off", "smart"];
-const MOBILE_LIKED_MODES = ["ma", "local"];
 const MOBILE_SWIPE_MODES = ["play", "browse"];
 const MOBILE_RADIO_SOURCE_MODES = ["combined", "ma_first", "ma_only", "radiobrowser_only"];
 const VOICE_ASSISTANT_MODES = ["hybrid", "music", "assist"];
@@ -192,7 +191,7 @@ export function normalizeHomeShortcutPath(value, { leadingSlash = false } = {}) 
 }
 
 export function normalizeMobileFooterMode(value) {
-  return normalizeEnum(value, MOBILE_FOOTER_MODES, "both");
+  return normalizeEnum(value, MOBILE_FOOTER_MODES, "icon");
 }
 
 export function normalizeMobileMicMode(value) {
@@ -339,6 +338,7 @@ export function normalizeVisualMobileState(config = {}, {
     mobileFooterSearchEnabled: !!config.mobile_footer_search_enabled,
     mobileStudioShortcutEnabled: config.mobile_studio_shortcut !== false,
     mobileFooterMode: normalizeMobileFooterMode(config.mobile_footer_mode),
+    mobilePlayerDesign: config.player_design === "classic" ? "classic" : "immersive",
     mobileHomeShortcutEnabled: !!config.mobile_home_shortcut,
     mobileHomeShortcutPath: normalizeHomeShortcutPath(config.mobile_home_shortcut_path),
     mobileVolumeMode: normalizeMobileVolumeMode(config.mobile_volume_mode),
@@ -349,7 +349,7 @@ export function normalizeVisualMobileState(config = {}, {
     voiceAssistantMode: normalizeVoiceAssistantMode(config.voice_assistant_mode),
     voiceAssistantAgentId: String(config.voice_assistant_agent_id || "").trim(),
     voiceAssistantSpeakFeedback: config.voice_assistant_speak_feedback === true,
-    mobileLikedMode: normalizeEnum(config.mobile_liked_mode, MOBILE_LIKED_MODES, "ma"),
+    mobileLikedMode: "ma",
     mobileSwipeMode: normalizeEnum(config.mobile_swipe_mode, MOBILE_SWIPE_MODES, "browse"),
     mobileRadioSourceMode: normalizeMobileRadioSourceMode(config.mobile_radio_source_mode),
     mobileRadioBrowserCountry: String(config.mobile_radio_browser_country || "all"),

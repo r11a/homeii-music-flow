@@ -13,16 +13,28 @@ import {
   imageProxyUrl,
   imageProxyIdUrl,
   imageUrl,
+  legacyImageProxyFallbackUrl,
   normalizeImageProxySize,
+  normalizeImageProxyUrl,
   normalizeMediaItem,
   parsePlaybackTimestampMs,
+  playbackPositionPair,
   parseLrcLyrics,
   qualityBadgeLabel,
+  rebaseImageProxyUrl,
   sourceProviderMeta,
   stripLyricsTimestamps,
 } from "../src/core/media/presentation.js";
 
 describe("media presentation foundation", () => {
+  it("uses supplied word timing and keeps untimed lyrics as lines", () => {
+    const enhanced = "[00:10.00]<00:10.00>Hello <00:10.500>world";
+    expect(stripLyricsTimestamps(enhanced)).toBe("Hello world");
+    expect(parseLrcLyrics(enhanced)).toEqual([{time:10, text:"Hello world", words:[{time:10,text:"Hello "},{time:10.5,text:"world"}]}]);
+    expect(parseLrcLyrics("[00:10]Hello world")).toEqual([{time:10,text:"Hello world"}]);
+    expect(parseLrcLyrics("[00:10]<00:11>Hello <00:10.5>world")).toEqual([{time:10,text:"Hello world"}]);
+    expect(parseLrcLyrics("[00:10][00:20]<00:10>Hello")).toEqual([{time:10,text:"Hello"},{time:20,text:"Hello"}]);
+  });
   it("builds track info from player and queue item", () => {
     expect(buildCurrentTrackInfo({
       player: {
@@ -97,12 +109,27 @@ describe("media presentation foundation", () => {
       "https://ma.local/imageproxy?path=https%3A%2F%2Fcovers.example%2Fartist.jpg&size=512",
     );
     expect(imageProxyIdUrl("a".repeat(64), 300, "https://ma.local")).toBe(
-      `https://ma.local/imageproxy/${"a".repeat(64)}?size=512&fmt=jpeg`,
+      `https://ma.local/imageproxy/${"a".repeat(64)}?size=512`,
     );
     expect(imageProxyIdUrl("not-a-proxy-id", 300, "https://ma.local")).toBe(null);
     expect(imageUrl({ proxy_id: "b".repeat(64), path: "legacy/path.jpg", provider: "spotify" }, 120, { maUrl: "https://ma.local" })).toBe(
-      `https://ma.local/imageproxy/${"b".repeat(64)}?size=160&fmt=jpeg`,
+      `https://ma.local/imageproxy/${"b".repeat(64)}?size=160`,
     );
+    expect(legacyImageProxyFallbackUrl(
+      { proxy_id: "b".repeat(64), path: "legacy/path.jpg", provider: "spotify" },
+      120,
+      { maUrl: "https://ma.local" },
+    )).toBe("https://ma.local/imageproxy?path=legacy%2Fpath.jpg&provider=spotify&size=160");
+    expect(normalizeImageProxyUrl(
+      `http://192.168.1.20:8097/imageproxy/${"d".repeat(64)}?size=500`,
+      300,
+      "https://music.example.com/ma",
+    )).toBe(`http://192.168.1.20:8097/imageproxy/${"d".repeat(64)}?size=512`);
+    expect(rebaseImageProxyUrl(
+      `http://192.168.1.20:8097/imageproxy/${"d".repeat(64)}?size=500`,
+      300,
+      "https://music.example.com/ma",
+    )).toBe(`https://music.example.com/ma/imageproxy/${"d".repeat(64)}?size=512`);
     expect(imageUrl({ proxy_id: "short", path: "legacy/path.jpg", provider: "spotify" }, 120, { maUrl: "https://ma.local" })).toBe(
       "https://ma.local/imageproxy?path=legacy%2Fpath.jpg&provider=spotify&size=160",
     );
@@ -129,6 +156,20 @@ describe("media presentation foundation", () => {
       media_item: { image: { path: "queue/path.png", provider: "library" } },
     }, "https://ma.local")).toBe(
       "https://ma.local/imageproxy?path=queue%2Fpath.png&provider=library&size=512",
+    );
+    expect(artUrl({
+      homeii_artwork_url: "/api/homeii_flow/artwork/item/opaque-token",
+      image: "https://ma.local/imageproxy?path=legacy.jpg",
+    }, "https://ma.local")).toBe(
+      "/api/homeii_flow/artwork/item/opaque-token",
+    );
+    expect(artUrl({
+      media_item: {
+        homeii_artwork_url: "/api/homeii_flow/artwork/item/nested-token",
+        image: "https://ma.local/imageproxy/old",
+      },
+    }, "https://ma.local")).toBe(
+      "/api/homeii_flow/artwork/item/nested-token",
     );
     expect(artUrl({
       thumbnail: { path: "thumb/path.png", provider: "library" },
@@ -159,4 +200,13 @@ describe("media presentation foundation", () => {
     expect(spaceSeparatedUtc).toBe(Date.UTC(2026, 4, 27, 12, 0, 0, 123));
     expect(parsePlaybackTimestampMs(1800000000)).toBe(1800000000000);
   });
+});
+
+it("keeps the newest WiiM playback position and timestamp together, including zero", () => {
+ const raw={elapsed_time:0,elapsed_time_last_updated:1788988205,current_media:{elapsed_time:2,elapsed_time_last_updated:1788992080}};
+ expect(playbackPositionPair(raw)).toEqual({position:2,updatedAt:1788992080000});
+ raw.current_media.elapsed_time=0;
+ expect(playbackPositionPair(raw)).toEqual({position:0,updatedAt:1788992080000});
+ raw.elapsed_time=45;raw.elapsed_time_last_updated=1788992090;
+ expect(playbackPositionPair(raw)).toEqual({position:45,updatedAt:1788992090000});
 });

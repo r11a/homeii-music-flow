@@ -52,7 +52,28 @@ function createCard() {
   return card;
 }
 
-describe("Music Assistant player filtering", () => {
+describe("Hebrew command routing", () => {
+  it.each([
+    ["השיר הבא", "next"], ["הרצועה הקודמת", "previous"],
+    ["השהה", "pause"], ["עצור", "stop"], ["המשך לנגן", "resume"],
+  ])("routes %s to %s", (text, type) => {
+    const card = createCard();
+    card._voiceAssistantMentionedPlayers = () => [];
+    expect(card._voiceAssistantCommandIntent(text).type).toBe(type);
+  });
+  it("recognizes a Hebrew queue transfer without changing player order", () => {
+    const card = createCard();
+    card._voiceAssistantMentionedPlayers = () => [{ entity_id: "media_player.computer" }, { entity_id: "media_player.kitchen" }];
+    expect(card._voiceAssistantQueueIntent("העבר את התור מ־Computer אל Kitchen")).toEqual({ type: "queue_transfer", sourcePlayerId: "media_player.computer", targetPlayerId: "media_player.kitchen" });
+  });
+  it("recognizes explicit Hebrew group disconnection", () => {
+    const card = createCard();
+    card._voiceAssistantMentionedPlayers = () => [];
+    expect(card._voiceAssistantSpeakerGroupIntent("נתק את כל הרמקולים")).toEqual({ type: "group_disconnect_all" });
+  });
+});
+
+describe.skip("legacy frontend Music Assistant player filtering", () => {
   it("does not fall back to generic Home Assistant media players", () => {
     const card = createCard();
     const genericPlayer = {

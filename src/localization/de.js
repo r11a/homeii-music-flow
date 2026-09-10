@@ -1,6 +1,8 @@
 // German HOMEii Music Flow localization dictionary.
 // Keep keys stable. Translate only the string values.
+// Adapted from rtreichl, PR #89 (7ef61817240c22ca9df9edf6ae6cf70621c5a4b7).
 const messages = Object.freeze({
+  "ui.action_menu_labels": "Aktionsnamen unter Symbolen",
   "ui.a_guided_music_wizard": "Ein geführter Musikassistent",
   "ui.a_radio_station": "Ein Radiosender",
   "ui.accent_color": "Akzentfarbe",
@@ -30,7 +32,6 @@ const messages = Object.freeze({
   "ui.all_players_2": "Alle Player",
   "ui.all_podcasts": "Alle Podcasts",
   "ui.all_tracks": "Alle Titel",
-  "ui.allow_local_likes": "Lokale Favoriten erlauben",
   "ui.always_visible": "Immer sichtbar",
   "ui.announce": "Ansagen",
   "ui.announce_to_all_players": "Ansage auf allen Playern",
@@ -104,7 +105,7 @@ const messages = Object.freeze({
   "ui.choose_music_assistant_players_only_the_in_card_pinning_list_shows_only": "Wähle nur Music-Assistant-Player. Um Verwechslungen zu vermeiden, zeigt die Liste zum Anheften in der Karte ausschließlich Music-Assistant-Player.",
   "ui.choose_one_clear_option": "Wähle eine eindeutige Option",
   "ui.choose_player": "Player wählen",
-  "ui.choose_something_from_the_quick_shelf_or_tap_the_wand_for_a_random_playl": "Wähle etwas aus der Schnellauswahl oder tippe auf den Zauberstab für eine zufällige Playlist.",
+  "ui.choose_something_from_the_quick_shelf_or_tap_the_wand_for_a_random_playl": "Wähle etwas aus der Schnellauswahl oder tippe auf Überraschung für eine zufällige Playlist.",
   "ui.choose_source": "Quelle wählen",
   "ui.choose_target": "Ziel wählen",
   "ui.choose_target_player": "Zielplayer wählen",
@@ -212,7 +213,6 @@ const messages = Object.freeze({
   "ui.favorite": "Favorit",
   "ui.favorite_action_failed": "Favoritenaktion fehlgeschlagen",
   "ui.favorite_action_sent": "Favoritenaktion gesendet",
-  "ui.favorite_button_entity": "Entität der Favoritentaste",
   "ui.favorite_center": "Favoritenzentrale",
   "ui.favorite_center_2": "Favoritenzentrale",
   "ui.favorite_radio": "Lieblingssender",
@@ -327,7 +327,6 @@ const messages = Object.freeze({
   "ui.main_bar_items_2": "Elemente der Hauptleiste",
   "ui.main_opacity": "Deckkraft der Hauptansicht",
   "ui.mainly_relevant_on_larger_layouts": "Hauptsächlich für größere Layouts relevant.",
-  "ui.mass_queue_send_command_fallback": "Ausweichlösung über mass_queue/send_command",
   "ui.matches_the_microphone_setting_from_the_in_card_settings_screen": "Entspricht der Mikrofoneinstellung innerhalb der Karte.",
   "ui.media": "Medien",
   "ui.media_2": "Medien",

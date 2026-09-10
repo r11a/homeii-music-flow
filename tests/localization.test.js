@@ -36,12 +36,14 @@ describe("localization", () => {
     expect(detectLanguage({ configLanguage: "lt" })).toBe("lt");
     expect(detectLanguage({ configLanguage: "zh-CN" })).toBe("zh");
     expect(detectLanguage({ configLanguage: "de" })).toBe("de");
+    expect(detectLanguage({ configLanguage: "de-AT" })).toBe("de");
     expect(detectLanguage({ configLanguage: "nl" })).toBe("en");
     expect(detectLanguage({ configLanguage: "auto", hass: { locale: { language: "de-DE" } } })).toBe("de");
     expect(detectLanguage({ configLanguage: "auto", hass: { locale: { language: "he-IL" } } })).toBe("he");
   });
 
   it("offers community languages in the language picker options", () => {
+    expect(LANGUAGE_OPTIONS).toContainEqual({value:"de",label:"Deutsch"});
     expect(LANGUAGE_OPTIONS).toContainEqual({
       value: "da",
       label: "Dansk",
@@ -79,6 +81,11 @@ describe("localization", () => {
     const englishKeys = Object.keys(DICTIONARIES.en).sort();
     for (const [language, dictionary] of Object.entries(DICTIONARIES)) {
       expect(Object.keys(dictionary).sort(), language).toEqual(englishKeys);
+    }
+  });
+  it("preserves every German interpolation placeholder", () => {
+    for (const [key,value] of Object.entries(DICTIONARIES.en)) {
+      expect((DICTIONARIES.de[key].match(/\{\w+\}/g) || []).sort(),key).toEqual((value.match(/\{\w+\}/g) || []).sort());
     }
   });
 });

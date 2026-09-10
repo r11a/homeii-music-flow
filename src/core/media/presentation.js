@@ -50,6 +50,7 @@ export function qualityBadgeLabel(values = []) {
 export function stripLyricsTimestamps(text = "") {
   return String(text || "")
     .replace(/\r/g, "")
+    .replace(/<\d{1,3}:\d{2}(?:[.:]\d{1,3})?>/g, "")
     .replace(/^\[[a-z]+:[^\]]*\]\s*$/gim, "")
     .replace(/\[\d{1,3}:\d{2}(?:[.:]\d{1,3})?\]\s*/g, "")
     .trim();
@@ -83,7 +84,10 @@ export function parseLrcLyrics(text = "") {
   raw.split("\n").forEach((line) => {
     const tags = [...line.matchAll(timeTag)];
     if (!tags.length) return;
-    const lyric = line.replace(/\[[^\]]+\]/g, "").trim();
+    const content = line.replace(/\[[^\]]+\]/g, "").trim();
+    const wordPattern = /<(\d{1,3}):(\d{2})(?:[.:](\d{1,3}))?>([^<]*)/g;
+    const words = [...content.matchAll(wordPattern)].map(match => ({time:Number(match[1])*60+Number(match[2])+Number((match[3] || "0").padEnd(3,"0"))/1000,text:match[4]})).filter(word => word.text.length);
+    const lyric = content.replace(/<\d{1,3}:\d{2}(?:[.:]\d{1,3})?>/g, "");
     if (!lyric) return;
     tags.forEach((tag) => {
       const minutes = Number(tag[1]);
@@ -91,7 +95,8 @@ export function parseLrcLyrics(text = "") {
       const fraction = String(tag[3] || "0");
       const millis = Number(fraction.padEnd(3, "0").slice(0, 3));
       const time = minutes * 60 + seconds + millis / 1000;
-      if (Number.isFinite(time)) rows.push({ time, text: lyric });
+      const validWords = tags.length === 1 && words.length && words.map(word=>word.text).join("") === lyric && words.every((word, index) => word.time >= time && (!index || word.time >= words[index - 1].time));
+      if (Number.isFinite(time)) rows.push({ time, text: lyric, ...(validWords ? {words} : {}) });
     });
   });
   return rows
@@ -104,21 +109,24 @@ export function extractCurrentLyricsRawText(queueItem = null) {
   const media = currentQueueItem.media_item || {};
   const metadata = media.metadata || currentQueueItem.metadata || {};
   const candidates = [
+    currentQueueItem.lrc_lyrics,
+    media.lrc_lyrics,
+    metadata.lrc_lyrics,
+    currentQueueItem.syncedLyrics,
+    currentQueueItem.synced_lyrics,
+    media.syncedLyrics,
+    media.synced_lyrics,
+    metadata.syncedLyrics,
+    metadata.synced_lyrics,
     currentQueueItem.lyrics,
     currentQueueItem.plainLyrics,
     currentQueueItem.plain_lyrics,
-    currentQueueItem.syncedLyrics,
-    currentQueueItem.synced_lyrics,
     media.lyrics,
     media.plainLyrics,
     media.plain_lyrics,
-    media.syncedLyrics,
-    media.synced_lyrics,
     metadata.lyrics,
     metadata.plainLyrics,
     metadata.plain_lyrics,
-    metadata.syncedLyrics,
-    metadata.synced_lyrics,
   ];
   for (const candidate of candidates) {
     const text = coerceLyricsRawText(candidate);
@@ -154,14 +162,16 @@ export function normalizeImageProxySize(size = 300) {
   return 1024;
 }
 
-export function imageProxyIdUrl(proxyId = "", size = 300, maUrl = "", format = "jpeg") {
+export function imageProxyIdUrl(proxyId = "", size = 300, maUrl = "", format = "") {
   const raw = String(proxyId || "").trim();
   if (!raw || !maUrl) return null;
   if (!/^[0-9a-f]{64}$/i.test(raw)) return null;
   const baseUrl = String(maUrl || "").replace(/\/$/, "");
   const normalizedId = raw.toLowerCase();
-  const normalizedFormat = String(format || "jpeg").trim().toLowerCase() || "jpeg";
-  return `${baseUrl}/imageproxy/${encodeURIComponent(normalizedId)}?size=${normalizeImageProxySize(size)}&fmt=${encodeURIComponent(normalizedFormat)}`;
+  const normalizedFormat = String(format || "").trim().toLowerCase();
+  const params = new URLSearchParams({ size: String(normalizeImageProxySize(size)) });
+  if (normalizedFormat) params.set("fmt", normalizedFormat);
+  return `${baseUrl}/imageproxy/${encodeURIComponent(normalizedId)}?${params.toString()}`;
 }
 
 function imageDataUrlFromEncoded(value = "") {
@@ -183,13 +193,31 @@ export function normalizeImageProxyUrl(value = "", size = 300, maUrl = "") {
   const baseUrl = maUrl || "http://homeii.local";
   try {
     const parsed = new URL(raw, baseUrl);
-    if (!parsed.pathname.includes("/imageproxy")) return raw;
+    if (!parsed.pathname.toLowerCase().includes("/imageproxy")) return raw;
     parsed.searchParams.set("size", String(normalizeImageProxySize(size)));
-    if (/\/imageproxy\/[^/]+/.test(parsed.pathname) && !parsed.searchParams.has("fmt")) {
-      parsed.searchParams.set("fmt", "jpeg");
-    }
     if (isAbsolute || maUrl) return parsed.toString();
     return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+  } catch {
+    return raw;
+  }
+}
+
+export function rebaseImageProxyUrl(value = "", size = 300, maUrl = "") {
+  const raw = String(value || "").trim();
+  const configuredRaw = String(maUrl || "").trim();
+  if (!raw || !configuredRaw || !/^https?:\/\//i.test(configuredRaw)) return raw;
+  try {
+    const parsed = new URL(raw, configuredRaw);
+    const proxyIndex = parsed.pathname.toLowerCase().indexOf("/imageproxy");
+    if (proxyIndex < 0) return raw;
+    const configured = new URL(configuredRaw);
+    const basePath = configured.pathname.replace(/\/$/, "");
+    const proxyPath = parsed.pathname.slice(proxyIndex);
+    const resolved = new URL(`${basePath}${proxyPath}`, configured);
+    resolved.search = parsed.search;
+    resolved.hash = parsed.hash;
+    resolved.searchParams.set("size", String(normalizeImageProxySize(size)));
+    return resolved.toString();
   } catch {
     return raw;
   }
@@ -223,7 +251,7 @@ export function imageUrl(value, size = 300, { maUrl = "", seen = new Set(), dept
   if (value.url) return imageUrl(value.url, size, { maUrl, seen, depth: depth + 1 });
 
   const proxyId = value.proxy_id || value.proxyId || value.image_id || value.imageId || value.image_proxy_id || value.imageProxyId;
-  const proxyResolved = proxyId ? imageProxyIdUrl(proxyId, size, maUrl, value.format || value.fmt || "jpeg") : null;
+  const proxyResolved = proxyId ? imageProxyIdUrl(proxyId, size, maUrl, value.format || value.fmt || "") : null;
   if (proxyResolved) return proxyResolved;
 
   const rawPath = value.path || value.image_path || value.imagePath || value.thumb_path || value.thumbnail_path || value.cover_path || value.coverPath;
@@ -237,6 +265,7 @@ export function imageUrl(value, size = 300, { maUrl = "", seen = new Set(), dept
   }
 
   const priorityKeys = [
+    "homeii_artwork_url",
     "image",
     "images",
     "image_url",
@@ -279,8 +308,48 @@ export function imageUrl(value, size = 300, { maUrl = "", seen = new Set(), dept
   return null;
 }
 
+export function legacyImageProxyFallbackUrl(value, size = 300, { maUrl = "", seen = new Set(), depth = 0 } = {}) {
+  if (!value || depth > 5 || typeof value !== "object") return null;
+  if (seen.has(value)) return null;
+  seen.add(value);
+
+  if (Array.isArray(value)) {
+    for (const entry of value) {
+      const resolved = legacyImageProxyFallbackUrl(entry, size, { maUrl, seen, depth: depth + 1 });
+      if (resolved) return resolved;
+    }
+    return null;
+  }
+
+  const proxyId = value.proxy_id || value.proxyId || value.image_id || value.imageId || value.image_proxy_id || value.imageProxyId;
+  const rawPath = value.path || value.image_path || value.imagePath || value.thumb_path || value.thumbnail_path || value.cover_path || value.coverPath;
+  if (/^[0-9a-f]{64}$/i.test(String(proxyId || "").trim()) && rawPath) {
+    return imageProxyUrl(
+      rawPath,
+      value.provider || value.provider_id || value.provider_instance || value.provider_domain || value.provider_name || "",
+      size,
+      maUrl,
+    );
+  }
+
+  const priorityKeys = [
+    "homeii_artwork_url", "image", "images", "image_url", "imageUrl", "media_image", "media_image_url",
+    "local_image", "local_image_url", "preview_image", "preview_image_url",
+    "thumb", "thumbnail", "cover", "cover_image", "artwork", "picture",
+    "album", "media_item", "metadata",
+  ];
+  for (const key of priorityKeys) {
+    const resolved = legacyImageProxyFallbackUrl(value[key], size, { maUrl, seen, depth: depth + 1 });
+    if (resolved) return resolved;
+  }
+  return null;
+}
+
 export function artUrl(item = null, maUrl = "", size = 300) {
-  return imageUrl(item?.image_url, size, { maUrl })
+  return imageUrl(item?.homeii_artwork_url, size, { maUrl })
+    || imageUrl(item?.media_item?.homeii_artwork_url, size, { maUrl })
+    || imageUrl(item?.album?.homeii_artwork_url, size, { maUrl })
+    || imageUrl(item?.image_url, size, { maUrl })
     || imageUrl(item?.image, size, { maUrl })
     || imageUrl(item?.thumbnail, size, { maUrl })
     || imageUrl(item?.thumb, size, { maUrl })
@@ -349,6 +418,18 @@ export function parsePlaybackTimestampMs(value, { now = Date.now() } = {}) {
     Math.abs(candidate - now) < Math.abs(best - now) ? candidate : best
   ), candidates[0]);
   return Number.isFinite(parsed) ? parsed : 0;
+}
+
+// Position and timestamp must come from the same snapshot (WiiM keeps an old
+// player-level clock while current_media carries the active track's clock).
+export function playbackPositionPair(raw = {}) {
+  const media = raw.current_media || raw.media || {};
+  const candidates = [raw, media].flatMap(source => {
+    const position = source.elapsed_time ?? source.media_position;
+    if (position === undefined || position === null || position === "" || !Number.isFinite(Number(position))) return [];
+    return [{position:Math.max(0,Number(position)), updatedAt:parsePlaybackTimestampMs(source.elapsed_time_last_updated ?? source.media_position_updated_at)}];
+  });
+  return candidates.sort((a,b)=>b.updatedAt-a.updatedAt)[0] || {position:0,updatedAt:0};
 }
 
 export function formatDuration(sec) {

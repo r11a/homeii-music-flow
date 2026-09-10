@@ -6,10 +6,34 @@ on:
   schedule:
     - cron: "0 0 * * *"
   workflow_dispatch:
+  workflow_call:
 
 permissions: {}
 
 jobs:
+  quality:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run test -- --maxWorkers=2
+      - run: npm run build
+      - name: Verify committed release artifacts
+        run: |
+          git diff --exit-code -- dist package.json
+          if [ -n "$(git ls-files --others --exclude-standard -- dist)" ]; then
+            echo "Build produced release files that are missing from the tag"
+            git ls-files --others --exclude-standard -- dist
+            exit 1
+          fi
+
   validate-hacs:
     runs-on: ubuntu-latest
     steps:

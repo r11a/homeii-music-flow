@@ -177,4 +177,3 @@ export class StateManager {
         return this._groupState;
     }
 }
-//# sourceMappingURL=state-manager.js.map

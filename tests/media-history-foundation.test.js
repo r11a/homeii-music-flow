@@ -9,6 +9,13 @@ import {
 } from "../src/core/media/history.js";
 
 describe("media history foundation", () => {
+  it("does not attach the previous player's album to a podcast episode", () => {
+    const snapshot = buildCurrentHistorySnapshot({
+      player: { attributes: { media_content_id: "spotify://track/old", media_artist: "Old artist", media_album_name: "Old album" } },
+      queueItem: { media_item: { uri: "podcast://podcast_episode/new", media_type: "podcast_episode", name: "Episode" } },
+    });
+    expect(snapshot).toMatchObject({ title: "Episode", artist: "", album: "", media_type: "podcast_episode" });
+  });
   it("builds current source badge metadata", () => {
     expect(buildCurrentSourceBadgeMeta({
       player: {

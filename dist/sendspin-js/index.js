@@ -180,6 +180,11 @@ export class SendspinPlayer {
         }, runwaySec * 1000 + DISCONNECT_PLAYBACK_RESET_GRACE_MS);
     }
     // Connect to Sendspin server
+    async resumePlayback() {
+        // A live connection can survive an iOS audio interruption. Recover its
+        // context without reconnecting or restarting a deliberately paused stream.
+        if (this.isPlaying) await this.scheduler.resumeAudioContext();
+    }
     async connect() {
         this.suppressDisconnectPlaybackReset = false;
         return this.core.connect();
@@ -275,4 +280,3 @@ export { SendspinDecoder } from "./audio/decoder.js";
 export { AudioScheduler } from "./audio/scheduler.js";
 // Export platform detection utilities
 export { detectIsAndroid, detectIsIOS, detectIsMobile, detectIsCastRuntime, getDefaultSyncDelay, };
-//# sourceMappingURL=index.js.map

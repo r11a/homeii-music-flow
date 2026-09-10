@@ -1,6 +1,7 @@
 // Generated HOMEii Music Flow localization dictionary.
 // Keep keys stable. Translate only the string values.
 const messages = Object.freeze({
+  "ui.action_menu_labels": "在图标下方显示操作名称",
   "ui.a_guided_music_wizard": "引导式音乐向导",
   "ui.a_radio_station": "一个电台",
   "ui.accent_color": "强调色",
@@ -30,7 +31,6 @@ const messages = Object.freeze({
   "ui.all_players_2": "所有播放器",
   "ui.all_podcasts": "全部播客",
   "ui.all_tracks": "全部歌曲",
-  "ui.allow_local_likes": "允许本地喜欢",
   "ui.always_visible": "始终显示",
   "ui.announce": "播报",
   "ui.announce_to_all_players": "向所有播放器播报",
@@ -208,7 +208,6 @@ const messages = Object.freeze({
   "ui.favorite": "收藏",
   "ui.favorite_action_failed": "收藏操作失败",
   "ui.favorite_action_sent": "收藏操作已发送",
-  "ui.favorite_button_entity": "收藏按钮实体",
   "ui.favorite_center": "收藏中心",
   "ui.favorite_center_2": "收藏中心",
   "ui.favorite_radio": "收藏电台",
@@ -323,7 +322,6 @@ const messages = Object.freeze({
   "ui.main_bar_items_2": "主栏项目",
   "ui.main_opacity": "主界面透明度",
   "ui.mainly_relevant_on_larger_layouts": "主要用于较大布局。",
-  "ui.mass_queue_send_command_fallback": "mass_queue/send_command 回退",
   "ui.matches_the_microphone_setting_from_the_in_card_settings_screen": "与卡片内设置界面的麦克风设置保持一致。",
   "ui.media": "媒体",
   "ui.media_2": "媒体",

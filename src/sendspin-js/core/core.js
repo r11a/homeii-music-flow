@@ -251,4 +251,3 @@ export class SendspinCore {
         return this.timeFilter;
     }
 }
-//# sourceMappingURL=core.js.map

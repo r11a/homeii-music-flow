@@ -256,4 +256,3 @@ export class SendspinTimeFilter {
         return this._drift;
     }
 }
-//# sourceMappingURL=time-filter.js.map

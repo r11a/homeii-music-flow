@@ -76,12 +76,16 @@ export function buildCurrentHistorySnapshot(
 ) {
   const currentQueueItem = queueItem || null;
   const media = currentQueueItem?.media_item || currentQueueItem || {};
-  const title = media?.name || currentQueueItem?.name || player?.attributes?.media_title || "";
+  const queueUri = String(getQueueItemUriFn?.(currentQueueItem) || media?.uri || "").trim();
+  const playerUri = String(player?.attributes?.media_content_id || "").trim();
+  const playerMetadata = !currentQueueItem || (queueUri && queueUri === playerUri)
+    ? (player?.attributes || {}) : {};
+  const title = media?.name || currentQueueItem?.name || playerMetadata.media_title || "";
   const artist = Array.isArray(media?.artists)
     ? media.artists.map((entry) => entry?.name).filter(Boolean).join(", ")
-    : (media?.artist_str || player?.attributes?.media_artist || "");
-  const album = media?.album?.name || currentQueueItem?.album || player?.attributes?.media_album_name || "";
-  const uri = String(getQueueItemUriFn?.(currentQueueItem) || media?.uri || player?.attributes?.media_content_id || "").trim();
+    : (media?.artist_str || media?.publisher || playerMetadata.media_artist || "");
+  const album = media?.album?.name || media?.podcast?.name || currentQueueItem?.album || playerMetadata.media_album_name || "";
+  const uri = queueUri || playerUri;
   const mediaType = String(media?.media_type || currentQueueItem?.media_type || player?.attributes?.media_content_type || "track").toLowerCase();
   const key = [title, artist, album].map((part) => String(part || "").trim().toLowerCase()).join("|");
   if (!key || !uri || mediaType === "radio") return null;

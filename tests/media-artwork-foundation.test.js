@@ -20,6 +20,17 @@ function queueItems(count = 8) {
 }
 
 describe("media artwork foundation", () => {
+  it("invalidates radio artwork when stream artwork changes without changing the station URI", () => {
+    const station={media_item:{uri:'radio://station',name:'Station'},streamdetails:{stream_metadata:{image_url:'https://radio.example/first.jpg'}}};
+    const accessors={getQueueItemUri:item=>item.media_item.uri};
+    const first=queueItemArtworkCacheKey(station,accessors);
+    station.streamdetails.stream_metadata.image_url='https://radio.example/second.jpg';
+    const second=queueItemArtworkCacheKey(station,accessors);
+    expect(second).not.toBe(first);
+    expect(second).not.toContain('first.jpg');
+    delete station.streamdetails.stream_metadata.image_url;
+    expect(queueItemArtworkCacheKey(station,accessors)).not.toBe(second);
+  });
   it("builds queue artwork cache keys from stable item artwork identity", () => {
     const item = queueItems(1)[0];
     const key = queueItemArtworkCacheKey(item, {

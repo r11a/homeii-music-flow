@@ -1,3 +1,13 @@
+import { classicStyles } from "./theme/classic-styles.js";
+import { showToast } from "./media/feedback.js";
+import * as SpeakerGroups from "./media/speaker-groups.js";
+import { syncPlayerVolumeControls } from "./media/player-volume.js";
+import { syncScreenDock } from "./media/screen-dock.js";
+import { bindProgressSeek } from "./media/progress-seek.js";
+import { actionIconSvg, contextActionHtml } from "./media/action-menu.js";
+import * as HomeiiSendspinModule from "../sendspin-js/index.js";
+import { ensureInterfaceFont, interfaceStyles } from "./theme/interface.js";
+
 export function createHomeiiBaseMusicCard({
   HOMEII_CARD_VERSION,
   HOMEII_VISIBLE_LANGUAGE_OPTIONS,
@@ -11,6 +21,7 @@ export function createHomeiiBaseMusicCard({
   HomeiiNowPlayingFoundation,
   HomeiiFavoritesFoundation,
   HomeiiPlayersFoundation,
+  HomeiiRevisionedSnapshotsFoundation,
   getBaseCardConfigForm,
   getRadioBrowserCountrySelectorOptions,
   homeiiRadioBrowserCountryLabel,
@@ -23,6 +34,7 @@ export function createHomeiiBaseMusicCard({
   return class HomeiiBaseMusicCard extends HTMLElement {
     constructor() {
       super();
+      ensureInterfaceFont();
       this.attachShadow({ mode: "open" });
 
       this._hass = null;
@@ -45,11 +57,10 @@ export function createHomeiiBaseMusicCard({
       this._resizeObserver = null;
       this._visualViewportResizeListening = false;
 
-      this._ws = null;
-      this._wsPending = new Map();
-      this._wsMsgId = 100;
-      this._maReconnectTimer = null;
-      this._directMaFailure = null;
+      this._libraryDetailLoadPromises = new Map();
+      this._artistDetailLoadPromises = new Map();
+      this._libraryLoadPromises = new Map();
+      this._engineSnapshotRevisions = new Map();
 
       this._imgObserver = null;
       this._imgObserverRoot = null;
@@ -92,7 +103,10 @@ export function createHomeiiBaseMusicCard({
       this._boundManualFrontRouteChange = this._handleManualFrontRouteChange.bind(this);
       this.shadowRoot.addEventListener("error", this._boundBrandLogoError, true);
       this._imageBlobCache = new Map();
+      this._imageBlobCacheOrder = [];
       this._imageFailed = new Set();
+      this._imageFailedAt = new Map();
+      this._imageRetryTimers = new Map();
       this._resizeListening = false;
       this._lastViewportWidth = typeof window !== "undefined" ? window.innerWidth : 0;
       this._lastViewportHeight = typeof window !== "undefined" ? window.innerHeight : 0;
@@ -116,6 +130,11 @@ export function createHomeiiBaseMusicCard({
       this._updateNowPlayingInFlight = false;
       this._updateNowPlayingQueued = false;
       this._queueSnapshotToken = 0;
+      this._queueMutationRefreshTimer = null;
+      this._favoriteReconcileTimer = null;
+      this._favoriteMutationConfirmedAt = 0;
+      this._homeiiFavoritesLoadPromise = null;
+      this._homeiiFavoriteMutationPromises = new Map();
       this._cardIssueNoticeTimes = new Map();
       this._voiceAssistantRecognitionTimer = null;
       this._lyricsRefreshPromise = null;
@@ -128,12 +147,11 @@ export function createHomeiiBaseMusicCard({
         language: "en",
         cache_ttl: 300000,
         music_assistant_timeout_ms: 12000,
-        homeii_engine_mode: "auto",
+        homeii_engine_mode: "required",
         homeii_engine_instance_id: "",
         homeii_engine_profile_id: "",
         homeii_engine_timeout_ms: 3500,
         active_player_helper_entity: "",
-        music_assistant_external_url: "",
         show_ma_button: true,
         ma_interface_url: "/music-assistant",
         ma_interface_target: "_self",
@@ -142,10 +160,15 @@ export function createHomeiiBaseMusicCard({
         hotel_mode: false,
         performance_profile: "full",
         performance_mode: false,
+        lrclib_lyrics_enabled: false,
         main_opacity: 0.66,
         popup_opacity: 0.92,
         ...config,
       };
+      delete nextConfig.ma_url;
+      delete nextConfig.ma_token;
+      delete nextConfig.ma_external_url;
+      delete nextConfig.music_assistant_external_url;
       const validator = this._getConfigValidator?.();
       if (typeof validator === "function") {
         validator(nextConfig);
@@ -182,11 +205,9 @@ export function createHomeiiBaseMusicCard({
         this._state.tracksLayout = "list";
       }
 
-      this._maUrl = this._normalizeMaConfigUrl(this._config.ma_url);
-      this._maExternalUrl = this._normalizeMaConfigUrl(this._config.music_assistant_external_url || this._config.ma_external_url);
-      this._maToken = this._config.ma_token || "";
-      const nextDirectMaUrl = this._maBrowserUrl();
-      if (this._directMaFailure && this._directMaFailure.url !== nextDirectMaUrl) this._directMaFailure = null;
+      this._maUrl = "";
+      this._maExternalUrl = "";
+      this._maToken = "";
       this._resolvedConfigEntryId = String(this._config.config_entry_id || "").trim();
       this._resetMeasuredLayoutState();
       this._closeTransientEditorLayoutState();
@@ -566,9 +587,6 @@ export function createHomeiiBaseMusicCard({
     static getStubConfig() {
       return {
         config_entry_id: "",
-        ma_url: "",
-        music_assistant_external_url: "",
-        ma_token: "",
         active_player_helper_entity: "",
         rtl: true,
         language: "en",
@@ -576,7 +594,7 @@ export function createHomeiiBaseMusicCard({
         ma_interface_url: "/music-assistant",
         ma_interface_target: "_self",
         music_assistant_timeout_ms: 12000,
-        homeii_engine_mode: "auto",
+        homeii_engine_mode: "required",
         homeii_engine_instance_id: "",
         homeii_engine_profile_id: "",
         homeii_engine_timeout_ms: 3500,
@@ -643,21 +661,9 @@ export function createHomeiiBaseMusicCard({
       return internalUrl || externalUrl;
     }
 
-    _isLikelyHomeAssistantIngressMaUrl(value = "") {
-      const raw = String(value || "").trim();
-      if (!raw) return false;
-      try {
-        const parsed = new URL(raw, typeof window !== "undefined" ? window.location.href : "http://homeii.local");
-        const path = String(parsed.pathname || "").toLowerCase();
-        return /(^|\/)[a-z0-9]+_music_assistant(\/|$)/.test(path) || path.includes("_music_assistant");
-      } catch (_) {
-        return raw.toLowerCase().includes("_music_assistant");
-      }
-    }
-
     _directMaIngressMessage() {
       return this._localText(
-        "The configured ma_url points to the Home Assistant Music Assistant ingress page, not the direct Music Assistant API. Leave ma_url empty for the normal Home Assistant integration path, or use the Music Assistant Web Server URL, for example http://host:8095.",
+        "The configured ma_url points to the Home Assistant Music Assistant ingress page, not the direct Music Assistant API. HOMEii Flow 6 uses HOMEii Flow Engine as the required backend; leave ma_url empty unless you need Sendspin/local-device browser playback, or use the Music Assistant Web Server URL, for example http://host:8095.",
         "כתובת ma_url שהוגדרה מצביעה למסך ה-ingress של Music Assistant בתוך Home Assistant, ולא ל-API הישיר של Music Assistant. השאר ma_url ריק לשימוש רגיל דרך Home Assistant, או השתמש בכתובת Web Server ישירה, למשל http://host:8095."
       );
     }
@@ -665,7 +671,7 @@ export function createHomeiiBaseMusicCard({
     _directMaUnavailableMessage(status = 0, error = null) {
       if (status === 404 || status === 405) {
         return this._localText(
-          "The configured ma_url does not expose the Music Assistant direct API. Leave ma_url empty for the normal Home Assistant integration path, or use the Music Assistant Web Server URL, for example http://host:8095.",
+          "The configured ma_url does not expose the Music Assistant direct API. HOMEii Flow 6 uses HOMEii Flow Engine as the required backend; leave ma_url empty unless you need Sendspin/local-device browser playback, or use the Music Assistant Web Server URL, for example http://host:8095.",
           "כתובת ma_url שהוגדרה לא חושפת את ה-API הישיר של Music Assistant. השאר ma_url ריק לשימוש רגיל דרך Home Assistant, או השתמש בכתובת Web Server ישירה, למשל http://host:8095."
         );
       }
@@ -673,8 +679,8 @@ export function createHomeiiBaseMusicCard({
       const lower = detail.toLowerCase();
       if (!status && (lower.includes("failed to fetch") || lower.includes("networkerror") || lower.includes("cors") || lower.includes("preflight"))) {
         return this._localText(
-          "Direct Music Assistant API is blocked by the browser before HOMEii receives a response. This is usually CORS/preflight or local-network browser access. Core playback can still work through the Home Assistant integration; leave ma_url empty unless you need Direct API or Sendspin.",
-          "Direct Music Assistant API is blocked by the browser before HOMEii receives a response. This is usually CORS/preflight or local-network browser access. Core playback can still work through the Home Assistant integration; leave ma_url empty unless you need Direct API or Sendspin."
+          "Direct Music Assistant API is blocked by the browser before HOMEii receives a response. This is usually CORS/preflight or local-network browser access. HOMEii Flow 6 routes core playback through HOMEii Flow Engine; leave ma_url empty unless you need Sendspin/local-device browser playback.",
+          "Direct Music Assistant API is blocked by the browser before HOMEii receives a response. This is usually CORS/preflight or local-network browser access. HOMEii Flow 6 routes core playback through HOMEii Flow Engine; leave ma_url empty unless you need Sendspin/local-device browser playback."
         );
       }
       return this._localText(
@@ -683,72 +689,16 @@ export function createHomeiiBaseMusicCard({
       );
     }
 
-    _directMaSetupIssue(url = this._maBrowserUrl()) {
-      const value = this._normalizeMaConfigUrl(url);
-      if (!value) return "";
-      if (this._isLikelyHomeAssistantIngressMaUrl(value)) return this._directMaIngressMessage();
-      try {
-        this._assertMaBrowserUrlSecure(value);
-      } catch (error) {
-        return error?.message || this._maMixedContentMessage();
-      }
-      return "";
-    }
-
-    _directMaCooldownIssue(url = this._maBrowserUrl()) {
-      const failure = this._directMaFailure;
-      if (!failure?.blockedUntil) return "";
-      const value = this._normalizeMaConfigUrl(url);
-      if (!value || failure.url !== value) return "";
-      if (Date.now() >= Number(failure.blockedUntil || 0)) return "";
-      return failure.message || this._directMaUnavailableMessage(failure.status, failure.error);
-    }
-
-    _handleDirectMaConfigurationIssue(message = "", options = {}) {
-      const text = String(message || "").trim();
-      if (!text) return "";
-      const severity = String(options.severity || "error");
-      if (options.global !== false) this._state.musicAssistantIssueMessage = text;
-      else if (!this._state.musicAssistantIssueMessage) this._state.musicAssistantIssueMessage = "";
-      this._notifyCardIssue("direct-ma-url", text, severity, 45000);
-      return text;
-    }
-
-    _recordDirectMaFailure(url = this._maBrowserUrl(), error = null, status = 0) {
-      const value = this._normalizeMaConfigUrl(url);
-      if (!value) return "";
-      const message = this._isLikelyHomeAssistantIngressMaUrl(value)
-        ? this._directMaIngressMessage()
-        : this._directMaUnavailableMessage(status, error);
-      const detail = String(error?.message || error || "").toLowerCase();
-      const browserBlocked = !status && (detail.includes("failed to fetch") || detail.includes("networkerror") || detail.includes("cors") || detail.includes("preflight"));
-      const cooldown = (browserBlocked || status === 404 || status === 405 || this._isLikelyHomeAssistantIngressMaUrl(value)) ? 60000 : 15000;
-      this._directMaFailure = {
-        url: value,
-        status: Number(status || 0) || 0,
-        message,
-        blockedUntil: Date.now() + cooldown,
-      };
-      const hasIntegration = this._hasMusicAssistantServiceSignal?.();
-      this._handleDirectMaConfigurationIssue(message, {
-        severity: hasIntegration ? "warning" : "error",
-        global: !hasIntegration,
-      });
-      return message;
-    }
-
-    _clearDirectMaFailure(url = this._maBrowserUrl()) {
-      const value = this._normalizeMaConfigUrl(url);
-      if (!this._directMaFailure || !value || this._directMaFailure.url === value) this._directMaFailure = null;
-    }
-
     _hasDirectMAConnection() {
-      const maUrl = this._maBrowserUrl();
-      return !!maUrl && !this._directMaSetupIssue(maUrl) && !this._directMaCooldownIssue(maUrl);
+      return false;
+    }
+
+    _hasMusicAssistantCommandBridge() {
+      return typeof this._homeiiEngineMaCommand === "function" && !!this._state?.engineAvailable;
     }
 
     _hasRealtimeDirectMA() {
-      return !!(this._hasDirectMAConnection() && this._maToken);
+      return false;
     }
 
     _maArtworkBaseUrl() {
@@ -937,16 +887,173 @@ export function createHomeiiBaseMusicCard({
       }
     }
 
+    _rememberArtworkFallback(primaryUrl = "", fallbackUrl = "") {
+      const primary = String(primaryUrl || "").trim();
+      const fallbackValues = (Array.isArray(fallbackUrl) ? fallbackUrl : [fallbackUrl])
+        .map((value) => String(value || "").trim())
+        .filter((value, index, list) => value && value !== primary && list.indexOf(value) === index);
+      if (!primary || !fallbackValues.length || !this._isMaImageProxyPath(primary)) return primary;
+      if (!this._artworkFallbackUrls) this._artworkFallbackUrls = new Map();
+      const existing = this._artworkFallbackUrls.get(primary);
+      const existingValues = Array.isArray(existing) ? existing : [existing].filter(Boolean);
+      this._artworkFallbackUrls.set(primary, [...existingValues, ...fallbackValues]
+        .filter((value, index, list) => value && list.indexOf(value) === index));
+      while (this._artworkFallbackUrls.size > 600) {
+        const oldest = this._artworkFallbackUrls.keys().next().value;
+        if (!oldest) break;
+        this._artworkFallbackUrls.delete(oldest);
+      }
+      return primary;
+    }
+
+    _artworkFallbackUrl(url = "") {
+      const raw = String(url || "").trim();
+      return this._artworkFallbackCandidates(raw)[0] || "";
+    }
+
+    _artworkFallbackCandidates(url = "") {
+      const raw = String(url || "").trim();
+      if (!raw) return [];
+      const stored = this._artworkFallbackUrls?.get?.(raw);
+      return (Array.isArray(stored) ? stored : [stored])
+        .map((value) => String(value || "").trim())
+        .filter((value, index, list) => value && value !== raw && list.indexOf(value) === index);
+    }
+
     _artworkDisplayUrl(url = "") {
       const raw = String(url || "").trim();
       if (!raw) return "";
       return this._imageBlobCache?.get?.(raw) || raw;
     }
 
+    _imageBlobCacheLimit() {
+      const profile = typeof this._performanceProfile === "function" ? this._performanceProfile() : "full";
+      if (profile === "ultra_lite") return 80;
+      if (profile === "low") return 150;
+      if (profile === "high") return 260;
+      return 420;
+    }
+
+    _rememberImageBlobUrl(keys = [], objectUrl = "") {
+      const url = String(objectUrl || "").trim();
+      if (!url) return "";
+      const cacheKeys = (Array.isArray(keys) ? keys : [keys])
+        .map((key) => String(key || "").trim())
+        .filter((key, index, list) => key && list.indexOf(key) === index);
+      cacheKeys.forEach((key) => {
+        if (!this._imageBlobCache.has(key)) this._imageBlobCacheOrder.push(key);
+        this._imageBlobCache.set(key, url);
+      });
+      this._pruneImageBlobCache();
+      return url;
+    }
+
+    _pruneImageBlobCache() {
+      const limit = this._imageBlobCacheLimit();
+      while (this._imageBlobCache.size > limit && this._imageBlobCacheOrder.length) {
+        const key = this._imageBlobCacheOrder.shift();
+        if (!key || !this._imageBlobCache.has(key)) continue;
+        const value = this._imageBlobCache.get(key);
+        this._imageBlobCache.delete(key);
+        if (/^blob:/i.test(String(value || "")) && !Array.from(this._imageBlobCache.values()).includes(value)) {
+          try { URL.revokeObjectURL(value); } catch (_) {}
+        }
+      }
+      if (this._imageBlobCacheOrder.length > limit * 3) {
+        this._imageBlobCacheOrder = this._imageBlobCacheOrder.filter((key, index, list) => this._imageBlobCache.has(key) && list.indexOf(key) === index);
+      }
+    }
+
+    _clearImageBlobCache() {
+      this._imageBlobCache.forEach((url) => {
+        if (/^blob:/i.test(String(url || ""))) {
+          try { URL.revokeObjectURL(url); } catch (_) {}
+        }
+      });
+      this._imageBlobCache.clear();
+      this._imageBlobCacheOrder = [];
+    }
+
+    _imageFailureTtlMs(url = "") {
+      const raw = String(url || "").trim();
+      if (!raw) return 0;
+      if (raw.includes("/api/homeii_flow/artwork/")) return 25000;
+      if (this._isMaImageProxyPath(raw)) return 35000;
+      return 90000;
+    }
+
+    _markImageFailed(url = "") {
+      const raw = String(url || "").trim();
+      if (!raw) return;
+      this._imageFailed.add(raw);
+      this._imageFailedAt.set(raw, Date.now());
+      this._pruneImageFailures();
+    }
+
+    _clearImageFailed(url = "") {
+      const raw = String(url || "").trim();
+      if (!raw) return;
+      this._imageFailed.delete(raw);
+      this._imageFailedAt.delete(raw);
+      const timer = this._imageRetryTimers?.get?.(raw);
+      if (timer) clearTimeout(timer);
+      this._imageRetryTimers?.delete?.(raw);
+    }
+
+    _isImageFailureFresh(url = "") {
+      const raw = String(url || "").trim();
+      if (!raw || !this._imageFailed.has(raw)) return false;
+      const at = Number(this._imageFailedAt.get(raw) || 0);
+      const ttl = this._imageFailureTtlMs(raw);
+      if (!at || !ttl || Date.now() - at > ttl) {
+        this._clearImageFailed(raw);
+        return false;
+      }
+      return true;
+    }
+
+    _pruneImageFailures() {
+      const now = Date.now();
+      for (const url of Array.from(this._imageFailed)) {
+        const at = Number(this._imageFailedAt.get(url) || 0);
+        const ttl = this._imageFailureTtlMs(url) || 90000;
+        if (!at || now - at > Math.max(ttl, 120000)) this._clearImageFailed(url);
+      }
+      while (this._imageFailed.size > 500) {
+        const oldest = this._imageFailed.values().next().value;
+        if (!oldest) break;
+        this._clearImageFailed(oldest);
+      }
+    }
+
+    _scheduleImageRetry(url = "", el = null, fallback = "album") {
+      const raw = String(url || "").trim();
+      if (!raw || !el?.isConnected || this._imageRetryTimers?.has?.(raw)) return;
+      const delay = Math.min(12000, Math.max(2500, Math.floor((this._imageFailureTtlMs(raw) || 35000) / 3)));
+      const timer = setTimeout(() => {
+        this._imageRetryTimers?.delete?.(raw);
+        if (!el?.isConnected) return;
+        if (this._isImageFailureFresh(raw)) this._clearImageFailed(raw);
+        this._loadImgInto(raw, el, fallback).catch(() => {});
+      }, delay);
+      this._imageRetryTimers.set(raw, timer);
+    }
+
     _shouldFetchArtworkUrl(url = "", { crossOrigin = false } = {}) {
       const raw = String(url || "").trim();
       if (!raw || typeof fetch !== "function") return false;
-      if (crossOrigin) return !!(this._maToken && this._isDirectMaImageProxyUrl(raw));
+      if (/^\/api\/homeii_flow\/artwork\/item\//i.test(raw)) return false;
+      try {
+        const parsed = new URL(raw, typeof window !== "undefined" ? window.location?.href : "http://homeii.local");
+        if (/^\/api\/homeii_flow\/artwork\/item\//i.test(parsed.pathname)) return false;
+      } catch (_) {}
+      if (crossOrigin) return !!(
+        this._isMaImageProxyPath(raw)
+        && (
+          (this._isDirectMaImageProxyUrl(raw) && this._maToken)
+          || this._artworkFallbackCandidates(raw).length
+        )
+      );
       return true;
     }
 
@@ -955,27 +1062,44 @@ export function createHomeiiBaseMusicCard({
       if (!raw || /^(data:|blob:)/i.test(raw)) return raw;
       if (!this._shouldFetchArtworkUrl(raw, { crossOrigin: options.crossOrigin === true })) return "";
       if (this._imageBlobCache.has(raw)) return this._imageBlobCache.get(raw);
-      const headers = { Accept: "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8" };
-      if (this._maToken && this._isDirectMaImageProxyUrl(raw)) headers.Authorization = `Bearer ${this._maToken}`;
-      const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
-      const timeout = controller ? setTimeout(() => controller.abort(), Number(options.timeoutMs || 6500)) : null;
-      try {
-        const response = await fetch(raw, {
-          cache: options.cache || "force-cache",
-          credentials: headers.Authorization ? "omit" : "same-origin",
-          headers,
-          signal: controller?.signal,
-        });
-        if (!response.ok) throw new Error(`Image load failed: ${response.status}`);
-        const blob = await response.blob();
-        if (!blob) throw new Error("Image response did not include a blob.");
-        const objectUrl = URL.createObjectURL(blob);
-        this._imageBlobCache.set(raw, objectUrl);
-        this._imageFailed.delete(raw);
-        return objectUrl;
-      } finally {
-        if (timeout) clearTimeout(timeout);
+      const candidates = [raw, ...this._artworkFallbackCandidates(raw)].filter((candidate, index, list) => candidate && list.indexOf(candidate) === index);
+      let lastError = null;
+      for (const candidate of candidates) {
+        const canRetryWithToken = !!(this._maToken && this._isDirectMaImageProxyUrl(candidate));
+        for (let attempt = 0; attempt < (canRetryWithToken ? 2 : 1); attempt += 1) {
+          const useAuthorization = attempt === 1;
+          const headers = { Accept: "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8" };
+          if (useAuthorization) headers.Authorization = `Bearer ${this._maToken}`;
+          const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
+          const timeout = controller ? setTimeout(() => controller.abort(), Number(options.timeoutMs || 6500)) : null;
+          try {
+              const response = await fetch(candidate, {
+                cache: options.cache || "force-cache",
+                credentials: options.crossOrigin === true || useAuthorization ? "omit" : "same-origin",
+                headers,
+                signal: controller?.signal,
+              });
+              if (!response.ok) {
+                lastError = new Error(`Image load failed: ${response.status}`);
+                if (!useAuthorization && canRetryWithToken && [401, 403].includes(Number(response.status))) continue;
+                break;
+              }
+              const blob = await response.blob();
+              if (!blob) throw new Error("Image response did not include a blob.");
+              const objectUrl = URL.createObjectURL(blob);
+              this._rememberImageBlobUrl([raw, candidate], objectUrl);
+              this._clearImageFailed(raw);
+              this._clearImageFailed(candidate);
+              return objectUrl;
+          } catch (error) {
+            lastError = error;
+            break;
+          } finally {
+            if (timeout) clearTimeout(timeout);
+          }
+        }
       }
+      throw lastError || new Error("Image load failed.");
     }
 
     _normalizeArtworkUrl(value = "", { size = 300, cacheKey = "" } = {}) {
@@ -1052,12 +1176,15 @@ export function createHomeiiBaseMusicCard({
       const media = queueItem?.media_item || {};
       const cacheKey = this._currentArtworkCacheKey(player, queueItem);
       const playerArtwork = [
+        // Home Assistant exposes inaccessible MA artwork through its signed,
+        // same-origin media_player proxy. Keep that proven browser-safe path
+        // ahead of the raw current_media URL returned by Direct MA.
+        attrs.entity_picture_local,
+        attrs.entity_picture,
         attrs.current_media?.image_url,
         attrs.currentMedia?.image_url,
         attrs.media_image_url,
         attrs.media_image,
-        attrs.entity_picture_local,
-        attrs.entity_picture,
         attrs.thumbnail,
       ];
       const queueArtwork = [
@@ -1079,10 +1206,10 @@ export function createHomeiiBaseMusicCard({
         : [...queueArtwork, ...playerArtwork], { size, cacheKey });
     }
 
-    _artPlaceholderHtml(icon = "music_note") {
+    _artPlaceholderHtml(icon = "album") {
       return `
         <span class="homeii-art-fallback" aria-hidden="true">
-          <span class="homeii-art-fallback-disc">${this._iconSvg(icon || "music_note")}</span>
+          <span class="homeii-art-fallback-disc">${this._iconSvg(icon || "album")}</span>
         </span>
       `;
     }
@@ -1094,6 +1221,15 @@ export function createHomeiiBaseMusicCard({
     _iconSvg(name) {
       const requestedIcon = String(name || "").trim();
       const icons = {
+        compass: `<svg class="ui-ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m16 8-2.5 5.5L8 16l2.5-5.5Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>`,
+        queue_replace: `<svg class="ui-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 5 10 7-10 7Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="m17 5 4 4m0-4-4 4M17 15h4m-4 4h4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`,
+        queue_next_replace: `<svg class="ui-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h9M3 9h9m-9 4h4m3 1 7 4-7 4Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="m17 4 4 4m0-4-4 4M20 15v6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`,
+        queue_transfer: `<svg class="ui-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h10M3 9h10M3 13h5M14 13h7m-3-3 3 3-3 3M10 17H3m3-3-3 3 3 3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+        crossfade: `<svg class="ui-ic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h3c6 0 6 12 12 12h3M3 18h3c6 0 6-12 12-12h3"/><path d="M3 10v4m18-4v4" opacity=".45"/></svg>`,
+        this_device: `<svg class="ui-ic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="13" rx="2"/><path d="M8 21h8m-4-5v5m-2-14 5 3-5 3z"/></svg>`,
+        queue_add: `<svg class="ui-ic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 5h16M4 10h12M4 15h6m7-1v7m-3.5-3.5h7"/></svg>`,
+        queue_next: `<svg class="ui-ic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16M4 10h9M4 15h5m5-3 7 5-7 5z"/></svg>`,
+        sun: `<svg class="ui-ic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg>`,
         play: `<svg class="ui-ic" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 5.5v13l10-6.5z"/></svg>`,
         pause: `<svg class="ui-ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="5" width="4" height="14" rx="1.2" fill="currentColor"></rect><rect x="13.5" y="5" width="4" height="14" rx="1.2" fill="currentColor"></rect></svg>`,
         previous: `<svg class="ui-ic" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 6h2v12H7zM18 6.5v11L10.5 12z"/></svg>`,
@@ -1131,7 +1267,7 @@ export function createHomeiiBaseMusicCard({
         music_note: `<svg class="ui-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5v9.1a3.3 3.3 0 1 1-1.9-3V7.1l6-1.6v6.6a3.3 3.3 0 1 1-1.9-3V4z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></path></svg>`,
         moon: `<svg class="ui-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M18.2 14.6A7.8 7.8 0 0 1 9.4 5.8a7.8 7.8 0 1 0 8.8 8.8Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M16.7 4.8v2.1M21 9.1h-2.1M18.9 7l-1.5-1.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg>`,
         timer: `<svg class="ui-ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="7" fill="none" stroke="currentColor" stroke-width="2"></circle><path d="M12 13V9.6M12 13l2.3 1.5M9 3.8h6M15.4 5.4l1.4-1.4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>`,
-        wand: `<svg class="ui-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 19 10-10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path><path d="m14.2 5.8 1.3-1.3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path><path d="m18 9.5 1.5-1.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path><path d="m15.2 3.5.3 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path><path d="m18.9 7.2.3 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path><path d="m16.9 8.8 2 .3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path><path d="m7.2 16.8 2 .3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path></svg>`,
+        wand: `<svg class="ui-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 15c4 0 4-6 8-6s4 6 10 6M3 9c4 0 4 6 8 6s4-6 10-6"/></svg>`,
         radio: `<svg class="ui-ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="7" width="16" height="11" rx="3" fill="none" stroke="currentColor" stroke-width="2"></rect><path d="M8 12h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path><path d="M8 15h3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path><circle cx="16.5" cy="13" r="2" fill="none" stroke="currentColor" stroke-width="2"></circle><path d="M9 7 16.5 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path></svg>`,
         tracks: `<svg class="ui-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6.5v10.2a2.6 2.6 0 1 1-1.5-2.35V8.2l9-2.2v8.7a2.6 2.6 0 1 1-1.5-2.35V7.2Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>`,
         queue_flow: `<svg class="ui-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h7.5M5 12h5.5M5 17h7.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path><path d="M16.2 7.2h3.1v3.1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M19.1 7.4a5 5 0 0 0-5.9 7.7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path><path d="M16.8 16.8h-3.1v-3.1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M13.9 16.6a5 5 0 0 0 5.9-7.7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path></svg>`,
@@ -1149,6 +1285,8 @@ export function createHomeiiBaseMusicCard({
         plus: `<svg class="ui-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5.5v13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"></path><path d="M5.5 12h13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"></path></svg>`,
         minus: `<svg class="ui-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 12h13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"></path></svg>`,
         check: `<svg class="ui-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 12.5 4 4L18 8.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>`,
+        back: `<svg class="ui-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>`,
+        folder: `<svg class="ui-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7V6a2 2 0 0 1 2-2h5l2 3h7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>`,
         close: `<svg class="ui-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 7 10 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path><path d="m17 7-10 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path></svg>`,
         fullscreen: `<svg class="ui-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 4.8H5.2v3.3" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"></path><path d="M5.4 5.4 10 10" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"></path><path d="M15.5 4.8h3.3v3.3" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"></path><path d="M18.6 5.4 14 10" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"></path><path d="M8.5 19.2H5.2v-3.3" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"></path><path d="M5.4 18.6 10 14" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"></path><path d="M15.5 19.2h3.3v-3.3" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"></path><path d="M18.6 18.6 14 14" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"></path></svg>`,
       };
@@ -1166,6 +1304,18 @@ export function createHomeiiBaseMusicCard({
       return `${value}${value.includes("?") ? "&" : "?"}v=${encodeURIComponent(version)}`;
     }
 
+    _moduleAssetUrl(fileName) {
+      const name = String(fileName || "").replace(/^\/+/, "");
+      if (!name) return "";
+      try {
+        const cleanModuleUrl = String(import.meta?.url || "").split("?")[0];
+        const baseUrl = cleanModuleUrl.replace(/(?:\/core)?\/[^/]*$/, "/");
+        return `${baseUrl}${name}`;
+      } catch (_) {
+        return "";
+      }
+    }
+
     _brandLogoCandidates() {
       if (Array.isArray(this._homeiiBrandLogoCandidates)) return this._homeiiBrandLogoCandidates;
       const urls = [];
@@ -1177,11 +1327,14 @@ export function createHomeiiBaseMusicCard({
       };
       const configured = String(this._config?.brand_logo_url || this._config?.logo_url || "").trim();
       push(configured);
-      try {
-        push(new URL("../homeii-flow-logo.svg", import.meta.url).href, true);
-      } catch (_) {}
+      push(this._moduleAssetUrl("homeii-flow-logo-v2.png"), true);
+      push(this._moduleAssetUrl("homeii-flow-logo.png"), true);
+      push(this._moduleAssetUrl("homeii-flow-logo.svg"), true);
+      push("/local/community/homeii-music-flow/homeii-flow-logo.png", true);
       push("/local/community/homeii-music-flow/homeii-flow-logo.svg", true);
+      push("/hacsfiles/homeii-music-flow/homeii-flow-logo.png", true);
       push("/hacsfiles/homeii-music-flow/homeii-flow-logo.svg", true);
+      push("/local/homeii-flow-logo.png", true);
       push("/local/homeii-flow-logo.svg", true);
       this._homeiiBrandLogoCandidates = urls.length ? urls : ["/local/community/homeii-music-flow/homeii-flow-logo.svg"];
       return this._homeiiBrandLogoCandidates;
@@ -1201,27 +1354,58 @@ export function createHomeiiBaseMusicCard({
     }
 
     _tabletBrandSignatureHtml(className = "tablet-brand-logo") {
-      return `
-        <svg class="brand-signature-logo ${this._esc(className)}" viewBox="0 0 360 86" role="img" aria-label="HOMEii Flow">
-          <path class="tablet-brand-wave" d="M8 50 C42 34 72 34 106 50 C142 67 173 65 206 45 C241 24 274 28 352 48" fill="none" pathLength="1"/>
-          <text class="tablet-brand-home" x="180" y="42" text-anchor="middle">HOMEii</text>
-          <text class="tablet-brand-flow" x="180" y="70" text-anchor="middle">FLOW</text>
-          <line class="tablet-brand-rule" x1="110" y1="52" x2="250" y2="52" pathLength="1"/>
-        </svg>
-      `;
+      return this._brandLogoImgHtml(`brand-signature-logo ${className}`);
     }
 
     _handleBrandLogoError(event) {
       const img = event?.target;
       if (!img?.dataset) return;
       if (img.dataset.homeiiArtFallback === "1") {
-        const current = img.getAttribute("src") || "";
-        if (current) this._imageFailed?.add?.(current);
-        const fallback = img.dataset.homeiiArtFallbackIcon || "music_note";
+        const current = img.getAttribute("src") || img.dataset.homeiiArtSrc || "";
+        if (current) this._markImageFailed(current);
+        const fallback = img.dataset.homeiiArtFallbackIcon || "album";
         const host = img.closest?.(".art-stack-card");
         if (host) {
           host.classList.add("placeholder");
           host.innerHTML = this._mobileArtFallbackHtml(fallback);
+          if (current) this._scheduleImageRetry(current, host, fallback);
+        }
+        return;
+      }
+      if (img.dataset.homeiiInlineArt === "1") {
+        const current = img.getAttribute("src") || img.dataset.homeiiArtSrc || "";
+        if (current) this._markImageFailed(current);
+        const fallback = img.dataset.homeiiArtFallbackIcon || "album";
+        const host = img.closest?.([
+          ".player-card-art",
+          ".history-chip-art",
+          ".control-room-context-art",
+          ".control-room-group-art",
+          ".control-room-picker-art",
+          ".control-room-queue-art",
+          ".control-room-media-art",
+          ".control-room-action-art",
+          ".control-room-transfer-art",
+          ".control-room-now-art",
+          ".immersive-art",
+          ".now-art",
+          ".queue-art",
+          ".queue-thumb",
+          ".mini-queue-thumb",
+          ".surprise-popup-art",
+          ".empty-quick-art",
+          ".simple-wizard-player-art",
+          ".simple-wizard-review-art",
+          ".simple-wizard-result-art",
+          ".discovery-card-art",
+          ".discovery-player-art",
+          ".artist-detail-art",
+          ".menu-thumb",
+          ".queue-flow-art",
+        ].join(","));
+        if (host) {
+          host.innerHTML = this._artPlaceholderHtml(fallback);
+          if (current) this._scheduleImageRetry(current, host, fallback);
         }
         return;
       }
@@ -1244,6 +1428,11 @@ export function createHomeiiBaseMusicCard({
     _setButtonIcon(el, name) {
       if (!el) return;
       el.innerHTML = this._iconSvg(name);
+      if (["play", "pause", "stop", "previous", "next", "shuffle"].includes(name)) {
+        const label = this._i18n(`ui.${name}`);
+        el.setAttribute("aria-label", label);
+        el.setAttribute("title", label);
+      }
     }
 
     _syncQueueLikeActionButton(el, liked = false) {
@@ -1262,8 +1451,56 @@ export function createHomeiiBaseMusicCard({
       return "volume_high";
     }
 
+    _playerSupportsMediaFeature(player = null, numericFlag = 0, featureName = "") {
+      const raw = player?.attributes?.supported_features ?? player?.supported_features;
+      const numeric = Number(raw);
+      if (Number.isFinite(numeric) && numericFlag) return (numeric & numericFlag) === numericFlag;
+      const expected = String(featureName || "").trim().toLowerCase();
+      if (!expected || !Array.isArray(raw)) return false;
+      return raw.some((feature) => String(feature || "").trim().toLowerCase() === expected);
+    }
+
+    _playPauseActionForPlayer(player = null) {
+      if (player?.state !== "playing") return "play";
+      const supportsPause = this._playerSupportsMediaFeature(player, 1, "pause");
+      const supportsStop = this._playerSupportsMediaFeature(player, 4096, "stop");
+      return supportsStop && !supportsPause ? "stop" : "pause";
+    }
+
     _playPauseIconName(player) {
-      return player?.state === "playing" ? "pause" : "play";
+      return this._playPauseActionForPlayer(player);
+    }
+
+    async _callHomeiiEnginePlayerCommand(entityId, command, payload = {}) {
+      const targetId = String(entityId || "").trim();
+      const action = String(command || "").trim();
+      if (!targetId || !action) return false;
+      const canUseHomeiiEngineCommand = typeof this._homeiiEnginePlayerCommand === "function"
+        && this._homeiiEngineRequired?.()
+        && this._state?.engineAvailable;
+      if (!canUseHomeiiEngineCommand) {
+        throw new Error(this._i18n?.("diagnostics.engine_required_missing") || "HOMEii Flow Engine is required.");
+      }
+      const result = await this._homeiiEnginePlayerCommand({
+        player: targetId,
+        command: action,
+        ...payload,
+      });
+      if (!result?.ok) throw new Error(result?.error || `HOMEii Flow Engine could not run ${action}.`);
+      this._schedulePlayerStateRefresh();
+      return true;
+    }
+
+    _schedulePlayerStateRefresh(delay = 180) {
+      if (this._homeiiMaPlayerEventTimer) return;
+      this._homeiiMaPlayerEventTimer = setTimeout(() => {
+        this._homeiiMaPlayerEventTimer = null;
+        this._homeiiMaLastPlayerRefreshAt = Date.now();
+        this._refreshEnginePlayers({ force: true }).then(() => {
+          this._loadPlayers();
+          this._syncNowPlayingUI();
+        }).catch(() => {});
+      }, delay);
     }
 
     _build() {
@@ -1273,7 +1510,7 @@ export function createHomeiiBaseMusicCard({
         this._imgObserverRoot = null;
       }
       this._cache.library.clear();
-      this._imageBlobCache.clear();
+      this._clearImageBlobCache();
       const rtl = this._isHebrew();
       const theme = this._effectiveTheme();
       const visualTheme = theme;
@@ -1297,2306 +1534,8 @@ export function createHomeiiBaseMusicCard({
         : Math.max(0.18, Math.min(0.42, popupOpacity * 0.28));
 
       this.shadowRoot.innerHTML = `
-        <style>
-          @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800;900&family=Rubik:wght@400;500;700;800;900&display=swap');
-          :host {
-            display:block;
-            container-type:inline-size;
-            container-name:homeii-browser-host;
-            margin:0 !important;
-            padding:0 !important;
-            background:transparent !important;
-            border:none !important;
-            box-shadow:none !important;
-            --ma-accent: var(--accent-color, #e0a11b);
-            --ma-radius-xl: 22px;
-            overflow:hidden !important;
-            border-radius:var(--ma-radius-xl);
-            --ma-card-height: ${Math.round(allocatedHeight || effectiveHeight)}px;
-            --ma-effective-height: ${effectiveHeight}px;
-            --ma-ui-scale: ${uiScale.toFixed(3)};
-            --ma-main-opacity: ${mainOpacity.toFixed(2)};
-            --ma-popup-opacity: ${popupOpacity.toFixed(2)};
-            --ma-shell-pad: calc(16px * var(--ma-ui-scale));
-            --ma-shell-gap: calc(14px * var(--ma-ui-scale));
-            --ma-control-size: calc(42px * var(--ma-ui-scale));
-            --ma-chip-height: calc(44px * var(--ma-ui-scale));
-            --ma-np-art-size: calc(96px * var(--ma-ui-scale));
-            --ma-now-button-size: calc(58px * var(--ma-ui-scale));
-            --ma-now-main-button-size: calc(82px * var(--ma-ui-scale));
-            --ma-track-title-size: calc(24px * var(--ma-ui-scale));
-            --ma-blur: blur(18px);
-            font-family:'Outfit','Segoe UI',system-ui,sans-serif;
-          }
-          ha-card {
-            background:transparent !important;
-            border:none !important;
-            box-shadow:none !important;
-            overflow:hidden !important;
-            border-radius:var(--ma-radius-xl);
-          }
-          .card.rtl,
-          .card.rtl button,
-          .card.rtl input,
-          .card.rtl textarea,
-          .card.rtl select {
-            font-family:'Heebo','Outfit','Segoe UI',system-ui,sans-serif;
-          }
-          .theme-dark {
-            --ma-bg: rgba(18,20,26,${darkBgAlpha.toFixed(2)});
-            --ma-sidebar: rgba(14,16,22,${darkSidebarAlpha.toFixed(2)});
-            --ma-topbar: rgba(20,22,29,${Math.max(0.36, Math.min(0.94, mainOpacity * 0.92)).toFixed(2)});
-            --ma-panel: rgba(24,26,33,${darkPanelAlpha.toFixed(2)});
-            --ma-soft: rgba(255,255,255,0.07);
-            --ma-soft-2: rgba(255,255,255,0.10);
-            --ma-border: rgba(255,255,255,0.10);
-            --ma-text-1: var(--primary-text-color, #f1f3f8);
-            --ma-text-2: var(--secondary-text-color, #b7bccb);
-            --ma-text-3: rgba(200,205,220,0.65);
-            --ma-shadow: 0 18px 44px rgba(0,0,0,0.34);
-            --ma-modal-bg: rgba(18,22,30,${Math.max(0.68, popupOpacity).toFixed(2)});
-            --ma-modal-soft: rgba(255,255,255,0.06);
-            --ma-modal-border: rgba(255,255,255,0.14);
-          }
-          .theme-light {
-            --ma-bg: rgba(248,250,253,${Math.max(0.84, lightBgAlpha + 0.16).toFixed(2)});
-            --ma-sidebar: rgba(236,241,247,${Math.max(0.88, mainOpacity + 0.12).toFixed(2)});
-            --ma-topbar: rgba(242,246,251,${Math.max(0.9, mainOpacity + 0.16).toFixed(2)});
-            --ma-panel: rgba(255,255,255,${Math.max(0.9, lightPanelAlpha + 0.18).toFixed(2)});
-            --ma-soft: rgba(18,25,36,0.055);
-            --ma-soft-2: rgba(18,25,36,0.12);
-            --ma-border: rgba(18,25,36,0.14);
-            --ma-text-1: #16202d;
-            --ma-text-2: #445166;
-            --ma-text-3: rgba(22,32,45,0.72);
-            --ma-shadow: 0 18px 44px rgba(28,35,45,0.10);
-            --ma-modal-bg: rgba(255,255,255,${Math.max(0.82, popupOpacity).toFixed(2)});
-            --ma-modal-soft: rgba(20,24,32,0.04);
-            --ma-modal-border: rgba(20,24,32,0.12);
-          }
-          * { box-sizing:border-box; }
-          *::before,*::after { box-sizing:border-box; }
-          .card {
-            display:grid;
-            grid-template-columns:220px minmax(0,1fr);
-            container-type:inline-size;
-            container-name:homeii-browser-card;
-            position:relative;
-            width:100%;
-            height:min(var(--ma-card-height), calc(100dvh - 24px));
-            min-height:min(520px, var(--ma-effective-height));
-            max-height:calc(100dvh - 24px);
-            overflow:hidden;
-            border-radius:var(--ma-radius-xl);
-            background:linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01)), var(--ma-bg);
-            color:var(--ma-text-1);
-            border:1px solid var(--ma-border);
-            box-shadow:var(--ma-shadow);
-            backdrop-filter: var(--ma-blur);
-            -webkit-backdrop-filter: var(--ma-blur);
-          }
-          .card.rtl { direction:rtl; }
-          .sidebar {
-            min-width:0;
-            display:flex;
-            flex-direction:column;
-            background:var(--ma-sidebar);
-            border-inline-end:1px solid var(--ma-border);
-            backdrop-filter:blur(16px);
-            -webkit-backdrop-filter:blur(16px);
-          }
-          .brand {
-            display:flex;
-            align-items:center;
-            gap:12px;
-            padding:18px 16px 16px;
-            border-bottom:1px solid var(--ma-border);
-          }
-          .brand-icon {
-            width:38px;
-            height:38px;
-            border-radius:12px;
-            display:grid;
-            place-items:center;
-            background:linear-gradient(135deg, var(--ma-accent), color-mix(in srgb, var(--ma-accent) 74%, white 26%));
-            color:#111;
-            font-weight:700;
-            flex-shrink:0;
-            box-shadow:0 10px 24px rgba(224,161,27,0.22);
-            cursor:pointer;
-            transition:transform 180ms ease, box-shadow 180ms ease, opacity 180ms ease;
-          }
-          .brand-icon:hover {
-            transform:translateY(-1px) scale(1.02);
-            box-shadow:0 14px 30px rgba(224,161,27,0.28);
-          }
-          .brand-icon.playing {
-            animation:brandPulseFade 2.8s ease-in-out infinite;
-          }
-          @keyframes brandPulseFade {
-            0% { opacity:1; transform:scale(1); }
-            50% { opacity:.72; transform:scale(1.045); }
-            100% { opacity:1; transform:scale(1); }
-          }
-          .brand-title { font-size:15px; font-weight:700; }
-          .brand-sub { font-size:11px; color:var(--ma-text-3); }
-          .nav { flex:1; overflow-y:auto; padding:12px 10px; }
-          .nav-label { font-size:10px; text-transform:uppercase; letter-spacing:.12em; color:var(--ma-text-3); padding:10px 10px 6px; }
-          .nav-btn {
-            width:100%;
-            display:flex;
-            align-items:center;
-            gap:10px;
-            border:1px solid transparent;
-            background:transparent;
-            color:var(--ma-text-2);
-            padding:10px 12px;
-            border-radius:13px;
-            cursor:pointer;
-            margin-bottom:4px;
-            text-align:start;
-            font:inherit;
-            transition:180ms ease;
-          }
-          .nav-btn:hover { background:var(--ma-soft); color:var(--ma-text-1); }
-          .nav-btn.active {
-            color:var(--ma-accent);
-            background:color-mix(in srgb, var(--ma-accent) 14%, transparent);
-            border-color:color-mix(in srgb, var(--ma-accent) 28%, transparent);
-          }
-          .nav-ico { width:18px; text-align:center; flex-shrink:0; }
-          .player-panel {
-            padding:16px 14px 14px;
-            border-top:1px solid var(--ma-border);
-            background:color-mix(in srgb, var(--ma-sidebar) 88%, black 12%);
-            display:flex;
-            flex-direction:column;
-            gap:14px;
-          }
-          .np-row {
-            display:flex;
-            flex-direction:column;
-            align-items:center;
-            gap:12px;
-            margin-bottom:0;
-            min-width:0;
-            cursor:pointer;
-            text-align:center;
-          }
-          .np-art,.track-art,.queue-thumb,.queue-art,.mini-queue-thumb { background:var(--ma-soft); display:grid; place-items:center; overflow:hidden; }
-          .np-art {
-            width:104px;
-            height:104px;
-            border-radius:28px;
-            flex-shrink:0;
-            border:1px solid color-mix(in srgb, var(--ma-border) 96%, transparent);
-            box-shadow:0 16px 30px rgba(0,0,0,0.14);
-          }
-          .np-art img,.track-art img,.queue-thumb img,.queue-art img,.mini-queue-thumb img,.media-art img,.now-art img {
-            width:100%;
-            height:100%;
-            object-fit:cover;
-            display:block;
-          }
-          .np-art img,.media-art img,.now-art img {
-            object-fit:contain;
-            object-position:center;
-          }
-          .np-meta {
-            width:100%;
-            min-width:0;
-          }
-          .np-title,.media-title,.track-name,.queue-name,.mini-queue-name { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-          .np-title {
-            font-size:15px;
-            font-weight:800;
-            line-height:1.15;
-          }
-          .np-sub,.media-sub,.track-sub,.queue-artist,.mini-queue-artist { font-size:11px; color:var(--ma-text-3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-          .controls,.now-controls-main { display:flex; align-items:center; justify-content:center; gap:8px; }
-          .card.rtl .controls,.card.rtl .now-controls-main { direction:ltr; }
-          .card.rtl .volume-row,.card.rtl .now-volume { direction:ltr; }
-          .controls {
-            margin-bottom:0;
-            gap:14px;
-          }
-          .icon-btn,.play-btn,.lang-btn,.close-btn,.big-round-btn,.big-main-btn,.theme-btn {
-            border:none;
-            cursor:pointer;
-            font:inherit;
-            transition:180ms ease;
-            display:grid;
-            place-items:center;
-          }
-          .ui-ic {
-            width:60%;
-            height:60%;
-            display:block;
-            flex-shrink:0;
-            pointer-events:none;
-            overflow:visible;
-            shape-rendering:geometricPrecision;
-          }
-          .ui-ic * {
-            vector-effect:non-scaling-stroke;
-          }
-          ha-icon.ui-ic {
-            --mdc-icon-size:100%;
-            width:60%;
-            height:60%;
-            display:inline-flex;
-            align-items:center;
-            justify-content:center;
-          }
-          .play-btn .ui-ic,
-          .big-main-btn .ui-ic {
-            width:58%;
-            height:58%;
-          }
-          .immersive-btn.small .ui-ic {
-            width:48%;
-            height:48%;
-          }
-          .immersive-btn.primary .ui-ic {
-            width:54%;
-            height:54%;
-          }
-          .icon-btn,.lang-btn,.close-btn,.theme-btn {
-            width:42px;
-            height:42px;
-            border-radius:14px;
-            background:color-mix(in srgb, var(--ma-soft) 92%, transparent);
-            color:var(--ma-text-2);
-            border:1px solid color-mix(in srgb, var(--ma-border) 96%, transparent);
-            box-shadow:0 6px 16px rgba(0,0,0,0.06);
-          }
-          .theme-light .icon-btn,
-          .theme-light .lang-btn,
-          .theme-light .close-btn,
-          .theme-light .theme-btn {
-            background:rgba(255,255,255,0.44);
-          }
-          .icon-btn:hover,.lang-btn:hover,.close-btn:hover,.theme-btn:hover { background:var(--ma-soft); color:var(--ma-text-1); }
-          .icon-btn.active,.big-round-btn.active,.theme-btn.active {
-            color:var(--ma-accent);
-            background:color-mix(in srgb, var(--ma-accent) 14%, transparent);
-            border-color:color-mix(in srgb, var(--ma-accent) 28%, transparent);
-          }
-          .group-volume-btn[hidden] { display:none!important; }
-          .group-volume-btn.active {
-            color:var(--ma-accent);
-            background:color-mix(in srgb, var(--ma-accent) 14%, transparent);
-            border-color:color-mix(in srgb, var(--ma-accent) 28%, transparent);
-          }
-          .play-btn,.big-main-btn {
-            width:94px;
-            height:94px;
-            border-radius:28px;
-            font-size:32px;
-            box-shadow:0 18px 34px rgba(224,161,27,0.24);
-          }
-          .play-btn {
-            width:64px;
-            height:64px;
-            border-radius:22px;
-            box-shadow:0 14px 30px rgba(224,161,27,0.24);
-            font-size:22px;
-          }
-          .progress,.now-progress { position:relative; height:8px; border-radius:999px; background:var(--ma-soft-2); overflow:hidden; cursor:pointer; touch-action:none; }
-          .progress::before,.now-progress::before,.immersive-progress::before {
-            content:"";
-            position:absolute;
-            inset:-12px 0;
-          }
-          .progress { display:none; }
-          .progress-fill,.now-progress-fill {
-            height:100%;
-            width:0%;
-            background:linear-gradient(90deg, var(--ma-accent), color-mix(in srgb, var(--ma-accent) 72%, white 28%));
-          }
-          .player-label { display:none; }
-          .player-select { display:none; }
-          .volume-row,.now-volume { display:flex; align-items:center; gap:12px; }
-          .volume-range,.now-volume input {
-            width:100%;
-            appearance:none;
-            height:8px;
-            border-radius:999px;
-            outline:none;
-            background:linear-gradient(to right, var(--ma-accent) 0%, var(--ma-accent) var(--vol-pct, 50%), var(--ma-soft-2) var(--vol-pct, 50%), var(--ma-soft-2) 100%);
-          }
-          .volume-range::-webkit-slider-thumb,.now-volume input::-webkit-slider-thumb {
-            appearance:none;
-            width:18px;
-            height:18px;
-            border-radius:50%;
-            background:var(--ma-accent);
-            border:none;
-          }
-          .volume-range::-moz-range-thumb,.now-volume input::-moz-range-thumb {
-            width:18px;
-            height:18px;
-            border-radius:50%;
-            background:var(--ma-accent);
-            border:none;
-          }
-          .main {
-            min-width:0;
-            min-height:0;
-            display:flex;
-            flex-direction:column;
-            overflow:hidden;
-            position:relative;
-            backdrop-filter:blur(14px);
-            -webkit-backdrop-filter:blur(14px);
-            box-shadow:0 18px 44px rgba(0,0,0,0.24);
-          }
-          .topbar {
-            display:flex;
-            flex-direction:column;
-            gap:10px;
-            padding:14px 18px 14px;
-            border-bottom:1px solid var(--ma-border);
-            background:linear-gradient(180deg, color-mix(in srgb, var(--ma-topbar) 94%, transparent), color-mix(in srgb, var(--ma-topbar) 80%, transparent));
-            backdrop-filter:blur(16px);
-            -webkit-backdrop-filter:blur(16px);
-            overflow-x:auto;
-            overflow-y:hidden;
-          }
-          .topbar-row,.player-summary-row {
-            display:flex;
-            align-items:center;
-            gap:10px;
-            flex-wrap:nowrap !important;
-            width:max-content;
-            min-width:100%;
-          }
-          .player-summary-row {
-            display:none;
-          }
-          .search {
-            flex:1 1 320px;
-            min-width:180px;
-            display:flex;
-            align-items:center;
-            gap:10px;
-            min-height:48px;
-            padding:0 16px;
-            border-radius:18px;
-            background:color-mix(in srgb, var(--ma-soft) 92%, transparent);
-            border:1px solid color-mix(in srgb, var(--ma-border) 96%, transparent);
-            box-shadow:inset 0 1px 0 rgba(255,255,255,0.04);
-          }
-          .theme-light .search {
-            background:rgba(255,255,255,0.92);
-            box-shadow:inset 0 1px 0 rgba(255,255,255,0.75);
-          }
-          .search input {
-            flex:1;
-            min-width:0;
-            border:none;
-            background:transparent;
-            color:var(--ma-text-1);
-            outline:none;
-            font:inherit;
-          }
-          .search input::placeholder { color:var(--ma-text-3); }
-          .topbar-actions,.summary-actions {
-            display:flex;
-            gap:10px;
-            align-items:center;
-            flex-wrap:nowrap;
-            flex:0 0 auto;
-            margin-inline-start:auto;
-          }
-          .status-pill {
-            display:inline-flex;
-            align-items:center;
-            gap:10px;
-            min-height:46px;
-            padding:0 16px;
-            border-radius:999px;
-            border:1px solid color-mix(in srgb, var(--ma-border) 96%, transparent);
-            background:color-mix(in srgb, var(--ma-soft) 90%, transparent);
-            color:var(--ma-text-2);
-            font-size:13px;
-            font-weight:600;
-            white-space:nowrap;
-            box-shadow:0 6px 16px rgba(0,0,0,0.06);
-          }
-          .theme-light .status-pill {
-            background:rgba(255,255,255,0.9);
-          }
-          .status-dot { width:8px; height:8px; border-radius:50%; background:#46c16f; box-shadow:0 0 10px rgba(70,193,111,0.4); }
-          .status-pill.offline .status-dot { background:#d66; box-shadow:0 0 10px rgba(214,102,102,0.35); }
-          .selected-player-box {
-            display:flex;
-            align-items:center;
-            gap:12px;
-            min-width:220px;
-            max-width:340px;
-            flex:0 0 clamp(220px, 24cqi, 340px);
-            min-height:48px;
-            padding:0 16px;
-            border-radius:18px;
-            border:1px solid color-mix(in srgb, var(--ma-border) 96%, transparent);
-            background:color-mix(in srgb, var(--ma-soft) 94%, transparent);
-            box-shadow:0 8px 20px rgba(0,0,0,0.06);
-          }
-          .theme-light .selected-player-box {
-            background:rgba(255,255,255,0.92);
-          }
-          .selected-player-meta { min-width:0; flex:1; }
-          .selected-player-title {
-            font-size:12px;
-            font-weight:800;
-            color:var(--ma-text-1);
-            letter-spacing:-0.01em;
-            white-space:nowrap;
-            overflow:hidden;
-            text-overflow:ellipsis;
-          }
-          .selected-player-sub {
-            font-size:11px;
-            color:var(--ma-text-3);
-            white-space:nowrap;
-            overflow:hidden;
-            text-overflow:ellipsis;
-            margin-top:1px;
-          }
-          .chip-dot {
-            width:10px;
-            height:10px;
-            border-radius:50%;
-            background:rgba(255,255,255,0.32);
-            flex-shrink:0;
-            box-shadow:0 0 0 5px rgba(255,255,255,0.04);
-          }
-          .theme-light .chip-dot { background:rgba(20,24,32,0.22); }
-          .content { flex:1; min-height:0; overflow-y:auto; padding:16px; }
-          .content.now-playing-mode { overflow:hidden; }
-          .brand {
-            padding:calc(16px * var(--ma-ui-scale));
-            gap:calc(12px * var(--ma-ui-scale));
-          }
-          .brand-icon {
-            width:calc(38px * var(--ma-ui-scale));
-            height:calc(38px * var(--ma-ui-scale));
-            border-radius:calc(12px * var(--ma-ui-scale));
-          }
-          .brand-title { font-size:calc(15px * var(--ma-ui-scale)); }
-          .brand-sub { font-size:calc(11px * var(--ma-ui-scale)); }
-          .player-panel { padding:var(--ma-shell-pad); gap:calc(14px * var(--ma-ui-scale)); }
-          .np-art {
-            width:var(--ma-np-art-size);
-            height:var(--ma-np-art-size);
-            border-radius:calc(26px * var(--ma-ui-scale));
-            cursor:pointer;
-            transition:transform 180ms ease, box-shadow 180ms ease;
-          }
-          .np-art:hover {
-            transform:translateY(-1px) scale(1.015);
-            box-shadow:0 18px 34px rgba(0,0,0,0.16);
-          }
-          .np-title { font-size:calc(15px * var(--ma-ui-scale)); }
-          .topbar { padding:calc(14px * var(--ma-ui-scale)); }
-          .topbar-row,.player-summary-row,.topbar-actions,.summary-actions { gap:calc(10px * var(--ma-ui-scale)); }
-          .search {
-            min-height:calc(46px * var(--ma-ui-scale));
-            padding:0 calc(14px * var(--ma-ui-scale));
-            border-radius:calc(18px * var(--ma-ui-scale));
-          }
-          .content { padding:var(--ma-shell-pad); }
-          .chip-btn {
-            min-height:var(--ma-chip-height);
-            padding:0 calc(14px * var(--ma-ui-scale));
-            border-radius:calc(16px * var(--ma-ui-scale));
-          }
-          .icon-btn,.lang-btn,.close-btn,.theme-btn {
-            width:var(--ma-control-size);
-            height:var(--ma-control-size);
-            border-radius:calc(14px * var(--ma-ui-scale));
-          }
-          .selected-player-box,.status-pill {
-            min-height:calc(46px * var(--ma-ui-scale));
-            padding:0 calc(15px * var(--ma-ui-scale));
-            border-radius:calc(18px * var(--ma-ui-scale));
-          }
-          .section { margin-bottom:calc(24px * var(--ma-ui-scale)); }
-          .section { margin-bottom:28px; }
-          .section-header { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
-          .section-title { font-size:15px; font-weight:700; }
-          .section-badge,.now-queue-count {
-            padding:3px 9px;
-            border-radius:999px;
-            background:var(--ma-soft);
-            border:1px solid var(--ma-border);
-            color:var(--ma-text-3);
-            font-size:11px;
-          }
-          .section-actions { margin-inline-start:auto; display:flex; gap:6px; flex-wrap:wrap; }
-          .chip-btn {
-            border:1px solid color-mix(in srgb, var(--ma-border) 96%, transparent);
-            background:color-mix(in srgb, var(--ma-soft) 92%, transparent);
-            color:var(--ma-text-2);
-            border-radius:16px;
-            min-height:44px;
-            padding:0 14px;
-            font:inherit;
-            font-size:12px;
-            font-weight:700;
-            cursor:pointer;
-            display:inline-flex;
-            align-items:center;
-            justify-content:center;
-            gap:8px;
-            backdrop-filter:blur(10px);
-            -webkit-backdrop-filter:blur(10px);
-            transition:180ms ease;
-            box-shadow:0 6px 16px rgba(0,0,0,0.06);
-          }
-          .theme-light .chip-btn {
-            background:rgba(255,255,255,0.92);
-          }
-          .chip-btn:hover {
-            color:var(--ma-accent);
-            background:color-mix(in srgb, var(--ma-accent) 14%, transparent);
-            border-color:color-mix(in srgb, var(--ma-accent) 28%, transparent);
-          }
-          .chip-btn.warn { color:#ffcf7a; border-color:rgba(255,207,122,0.18); }
-          .chip-btn.active {
-            color:var(--ma-accent);
-            border-color:color-mix(in srgb, var(--ma-accent) 30%, transparent);
-            background:color-mix(in srgb, var(--ma-accent) 12%, transparent);
-          }
-          .grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(126px, 1fr)); gap:14px; }
-          .media-card { cursor:pointer; min-width:0; transition:transform 180ms ease; }
-          .media-card:hover { transform:translateY(-3px); }
-          .media-card.playing .media-art {
-            border-color:color-mix(in srgb, var(--ma-accent) 28%, transparent);
-            box-shadow:0 0 0 1px color-mix(in srgb, var(--ma-accent) 40%, transparent);
-          }
-          .media-art {
-            position:relative;
-            aspect-ratio:1/1;
-            border-radius:18px;
-            border:1px solid var(--ma-border);
-            margin-bottom:8px;
-            background:var(--ma-soft);
-            overflow:hidden;
-          }
-          .media-placeholder {
-            position:absolute;
-            inset:0;
-            display:grid;
-            place-items:center;
-            font-size:28px;
-            color:var(--ma-text-3);
-          }
-          .homeii-art-fallback {
-            width:100%;
-            height:100%;
-            display:grid;
-            place-items:center;
-            border-radius:inherit;
-            background:
-              radial-gradient(circle at 50% 36%, color-mix(in srgb, var(--ma-accent) 28%, transparent), transparent 52%),
-              linear-gradient(145deg, rgba(255,255,255,.09), rgba(255,255,255,.025));
-            color:rgba(255,255,255,.78);
-            box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);
-          }
-          .homeii-art-fallback-disc {
-            width:46%;
-            height:46%;
-            min-width:34px;
-            min-height:34px;
-            display:grid;
-            place-items:center;
-            border-radius:50%;
-            background:rgba(0,0,0,.2);
-            border:1px solid rgba(255,255,255,.12);
-            box-shadow:0 12px 28px rgba(0,0,0,.18);
-          }
-          .homeii-art-fallback svg {
-            width:48%;
-            height:48%;
-            color:currentColor;
-            opacity:.92;
-          }
-          .theme-light .homeii-art-fallback {
-            color:rgba(48,55,68,.7);
-            background:
-              radial-gradient(circle at 50% 36%, color-mix(in srgb, var(--ma-accent) 18%, transparent), transparent 54%),
-              linear-gradient(145deg, rgba(255,255,255,.86), rgba(238,242,247,.56));
-            box-shadow:inset 0 0 0 1px rgba(90,105,125,.12);
-          }
-          .theme-light .homeii-art-fallback-disc {
-            background:rgba(255,255,255,.48);
-            border-color:rgba(82,96,118,.12);
-          }
-          .media-overlay {
-            position:absolute;
-            inset:0;
-            display:grid;
-            place-items:center;
-            background:linear-gradient(180deg, transparent, rgba(0,0,0,0.18), rgba(0,0,0,0.54));
-            opacity:0;
-            transition:opacity 180ms ease;
-          }
-          .theme-light .media-overlay { background:linear-gradient(180deg, transparent, rgba(255,255,255,0.04), rgba(0,0,0,0.16)); }
-          .media-card:hover .media-overlay { opacity:1; }
-          .play-bubble {
-            width:42px;
-            height:42px;
-            border-radius:50%;
-            display:grid;
-            place-items:center;
-            background:linear-gradient(135deg, var(--ma-accent), color-mix(in srgb, var(--ma-accent) 72%, white 28%));
-            color:#111;
-          }
-          .playing-badge {
-            position:absolute;
-            bottom:6px;
-            left:6px;
-            padding:3px 6px;
-            border-radius:8px;
-            font-size:10px;
-            font-weight:700;
-            color:#111;
-            background:linear-gradient(135deg, var(--ma-accent), color-mix(in srgb, var(--ma-accent) 72%, white 28%));
-            display:none;
-          }
-          .media-card.playing .playing-badge { display:inline-flex; }
-          .media-title { font-size:12.5px; font-weight:600; }
-          .track-list { display:flex; flex-direction:column; gap:6px; }
-          .track-row {
-            display:flex;
-            align-items:center;
-            gap:12px;
-            min-width:0;
-            padding:10px 12px;
-            border-radius:14px;
-            background:transparent;
-            border:1px solid transparent;
-            cursor:pointer;
-          }
-          .track-row:hover { background:var(--ma-soft); }
-          .track-row.playing {
-            background:color-mix(in srgb, var(--ma-accent) 14%, transparent);
-            border-color:color-mix(in srgb, var(--ma-accent) 28%, transparent);
-          }
-          .track-num { width:24px; text-align:center; color:var(--ma-text-3); font-size:11px; flex-shrink:0; }
-          .track-row.playing .track-num { color:var(--ma-accent); }
-          .track-art { width:42px; height:42px; border-radius:12px; flex-shrink:0; }
-          .track-meta { flex:1; min-width:0; }
-          .track-name { font-size:12.5px; font-weight:600; }
-          .track-row.playing .track-name { color:var(--ma-accent); }
-          .track-dur { font-size:11px; color:var(--ma-text-3); flex-shrink:0; }
-          .state-box {
-            min-height:240px;
-            display:grid;
-            place-items:center;
-            text-align:center;
-            padding:24px;
-            color:var(--ma-text-3);
-          }
-          .spinner {
-            width:24px;
-            height:24px;
-            border:2px solid color-mix(in srgb, var(--ma-text-3) 25%, transparent);
-            border-top-color:var(--ma-accent);
-            border-radius:50%;
-            animation:spin .8s linear infinite;
-            margin:0 auto 10px;
-          }
-          @keyframes spin { to { transform:rotate(360deg); } }
-          .homeii-loading-state {
-            min-height:240px;
-            display:grid;
-            place-items:center;
-            text-align:center;
-            padding:24px;
-            color:var(--ma-text-2);
-          }
-          .homeii-loading-content {
-            display:grid;
-            justify-items:center;
-            gap:12px;
-          }
-          .homeii-loading-mark {
-            position:relative;
-            width:70px;
-            height:70px;
-            display:grid;
-            place-items:center;
-          }
-          .homeii-loading-ring {
-            position:absolute;
-            inset:8px;
-            border-radius:999px;
-            border:2px solid color-mix(in srgb, var(--ma-text-3) 16%, transparent);
-            border-top-color:color-mix(in srgb, var(--ma-accent) 88%, #fff 8%);
-            animation:homeiiLoadingSpin 1.4s linear infinite;
-          }
-          .homeii-loading-ring.secondary {
-            inset:17px;
-            opacity:.58;
-            animation-duration:2.1s;
-            animation-direction:reverse;
-          }
-          .homeii-loading-core {
-            width:15px;
-            height:15px;
-            border-radius:999px;
-            background:var(--ma-accent);
-            box-shadow:0 0 24px color-mix(in srgb, var(--ma-accent) 56%, transparent);
-            animation:homeiiLoadingPulse 1.2s ease-in-out infinite;
-          }
-          .homeii-loading-text {
-            color:var(--ma-text-2);
-            font-size:13px;
-            font-weight:850;
-          }
-          @keyframes homeiiLoadingSpin { to { transform:rotate(360deg); } }
-          @keyframes homeiiLoadingPulse {
-            0%,100% { transform:scale(.86); opacity:.62; }
-            50% { transform:scale(1.08); opacity:1; }
-          }
-          @media (prefers-reduced-motion: reduce) {
-            .homeii-loading-ring,
-            .homeii-loading-core {
-              animation:none;
-            }
-          }
-          .queue-panel {
-            position:absolute;
-            inset:0;
-            z-index:210;
-            display:flex;
-            flex-direction:column;
-            background:rgba(8,12,18,0.42);
-            backdrop-filter:blur(18px);
-            -webkit-backdrop-filter:blur(18px);
-          }
-          .theme-light .queue-panel {
-            background:rgba(236,241,247,0.58);
-            backdrop-filter:blur(20px);
-            -webkit-backdrop-filter:blur(20px);
-          }
-          .queue-shell {
-            width:min(1100px, calc(100% - 20px));
-            height:min(calc(100% - 20px), var(--ma-effective-height));
-            margin:auto;
-            display:flex;
-            flex-direction:column;
-            border-radius:26px;
-            border:1px solid var(--ma-modal-border);
-            background:
-              linear-gradient(180deg, color-mix(in srgb, var(--ma-accent) 6%, transparent), transparent 20%),
-              linear-gradient(180deg, color-mix(in srgb, var(--ma-modal-bg) 96%, transparent), color-mix(in srgb, var(--ma-modal-bg) 90%, black 10%));
-            box-shadow:0 24px 60px rgba(0,0,0,0.22);
-            overflow:hidden;
-          }
-          .theme-light .queue-shell {
-            background:linear-gradient(180deg, rgba(255,255,255,0.94), rgba(247,250,255,0.92));
-            box-shadow:0 22px 50px rgba(31,41,55,0.14);
-          }
-          .queue-header {
-            display:flex;
-            align-items:center;
-            gap:14px;
-            padding:18px 20px;
-            border-bottom:1px solid var(--ma-border);
-            background:color-mix(in srgb, var(--ma-modal-soft) 92%, transparent);
-            backdrop-filter:blur(12px);
-            -webkit-backdrop-filter:blur(12px);
-          }
-          .queue-art {
-            width:58px;
-            height:58px;
-            border-radius:16px;
-            flex-shrink:0;
-            border:1px solid var(--ma-border);
-            overflow:hidden;
-            box-shadow:0 8px 18px rgba(0,0,0,0.12);
-          }
-          .queue-meta { min-width:0; flex:1; }
-          .queue-title {
-            font-size:18px;
-            font-weight:800;
-            white-space:nowrap;
-            overflow:hidden;
-            text-overflow:ellipsis;
-          }
-          .queue-sub {
-            margin-top:3px;
-            font-size:12px;
-            color:var(--ma-text-3);
-            white-space:nowrap;
-            overflow:hidden;
-            text-overflow:ellipsis;
-          }
-          .queue-scroll {
-            flex:1;
-            overflow-y:auto;
-            padding:16px;
-            background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent 18%);
-          }
-          .queue-item {
-            display:flex;
-            align-items:center;
-            gap:12px;
-            padding:12px 14px;
-            border-radius:16px;
-            cursor:pointer;
-            border:1px solid transparent;
-            background:transparent;
-            transition:180ms ease;
-            margin-bottom:8px;
-          }
-          .queue-item:hover {
-            background:color-mix(in srgb, var(--ma-soft) 82%, transparent);
-            border-color:color-mix(in srgb, var(--ma-border) 78%, transparent);
-          }
-          .queue-item.active {
-            background:linear-gradient(90deg, color-mix(in srgb, var(--ma-accent) 16%, transparent), transparent 72%), color-mix(in srgb, var(--ma-soft) 88%, transparent);
-            border-color:color-mix(in srgb, var(--ma-accent) 26%, transparent);
-            box-shadow:0 8px 20px rgba(0,0,0,0.08);
-          }
-          .queue-item.past { opacity:.44; }
-          .queue-num {
-            width:28px;
-            text-align:center;
-            font-size:12px;
-            font-weight:700;
-            color:var(--ma-text-3);
-            flex-shrink:0;
-          }
-          .queue-item.active .queue-num,.queue-item.active .queue-name { color:var(--ma-accent); }
-          .queue-thumb {
-            width:46px;
-            height:46px;
-            border-radius:13px;
-            flex-shrink:0;
-            border:1px solid var(--ma-border);
-            overflow:hidden;
-          }
-          .queue-item-meta { flex:1; min-width:0; }
-          .queue-name { font-size:13px; font-weight:700; }
-          .queue-artist { font-size:11.5px; color:var(--ma-text-3); margin-top:2px; }
-          .queue-dur { font-size:11px; color:var(--ma-text-3); flex-shrink:0; }
-          .queue-actions,.mini-queue-actions {
-            display:flex;
-            gap:10px;
-            align-items:center;
-            flex-wrap:wrap;
-            direction:ltr;
-          }
-          .mini-queue-actions .chip-btn,.queue-actions .chip-btn {
-            padding:10px 14px;
-            min-width:46px;
-            min-height:42px;
-            font-size:14px;
-            font-weight:800;
-            border-radius:12px;
-            background:color-mix(in srgb, var(--ma-panel) 82%, transparent);
-            box-shadow:0 6px 18px rgba(0,0,0,0.12);
-          }
-          .mini-queue-actions .chip-btn:disabled,.queue-actions .chip-btn:disabled {
-            opacity:.52;
-            cursor:progress;
-          }
-          .queue-item-meta {
-            flex:1;
-            min-width:0;
-          }
-          .queue-actions {
-            margin-inline-start:auto;
-          }
-          .theme-light .queue-item,
-          .theme-light .queue-header {
-            box-shadow:none;
-          }
-          .immersive-backdrop {
-            position:absolute;
-            inset:0;
-            z-index:120;
-            display:none;
-            overflow:hidden;
-            border-radius:inherit;
-            background:rgba(8,12,18,0.38);
-          }
-          .immersive-backdrop.open { display:block; }
-          .immersive-shell {
-            position:relative;
-            width:100%;
-            height:100%;
-            overflow:hidden;
-            display:grid;
-            grid-template-rows:auto minmax(0,1fr) auto;
-            gap:clamp(14px, 2.2vw, 24px);
-            padding:clamp(16px, 2.2vw, 28px);
-            color:#f7f8fc;
-            direction:ltr;
-          }
-          .immersive-shell.rtl { direction:rtl; }
-          .immersive-bg,
-          .immersive-cover-glow,
-          .immersive-frost,
-          .immersive-vignette {
-            position:absolute;
-            inset:0;
-            pointer-events:none;
-          }
-          .immersive-bg,
-          .immersive-cover-glow {
-            background-position:center;
-            background-size:cover;
-            transform:scale(1.12);
-            filter:blur(34px) saturate(1.08);
-            opacity:0.9;
-          }
-          .immersive-cover-glow::after {
-            content:"";
-            position:absolute;
-            inset:0;
-            background:
-              radial-gradient(circle at center, transparent 18%, rgba(8,12,18,0.34) 62%, rgba(8,12,18,0.72) 100%),
-              linear-gradient(180deg, rgba(8,12,18,0.22), rgba(8,12,18,0.52));
-          }
-          .immersive-frost {
-            background:
-              radial-gradient(circle at top, rgba(224,161,27,0.14), transparent 34%),
-              linear-gradient(180deg, rgba(16,18,26,0.26), rgba(12,14,20,0.58));
-            backdrop-filter:blur(18px);
-            -webkit-backdrop-filter:blur(18px);
-          }
-          .immersive-vignette {
-            background:
-              radial-gradient(circle at center, transparent 18%, rgba(8,12,18,0.34) 62%, rgba(8,12,18,0.72) 100%),
-              linear-gradient(180deg, rgba(8,12,18,0.22), rgba(8,12,18,0.52));
-          }
-          .immersive-topbar,
-          .immersive-stage,
-          .immersive-footer,
-          .immersive-header,
-          .immersive-body,
-          .immersive-panel {
-            position:relative;
-            z-index:1;
-          }
-          .immersive-topbar {
-            display:flex;
-            align-items:flex-start;
-            justify-content:space-between;
-            gap:16px;
-          }
-          .immersive-shell.rtl .immersive-topbar {
-            flex-direction:row-reverse;
-          }
-          .immersive-header {
-            display:flex;
-            align-items:flex-start;
-            justify-content:space-between;
-            gap:16px;
-          }
-          .immersive-shell.rtl .immersive-header {
-            flex-direction:row-reverse;
-          }
-          .immersive-backdrop .close-btn {
-            width:58px;
-            height:58px;
-            border-radius:999px;
-            background:rgba(255,255,255,0.18);
-            color:#121212;
-            border-color:rgba(255,255,255,0.22);
-            box-shadow:0 12px 24px rgba(0,0,0,0.18);
-            backdrop-filter:blur(10px);
-            -webkit-backdrop-filter:blur(10px);
-            flex:0 0 auto;
-          }
-          .immersive-meta {
-            display:grid;
-            gap:8px;
-            min-width:0;
-            text-align:start;
-            max-width:min(44vw, 520px);
-          }
-          .immersive-shell.rtl .immersive-meta { text-align:right; }
-          .immersive-kicker {
-            font-size:12px;
-            letter-spacing:.16em;
-            text-transform:uppercase;
-            color:rgba(255,255,255,0.72);
-          }
-          .immersive-title {
-            font-size:clamp(24px, 3.4vw, 40px);
-            line-height:1.04;
-            font-weight:900;
-            letter-spacing:-0.03em;
-            text-shadow:0 10px 24px rgba(0,0,0,0.28);
-            word-break:break-word;
-          }
-          .immersive-subtitle {
-            font-size:clamp(14px, 1.35vw, 18px);
-            color:rgba(255,255,255,0.84);
-            text-shadow:0 8px 22px rgba(0,0,0,0.24);
-            word-break:break-word;
-          }
-          .immersive-player-pill {
-            display:inline-flex;
-            align-items:center;
-            gap:8px;
-            width:fit-content;
-            max-width:100%;
-            min-height:38px;
-            padding:0 14px;
-            border-radius:999px;
-            background:rgba(18,20,28,0.34);
-            border:1px solid rgba(255,255,255,0.14);
-            color:rgba(255,255,255,0.88);
-            font-size:12px;
-            font-weight:700;
-            backdrop-filter:blur(12px);
-            -webkit-backdrop-filter:blur(12px);
-            white-space:nowrap;
-            overflow:hidden;
-            text-overflow:ellipsis;
-          }
-          .immersive-stage,
-          .immersive-body {
-            min-height:0;
-            display:grid;
-            place-items:center;
-            align-content:center;
-            gap:clamp(20px, 3vw, 36px);
-          }
-          .immersive-art-wrap {
-            width:min(100%, 620px);
-            display:grid;
-            place-items:center;
-          }
-          .immersive-art {
-            width:min(100%, min(54vh, 620px));
-            max-width:min(86vw, 620px);
-            max-height:min(54vh, 620px);
-            aspect-ratio:1/1;
-            border-radius:32px;
-            overflow:hidden;
-            border:1px solid rgba(255,255,255,0.18);
-            background:rgba(255,255,255,0.08);
-            box-shadow:0 28px 80px rgba(0,0,0,0.34);
-            display:grid;
-            place-items:center;
-            font-size:72px;
-            color:rgba(255,255,255,0.5);
-          }
-          .immersive-art img {
-            width:100%;
-            height:100%;
-            object-fit:contain;
-            object-position:center;
-            display:block;
-          }
-          .immersive-body {
-            grid-template-rows:minmax(0,1fr) auto;
-            gap:clamp(28px, 3.6vw, 44px);
-          }
-          .immersive-body > .immersive-art-wrap {
-            align-self:center;
-          }
-          .immersive-track-pill {
-            display:inline-flex;
-            align-items:center;
-            justify-content:center;
-            gap:10px;
-            max-width:min(92%, 720px);
-            padding:12px 18px;
-            border-radius:18px;
-            background:rgba(18,20,28,0.36);
-            border:1px solid rgba(255,255,255,0.14);
-            backdrop-filter:blur(14px);
-            -webkit-backdrop-filter:blur(14px);
-            box-shadow:0 12px 28px rgba(0,0,0,0.18);
-            text-align:center;
-          }
-          .immersive-track-pill .immersive-title,
-          .immersive-track-pill .immersive-subtitle {
-            font-size:inherit;
-            line-height:1.2;
-            text-shadow:none;
-          }
-          .immersive-track-pill-text {
-            display:grid;
-            gap:4px;
-            min-width:0;
-          }
-          .immersive-track-pill-title {
-            font-size:clamp(16px, 1.5vw, 22px);
-            font-weight:800;
-            white-space:nowrap;
-            overflow:hidden;
-            text-overflow:ellipsis;
-          }
-          .immersive-track-pill-sub {
-            font-size:clamp(12px, 1vw, 15px);
-            color:rgba(255,255,255,0.78);
-            white-space:nowrap;
-            overflow:hidden;
-            text-overflow:ellipsis;
-          }
-          .immersive-footer,
-          .immersive-panel {
-            display:grid;
-            gap:clamp(12px, 1.8vw, 18px);
-            align-self:end;
-          }
-          .immersive-panel {
-            width:min(100%, 1180px);
-            margin:0 auto;
-            padding-top:clamp(10px, 2vh, 24px);
-            background:transparent;
-            border:none;
-            box-shadow:none;
-            grid-template-columns:minmax(210px, 320px) minmax(0, 1fr);
-            align-items:end;
-          }
-          .immersive-panel > .immersive-time-row,
-          .immersive-panel > .immersive-progress,
-          .immersive-panel > .immersive-controls {
-            grid-column:1 / -1;
-          }
-          .immersive-time-row {
-            display:flex;
-            align-items:center;
-            justify-content:space-between;
-            gap:12px;
-            color:rgba(255,255,255,0.82);
-            font-size:14px;
-            padding:0 6px;
-            direction:ltr;
-          }
-          .immersive-progress {
-            position:relative;
-            width:min(100%, 1180px);
-            margin:0 auto;
-            height:14px;
-            border-radius:999px;
-            background:rgba(255,255,255,0.16);
-            overflow:hidden;
-            cursor:pointer;
-            touch-action:none;
-            box-shadow:inset 0 1px 0 rgba(255,255,255,0.1);
-          }
-          .immersive-progress-fill {
-            height:100%;
-            width:0%;
-            border-radius:inherit;
-            background:linear-gradient(90deg, var(--ma-accent), color-mix(in srgb, var(--ma-accent) 76%, white 24%));
-          }
-          .immersive-controls {
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            gap:clamp(12px, 1.8vw, 20px);
-            flex-wrap:nowrap;
-            direction:ltr;
-          }
-          .immersive-btn {
-            width:86px;
-            height:86px;
-            border-radius:999px;
-            border:1px solid rgba(255,255,255,0.15);
-            background:rgba(255,255,255,0.12);
-            color:#fff;
-            display:grid;
-            place-items:center;
-            font-size:32px;
-            box-shadow:0 16px 32px rgba(0,0,0,0.22);
-            backdrop-filter:blur(12px);
-            -webkit-backdrop-filter:blur(12px);
-            display:grid;
-            place-items:center;
-          }
-          .immersive-btn.primary {
-            width:126px;
-            height:126px;
-            font-size:48px;
-            background:rgba(255,255,255,0.18);
-          }
-          .immersive-btn.small {
-            width:72px;
-            height:72px;
-            font-size:26px;
-            background:rgba(255,255,255,0.1);
-          }
-          .immersive-btn.active {
-            border-color:rgba(255,220,140,0.74);
-            box-shadow:0 0 0 2px rgba(255,220,140,0.24), 0 16px 32px rgba(0,0,0,0.22);
-          }
-          .immersive-bottom-row {
-            width:min(100%, 1180px);
-            margin:0 auto;
-            display:grid;
-            grid-template-columns:minmax(0, 1fr) minmax(220px, 360px);
-            gap:18px;
-            align-items:center;
-          }
-          .immersive-actions {
-            display:flex;
-            align-items:center;
-            justify-content:flex-end;
-            gap:10px;
-            flex-wrap:wrap;
-          }
-          .immersive-actions .chip-btn {
-            background:rgba(18,20,28,0.34);
-            color:#fff;
-            border-color:rgba(255,255,255,0.16);
-            backdrop-filter:blur(10px);
-            -webkit-backdrop-filter:blur(10px);
-            min-height:40px;
-            padding:0 12px;
-          }
-          .immersive-player-picker-btn,
-          .now-player-picker-btn {
-            width:calc(46px * var(--ma-ui-scale));
-            min-width:calc(46px * var(--ma-ui-scale));
-            min-height:calc(46px * var(--ma-ui-scale));
-            padding:0;
-            border-radius:calc(16px * var(--ma-ui-scale));
-            flex:0 0 auto;
-          }
-          .immersive-player-picker-btn .ui-ic,
-          .now-player-picker-btn .ui-ic {
-            width:18px;
-            height:18px;
-          }
-          .immersive-volume {
-            display:grid;
-            grid-template-columns:auto minmax(0,1fr);
-            align-items:center;
-            gap:12px;
-            direction:ltr;
-            max-width:300px;
-            padding:6px 12px;
-            border-radius:999px;
-            background:rgba(18,20,28,0.34);
-            border:1px solid rgba(255,255,255,0.14);
-            backdrop-filter:blur(12px);
-            -webkit-backdrop-filter:blur(12px);
-          }
-          .immersive-volume input {
-            width:100%;
-            appearance:none;
-            height:8px;
-            border-radius:999px;
-            outline:none;
-            background:linear-gradient(to right, var(--ma-accent) 0%, var(--ma-accent) var(--vol-pct, 50%), rgba(255,255,255,0.28) var(--vol-pct, 50%), rgba(255,255,255,0.28) 100%);
-          }
-          .immersive-volume input::-webkit-slider-thumb {
-            appearance:none;
-            width:18px;
-            height:18px;
-            border-radius:50%;
-            background:var(--ma-accent);
-            border:none;
-          }
-          .immersive-volume input::-moz-range-thumb {
-            width:18px;
-            height:18px;
-            border-radius:50%;
-            background:var(--ma-accent);
-            border:none;
-          }
-          .immersive-panel .immersive-actions,
-          .immersive-panel .immersive-volume {
-            margin:0;
-          }
-          .immersive-panel > .immersive-volume {
-            grid-column:1;
-            width:100%;
-            justify-self:stretch;
-          }
-          .immersive-panel .immersive-actions {
-            grid-column:2;
-            width:auto;
-            justify-self:end;
-          }
-          @media (max-width:1024px) {
-            .immersive-art {
-              width:min(100%, min(50vh, 560px));
-              max-width:min(86vw, 560px);
-              max-height:min(50vh, 560px);
-            }
-            .immersive-btn {
-              width:78px;
-              height:78px;
-              font-size:29px;
-            }
-            .immersive-btn.primary {
-              width:112px;
-              height:112px;
-              font-size:42px;
-            }
-          }
-          @media (max-width:760px) {
-            .immersive-shell {
-              padding:14px;
-              grid-template-rows:auto minmax(0,1fr) auto;
-            }
-            .immersive-art {
-              width:min(100%, min(42vh, 420px));
-              max-width:min(88vw, 420px);
-              max-height:min(42vh, 420px);
-              border-radius:24px;
-            }
-            .immersive-body {
-              gap:12px;
-            }
-            .immersive-topbar {
-              gap:12px;
-            }
-            .immersive-header {
-              gap:12px;
-            }
-            .immersive-bottom-row {
-              grid-template-columns:1fr;
-              gap:12px;
-            }
-            .immersive-panel {
-              grid-template-columns:1fr;
-            }
-            .immersive-actions {
-              order:2;
-              justify-content:center;
-            }
-            .immersive-volume {
-              order:1;
-              max-width:none;
-            }
-            .immersive-panel .immersive-actions,
-            .immersive-panel .immersive-volume {
-              width:100%;
-            }
-            .immersive-panel > .immersive-volume,
-            .immersive-panel .immersive-actions {
-              grid-column:1;
-              justify-self:stretch;
-            }
-            .immersive-btn {
-              width:64px;
-              height:64px;
-              font-size:24px;
-            }
-            .immersive-btn.small {
-              width:56px;
-              height:56px;
-              font-size:21px;
-            }
-            .immersive-btn.primary {
-              width:86px;
-              height:86px;
-              font-size:34px;
-            }
-          }
-          .ctx-menu {
-            position:absolute;
-            z-index:80;
-            min-width:214px;
-            max-width:min(268px, calc(100% - 24px));
-            max-height:min(56vh, 360px);
-            overflow:auto;
-            padding:8px;
-            border-radius:18px;
-            border:1px solid var(--ma-border);
-            background:var(--ma-panel);
-            backdrop-filter:blur(14px);
-            -webkit-backdrop-filter:blur(14px);
-            box-shadow:0 18px 44px rgba(0,0,0,0.24);
-            display:grid;
-            gap:6px;
-          }
-          .ctx-item { display:flex; align-items:center; gap:10px; min-height:42px; padding:10px 12px; border-radius:14px; color:var(--ma-text-1); cursor:pointer; font-size:13px; font-weight:800; }
-          .ctx-item:hover { background:var(--ma-soft); }
-          .ctx-ico { width:18px; height:18px; text-align:center; color:var(--ma-text-2); flex-shrink:0; display:grid; place-items:center; }
-          .ctx-ico .ui-ic { width:15px; height:15px; }
-          .queue-ctx-menu {
-            min-width:186px;
-            max-width:min(220px, calc(100% - 24px));
-            padding:6px;
-            gap:4px;
-            border-radius:16px;
-          }
-          .queue-ctx-menu .ctx-item {
-            min-height:38px;
-            padding:8px 10px;
-            border-radius:12px;
-            font-size:12px;
-            font-weight:800;
-          }
-          .queue-ctx-menu .ctx-ico {
-            width:16px;
-            height:16px;
-          }
-          .queue-ctx-menu .ctx-ico .ui-ic {
-            width:14px;
-            height:14px;
-          }
-          .ctx-sep { height:1px; margin:6px 4px; background:rgba(255,255,255,.12); }
-          .ctx-caption { padding:4px 8px 2px; font-size:11px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--ma-text-3); }
-          .toast-wrap {
-            position:absolute;
-            inset-inline-end:16px;
-            bottom:16px;
-            z-index:60;
-            display:flex;
-            flex-direction:column;
-            gap:8px;
-            pointer-events:none;
-          }
-          .toast-wrap.center-toast {
-            inset:0;
-            bottom:auto;
-            align-items:center;
-            justify-content:center;
-            padding:18px;
-          }
-          .toast-wrap.top-toast {
-            top:max(16px, env(safe-area-inset-top));
-            bottom:auto;
-            inset-inline:16px;
-            align-items:center;
-          }
-          .toast {
-            padding:10px 14px;
-            border-radius:12px;
-            border:1px solid var(--ma-border);
-            background:var(--ma-panel);
-            color:var(--ma-text-1);
-            font-size:12px;
-            display:flex;
-            align-items:center;
-            gap:8px;
-            pointer-events:auto;
-            backdrop-filter:blur(12px);
-            -webkit-backdrop-filter:blur(12px);
-          }
-          .toast-text { min-width:0; flex:1; }
-          .toast-ack {
-            border:1px solid color-mix(in srgb, var(--ma-accent) 42%, transparent);
-            border-radius:999px;
-            padding:5px 10px;
-            color:var(--ma-text-1);
-            background:color-mix(in srgb, var(--ma-accent) 18%, transparent);
-            font-size:11px;
-            font-weight:800;
-            cursor:pointer;
-          }
-          .toast.centered {
-            max-width:min(420px, calc(100% - 48px));
-            padding:14px 18px;
-            border-radius:18px;
-            font-size:14px;
-            font-weight:850;
-            text-align:center;
-            box-shadow:0 22px 54px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.12);
-          }
-          .modal-backdrop {
-            position:absolute;
-            inset:0;
-            z-index:220;
-            display:none;
-            align-items:center;
-            justify-content:center;
-            background:rgba(10,14,22,${modalOverlayAlpha.toFixed(2)});
-            backdrop-filter:blur(10px);
-            -webkit-backdrop-filter:blur(10px);
-            padding:20px;
-          }
-          .modal-backdrop.open { display:flex; }
-          .modal {
-            width:min(760px,100%);
-            max-height:min(84vh,760px);
-            overflow:auto;
-            border-radius:26px;
-            border:1px solid var(--ma-modal-border);
-            background:
-              linear-gradient(180deg, color-mix(in srgb, var(--ma-accent) 7%, transparent), transparent 22%),
-              linear-gradient(180deg, color-mix(in srgb, var(--ma-modal-bg) 96%, transparent), color-mix(in srgb, var(--ma-modal-bg) 88%, black 12%));
-            backdrop-filter:blur(22px);
-            -webkit-backdrop-filter:blur(22px);
-            box-shadow:0 28px 70px rgba(0,0,0,0.26);
-            overflow-x:hidden;
-            color:var(--ma-text-1);
-          }
-          .theme-light .modal {
-            background:
-              linear-gradient(180deg, rgba(255,255,255,0.92), rgba(247,250,255,0.88));
-            box-shadow:0 24px 60px rgba(31,41,55,0.16);
-          }
-          .theme-light .modal-header,
-          .theme-light .queue-header {
-            background:rgba(255,255,255,0.9);
-          }
-          .theme-light .modal-title,
-          .theme-light .modal-section-title,
-          .theme-light .player-card-title,
-          .theme-light .group-name,
-          .theme-light .queue-title,
-          .theme-light .media-title,
-          .theme-light .track-name,
-          .theme-light .selected-player-title,
-          .theme-light .now-track-title {
-            color:var(--ma-text-1);
-          }
-          .theme-light .modal-subtitle,
-          .theme-light .player-card-sub,
-          .theme-light .player-card-track,
-          .theme-light .queue-sub,
-          .theme-light .selected-player-sub,
-          .theme-light .now-track-subtitle,
-          .theme-light .track-sub,
-          .theme-light .media-sub {
-            color:var(--ma-text-2);
-          }
-          .modal-header {
-            display:flex;
-            align-items:center;
-            gap:12px;
-            padding:18px 20px;
-            border-bottom:1px solid color-mix(in srgb, var(--ma-border) 96%, transparent);
-            background:linear-gradient(180deg, color-mix(in srgb, var(--ma-modal-soft) 96%, transparent), transparent);
-            position:sticky;
-            top:0;
-            z-index:2;
-            backdrop-filter:blur(16px);
-            -webkit-backdrop-filter:blur(16px);
-          }
-          .modal-header-icon {
-            width:42px;
-            height:42px;
-            border-radius:14px;
-            display:grid;
-            place-items:center;
-            background:color-mix(in srgb, var(--ma-accent) 16%, transparent);
-            border:1px solid color-mix(in srgb, var(--ma-accent) 26%, transparent);
-            color:var(--ma-accent);
-            font-size:18px;
-            flex-shrink:0;
-          }
-          .modal-header-meta { min-width:0; flex:1; }
-          .modal-title { font-size:16px; font-weight:800; letter-spacing:-0.01em; }
-          .modal-subtitle {
-            margin-top:2px;
-            font-size:11.5px;
-            color:var(--ma-text-3);
-            white-space:nowrap;
-            overflow:hidden;
-            text-overflow:ellipsis;
-          }
-          .modal-body { padding:18px 20px 20px; }
-          .modal-section {
-            border:1px solid color-mix(in srgb, var(--ma-modal-border) 92%, transparent);
-            background:color-mix(in srgb, var(--ma-modal-soft) 72%, transparent);
-            border-radius:20px;
-            padding:14px;
-            margin-bottom:14px;
-            box-shadow:0 10px 24px rgba(0,0,0,0.06);
-          }
-          .theme-light .modal-section {
-            background:rgba(255,255,255,0.72);
-            box-shadow:0 10px 24px rgba(31,41,55,0.08);
-          }
-          .modal-section:last-child { margin-bottom:0; }
-          .modal-section-top {
-            display:flex;
-            align-items:center;
-            gap:10px;
-            flex-wrap:wrap;
-            margin-bottom:12px;
-          }
-          .modal-section-title { font-size:12px; font-weight:800; color:var(--ma-text-1); }
-          .modal-section-badge {
-            padding:4px 9px;
-            border-radius:999px;
-            background:color-mix(in srgb, var(--ma-soft) 94%, transparent);
-            border:1px solid color-mix(in srgb, var(--ma-border) 96%, transparent);
-            color:var(--ma-text-3);
-            font-size:11px;
-            font-weight:700;
-          }
-          .group-list { display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:10px; margin-bottom:14px; }
-          .group-item,.player-card {
-            display:flex;
-            align-items:center;
-            gap:12px;
-            padding:12px 12px;
-            border-radius:16px;
-            border:1px solid color-mix(in srgb, var(--ma-border) 96%, transparent);
-            background:color-mix(in srgb, var(--ma-panel) 78%, transparent);
-            cursor:pointer;
-            min-width:0;
-            transition:180ms ease;
-            box-shadow:0 8px 18px rgba(0,0,0,0.08);
-          }
-          .theme-light .group-item,
-          .theme-light .player-card {
-            background:rgba(255,255,255,0.88);
-            box-shadow:0 8px 18px rgba(31,41,55,0.07);
-          }
-          .group-item:hover,.player-card:hover {
-            transform:translateY(-1px);
-            border-color:color-mix(in srgb, var(--ma-accent) 28%, transparent);
-            background:color-mix(in srgb, var(--ma-accent) 8%, transparent);
-          }
-          .group-item.checked,.player-card.active {
-            border-color:color-mix(in srgb, var(--ma-accent) 32%, transparent);
-            background:linear-gradient(90deg, color-mix(in srgb, var(--ma-accent) 12%, transparent), transparent 68%), color-mix(in srgb, var(--ma-accent) 12%, transparent);
-            box-shadow:0 10px 22px rgba(224,161,27,0.10);
-          }
-          .group-item input { margin:0; accent-color:var(--ma-accent); flex-shrink:0; }
-          .group-icon,
-          .player-card-icon {
-            width:42px;
-            height:42px;
-            border-radius:14px;
-            display:grid;
-            place-items:center;
-            background:color-mix(in srgb, var(--ma-soft) 92%, transparent);
-            border:1px solid color-mix(in srgb, var(--ma-border) 96%, transparent);
-            font-size:18px;
-            flex-shrink:0;
-          }
-          .group-meta { min-width:0; flex:1; }
-          .group-name { min-width:0; font-size:13px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-          .group-sub { min-width:0; font-size:11px; color:var(--ma-text-3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px; }
-          .group-actions { display:flex; gap:8px; flex-wrap:wrap; }
-          .player-modal-grid { display:grid; grid-template-columns:1fr; gap:14px; }
-          .player-group-title { font-size:12px; font-weight:800; color:var(--ma-text-2); margin-bottom:10px; }
-          .player-list { display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:10px; }
-          .player-card { align-items:flex-start; text-align:start; width:100%; }
-          .player-card-dot { width:10px; height:10px; border-radius:50%; background:var(--ma-text-3); margin-top:6px; flex-shrink:0; box-shadow:0 0 0 5px rgba(255,255,255,0.03); }
-          .player-card.playing .player-card-dot { background:#46c16f; box-shadow:0 0 10px rgba(70,193,111,0.35); }
-          .player-card.paused .player-card-dot { background:#d9a441; }
-          .player-card-meta { min-width:0; flex:1; }
-          .player-card-top {
-            display:flex;
-            align-items:center;
-            gap:8px;
-            justify-content:space-between;
-            margin-bottom:4px;
-          }
-          .player-card-title { font-size:13px; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-          .player-card-badge {
-            padding:3px 8px;
-            border-radius:999px;
-            background:color-mix(in srgb, var(--ma-soft) 94%, transparent);
-            border:1px solid color-mix(in srgb, var(--ma-border) 96%, transparent);
-            color:var(--ma-text-3);
-            font-size:10px;
-            font-weight:800;
-            flex-shrink:0;
-          }
-          .player-card.active .player-card-badge {
-            color:var(--ma-accent);
-            border-color:color-mix(in srgb, var(--ma-accent) 28%, transparent);
-            background:color-mix(in srgb, var(--ma-accent) 10%, transparent);
-          }
-          .player-card-sub,.player-card-track { font-size:11px; color:var(--ma-text-3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-          .player-card-art,
-          .group-art {
-            width:52px;
-            height:52px;
-            border-radius:16px;
-            overflow:hidden;
-            border:1px solid color-mix(in srgb, var(--ma-border) 94%, transparent);
-            background:color-mix(in srgb, var(--ma-soft) 92%, transparent);
-            display:grid;
-            place-items:center;
-            flex-shrink:0;
-            font-size:22px;
-            color:var(--ma-text-3);
-            box-shadow:0 8px 18px rgba(0,0,0,0.10);
-          }
-          .player-card-art img,
-          .group-art img {
-            width:100%;
-            height:100%;
-            object-fit:cover;
-            display:block;
-          }
-          .group-item {
-            justify-content:flex-start;
-            align-items:center;
-            gap:12px;
-          }
-          .group-item input {
-            order:2;
-            width:24px;
-            height:24px;
-            margin-inline-start:auto;
-          }
-          .group-item .group-meta {
-            order:1;
-            min-width:0;
-            flex:1;
-          }
-          .group-item .group-name {
-            font-size:16px;
-            font-weight:800;
-            color:var(--ma-text-1);
-            white-space:nowrap;
-            overflow:hidden;
-            text-overflow:ellipsis;
-          }
-          .group-item .group-sub {
-            display:none;
-          }
-          .now-layout {
-            height:100%;
-            display:grid;
-            grid-template-columns:minmax(320px,42%) minmax(0,58%);
-            gap:calc(16px * var(--ma-ui-scale));
-            min-height:0;
-          }
-          .now-left,.now-right { min-height:0; display:flex; flex-direction:column; gap:calc(14px * var(--ma-ui-scale)); overflow:hidden; }
-          .now-right > .now-card { flex:1; }
-          .now-card {
-            border:1px solid var(--ma-border);
-            background:var(--ma-panel);
-            border-radius:calc(24px * var(--ma-ui-scale));
-            backdrop-filter:blur(16px);
-            -webkit-backdrop-filter:blur(16px);
-            box-shadow:0 10px 28px rgba(0,0,0,0.16);
-          }
-          .now-art-card {
-            padding:calc(18px * var(--ma-ui-scale));
-            min-height:0;
-            display:flex;
-            flex-direction:column;
-            justify-content:center;
-            box-shadow:0 16px 34px rgba(0,0,0,0.12);
-            flex:1 1 auto;
-          }
-          .now-art {
-            width:min(100%, clamp(200px, 34vh, 420px));
-            aspect-ratio:1/1;
-            max-width:100%;
-            border-radius:24px;
-            overflow:hidden;
-            background:var(--ma-soft);
-            display:grid;
-            place-items:center;
-            font-size:54px;
-            color:var(--ma-text-3);
-            border:1px solid var(--ma-border);
-            box-shadow:0 16px 34px rgba(0,0,0,0.14);
-            margin-inline:auto;
-          }
-          .now-track-meta { padding-top:12px; min-width:0; }
-          .now-track-title {
-            font-size:var(--ma-track-title-size);
-            font-weight:900;
-            line-height:1.06;
-            margin-bottom:6px;
-            letter-spacing:-0.02em;
-            word-break:break-word;
-          }
-          .now-track-subtitle {
-            font-size:14px;
-            color:var(--ma-text-2);
-            word-break:break-word;
-            line-height:1.45;
-          }
-          .now-controls-card {
-            padding:calc(18px * var(--ma-ui-scale));
-            box-shadow:0 16px 34px rgba(0,0,0,0.10);
-            display:grid;
-            gap:calc(14px * var(--ma-ui-scale));
-            align-content:start;
-            overflow:hidden;
-            flex:0 0 auto;
-          }
-          .now-time-row { display:flex; justify-content:space-between; gap:10px; font-size:12px; color:var(--ma-text-3); }
-          .now-progress {
-            height:12px;
-            border-radius:999px;
-            box-shadow:inset 0 1px 2px rgba(0,0,0,0.08);
-          }
-          .now-controls-main { gap:calc(10px * var(--ma-ui-scale)); flex-wrap:nowrap; justify-content:center; }
-          .big-round-btn {
-            width:var(--ma-now-button-size);
-            height:var(--ma-now-button-size);
-            border-radius:calc(20px * var(--ma-ui-scale));
-            background:color-mix(in srgb, var(--ma-soft) 96%, transparent);
-            color:var(--ma-text-1);
-            border:1px solid color-mix(in srgb, var(--ma-border) 96%, transparent);
-            box-shadow:0 12px 24px rgba(0,0,0,0.10);
-          }
-          .big-main-btn {
-            width:var(--ma-now-main-button-size);
-            height:var(--ma-now-main-button-size);
-            border-radius:50%;
-            font-size:calc(28px * var(--ma-ui-scale));
-            box-shadow:0 14px 32px rgba(224,161,27,0.22);
-          }
-          .now-controls-bottom { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:calc(12px * var(--ma-ui-scale)); align-items:center; }
-          .now-volume {
-            width:100%;
-            display:grid;
-            grid-template-columns:auto minmax(0,1fr);
-            align-items:center;
-            gap:calc(12px * var(--ma-ui-scale));
-          }
-          .now-volume input {
-            width:100%;
-            flex:unset;
-            min-width:0;
-          }
-          .now-actions {
-            display:flex;
-            gap:8px;
-            flex-wrap:wrap;
-            justify-content:flex-end;
-            align-items:center;
-          }
-          .now-player-picker-btn { font-size:12px; }
-          .now-queue-card { padding:calc(16px * var(--ma-ui-scale)); min-height:0; display:flex; flex-direction:column; overflow:hidden; }
-          .now-queue-toolbar { display:grid; gap:calc(12px * var(--ma-ui-scale)); margin-bottom:calc(12px * var(--ma-ui-scale)); }
-          .now-queue-toolbar .now-queue-header { margin-bottom:0; }
-          .now-queue-header { display:flex; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
-          .now-queue-title { font-size:15px; font-weight:700; }
-          .now-queue-body { flex:1; min-height:0; overflow:hidden; display:flex; flex-direction:column; }
-          .now-side-scroll {
-            min-height:0;
-            flex:1;
-            overflow:auto;
-            padding-inline-end:4px;
-          }
-          .now-queue-list {
-            min-height:0;
-            flex:1;
-            overflow-y:visible;
-            overflow-x:hidden;
-            display:flex;
-            flex-direction:column;
-            gap:8px;
-          }
-          .now-queue-search {
-            width:100%;
-            min-width:0;
-            flex:unset;
-          }
-          .side-search-summary {
-            display:flex;
-            align-items:center;
-            justify-content:space-between;
-            gap:10px;
-            flex-wrap:wrap;
-            margin-bottom:12px;
-          }
-          .side-search-summary-text {
-            font-size:12px;
-            color:var(--ma-text-3);
-          }
-          .mini-queue-item {
-            display:flex;
-            align-items:center;
-            gap:10px;
-            min-width:0;
-            padding:10px 10px;
-            border-radius:14px;
-            background:transparent;
-            border:1px solid transparent;
-            cursor:pointer;
-            position:relative;
-          }
-          .mini-queue-item:hover { background:var(--ma-soft); }
-          .mini-queue-item.active {
-            background:linear-gradient(90deg, color-mix(in srgb, var(--ma-accent) 18%, transparent), transparent 70%), var(--ma-soft);
-            border-color:color-mix(in srgb, var(--ma-accent) 34%, transparent);
-          }
-          .mini-queue-item.active::before {
-            content:'';
-            position:absolute;
-            inset-inline-start:0;
-            top:8px;
-            bottom:8px;
-            width:3px;
-            border-radius:999px;
-            background:linear-gradient(180deg, var(--ma-accent), color-mix(in srgb, var(--ma-accent) 70%, white 30%));
-          }
-          .mini-queue-thumb { width:40px; height:40px; border-radius:11px; flex-shrink:0; }
-          .mini-queue-meta { flex:1; min-width:0; }
-          .mini-queue-name { font-size:12px; font-weight:600; }
-          .mini-queue-item.active .mini-queue-name { color:var(--ma-text-1); font-weight:700; }
-          .mini-queue-item.active .mini-queue-artist,.mini-queue-item.active .mini-queue-index { color:color-mix(in srgb, var(--ma-accent) 68%, white 32%); }
-          .mini-queue-index { width:22px; text-align:center; font-size:11px; color:var(--ma-text-3); flex-shrink:0; }
-          .group-inline { display:flex; align-items:center; gap:8px; margin-inline-start:auto; flex-wrap:wrap; }
-          @media (max-width:1280px) {
-            .now-controls-bottom { grid-template-columns:minmax(0,1fr) auto; }
-            .now-actions { justify-content:flex-start; }
-            .now-volume { width:100%; }
-            .now-volume input { flex:1; min-width:0; }
-            .now-controls-main { justify-content:center; }
-          }
-          @media (max-width:1100px) { .now-layout { grid-template-columns:1fr; grid-template-rows:auto minmax(0,1fr); } }
-          @media (max-width:920px) {
-            .card { grid-template-columns:1fr; height:min(var(--ma-card-height), calc(100dvh - 24px)); min-height:min(620px, var(--ma-effective-height)); }
-            .sidebar {
-              border-inline-end:none;
-              border-bottom:1px solid var(--ma-border);
-              display:grid;
-              grid-template-columns:minmax(0,1fr);
-            }
-            .brand {
-              padding:12px;
-              border-bottom:1px solid color-mix(in srgb, var(--ma-border) 92%, transparent);
-            }
-            .nav { display:flex; gap:8px; overflow-x:auto; overflow-y:hidden; flex:unset; padding:10px; }
-            .nav-label { display:none; }
-            .nav-btn { width:auto; margin-bottom:0; white-space:nowrap; }
-            .player-panel {
-              display:grid;
-              grid-template-columns:minmax(0,1fr) auto;
-              gap:10px 12px;
-              padding:12px;
-              border-top:1px solid color-mix(in srgb, var(--ma-border) 92%, transparent);
-            }
-            .np-row {
-              flex-direction:row;
-              align-items:center;
-              text-align:start;
-              gap:10px;
-            }
-            .np-art {
-              width:72px;
-              height:72px;
-              border-radius:20px;
-            }
-            .np-meta { flex:1; }
-            .controls {
-              margin-inline-start:auto;
-              gap:10px;
-            }
-            .volume-row {
-              grid-column:1 / -1;
-            }
-            .topbar {
-              overflow-x:visible;
-              overflow-y:visible;
-            }
-            .topbar-row,.player-summary-row {
-              width:100%;
-              min-width:0;
-              display:grid;
-              grid-template-columns:minmax(0,1fr) auto;
-              grid-template-areas:
-                "player actions"
-                "search search";
-              align-items:center;
-              gap:10px;
-            }
-            .search {
-              grid-area:search;
-              width:100%;
-              min-width:0;
-            }
-            .selected-player-box {
-              grid-area:player;
-              width:100%;
-              min-width:0;
-              max-width:none;
-              flex:none;
-            }
-            .topbar-actions {
-              grid-area:actions;
-              margin-inline-start:0;
-              justify-self:end;
-              max-width:100%;
-              overflow-x:auto;
-              overflow-y:hidden;
-              padding-bottom:2px;
-            }
-            .status-pill { width:auto; justify-content:center; }
-            .now-controls-bottom { grid-template-columns:1fr; }
-            .now-actions { justify-content:flex-start; }
-            .group-list,.player-list { grid-template-columns:1fr; }
-            .modal-backdrop {
-              padding:
-                max(12px, env(safe-area-inset-top))
-                max(12px, env(safe-area-inset-right))
-                max(12px, env(safe-area-inset-bottom))
-                max(12px, env(safe-area-inset-left));
-            }
-          }
-          @media (max-width:720px) {
-            :host { --ma-radius-xl: 18px; }
-            .card {
-              height:min(var(--ma-card-height), calc(100dvh - 12px));
-              max-height:calc(100dvh - 12px);
-              border-radius:20px;
-            }
-            .brand {
-              padding:10px 12px;
-              gap:10px;
-            }
-            .brand-sub { display:none; }
-            .player-panel {
-              grid-template-columns:minmax(0,1fr);
-              padding:10px 12px 12px;
-            }
-            .np-row {
-              gap:10px;
-            }
-            .np-art {
-              width:64px;
-              height:64px;
-              border-radius:18px;
-            }
-            .np-title { font-size:14px; }
-            .controls {
-              margin-inline-start:0;
-              justify-content:flex-start;
-            }
-            .play-btn {
-              width:58px;
-              height:58px;
-              border-radius:20px;
-            }
-            .topbar { padding:12px; }
-            .content { padding:12px; }
-            .topbar-row,.player-summary-row {
-              grid-template-columns:1fr;
-              grid-template-areas:
-                "actions"
-                "player"
-                "search";
-            }
-            .topbar-actions {
-              justify-self:stretch;
-              width:100%;
-              justify-content:flex-start;
-              flex-wrap:nowrap;
-            }
-            .search,
-            .selected-player-box {
-              width:100%;
-              min-width:0;
-            }
-            .selected-player-box {
-              min-height:44px;
-            }
-            .icon-btn,.lang-btn,.close-btn,.theme-btn {
-              width:40px;
-              height:40px;
-            }
-            .status-pill {
-              min-height:40px;
-              padding:0 12px;
-            }
-            .now-layout {
-              height:auto;
-              min-height:0;
-              gap:12px;
-            }
-            .now-left,.now-right {
-              gap:12px;
-            }
-            .now-art-card {
-              padding:16px;
-            }
-            .now-art {
-              width:min(100%, 280px);
-              border-radius:20px;
-            }
-            .now-track-meta {
-              padding-top:10px;
-              text-align:center;
-            }
-            .now-track-title { font-size:22px; }
-            .now-track-subtitle { font-size:13px; }
-            .now-controls-card { padding:16px; gap:12px; }
-            .now-time-row { font-size:11px; }
-            .now-progress { height:10px; }
-            .big-round-btn { width:54px; height:54px; border-radius:18px; }
-            .big-main-btn { width:76px; height:76px; font-size:26px; }
-            .now-controls-main {
-              flex-wrap:nowrap;
-              gap:8px;
-            }
-            .now-controls-bottom {
-              grid-template-columns:1fr;
-              gap:10px;
-            }
-            .now-volume {
-              grid-template-columns:auto minmax(0,1fr);
-              gap:10px;
-            }
-            .now-actions {
-              width:100%;
-              justify-content:flex-start;
-            }
-            .now-actions .chip-btn {
-              width:100%;
-            }
-            .now-queue-card {
-              padding:14px;
-            }
-            .now-queue-header {
-              gap:8px;
-            }
-            .group-inline {
-              width:100%;
-              margin-inline-start:0;
-              gap:8px;
-            }
-            .group-inline .chip-btn {
-              flex:1 1 calc(50% - 4px);
-            }
-            .mini-queue-item {
-              padding:10px 8px;
-              gap:8px;
-            }
-            .mini-queue-actions .chip-btn,.queue-actions .chip-btn {
-              min-width:40px;
-              min-height:38px;
-              padding:8px 10px;
-              font-size:13px;
-            }
-            .modal {
-              width:min(100%, calc(100cqi - 16px));
-              max-height:calc(100dvh - 16px);
-              border-radius:20px;
-            }
-            .immersive-shell {
-              padding:
-                max(12px, env(safe-area-inset-top))
-                max(12px, env(safe-area-inset-right))
-                max(12px, env(safe-area-inset-bottom))
-                max(12px, env(safe-area-inset-left));
-            }
-          }
-          @media (max-width:480px) {
-            .card {
-              min-height:min(560px, var(--ma-card-height));
-              border-radius:18px;
-            }
-            .brand-title { font-size:14px; }
-            .brand-sub { font-size:10px; }
-            .nav { padding:8px; gap:6px; }
-            .nav-btn { width:auto; min-height:40px; padding:0 12px; }
-            .topbar-row { gap:8px; width:100%; min-width:0; }
-            .topbar-actions { gap:8px; }
-            .status-pill,.selected-player-box { width:auto; }
-            .now-layout { gap:12px; }
-            .now-art-card,.now-controls-card,.now-queue-card { border-radius:20px; }
-            .now-track-title { font-size:20px; }
-            .now-track-subtitle { font-size:13px; }
-            .big-round-btn { width:48px; height:48px; border-radius:16px; }
-            .big-main-btn { width:68px; height:68px; font-size:24px; }
-            .play-btn {
-              width:54px;
-              height:54px;
-              border-radius:18px;
-            }
-            .np-art {
-              width:58px;
-              height:58px;
-              border-radius:16px;
-            }
-            .selected-player-title {
-              font-size:11px;
-            }
-            .selected-player-sub {
-              font-size:10px;
-            }
-            .group-inline .chip-btn {
-              flex:1 1 100%;
-            }
-            .now-controls-main {
-              gap:6px;
-            }
-            .mini-queue-actions .chip-btn,.queue-actions .chip-btn {
-              min-width:36px;
-              min-height:36px;
-              padding:8px;
-            }
-            .modal-body { padding:14px; }
-          }
-        .mobile-volume-inline .volume-btn .ui-ic{width:20px;height:20px;}
-  .card:not(.layout-tablet) .mobile-volume-inline{grid-template-columns:auto minmax(0,1fr) auto auto;gap:10px;align-items:center;}
-  .card:not(.layout-tablet) .mobile-volume-inline .volume-value{order:1;min-width:46px;text-align:center;}
-  .card:not(.layout-tablet) .mobile-volume-inline .tablet-volume-track{order:2;}
-  .card:not(.layout-tablet) .mobile-volume-inline .volume-btn{order:3;width:38px;height:38px;border-radius:999px;}
-  .card:not(.layout-tablet) .mobile-volume-inline.has-volume-step-buttons{grid-template-columns:auto auto minmax(0,1fr) auto auto auto;gap:8px;}
-  .card:not(.layout-tablet) .mobile-volume-inline.has-volume-step-buttons .volume-value{order:1;}
-  .card:not(.layout-tablet) .mobile-volume-inline.has-volume-step-buttons .volume-step-minus{order:2;}
-  .card:not(.layout-tablet) .mobile-volume-inline.has-volume-step-buttons .tablet-volume-track{order:3;}
-  .card:not(.layout-tablet) .mobile-volume-inline.has-volume-step-buttons .volume-step-plus{order:4;}
-  .card:not(.layout-tablet) .mobile-volume-inline.has-volume-step-buttons .volume-btn{order:5;}
-  .card:not(.layout-tablet) .mobile-volume-inline .volume-btn.active{background:rgba(170,38,38,.28)!important;border-color:rgba(255,98,98,.36)!important;color:#fff!important;box-shadow:0 10px 24px rgba(120,22,22,.22)!important;}
-  .card:not(.layout-tablet) .queue-action-item{min-height:58px;margin-bottom:10px;}
-  .mobile-art-actions{left:50%!important;right:auto!important;transform:translateX(-50%)!important;inset-inline:auto!important;inset-block-end:16px!important;display:flex!important;align-items:center!important;justify-content:center!important;gap:10px!important;padding:0!important;border-radius:0!important;background:transparent!important;border:none!important;box-shadow:none!important;backdrop-filter:none!important;}
-  .card.layout-tablet .mobile-art-actions{left:50%!important;right:auto!important;transform:translateX(-50%)!important;inset-inline:auto!important;inset-block-end:18px!important;}
-  .theme-light .mobile-art-actions{background:transparent!important;border-color:transparent!important;box-shadow:none!important;}
-  .mobile-art-fab{width:46px;min-width:46px;height:46px;border-radius:999px;}
-  @media (max-width: 600px){.mobile-art-actions{left:50%!important;right:auto!important;transform:translateX(-50%)!important;inset-inline:auto!important;inset-block-end:12px!important;gap:8px!important;}.mobile-art-fab{width:42px;min-width:42px;height:42px;}}
-  .card.layout-tablet .menu-backdrop{justify-content:center!important;align-items:stretch!important;padding:var(--flow-sheet-pad-block) var(--flow-sheet-pad-inline)!important;}
-  .card.layout-tablet .menu-sheet{width:min(calc(100% - var(--flow-sheet-gutter)), 920px)!important;max-width:min(calc(100% - var(--flow-sheet-gutter)), 920px)!important;max-height:calc(100% - 26px)!important;height:calc(100% - 26px)!important;margin-inline:auto!important;}
-  .card.layout-tablet .menu-sheet.sheet-library,.card.layout-tablet .menu-sheet.sheet-search{width:min(calc(100% - var(--flow-sheet-gutter)), 1120px)!important;max-width:min(calc(100% - var(--flow-sheet-gutter)), 1120px)!important;}
-  .card.layout-tablet .menu-sheet.sheet-queue{width:min(calc(100% - var(--flow-sheet-queue-gutter)), 980px)!important;max-width:min(calc(100% - var(--flow-sheet-queue-gutter)), 980px)!important;}
-  .card.layout-tablet .menu-sheet.sheet-actions,.card.layout-tablet .menu-sheet.sheet-simple,.card.layout-tablet .menu-sheet.sheet-schedules,.card.layout-tablet .menu-sheet.sheet-players,.card.layout-tablet .menu-sheet.sheet-groupplayers,.card.layout-tablet .menu-sheet.sheet-settings{width:min(calc(100% - var(--flow-sheet-narrow-gutter)), 860px)!important;max-width:min(calc(100% - var(--flow-sheet-narrow-gutter)), 860px)!important;}
-  .card.layout-tablet .menu-sheet.sheet-schedules{width:min(calc(100% - var(--flow-sheet-gutter)), 1080px)!important;max-width:min(calc(100% - var(--flow-sheet-gutter)), 1080px)!important;}
-  .card.layout-tablet .menu-body.sheet-schedules{justify-items:stretch!important;align-content:start!important;overflow:auto!important;}
-  .card.layout-tablet .menu-body.sheet-schedules .settings-shell{height:auto!important;min-height:100%!important;grid-template-rows:auto auto!important;overflow:visible!important;}
-  .card.layout-tablet .wake-schedule-layout{height:auto!important;display:grid!important;grid-template-columns:minmax(0,1fr)!important;align-items:stretch!important;overflow:visible!important;}
-  .card.layout-tablet .wake-schedule-list-card{max-height:none!important;overflow:visible!important;}
-  .card.layout-tablet .wake-schedule-editor-card{overflow:visible!important;}
-  .card.layout-tablet .scheduled-start-grid{grid-template-columns:minmax(0,1fr)!important;}
-  .card.layout-tablet .sleep-timer-corner{inset-block-end:22px!important;inset-block-start:auto!important;transform:none!important;justify-items:end!important;z-index:8!important;}
-  .card.layout-tablet.rtl .sleep-timer-corner{inset-inline-end:76px!important;inset-inline-start:auto!important;}
-  .card.layout-tablet:not(.rtl) .sleep-timer-corner{inset-inline-start:76px!important;inset-inline-end:auto!important;}
-  .card.layout-tablet .queue-list{max-width:920px;margin-inline:auto;}
-  .card.layout-tablet .queue-row{min-height:88px!important;}
-  .card.layout-tablet .active-player-chip .bars,.card.layout-tablet .active-player-card .bars{display:none!important;}
-  .menu-backdrop{overflow:hidden;isolation:isolate;}
-  .menu-backdrop::before{content:"";position:absolute;inset:-42px;background:var(--menu-dynamic-art, var(--dynamic-art-url, none)) center/cover no-repeat;filter:blur(42px) saturate(1.12) brightness(.86);transform:scale(1.12);opacity:0;pointer-events:none;z-index:0;transition:opacity .22s ease;}
-  .menu-backdrop.has-menu-art::before{opacity:.58;}
-  .menu-backdrop::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(5,7,12,.46),rgba(8,10,16,.72));pointer-events:none;z-index:0;}
-  .theme-light .menu-backdrop::after{background:linear-gradient(180deg,rgba(238,243,250,.34),rgba(222,229,240,.68));}
-  .menu-backdrop>.menu-sheet{position:relative;z-index:1;isolation:isolate;}
-  .menu-sheet::before{content:"";position:absolute;inset:-24px;background:var(--menu-dynamic-art, var(--dynamic-art-url, none)) center/cover no-repeat;filter:blur(30px) saturate(1.08);transform:scale(1.08);opacity:0;pointer-events:none;z-index:0;}
-  .menu-backdrop.has-menu-art .menu-sheet::before{opacity:.22;}
-  .menu-sheet::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(20,22,31,.82),rgba(12,14,22,.94));pointer-events:none;z-index:0;}
-  .theme-light .menu-sheet::after{background:linear-gradient(180deg,rgba(255,255,255,.86),rgba(245,248,253,.94));}
-  .menu-sheet>*,.menu-head,.menu-body{position:relative;z-index:1;}
-  .card.dynamic-theme .modal{position:relative;overflow:hidden;isolation:isolate;}
-  .card.dynamic-theme .modal::before{content:"";position:absolute;inset:-24px;background:var(--dynamic-art-url, none) center/cover no-repeat;filter:blur(34px) saturate(1.08);transform:scale(1.08);opacity:.22;pointer-events:none;z-index:0;}
-  .card.dynamic-theme .modal::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(20,22,31,.8),rgba(12,14,22,.92));pointer-events:none;z-index:0;}
-  .theme-light.card.dynamic-theme .modal::after{background:linear-gradient(180deg,rgba(255,255,255,.84),rgba(245,248,253,.94));}
-  .card.dynamic-theme .modal>*{position:relative;z-index:1;}
-  .group-player-card{position:relative;}
-  .group-player-card.checked,.group-player-row.checked{border-color:rgba(var(--dynamic-accent-rgb,245 166 35) / .42)!important;background:linear-gradient(180deg,rgba(var(--dynamic-accent-rgb,245 166 35) / .13),rgba(255,255,255,.06))!important;}
-  .group-player-card .player-premium-head{position:relative;padding:10px 50px 0 0!important;}
-  .group-player-title-row{gap:8px;}
-  .group-player-toggle{position:absolute;top:6px;right:7px;left:auto;bottom:auto;width:29px;height:29px;border-radius:0;display:inline-grid;place-items:center;flex:0 0 auto;border:0;background:transparent;color:rgba(210,216,226,.62);box-shadow:none;opacity:.9;z-index:2;pointer-events:none;transition:transform .15s ease,opacity .15s ease,color .15s ease,filter .15s ease;}
-  .group-player-toggle.checked{color:rgb(var(--dynamic-accent-rgb,245 166 35));filter:drop-shadow(0 0 8px rgba(var(--dynamic-accent-rgb,245 166 35) / .34));opacity:1;}
-  .group-item-toggle{width:28px;height:28px;border-radius:999px;display:inline-grid;place-items:center;flex:0 0 auto;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);color:var(--ma-text-1);box-shadow:inset 0 1px 0 rgba(255,255,255,.12);}
-  .group-item-toggle.checked{border-color:rgba(var(--dynamic-accent-rgb,245 166 35) / .42);background:rgba(var(--dynamic-accent-rgb,245 166 35) / .18);color:var(--ma-accent);}
-  .theme-light .group-player-toggle{color:rgba(74,84,100,.62);}
-  .theme-light .group-player-toggle.checked{color:rgb(var(--dynamic-accent-rgb,245 166 35));}
-  .theme-light .group-item-toggle{border-color:rgba(26,39,61,.14);background:rgba(255,255,255,.74);color:#263247;}
-  .group-player-toggle .ui-ic{width:18px;height:18px;}
-  .group-item-toggle .ui-ic{width:15px;height:15px;}
-  .group-player-check,.group-player-card .group-player-check,.group-item input[type="checkbox"]{position:absolute!important;width:1px!important;height:1px!important;opacity:0!important;pointer-events:none!important;margin:0!important;}
-  .group-item .group-name{display:flex;align-items:center;gap:10px;min-width:0;}
-  .group-item .group-name .group-item-toggle{margin-inline-start:auto;}
-  .action-btn.busy{position:relative;display:inline-flex!important;align-items:center;justify-content:center;gap:8px;cursor:progress!important;pointer-events:none;color:var(--ma-accent);border-color:rgba(var(--dynamic-accent-rgb,245 166 35) / .34);background:linear-gradient(180deg,rgba(var(--dynamic-accent-rgb,245 166 35) / .2),rgba(255,255,255,.07));}
-  .action-btn.busy::before{content:"";width:14px;height:14px;border-radius:999px;border:2px solid currentColor;border-inline-end-color:transparent;animation:spin .72s linear infinite;}
-  .action-btn.busy::after{content:"";position:absolute;inset:-4px;border-radius:inherit;border:1px solid rgba(var(--dynamic-accent-rgb,245 166 35) / .28);animation:voiceAssistantListenPulse 1s ease-out infinite;pointer-events:none;}
-
+        <style>${classicStyles({allocatedHeight,effectiveHeight,uiScale,mainOpacity,popupOpacity,darkBgAlpha,darkSidebarAlpha,darkPanelAlpha,lightBgAlpha,lightPanelAlpha,modalOverlayAlpha})}
+  ${interfaceStyles}
   </style>
 
         <div class="card ${rtl ? "rtl" : ""} theme-${visualTheme}${theme === "custom" ? " theme-custom" : ""}${this._isHotelMode() ? " hotel-mode" : ""}${layoutProfileClass ? ` ${layoutProfileClass}` : ""}" style="${layoutProfileStyle}--v2-custom-text:${this._state.mobileCustomTextTone === "dark" ? "#1f2633" : "#ffffff"};">
@@ -3622,7 +1561,7 @@ export function createHomeiiBaseMusicCard({
 
             <div class="player-panel">
               <div class="np-row" id="npRow" title="${this._i18n("ui.now_playing")}">
-                <div class="np-art" id="npArt">${this._artPlaceholderHtml("music_note")}</div>
+                <div class="np-art" id="npArt">${this._artPlaceholderHtml("album")}</div>
                 <div class="np-meta">
                   <div class="np-title" id="npTitle">${this._i18n("ui.nothing_playing")}</div>
                   <div class="np-sub" id="npSub">—</div>
@@ -3750,8 +1689,7 @@ export function createHomeiiBaseMusicCard({
         const pct = Number(e.target.value || 0);
         e.target.style.setProperty("--vol-pct", `${pct}%`);
         this._setButtonIcon(this.$("btnMute"), pct === 0 ? "volume_mute" : pct < 40 ? "volume_low" : "volume_high");
-        clearTimeout(this._volumeTimer);
-        this._volumeTimer = setTimeout(() => this._setVolume(pct / 100), 120);
+        this._setVolume(pct / 100);
         this._syncBigVolumeMirror(pct);
       });
 
@@ -3789,7 +1727,14 @@ export function createHomeiiBaseMusicCard({
 
     async _init() {
       try {
-        await this._ensureConfigEntryId();
+        if (typeof this._ensureHomeiiEngineHandshake === "function") {
+          const ready = await this._ensureHomeiiEngineHandshake();
+          if (!ready) return;
+        }
+        if (typeof this._refreshEnginePlayers === "function") {
+          await this._refreshEnginePlayers({ force: true });
+        }
+        if (!this._homeiiEngineRequired?.()) await this._ensureConfigEntryId();
         this._loadPlayers();
         this._connectMA();
         this._refreshGroupingState();
@@ -3869,10 +1814,6 @@ export function createHomeiiBaseMusicCard({
         this._imgObserver = null;
         this._imgObserverRoot = null;
       }
-      if (this._ws) {
-        try { this._ws.close(); } catch (_) {}
-        this._ws = null;
-      }
       clearInterval(this._pollTimer);
       clearInterval(this._progressTimer);
       clearTimeout(this._searchTimer);
@@ -3898,7 +1839,7 @@ export function createHomeiiBaseMusicCard({
       this._state.hasAutoSelectedPlayer = hadAutoSelected;
       this._state.cardTheme = currentTheme;
       this._state.immersiveNowPlayingOpen = false;
-      this._imageBlobCache.clear();
+      this._clearImageBlobCache();
 
       this._build();
       this._init().then(() => {
@@ -3920,6 +1861,7 @@ export function createHomeiiBaseMusicCard({
 
     _playerStateLabel(player) {
       if (!player) return this._i18n("ui.idle");
+      if (!HomeiiPlayersFoundation.isPlayerAvailable(player)) return this._i18n("ui.disconnected");
       if (player.state === "playing") return this._i18n("ui.playing");
       if (player.state === "paused") return this._i18n("ui.paused");
       return this._i18n("ui.idle");
@@ -3930,7 +1872,7 @@ export function createHomeiiBaseMusicCard({
     }
 
     _isPlayerActive(player) {
-      if (!player) return false;
+      if (!HomeiiPlayersFoundation.isPlayerAvailable(player)) return false;
       const attrs = player.attributes || {};
       return player.state === "playing" || player.state === "paused" || !!attrs.media_title || !!attrs.active_queue;
     }
@@ -3942,7 +1884,9 @@ export function createHomeiiBaseMusicCard({
     }
 
     _thisDeviceStorageKey() {
-      return `homeii-this-device-player::${this._maBrowserUrl() || this._config?.ma_url || location.origin || "default"}`;
+      const instanceId = String(this._state?.engineInstanceId || this._config?.homeii_engine_instance_id || "default").trim();
+      const profileId = String(this._state?.engineProfileId || this._config?.homeii_engine_profile_id || "default").trim();
+      return `homeii-this-device-player::${instanceId || "default"}:${profileId || "default"}`;
     }
 
     _getRememberedThisDevicePlayerId() {
@@ -4107,17 +2051,9 @@ export function createHomeiiBaseMusicCard({
       return playerId;
     }
 
-    _localSendspinModuleUrl() {
-      return new URL(/* @vite-ignore */ "./sendspin-js/index.js", import.meta.url).href;
-    }
-
     async _loadLocalSendspinModule() {
       if (!this._localSendspinModule) {
-        this._localSendspinModule = import(this._localSendspinModuleUrl()).catch((error) => {
-          this._localSendspinModule = null;
-          const detail = error?.message ? `: ${error.message}` : "";
-          throw new Error(`${this._localText("Could not load the local Sendspin player files", "לא הצלחתי לטעון את קבצי נגן Sendspin המקומי")}${detail}`);
-        });
+        this._localSendspinModule = Promise.resolve(HomeiiSendspinModule);
       }
       return this._localSendspinModule;
     }
@@ -4135,6 +2071,10 @@ export function createHomeiiBaseMusicCard({
     }
 
     _assertLocalSendspinConfig() {
+      if (this._state.engineCapabilities?.sendspin_bridge === true) {
+        if (typeof WebSocket === "undefined") throw new Error(this._localText("This browser does not support WebSocket.", "הדפדפן הזה לא תומך ב-WebSocket."));
+        return;
+      }
       const baseUrl = this._maBrowserUrl();
       if (!baseUrl || !this._maToken) {
         throw new Error(this._localText(
@@ -4148,8 +2088,20 @@ export function createHomeiiBaseMusicCard({
       this._assertMaBrowserUrlSecure(baseUrl);
     }
 
-    _openAuthenticatedSendspinSocket(playerId) {
-      const wsUrl = this._localSendspinWsUrl();
+    async _openAuthenticatedSendspinSocket(playerId) {
+      const engineBridge = this._state.engineCapabilities?.sendspin_bridge === true;
+      let wsUrl;
+      if (engineBridge) {
+        const signed = await this._callHomeAssistantWs({
+          type: "auth/sign_path", path: `/api/homeii_flow/sendspin/${encodeURIComponent(playerId)}`, expires: 30,
+        });
+        if (!signed?.path) throw new Error("Home Assistant could not authorize local playback.");
+        const url = new URL(signed.path, this._hass?.hassUrl?.("/") || window.location.href);
+        url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
+        wsUrl = url.toString();
+      } else {
+        wsUrl = this._localSendspinWsUrl();
+      }
       return new Promise((resolve, reject) => {
         let settled = false;
         let ws = null;
@@ -4172,7 +2124,7 @@ export function createHomeiiBaseMusicCard({
           reject(error instanceof Error ? error : new Error(String(error || "Sendspin connection failed")));
         };
         try {
-          this._debugLog("info", "[Homeii Sendspin] opening proxy socket", wsUrl);
+          this._debugLog("info", "[Homeii Sendspin] opening proxy socket", engineBridge ? "Home Assistant" : this._sanitizeDiagnosticUrl?.(wsUrl));
           ws = new WebSocketCtor(wsUrl);
           ws.binaryType = "arraybuffer";
         } catch (error) {
@@ -4181,6 +2133,7 @@ export function createHomeiiBaseMusicCard({
         }
         timeout = setTimeout(() => fail(new Error(this._localText("Timed out connecting to Sendspin.", "החיבור ל-Sendspin לקח יותר מדי זמן."))), 10000);
         ws.onopen = () => {
+          if (engineBridge) return;
           try {
             this._debugLog("info", "[Homeii Sendspin] sending auth to proxy");
             ws.send(JSON.stringify({ type: "auth", token: this._maToken, client_id: playerId }));
@@ -4198,11 +2151,13 @@ export function createHomeiiBaseMusicCard({
                 fail(new Error(this._localText("Music Assistant rejected the Sendspin token.", "Music Assistant דחה את ה-token של Sendspin.")));
                 return;
               }
+              if (message?.type !== "auth_ok") return;
             } catch (_) {
-              this._debugLog("info", "[Homeii Sendspin] proxy auth response", event.data);
+              fail(new Error("Invalid Sendspin authentication response."));
+              return;
             }
           } else {
-            this._debugLog("info", "[Homeii Sendspin] proxy auth response", "binary");
+            return;
           }
           settled = true;
           cleanup();
@@ -4444,15 +2399,10 @@ export function createHomeiiBaseMusicCard({
         } else if (command === "stop") {
           await this._stopPlayer(player.entity_id);
         } else if (command === "play" || command === "pause") {
-          const directCommand = command === "play" ? "players/cmd/play" : "players/cmd/pause";
-          if (this._isDirectMaPlayer(player)) {
-            await this._callDirectMaPlayerCommand(player, directCommand);
-          } else {
-            await this._hass?.callService?.("media_player", command === "play" ? "media_play" : "media_pause", { entity_id: player.entity_id });
-          }
+          await this._callHomeiiEnginePlayerCommand(player.entity_id, command);
         }
         await this._refreshDirectMaPlayers().catch(() => {});
-        setTimeout(() => this._ensureQueueSnapshot(true), 450);
+        this._scheduleQueueRefreshAfterMutation(450);
       } catch (error) {
         this._debugLog("warn", "[Homeii Sendspin] media session action failed", command, error);
       }
@@ -4478,7 +2428,7 @@ export function createHomeiiBaseMusicCard({
     _scheduleLocalSendspinReconnect(reason = "lifecycle", delayMs = 900) {
       this._adoptLocalSendspinGlobalSession();
       if (!this._isLocalSendspinDesired()) return;
-      if (!this._maBrowserUrl() || !this._maToken) return;
+      if (this._state.engineCapabilities?.sendspin_bridge !== true && (!this._maBrowserUrl() || !this._maToken)) return;
       if (this._localSendspinConnecting || this._localSendspinConnected) return;
       if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
       this._clearLocalSendspinReconnectTimer();
@@ -4502,6 +2452,10 @@ export function createHomeiiBaseMusicCard({
         this._state.localSendspinStatus = this._localSendspinConnected ? "connected" : "suspended";
         return;
       }
+      this._adoptLocalSendspinGlobalSession();
+      this._localSendspinPlayer?.resumePlayback?.().catch((error) => {
+        this._debugLog("warn", "[Homeii Sendspin] audio resume failed", error);
+      });
       this._scheduleLocalSendspinReconnect(type, type === "pageshow" ? 350 : 800);
     }
 
@@ -4655,6 +2609,14 @@ export function createHomeiiBaseMusicCard({
         const audioElement = this._ensureLocalSendspinAudioElement();
         let syncDelay = 0;
         try { syncDelay = Number(localStorage.getItem(this._localSendspinSyncDelayStorageKey()) || 0) || 0; } catch (_) {}
+        const volumeStorageKey = `homeii_local_sendspin_volume_${playerId}`;
+        let savedVolume = null;
+        try {
+          const storedVolume = localStorage.getItem(volumeStorageKey);
+          if (storedVolume !== null && Number.isFinite(Number(storedVolume))) {
+            savedVolume = Math.max(0, Math.min(100, Number(storedVolume)));
+          }
+        } catch (_) {}
         this._localSendspinPlayer = new SendspinPlayer({
           playerId,
           webSocket,
@@ -4665,6 +2627,11 @@ export function createHomeiiBaseMusicCard({
           correctionMode: "quality-local",
           onStateChange: (state) => {
             this._localSendspinState = state;
+            if (this._localSendspinConnected && !this._localSendspinSuppressClose
+              && Number.isFinite(state?.volume) && state.volume !== savedVolume) {
+              savedVolume = state.volume;
+              try { localStorage.setItem(volumeStorageKey, String(savedVolume)); } catch (_) {}
+            }
             this._syncLocalSendspinGlobalSession();
           },
           onDelayCommand: (delayMs) => {
@@ -4678,6 +2645,7 @@ export function createHomeiiBaseMusicCard({
             "ההפעלה של נגן Sendspin המקומי לקחה יותר מדי זמן."
           ))), 15000)),
         ]);
+        if (savedVolume !== null) this._localSendspinPlayer.setVolume(savedVolume);
         this._localSendspinConnected = true;
         this._state.localSendspinStatus = "connected";
         this._state.localSendspinDisconnecting = false;
@@ -4843,8 +2811,8 @@ export function createHomeiiBaseMusicCard({
       const normalizedVolume = Number.isFinite(volumeLevel)
         ? (volumeLevel > 1 ? volumeLevel / 100 : volumeLevel)
         : 0;
-      const updatedAt = Number(raw.elapsed_time_last_updated || currentMedia.elapsed_time_last_updated || 0);
-      const mediaUpdatedAt = updatedAt > 0 ? new Date(updatedAt * 1000).toISOString() : undefined;
+      const timing = HomeiiMediaPresentationFoundation.playbackPositionPair(raw);
+      const mediaUpdatedAt = timing.updatedAt > 0 ? new Date(timing.updatedAt).toISOString() : undefined;
       const activeQueue = String(raw.active_queue || raw.queue_id || currentMedia.source_id || playerId).trim();
       const name = raw.name || raw.display_name || raw.friendly_name || currentMedia.title || playerId;
       const attrs = {
@@ -4872,7 +2840,7 @@ export function createHomeiiBaseMusicCard({
         media_artist: currentMedia.artist || "",
         media_album_name: currentMedia.album || "",
         media_duration: currentMedia.duration || 0,
-        media_position: raw.elapsed_time ?? currentMedia.elapsed_time ?? 0,
+        media_position: timing.position,
         media_position_updated_at: mediaUpdatedAt,
         entity_picture: currentMedia.image_url || "",
         entity_picture_local: currentMedia.image_url || "",
@@ -4925,10 +2893,14 @@ export function createHomeiiBaseMusicCard({
     }
 
     async _refreshDirectMaPlayers(options = {}) {
+      if (this._homeiiEngineRequired?.()) {
+        this._directMaPlayers = [];
+        return [];
+      }
       if (this._directMaPlayersRefreshPromise) return this._directMaPlayersRefreshPromise;
       this._directMaPlayersRefreshPromise = (async () => {
         try {
-          const rawPlayers = await this._callDirectMaCommand("players/all", {
+          const rawPlayers = await this._callEngineMaCommand("players/all", {
             return_unavailable: true,
             return_disabled: false,
             return_protocol_players: true,
@@ -4964,17 +2936,20 @@ export function createHomeiiBaseMusicCard({
     async _callDirectMaPlayerCommand(playerOrEntityId, command, args = {}) {
       const playerId = this._directMaPlayerId(playerOrEntityId);
       if (!playerId) throw new Error("Direct Music Assistant player was not found");
-      return this._callDirectMaCommand(command, { player_id: playerId, ...args });
+      return this._callEngineMaCommand(command, { player_id: playerId, ...args });
     }
 
     async _playMediaOnDirectMaPlayer(entityId, uri, mediaType = "album", enqueue = "play", options = {}) {
+      if (this._homeiiEngineRequired?.()) {
+        throw new Error("Direct Music Assistant playback is disabled in HOMEii Flow 6. Use HOMEii Flow Engine.");
+      }
       const player = this._playerByEntityId(entityId);
       const queueId = this._directMaQueueId(player || entityId);
       if (!queueId) throw new Error("Direct Music Assistant player is not ready");
       if (enqueue === "shuffle") {
-        await this._callDirectMaCommand("player_queues/shuffle", { queue_id: queueId, shuffle_enabled: true });
+        await this._callEngineMaCommand("player_queues/shuffle", { queue_id: queueId, shuffle_enabled: true });
       }
-      await this._callDirectMaCommand("player_queues/play_media", {
+      await this._callEngineMaCommand("player_queues/play_media", {
         queue_id: queueId,
         media: uri,
         option: this._directMaQueueOption(enqueue),
@@ -4986,13 +2961,14 @@ export function createHomeiiBaseMusicCard({
       }
       if (entityId === this._state.selectedPlayer) {
         this._refreshDirectMaPlayers().catch(() => {});
-        setTimeout(() => this._ensureQueueSnapshot(true), 600);
-        setTimeout(() => this._ensureQueueSnapshot(true), 1600);
+        this._scheduleQueueRefreshAfterMutation(600);
       }
       return true;
     }
 
     _connectThisDevicePlayer() {
+      if (this._focusConnectedThisDevicePlayer()) return Promise.resolve(true);
+      if (this._thisDeviceFocusPromise) return this._thisDeviceFocusPromise;
       this._state.localSendspinDisconnecting = false;
       this._state.localSendspinStatus = "connecting";
       if (this._state.menuOpen && typeof this._renderMobileMenu === "function") this._renderMobileMenu().catch(() => {});
@@ -5006,12 +2982,38 @@ export function createHomeiiBaseMusicCard({
       this._state.awaitingThisDevicePlayer = true;
       this._state.controlRoomRevealThisDevicePending = true;
       this._state.knownBrowserPlayerIds = this._getBrowserPlayers().map((p) => p.entity_id);
-      this._startLocalSendspinPlayer().catch((error) => {
+      this._thisDeviceFocusPromise = this._startLocalSendspinPlayer().then(async () => {
+        for (let attempt = 0; attempt < 12; attempt++) {
+          if (this._state.localSendspinStatus === "error" || this._state.localSendspinDisconnecting) return false;
+          if (this._homeiiEngineRequired?.()) await this._refreshEnginePlayers({ force: true });
+          else await this._refreshDirectMaPlayers();
+          this._loadPlayers();
+          if (this._focusConnectedThisDevicePlayer()) return true;
+          await new Promise((resolve) => setTimeout(resolve, 750));
+        }
+        throw new Error(this._localText("The local player is not available yet. Please try again.", "הנגן המקומי עדיין אינו זמין לבחירה. נסה שוב."));
+      }).catch((error) => {
         this._state.localSendspinDisconnecting = false;
         this._state.awaitingThisDevicePlayer = false;
         this._state.controlRoomRevealThisDevicePending = false;
         this._toastError(error?.message || this._localText("Local Sendspin connection failed.", "חיבור Sendspin המקומי נכשל."));
-      });
+        return false;
+      }).finally(() => { this._thisDeviceFocusPromise = null; });
+      return this._thisDeviceFocusPromise;
+    }
+
+    _focusConnectedThisDevicePlayer() {
+      this._adoptLocalSendspinGlobalSession();
+      if (!this._localSendspinConnected) return false;
+      const player = this._getThisDevicePlayer(this._state.players || []);
+      if (!player?.entity_id || !this._isLocalSendspinPlayer(player) || !this._isAvailableThisDevicePlayer(player)) return false;
+      this._selectPlayer(player.entity_id, true);
+      if (this._state.selectedPlayer !== player.entity_id) return false;
+      this._state.awaitingThisDevicePlayer = false;
+      this._revealControlRoomThisDevicePlayer(player.entity_id, { sync: false });
+      this._closeMobileMenu?.();
+      if (this._state.controlRoomOpen) this._closeControlRoom?.({ silent: true });
+      return true;
     }
 
     _disconnectThisDevicePlayer() {
@@ -5153,7 +3155,7 @@ export function createHomeiiBaseMusicCard({
                 return `
                   <button class="player-card ${stateCls} ${selected ? "active" : ""}" data-modal-player="${this._esc(p.entity_id)}">
                     <span class="player-card-dot"></span>
-                    <span class="player-card-art">${art ? `<img src="${this._esc(art)}" alt="">` : this._artPlaceholderHtml("speaker")}</span>
+                    <span class="player-card-art">${art ? this._imgHtml(art, "", { fallbackIcon: "speaker" }) : this._artPlaceholderHtml("speaker")}</span>
                     <span class="player-card-meta">
                       <span class="player-card-top">
                         <span class="player-card-title">${this._esc(name)}</span>
@@ -5211,7 +3213,7 @@ export function createHomeiiBaseMusicCard({
     }
 
     _cleanAllLabel() {
-      return this._i18n("ui.clean_all", {}, this._m("Clean all", "נקה הכל")) || this._m("Clean all", "נקה הכל");
+      return this._m("Disconnect", "ניתוק");
     }
 
     _cleanAllConfirmTitle() {
@@ -5244,8 +3246,13 @@ export function createHomeiiBaseMusicCard({
       setTimeout(() => this._updateNowPlayingState(), 350);
     }
 
+    _normalizedMusicAssistantInterfaceUrl() {
+      const configured = String(this._config?.ma_interface_url || "").trim();
+      return configured || "/music-assistant";
+    }
+
     _launchMusicAssistant() {
-      window.open(this._config.ma_interface_url || "/music-assistant", this._config.ma_interface_target || "_self");
+      window.open(this._normalizedMusicAssistantInterfaceUrl(), this._config.ma_interface_target || "_self");
     }
 
     _openNowPlayingView() {
@@ -5480,7 +3487,10 @@ export function createHomeiiBaseMusicCard({
         this._state.mobileHistoryRenderedHtml = "";
       }
       this._setHistoryDrawerOpen(next);
-      if (next) this._syncRecentHistoryUi(true);
+      if (next) {
+        this._syncRecentHistoryUi(true);
+        syncScreenDock(this, this.$("historyDrawer"), "history", () => this._setHistoryDrawerOpen(false));
+      }
     }
 
     _syncRecentHistoryUi(force = false) {
@@ -5517,6 +3527,7 @@ export function createHomeiiBaseMusicCard({
           host.innerHTML = emptyHtml;
           this._state.mobileHistoryRenderedHtml = emptyHtml;
         }
+        if (this._state.mobileHistoryDrawerOpen) syncScreenDock(this, drawer, "history", () => this._setHistoryDrawerOpen(false));
         return;
       }
       const nextHtml = `
@@ -5527,8 +3538,8 @@ export function createHomeiiBaseMusicCard({
           </button>
         </div>
         ${items.map((item, index) => `
-          <button class="history-chip" data-history-index="${this._esc(String(index))}" title="${this._esc(item.title || "")}">
-            <span class="history-chip-art">${item.image ? `<img src="${this._esc(item.image)}" alt="">` : this._iconSvg("music_note")}</span>
+          <button class="history-chip" data-history-index="${this._esc(String(index))}" data-history-key="${this._esc(`${tab}:${item.uri}`)}" title="${this._esc(item.title || "")}">
+            <span class="history-chip-art">${item.image ? this._imgHtml(item.image, "", { fallbackIcon: "album" }) : this._iconSvg("album")}</span>
             <span class="history-chip-copy">
               <span class="history-chip-title">${this._esc(item.title || this._i18n("ui.recent_track"))}</span>
               <span class="history-chip-sub">${this._esc(item.artist || item.album || item.provider_label || "—")}</span>
@@ -5556,6 +3567,7 @@ export function createHomeiiBaseMusicCard({
           this._setHistoryDrawerOpen(false);
         }));
       }
+      if (this._state.mobileHistoryDrawerOpen) syncScreenDock(this, drawer, "history", () => this._setHistoryDrawerOpen(false));
     }
 
     _controlRoomEnabled() {
@@ -5638,7 +3650,7 @@ export function createHomeiiBaseMusicCard({
       const target = this._controlRoomFocusTarget();
       return `
         <div class="control-room-context-chip">
-          <span class="control-room-context-art">${target.art ? `<img src="${this._esc(target.art)}" alt="">` : this._iconSvg("speaker")}</span>
+          <span class="control-room-context-art">${target.art ? this._imgHtml(target.art, "", { fallbackIcon: "speaker" }) : this._iconSvg("speaker")}</span>
           <span class="control-room-context-copy">
             <span class="control-room-context-kicker">${this._esc(target.kicker)}</span>
             <span class="control-room-context-name">${this._esc(target.name)}</span>
@@ -5665,7 +3677,7 @@ export function createHomeiiBaseMusicCard({
 
     _controlRoomAllPlayers() {
       this._loadPlayers();
-      const players = Array.isArray(this._state.players) ? this._state.players : [];
+      const players = (Array.isArray(this._state.players) ? this._state.players : []).filter(HomeiiPlayersFoundation.isPlayerAvailable);
       const visible = players.filter((player) => !this._isLikelyBrowserPlayer(player) || this._isLocalSendspinPlayer(player));
       return visible.length ? visible : players;
     }
@@ -5811,7 +3823,7 @@ export function createHomeiiBaseMusicCard({
         <div class="control-room-group-summary" data-control-room-scroll="groups">
           ${groups.map((group) => `
             <div class="control-room-group-chip" title="${this._esc(group.label)}">
-              <span class="control-room-group-art">${group.art ? `<img src="${this._esc(group.art)}" alt="">` : this._iconSvg("speaker")}</span>
+              <span class="control-room-group-art">${group.art ? this._imgHtml(group.art, "", { fallbackIcon: "speaker" }) : this._iconSvg("speaker")}</span>
               <span class="control-room-group-copy">
                 <span class="control-room-group-title">${this._esc(this._m(`${group.count} grouped players`, `${group.count} נגנים בקבוצה`))}</span>
                 <span class="control-room-group-members">${this._esc(group.label)}</span>
@@ -5940,7 +3952,7 @@ export function createHomeiiBaseMusicCard({
             const attr = kind === "visible" ? "data-room-visible-toggle" : "data-room-selection-toggle";
             return `
               <button class="control-room-picker-row ${active ? "active" : ""}" ${attr}="${this._esc(entityId)}">
-                <span class="control-room-picker-art">${art ? `<img src="${this._esc(art)}" alt="">` : this._iconSvg("speaker")}</span>
+                <span class="control-room-picker-art">${art ? this._imgHtml(art, "", { fallbackIcon: "speaker" }) : this._iconSvg("speaker")}</span>
                 <span class="control-room-picker-copy">
                   <span class="control-room-picker-title">${this._esc(name)}</span>
                   <span class="control-room-picker-sub">${this._esc(subtitle || "")}</span>
@@ -5992,6 +4004,10 @@ export function createHomeiiBaseMusicCard({
       this._state.controlRoomOpen = false;
       this._state.controlRoomPanel = "";
       this._state.controlRoomRestoreAfterMenu = false;
+      const sheet = this.$("controlRoomBackdrop");
+      sheet?.querySelectorAll(".screen-all-actions").forEach(panel => panel.remove());
+      sheet?.querySelectorAll(".immersive-fan").forEach(fan => { fan.hidden = true; });
+      sheet?.querySelectorAll("[data-screen-wheel]").forEach(button => button.setAttribute("aria-expanded", "false"));
       this._syncControlRoomChrome();
       if (!options.silent) this._toast(this._i18n("ui.studio_closed"));
     }
@@ -6168,16 +4184,16 @@ export function createHomeiiBaseMusicCard({
       return entry?.snapshot || null;
     }
 
-    async _fetchDirectControlRoomQueueSnapshot(player = null) {
+    async _fetchEngineControlRoomQueueSnapshot(player = null) {
       const queueId = this._directMaQueueId(player);
-      if (!queueId || !this._hasDirectMAConnection()) return null;
+      if (!queueId || !this._hasMusicAssistantCommandBridge()) return null;
       let queueState = null;
       let items = [];
       try {
-        queueState = await this._callDirectMaCommand("player_queues/get", { queue_id: queueId });
+        queueState = await this._callEngineMaCommand("player_queues/get", { queue_id: queueId });
       } catch (_) {}
       try {
-        const fullSnapshot = await this._callDirectMaCommand("player_queues/items", { queue_id: queueId, limit: 120, offset: 0 });
+        const fullSnapshot = await this._callEngineMaCommand("player_queues/items", { queue_id: queueId, limit: 120, offset: 0 });
         items = Array.isArray(fullSnapshot?.items)
           ? fullSnapshot.items
           : (Array.isArray(fullSnapshot) ? fullSnapshot : []);
@@ -6199,15 +4215,10 @@ export function createHomeiiBaseMusicCard({
           };
         }
       }
-      let snapshot = null;
-      try { snapshot = await this._fetchMusicAssistantQueueSnapshot(player); } catch (_) { snapshot = null; }
-      if (!snapshot?.items?.length) {
-        try { snapshot = await this._fetchMassQueueItemsSnapshot(player) || snapshot; } catch (_) {}
+      if (this._homeiiEngineRequired?.()) {
+        try { return await this._fetchMusicAssistantQueueSnapshot(player); } catch (_) { return null; }
       }
-      if (!snapshot?.items?.length) {
-        try { snapshot = await this._fetchDirectControlRoomQueueSnapshot(player) || snapshot; } catch (_) {}
-      }
-      return snapshot;
+      try { return await this._fetchMusicAssistantQueueSnapshot(player); } catch (_) { return null; }
     }
 
     async _loadControlRoomQueues(entityIds = []) {
@@ -6256,7 +4267,7 @@ export function createHomeiiBaseMusicCard({
             const artist = item.media_artist || (media.artists || []).map((artistEntry) => artistEntry?.name).filter(Boolean).join(", ") || media.album?.name || "";
             return `
               <div class="control-room-queue-row ${index === 0 ? "current" : ""}">
-                <span class="control-room-queue-art">${art ? `<img src="${this._esc(art)}" alt="">` : this._iconSvg("music_note")}</span>
+                <span class="control-room-queue-art">${art ? this._imgHtml(art, "", { fallbackIcon: "album" }) : this._iconSvg("album")}</span>
                 <span class="control-room-queue-copy">
                   <span class="control-room-queue-title">${this._esc(itemTitle)}</span>
                   <span class="control-room-queue-sub">${this._esc(index === 0 ? this._i18n("ui.now_playing_2") : (artist || this._i18n("ui.up_next_2")))}</span>
@@ -6327,9 +4338,9 @@ export function createHomeiiBaseMusicCard({
       try {
         items.push(...(await this._fetchRecentlyPlayed(18)).map((item) => this._controlRoomNormalizeMediaEntry(item, item.media_type || "album")));
       } catch (_) {}
-      if (this._hasDirectMAConnection()) {
+      if (this._hasMusicAssistantCommandBridge()) {
         try {
-          const inProgress = await this._callDirectMaCommand("music/in_progress_items", { limit: 12 });
+          const inProgress = await this._callEngineMaCommand("music/in_progress_items", { limit: 12 });
           const rawItems = Array.isArray(inProgress?.items) ? inProgress.items : (Array.isArray(inProgress) ? inProgress : []);
           items.push(...rawItems.map((item) => this._controlRoomNormalizeMediaEntry(item, item.media_type || "podcast", {
             subtitle: this._i18n("ui.continue_listening"),
@@ -6372,7 +4383,7 @@ export function createHomeiiBaseMusicCard({
             return `
               <article class="control-room-media-card ${liked ? "liked" : ""}">
                 <button class="control-room-media-main" data-room-library-action="play" ${attrs} title="${this._esc(this._i18n("ui.play_now"))}">
-                  <span class="control-room-media-art">${entry.image ? `<img src="${this._esc(entry.image)}" alt="">` : this._iconSvg(this._controlRoomMediaTypeIcon(entry.media_type))}</span>
+                  <span class="control-room-media-art">${entry.image ? this._imgHtml(entry.image, "", { fallbackIcon: this._controlRoomMediaTypeIcon(entry.media_type) }) : this._iconSvg(this._controlRoomMediaTypeIcon(entry.media_type))}</span>
                   <span class="control-room-media-copy">
                     <span class="control-room-media-kicker">${this._esc(this._controlRoomMediaTypeLabel(entry.media_type))}</span>
                     <span class="control-room-media-title">${this._esc(entry.name || this._i18n("ui.media"))}</span>
@@ -6887,6 +4898,13 @@ export function createHomeiiBaseMusicCard({
     }
 
     _controlRoomPanelHtml(players = []) {
+      const content = this._controlRoomPanelContentHtml(players);
+      if (!content) return content;
+      const label = this._esc(this._m("Back to studio", "חזרה לסטודיו"));
+      return content.replace(/(<div class="control-room-tray[^"]*">)/, `$1<button type="button" class="control-room-panel-close" data-room-selection-action="close_panel" aria-label="${label}" title="${label}">${this._iconSvg("close")}</button>`);
+    }
+
+    _controlRoomPanelContentHtml(players = []) {
       const panel = String(this._state.controlRoomPanel || "");
       if (!panel) return ``;
       const context = this._controlRoomContextChipHtml();
@@ -6954,7 +4972,7 @@ export function createHomeiiBaseMusicCard({
             </div>
             <div class="control-room-action-console">
               <div class="control-room-action-now">
-                <span class="control-room-action-art">${actionArt ? `<img src="${this._esc(actionArt)}" alt="">` : this._iconSvg("speaker")}</span>
+                <span class="control-room-action-art">${actionArt ? this._imgHtml(actionArt, "", { fallbackIcon: "speaker" }) : this._iconSvg("speaker")}</span>
                 <span class="control-room-action-copy">
                   <span class="control-room-action-kicker">${this._esc(actionTarget.kicker)}</span>
                   <span class="control-room-action-name">${this._esc(actionTarget.name)}</span>
@@ -6997,7 +5015,7 @@ export function createHomeiiBaseMusicCard({
               const isActive = player.entity_id === selectedId;
               return `
                 <button class="control-room-transfer-choice ${isActive ? "active" : ""}" data-room-transfer-${role}="${this._esc(player.entity_id)}">
-                  <span class="control-room-transfer-art">${art ? `<img src="${this._esc(art)}" alt="">` : this._iconSvg("speaker")}</span>
+                  <span class="control-room-transfer-art">${art ? this._imgHtml(art, "", { fallbackIcon: "speaker" }) : this._iconSvg("speaker")}</span>
                   <span class="control-room-transfer-copy">
                     <span class="control-room-transfer-title">${this._esc(player.attributes?.friendly_name || player.entity_id)}</span>
                     <span class="control-room-transfer-sub">${this._esc(player.attributes?.media_title || this._playerStateLabel(player))}</span>
@@ -7191,9 +5209,6 @@ export function createHomeiiBaseMusicCard({
         `;
       }
       if (panel === "pro") {
-        const directReady = this._hasDirectMAConnection();
-        const realtimeReady = this._hasRealtimeDirectMA();
-        const sendspinState = this._localSendspinConnected ? this._i18n("ui.connected") : (this._localSendspinConnecting ? this._i18n("ui.connecting") : this._i18n("ui.idle_2"));
         const primary = this._controlRoomPrimaryPlayer();
         const protocol = primary ? this._controlRoomProtocolLabel(primary) : "";
         return `
@@ -7205,13 +5220,9 @@ export function createHomeiiBaseMusicCard({
             <div class="control-room-diagnostics">
               <div class="control-room-diagnostic-row"><span>Target player</span><strong>${this._esc(primary?.attributes?.friendly_name || this._i18n("ui.none"))}</strong></div>
               <div class="control-room-diagnostic-row"><span>Protocol</span><strong>${this._esc(protocol || this._i18n("ui.unknown"))}</strong></div>
-              <div class="control-room-diagnostic-row"><span>Direct API</span><strong>${this._esc(directReady ? this._i18n("ui.available") : this._i18n("ui.missing_url"))}</strong></div>
-              <div class="control-room-diagnostic-row"><span>Realtime token</span><strong>${this._esc(realtimeReady ? this._i18n("ui.ready") : this._i18n("ui.optional"))}</strong></div>
-              <div class="control-room-diagnostic-row"><span>Sendspin</span><strong>${this._esc(sendspinState)}</strong></div>
+              <div class="control-room-diagnostic-row"><span>Music Assistant</span><strong>HOMEii Flow Engine</strong></div>
               <div class="control-room-diagnostic-row"><span>Players</span><strong>${this._esc(String(players.length))}</strong></div>
               <div class="control-room-pro-actions">
-                <button class="control-room-panel-action" data-room-this-device="connect">${this._iconSvg("speaker")}<span>${this._esc(this._i18n("ui.connect_this_device_2"))}</span></button>
-                <button class="control-room-panel-action danger" data-room-this-device="disconnect">${this._iconSvg("close")}<span>${this._esc(this._i18n("ui.disconnect"))}</span></button>
                 <button class="control-room-panel-action" data-room-selection-action="open_ma">${this._iconSvg("library_music")}<span>${this._esc(this._i18n("ui.open_music_assistant"))}</span></button>
               </div>
               <div class="control-room-empty subtle">${this._esc(this._i18n("ui.player_settings_and_dsp_presets_stay_read_only_until_music_assistant_exp"))}</div>
@@ -7358,7 +5369,7 @@ export function createHomeiiBaseMusicCard({
             <div class="control-room-dock focus-mode">
               <div class="control-room-player-console">
                 <div class="control-room-now-pill focus-target">
-                  <span class="control-room-now-art">${focusArt ? `<img src="${this._esc(focusArt)}" alt="">` : this._iconSvg("speaker")}</span>
+                  <span class="control-room-now-art">${focusArt ? this._imgHtml(focusArt, "", { fallbackIcon: "speaker" }) : this._iconSvg("speaker")}</span>
                   <span class="control-room-now-copy">
                     <span class="control-room-now-kicker">${this._esc(focusTarget.kicker)}</span>
                     <span class="control-room-now-name">${this._esc(focusTarget.name)}</span>
@@ -7491,7 +5502,7 @@ export function createHomeiiBaseMusicCard({
       }
       const focusTarget = this._controlRoomFocusTarget();
       const focusArt = focusTarget.art || primaryArt;
-      setHtml(host.querySelector(".control-room-now-art"), focusArt ? `<img src="${this._esc(focusArt)}" alt="">` : this._iconSvg("speaker"));
+      setHtml(host.querySelector(".control-room-now-art"), focusArt ? this._imgHtml(focusArt, "", { fallbackIcon: "speaker" }) : this._iconSvg("speaker"));
       setText(host.querySelector(".control-room-now-kicker"), focusTarget.kicker);
       setText(host.querySelector(".control-room-now-name"), focusTarget.name);
       setText(host.querySelector(".control-room-now-track"), focusTarget.track);
@@ -7552,8 +5563,7 @@ export function createHomeiiBaseMusicCard({
           });
         };
         if (
-          force
-          || this._state.controlRoomRenderedHtml !== nextHtml
+          this._state.controlRoomRenderedHtml !== nextHtml
           || !host.firstElementChild
         ) {
           host.innerHTML = nextHtml;
@@ -7564,6 +5574,7 @@ export function createHomeiiBaseMusicCard({
         this._state.controlRoomRenderSignature = nextSignature;
       }
       this._syncControlRoomLiveFields();
+      syncScreenDock(this, host.parentElement, "studio", () => this._closeControlRoom());
       const input = this.$("controlRoomLibraryInput");
       if (input) {
         input.value = this._state.controlRoomLibraryQuery || "";
@@ -7642,12 +5653,20 @@ export function createHomeiiBaseMusicCard({
       return HomeiiMediaPresentationFoundation.extractCurrentLyricsText(this._state.maQueueState?.current_item || {});
     }
 
-    async _fetchLyricsForCurrentTrack() {
+    async _fetchLyricsForCurrentTrack({ singleflight = false } = {}) {
       const info = this._currentTrackInfo();
       if (!info.title) return { text: "", source: "" };
       const cacheKey = info.key || info.title;
       const cached = this._cache.lyrics.get(cacheKey);
       if (cached) return cached;
+      if (!singleflight) {
+        this._lyricsFetches ||= new Map();
+        if (this._lyricsFetches.has(cacheKey)) return this._lyricsFetches.get(cacheKey);
+        const task = this._fetchLyricsForCurrentTrack({ singleflight: true });
+        this._lyricsFetches.set(cacheKey, task);
+        try { return await task; }
+        finally { if (this._lyricsFetches.get(cacheKey) === task) this._lyricsFetches.delete(cacheKey); }
+      }
 
       const embeddedRaw = this._extractCurrentLyricsRawText();
       if (embeddedRaw) {
@@ -7658,6 +5677,30 @@ export function createHomeiiBaseMusicCard({
           source: "metadata",
         };
         this._cache.lyrics.set(cacheKey, payload);
+        return payload;
+      }
+
+      const queueItem = this._state.maQueueState?.current_item;
+      const media = queueItem?.media_item || queueItem || {};
+      const uri = String(media.uri || this._getSelectedPlayer?.()?.attributes?.media_content_id || "").trim();
+      let maLyricsError = null;
+      if (uri && (media.media_type || "track") === "track") {
+        try {
+          const track = await this._callEngineMaCommand("music/item_by_uri", { uri, allow_update_metadata: false });
+          const embedded = HomeiiMediaPresentationFoundation.extractCurrentLyricsRawText({ media_item: track });
+          const result = embedded ? null : await this._callEngineMaCommand("metadata/get_track_lyrics", { track });
+          const rawText = embedded || (Array.isArray(result) ? result[1] || result[0] : this._coerceLyricsRawText(result)) || "";
+          if (rawText) {
+            const payload = { text: this._stripLyricsTimestamps(rawText), rawText, lrc: this._parseLrcLyrics(rawText), source: "music_assistant" };
+            this._cache.lyrics.set(cacheKey, payload);
+            return payload;
+          }
+        } catch (error) { maLyricsError = error; }
+      }
+
+      if (this._config?.lrclib_lyrics_enabled !== true) {
+        if (maLyricsError) throw maLyricsError;
+        const payload = { text: "", rawText: "", lrc: [], source: "disabled" };
         return payload;
       }
 
@@ -7685,7 +5728,7 @@ export function createHomeiiBaseMusicCard({
         lrc: this._parseLrcLyrics(rawText),
         source: rawText ? "lrclib" : "",
       };
-      this._cache.lyrics.set(cacheKey, payload);
+      if (rawText) this._cache.lyrics.set(cacheKey, payload);
       return payload;
     }
 
@@ -7753,6 +5796,7 @@ export function createHomeiiBaseMusicCard({
               <div class="lyrics-sub">${this._esc(subtitle || "")}</div>
             </div>
             <div class="lyrics-head-actions">
+              <button class="lyrics-sync-btn" id="lyricsRetryBtn" title="${this._esc(this._i18n("ui.refresh"))}" aria-label="${this._esc(this._i18n("ui.refresh"))}" ${this._state.lyricsLoading ? "disabled" : ""}>${actionIconSvg(this, "history")}</button>
               <div class="lyrics-font-controls" title="${this._esc(this._i18n("ui.lyrics_font_size"))}">
                 <button class="lyrics-offset-btn" id="lyricsFontMinusBtn" title="${this._esc(this._i18n("ui.smaller_lyrics"))}">−</button>
                 <button class="lyrics-offset-label" id="lyricsFontResetBtn" title="${this._esc(this._i18n("ui.reset_lyrics_font_size"))}">${this._esc(this._lyricsFontScaleLabel())}</button>
@@ -7763,19 +5807,25 @@ export function createHomeiiBaseMusicCard({
                 <button class="lyrics-offset-label" id="lyricsOffsetResetBtn" title="${this._esc(this._i18n("ui.reset_lyrics_timing"))}">${this._esc(offsetLabel)}</button>
                 <button class="lyrics-offset-btn" id="lyricsOffsetPlusBtn" title="${this._esc(this._i18n("ui.lyrics_later"))}">+</button>
               </div>
-              <button class="lyrics-sync-btn ${this._state.mobileLyricsSyncEnabled !== false ? "active" : ""}" id="lyricsSyncBtn" title="${this._esc(this._i18n("ui.sync_lyrics"))}">
-                ${this._iconSvg("sync")}
-                <span>${this._esc(this._i18n("ui.sync"))}</span>
+              <button class="lyrics-sync-btn ${this._state.mobileLyricsSyncEnabled !== false ? "active" : ""}" id="lyricsSyncBtn" ${this._state.lyricsLines?.length ? "" : "hidden"} aria-pressed="${this._state.mobileLyricsSyncEnabled !== false}" title="${this._esc(this._m("Karaoke · synced lines", "קריוקי · מילים מסונכרנות"))}">
+                ${actionIconSvg(this, "karaoke")}
+                <span>${this._esc(this._m("Karaoke", "קריוקי"))}</span>
               </button>
-              <button class="close-btn" id="lyricsCloseBtn">✕</button>
+              <button class="close-btn" id="lyricsCloseBtn" aria-label="${this._esc(this._i18n("ui.close"))}">${actionIconSvg(this, "close")}</button>
             </div>
           </div>
           <div class="lyrics-body">${bodyHtml}</div>
         </div>`;
+      syncScreenDock(this, backdrop.querySelector(".lyrics-sheet"), "lyrics", () => this._closeLyricsModal());
       backdrop.classList.add("open");
       this.shadowRoot?.querySelector(".card")?.classList.add("lyrics-modal-open");
       backdrop.onclick = (e) => { if (e.target === backdrop) this._closeLyricsModal(); };
       backdrop.querySelector("#lyricsCloseBtn")?.addEventListener("click", () => this._closeLyricsModal());
+      backdrop.querySelector("#lyricsRetryBtn")?.addEventListener("click", () => {
+        const info = this._currentTrackInfo();
+        this._cache.lyrics.delete(info.key || info.title);
+        this._openLyricsModal();
+      });
       backdrop.querySelector("#lyricsSyncBtn")?.addEventListener("click", () => this._toggleLyricsSyncEnabled());
       backdrop.querySelector("#lyricsOffsetMinusBtn")?.addEventListener("click", () => this._nudgeLyricsSyncOffset(-500));
       backdrop.querySelector("#lyricsOffsetPlusBtn")?.addEventListener("click", () => this._nudgeLyricsSyncOffset(500));
@@ -7790,7 +5840,7 @@ export function createHomeiiBaseMusicCard({
         <div class="lyrics-timeline" id="lyricsTimeline">
           ${lines.map((line, index) => `
             <div class="lyrics-line" data-lyrics-index="${index}" data-lyrics-time="${Number(line.time) || 0}">
-              ${this._esc(line.text || "")}
+              ${line.words?.length ? line.words.map(word => `<span data-lyrics-word-time="${Number(word.time)}">${this._esc(word.text)}</span>`).join("") : this._esc(line.text || "")}
             </div>
           `).join("")}
         </div>`;
@@ -7815,13 +5865,17 @@ export function createHomeiiBaseMusicCard({
       if (!lines.length) return;
       const timeline = this.shadowRoot?.querySelector("#lyricsTimeline");
       if (!timeline) return;
+      timeline.classList.toggle("karaoke-active", this._state.mobileLyricsSyncEnabled !== false);
       if (this._state.mobileLyricsSyncEnabled === false) {
         this._state.lyricsActiveIndex = -1;
         timeline.querySelectorAll(".lyrics-line").forEach((row) => row.classList.remove("active"));
+        timeline.querySelectorAll("[data-lyrics-word-time]").forEach(word => word.classList.remove("sung"));
         return;
       }
       const activeIndex = this._currentLyricsActiveIndex(lines);
       if (activeIndex < 0) return;
+      const wordPosition = this._getCurrentPosition() + this._lyricsSyncOffsetMs() / 1000;
+      timeline.querySelectorAll("[data-lyrics-word-time]").forEach(word => word.classList.toggle("sung", Number(word.dataset.lyricsWordTime) <= wordPosition));
       if (!force && activeIndex === this._state.lyricsActiveIndex) return;
       this._state.lyricsActiveIndex = activeIndex;
       this._syncScreensaverLyricsUi?.();
@@ -7848,7 +5902,11 @@ export function createHomeiiBaseMusicCard({
       this._state.mobileLyricsSyncEnabled = this._state.mobileLyricsSyncEnabled === false;
       this._persistMobileAppearance();
       const syncBtn = this.shadowRoot?.querySelector("#lyricsSyncBtn");
-      if (syncBtn) syncBtn.classList.toggle("active", this._state.mobileLyricsSyncEnabled !== false);
+      if (syncBtn) {
+        syncBtn.classList.toggle("active", this._state.mobileLyricsSyncEnabled !== false);
+        syncBtn.setAttribute("aria-pressed", String(this._state.mobileLyricsSyncEnabled !== false));
+      }
+      syncScreenDock(this, this.$("lyricsBackdrop")?.querySelector(".lyrics-sheet"), "lyrics", () => this._closeLyricsModal());
       this._syncLyricsHighlight(true);
     }
 
@@ -7874,7 +5932,7 @@ export function createHomeiiBaseMusicCard({
     }
 
     _lyricsFontScale() {
-      return Math.max(0.75, Math.min(1.4, Number(this._state.mobileLyricsFontScale || 1) || 1));
+      return Math.max(0.75, Math.min(1.4, Number(this._state.mobileLyricsFontScale || 1.4) || 1.4));
     }
 
     _lyricsFontScaleLabel() {
@@ -8145,11 +6203,7 @@ export function createHomeiiBaseMusicCard({
       this._state.currentMediaFavoriteOverride = null;
     }
 
-    _likedEntries() {
-      if (this._useMaLikedMode()) {
-        const cache = this._cache.library.get("liked:ma");
-        return Array.isArray(cache?.items) ? cache.items : [];
-      }
+    _localLikedEntries() {
       const likedUris = Array.from(this._loadLikedUris());
       const meta = this._loadLikedMetaMap();
       return likedUris.map((uri) => {
@@ -8161,7 +6215,24 @@ export function createHomeiiBaseMusicCard({
           artist: item.artist || "",
           album: item.album || "",
           image: item.image || "",
+          favorite: true,
+          favorite_scope: item.favorite_scope || "local",
         };
+      });
+    }
+
+    _likedEntries() {
+      const localItems = this._localLikedEntries();
+      if (!this._useMaLikedMode()) return localItems;
+      const cache = this._cache.library.get("liked:ma");
+      const maItems = Array.isArray(cache?.items) ? cache.items : [];
+      const seen = new Set();
+      return [...maItems, ...localItems].filter((item) => {
+        const uri = String(item?.uri || "").trim().toLowerCase();
+        const key = uri || `${String(item?.media_type || "")}:${String(item?.name || "").trim().toLowerCase()}`;
+        if (!key || seen.has(key)) return false;
+        seen.add(key);
+        return true;
       });
     }
 
@@ -8169,7 +6240,33 @@ export function createHomeiiBaseMusicCard({
       if (!this._useMaLikedMode()) return [];
       if (!force) {
         const cached = this._cache.library.get("liked:ma");
-        if (Array.isArray(cached?.items)) return cached.items;
+        const ttl = Number(this._config.cache_ttl || 300000);
+        if (Array.isArray(cached?.items) && Date.now() - Number(cached?.ts || 0) < ttl) return cached.items;
+      }
+      if (
+        this._state?.engineCapabilities?.favorites_aggregate === true
+        && typeof this._homeiiEngineGetFavorites === "function"
+      ) {
+        const result = await this._homeiiEngineGetFavorites({ refresh: !!force, limit: 160 });
+        if (!HomeiiRevisionedSnapshotsFoundation.acceptEngineSnapshot(
+          this._engineSnapshotRevisions,
+          "library",
+          result,
+          "favorites",
+        )) {
+          return this._likedEntries();
+        }
+        const items = (Array.isArray(result?.items) ? result.items : [])
+          .map((item) => ({
+            ...this._normalizeSearchItem(item, item?.media_type || "track"),
+            item_id: item?.item_id || item?.id || "",
+            provider: item?.provider || item?.provider_domain || item?.provider_instance || "",
+            library_item_id: item?.library_item_id || "",
+            favorite: true,
+          }))
+          .filter((item) => item?.uri || item?.library_item_id);
+        this._cache.library.set("liked:ma", { items, ts: Date.now() });
+        return items;
       }
       const types = [
         ["track", 160],
@@ -8201,7 +6298,7 @@ export function createHomeiiBaseMusicCard({
           });
         });
       });
-      this._cache.library.set("liked:ma", { items });
+      this._cache.library.set("liked:ma", { items, ts: Date.now() });
       return items;
     }
 
@@ -8235,8 +6332,9 @@ export function createHomeiiBaseMusicCard({
     }
 
     _resolveFavoriteButtonEntity(player = this._getSelectedPlayer()) {
+      if (this._homeiiEngineRequired?.() !== false) return "";
       if (!this._hass?.states || !player) return "";
-      const configured = String(this._config.favorite_button_entity || "").trim();
+      const configured = "";
       if (configured && this._hass.states[configured]) return configured;
       const fallback = "button.bathroom_favorite_current_song_2";
       const playerEntity = String(player.entity_id || "").toLowerCase();
@@ -8257,9 +6355,11 @@ export function createHomeiiBaseMusicCard({
     }
 
     async _toggleLikeViaFavoriteButton(sourceEl = null) {
+      if (this._homeiiEngineRequired?.() !== false) return false;
+      if (this._homeiiEngineRequired?.()) return false;
       const entityId = this._resolveFavoriteButtonEntity();
       if (!entityId) return false;
-      await this._hass.callService("button", "press", {}, { entity_id: entityId });
+      if (this._homeiiEngineRequired?.() && entityId) return false;
       if (sourceEl) this._flashInteraction(sourceEl);
       setTimeout(() => {
         this._cache.library.delete("liked:ma");
@@ -8270,35 +6370,6 @@ export function createHomeiiBaseMusicCard({
     }
 
     async _toggleLikeViaMassQueue() {
-      const player = this._getSelectedPlayer();
-      const entityId = player?.entity_id || this._config?.entity || this.config?.entity;
-      if (this._config?.use_mass_queue_send_command !== true) return false;
-      if (!entityId || !this._hass?.services?.mass_queue?.send_command) return false;
-      const configEntryId = await this._ensureConfigEntryId();
-      const queueId = String(player?.attributes?.active_queue || this._state?.maQueueState?.queue_id || "").trim();
-      const currentUri = String(this._getCurrentMediaUri() || "").trim();
-      const parsed = this._parseMediaReference(currentUri, this._state?.maQueueState?.current_item?.media_type || "track");
-      const attempts = [
-        { command: "favorite_current", payload: { entity_id: entityId, queue_id: queueId || undefined } },
-        { command: "favorite_current", payload: { player_id: entityId, queue_id: queueId || undefined } },
-        { command: "toggle_favorite", payload: { entity_id: entityId, uri: currentUri || undefined, media_type: parsed.media_type || undefined } },
-        { command: "toggle_favorite", payload: { player_id: entityId, uri: currentUri || undefined, media_type: parsed.media_type || undefined } },
-        { command: "add_to_library", payload: { entity_id: entityId, uri: currentUri || undefined, media_type: parsed.media_type || undefined, item_id: parsed.item_id || undefined, provider: parsed.provider || undefined } },
-        { command: "add_to_library", payload: { player_id: entityId, uri: currentUri || undefined, media_type: parsed.media_type || undefined, item_id: parsed.item_id || undefined, provider: parsed.provider || undefined } },
-      ];
-      for (const attempt of attempts) {
-        const payload = Object.fromEntries(Object.entries(attempt.payload).filter(([, value]) => value !== undefined && value !== ""));
-        const variants = [
-          { command: attempt.command, ...payload },
-          { command: attempt.command, data: payload },
-        ].map((entry) => (configEntryId ? { config_entry_id: configEntryId, ...entry } : entry));
-        for (const data of variants) {
-          try {
-            await this._hass.callService("mass_queue", "send_command", data);
-            return true;
-          } catch (_) {}
-        }
-      }
       return false;
     }
 
@@ -8352,6 +6423,7 @@ export function createHomeiiBaseMusicCard({
           artist: entry.artist || "",
           album: entry.album || "",
           image: entry.image || "",
+          favorite_scope: favoriteScope || "local",
         };
       }
       this._saveLikedUris();
@@ -8390,18 +6462,16 @@ export function createHomeiiBaseMusicCard({
             if (!actionOk) {
               try { actionOk = await this._toggleLikeViaMassQueue(); } catch (_) {}
             }
-            if (!actionOk && fallbackFavoriteEntity) {
-              await this._pressFavoriteButtonEntity(fallbackFavoriteEntity);
-              actionOk = true;
+            if (!actionOk && fallbackFavoriteEntity && !this._homeiiEngineRequired?.()) {
+              actionOk = await this._pressFavoriteButtonEntity(fallbackFavoriteEntity);
             }
-            if (!actionOk && playerEntityId && !this._isDirectMaPlayer(playerEntityId)) {
-              await this._pressFavoriteButtonEntity(playerEntityId);
-              actionOk = true;
+            if (!actionOk && playerEntityId && !this._isDirectMaPlayer(playerEntityId) && !this._homeiiEngineRequired?.()) {
+              actionOk = await this._pressFavoriteButtonEntity(playerEntityId);
             }
             if (!actionOk) throw new Error("Music Assistant favorite action was not available");
             this._toast(this._i18n("ui.added_to_music_assistant_liked"));
           }
-          [140, 520, 1400, 3000].forEach((delay) => setTimeout(() => this._refreshFavoriteState(true).catch(() => {}), delay));
+          this._scheduleFavoriteReconcile?.(700);
           return true;
         } catch (error) {
           this._clearCurrentMediaFavoriteOverride();
@@ -8424,13 +6494,13 @@ export function createHomeiiBaseMusicCard({
         const usedHaFavoriteService = await this._toggleMaLikeViaHaService(effectiveEntry, likedNow, mediaType);
         if (usedHaFavoriteService) {
           this._applyMaFavoriteOptimisticState(entry, !likedNow);
-          verified = await this._waitForFavoriteState(effectiveEntry, !likedNow, [400, 1100, 2200, 4200, 5800]);
+          verified = await this._waitForFavoriteState(effectiveEntry, !likedNow, [500, 1500, 3200]);
           if (!verified) this._applyMaFavoriteOptimisticState(entry, !likedNow);
           this._toast(likedNow ? this._i18n("ui.removed_from_music_assistant_liked") : this._i18n("ui.added_to_music_assistant_liked"));
           if (sourceEl) this._flashInteraction(sourceEl);
           entry.favorite = !likedNow;
           if (entry.media_item) entry.media_item.favorite = !likedNow;
-          [500, 1500, 3200, 5200].forEach((delay) => setTimeout(() => this._refreshFavoriteState(true).catch(() => {}), delay));
+          this._scheduleFavoriteReconcile?.(700);
           return true;
         }
         const usedDirectApi = await this._toggleMaLikeEntryDirect(effectiveEntry, likedNow, mediaType);
@@ -8438,13 +6508,13 @@ export function createHomeiiBaseMusicCard({
           const massQueueUsed = await this._toggleLikeViaMassQueue();
           if (massQueueUsed) {
             this._applyMaFavoriteOptimisticState(entry, !likedNow);
-            verified = await this._waitForFavoriteState(effectiveEntry, !likedNow, [450, 1200, 2600, 4200, 5800]);
+            verified = await this._waitForFavoriteState(effectiveEntry, !likedNow, [500, 1500, 3200]);
             if (!verified) this._applyMaFavoriteOptimisticState(entry, !likedNow);
             this._toast(likedNow ? this._i18n("ui.removed_from_music_assistant_liked") : this._i18n("ui.added_to_music_assistant_liked"));
             if (sourceEl) this._flashInteraction(sourceEl);
             entry.favorite = !likedNow;
             if (entry.media_item) entry.media_item.favorite = !likedNow;
-            [500, 1500, 3200, 5200].forEach((delay) => setTimeout(() => this._refreshFavoriteState(true).catch(() => {}), delay));
+            this._scheduleFavoriteReconcile?.(700);
             return true;
           }
         }
@@ -8452,11 +6522,14 @@ export function createHomeiiBaseMusicCard({
           throw new Error("Music Assistant Direct API is not available");
         }
         this._applyMaFavoriteOptimisticState(entry, !likedNow);
-        verified = await this._waitForFavoriteState(effectiveEntry, !likedNow, [350, 900, 1800, 3200, 5200]);
+        const engineConfirmed = Date.now() - Number(this._favoriteMutationConfirmedAt || 0) < 3000;
+        verified = engineConfirmed
+          ? true
+          : await this._waitForFavoriteState(effectiveEntry, !likedNow, [500, 1500, 3200]);
         if (!verified) this._applyMaFavoriteOptimisticState(entry, !likedNow);
         this._toast(likedNow ? this._i18n("ui.removed_from_music_assistant_liked") : this._i18n("ui.added_to_music_assistant_liked"));
         if (sourceEl) this._flashInteraction(sourceEl);
-        [300, 900, 1800].forEach((delay) => setTimeout(() => this._refreshFavoriteState(true).catch(() => {}), delay));
+        this._scheduleFavoriteReconcile?.(700);
         entry.favorite = !likedNow;
         if (entry.media_item) entry.media_item.favorite = !likedNow;
         return true;
@@ -8469,9 +6542,29 @@ export function createHomeiiBaseMusicCard({
     }
 
     async _toggleMaLikeEntryDirect(entry = {}, likedNow = false, mediaType = "track") {
-      if (!this._hasDirectMAConnection()) return false;
+      if (!this._hasMusicAssistantCommandBridge()) return false;
       const uri = String(entry?.uri || "").trim();
       if (!uri) return false;
+      if (
+        this._state?.engineCapabilities?.favorite_mutation === true
+        && typeof this._homeiiEngineSetFavorite === "function"
+      ) {
+        const removeArgs = likedNow ? await this._resolveMaFavoriteRemoveArgs(entry, mediaType) : null;
+        const parsed = this._parseMediaReference(uri, mediaType);
+        const result = await this._homeiiEngineSetFavorite({
+          favorite: !likedNow,
+          uri,
+          media_type: parsed.media_type || mediaType,
+          item_id: parsed.item_id || entry?.item_id || "",
+          provider: parsed.provider || entry?.provider || "",
+          library_item_id: removeArgs?.library_item_id || entry?.library_item_id || "",
+          remove_args: removeArgs || {},
+          entry,
+        });
+        if (!result?.ok) return false;
+        this._favoriteMutationConfirmedAt = Date.now();
+        return true;
+      }
       if (!likedNow) {
         const playerUri = this._entryTargetsCurrentMedia(entry)
           ? String(this._getSelectedPlayer()?.attributes?.media_content_id || "").trim()
@@ -8487,7 +6580,7 @@ export function createHomeiiBaseMusicCard({
         ];
         for (const args of attempts) {
           try {
-            await this._callDirectMaCommand("music/favorites/add_item", args);
+            await this._callEngineMaCommand("music/favorites/add_item", args);
             return true;
           } catch (error) {
             lastError = error;
@@ -8505,7 +6598,7 @@ export function createHomeiiBaseMusicCard({
       let lastError = null;
       for (const args of attempts) {
         try {
-          await this._callDirectMaCommand("music/favorites/remove_item", args);
+          await this._callEngineMaCommand("music/favorites/remove_item", args);
           return true;
         } catch (error) {
           lastError = error;
@@ -8516,6 +6609,7 @@ export function createHomeiiBaseMusicCard({
     }
 
     async _toggleMaLikeViaHaService(entry = {}, likedNow = false, mediaType = "track") {
+      if (this._homeiiEngineRequired?.()) return false;
       const uri = String(entry?.uri || "").trim();
       if (!uri) return false;
       const parsed = this._parseMediaReference(uri, mediaType);
@@ -8618,7 +6712,7 @@ export function createHomeiiBaseMusicCard({
       });
       if (resolvedFromKnownState) return resolvedFromKnownState;
       try {
-        const remote = await this._callDirectMaCommand("music/item_by_uri", { uri });
+        const remote = await this._callEngineMaCommand("music/item_by_uri", { uri });
         const remoteArgs = this._favoriteRemoveArgsFromItem(remote, mediaType);
         if (remoteArgs) return remoteArgs;
       } catch (_) {}
@@ -8653,6 +6747,25 @@ export function createHomeiiBaseMusicCard({
     }
 
     _isEntryLiked(entry = {}) {
+      const favoriteScope = String(
+        entry?.favorite_scope
+        || entry?.favoriteScope
+        || entry?.favorite_target
+        || entry?.favoriteTarget
+        || "",
+      ).trim().toLowerCase();
+      const uri = String(entry?.uri || "").trim();
+      if (
+        uri
+        && (
+          entry?.radio_browser
+          || entry?.radio_browser_id
+          || ["local", "browser", "radio_browser", "external_radio"].includes(favoriteScope)
+        )
+        && this._loadLikedUris().has(uri)
+      ) {
+        return true;
+      }
       const cache = this._cache.library.get("liked:ma");
       return HomeiiFavoritesFoundation.isEntryLiked(
         entry,
@@ -8691,10 +6804,10 @@ export function createHomeiiBaseMusicCard({
             ${this._queueMoveSelectHtml(queueCount, currentPosition, entry)}
           </label>
         </div>
-        <div class="ctx-item" data-queue-popup="next"><span class="ctx-ico">${this._iconSvg("next")}</span><span>${this._esc(this._i18n("ui.move_to_next"))}</span></div>
-        <div class="ctx-item" data-queue-popup="like"><span class="ctx-ico">${this._iconSvg(liked ? "heart_filled" : "heart_outline")}</span><span>${this._esc(this._i18n("ui.like_2"))}</span></div>
-        <div class="ctx-item" data-queue-popup="remove"><span class="ctx-ico">${this._iconSvg("menu")}</span><span>${this._esc(this._i18n("ui.remove"))}</span></div>
-        <div class="ctx-item" data-queue-popup="close"><span class="ctx-ico">×</span><span>${this._esc(this._i18n("ui.close"))}</span></div>`;
+        ${contextActionHtml(this, "data-queue-popup", "next", "queue_next", this._i18n("ui.move_to_next"), "ctx-item")}
+        ${contextActionHtml(this, "data-queue-popup", "like", liked ? "heart_filled" : "heart_outline", this._i18n("ui.like_2"), "ctx-item")}
+        ${contextActionHtml(this, "data-queue-popup", "remove", "trash", this._i18n("ui.remove"), "ctx-item")}
+        ${contextActionHtml(this, "data-queue-popup", "close", "close", this._i18n("ui.close"), "ctx-item")}`;
       menu.addEventListener("click", (e) => e.stopPropagation());
       menu.querySelectorAll("[data-queue-popup]").forEach((item) => item.addEventListener("click", async (e) => {
         e.stopPropagation();
@@ -8772,7 +6885,7 @@ export function createHomeiiBaseMusicCard({
           </div>
           <div class="immersive-body">
             <div class="immersive-art-wrap">
-              <div class="immersive-art" id="immersiveArt">${art ? `<img src="${this._esc(art)}" alt="">` : this._artPlaceholderHtml("music_note")}</div>
+              <div class="immersive-art" id="immersiveArt">${art ? this._imgHtml(art, "", { loading: "eager", fetchpriority: "high", fallbackIcon: "album" }) : this._artPlaceholderHtml("album")}</div>
             </div>
             <div class="immersive-panel">
               <div class="immersive-time-row"><span id="immersiveCurTime">${this._esc(this._fmtDur(position))}</span><span id="immersiveTotalTime">${this._esc(this._fmtDur(duration))}</span></div>
@@ -8821,8 +6934,7 @@ export function createHomeiiBaseMusicCard({
         this._setButtonIcon(this.$("btnMute"), pct === 0 ? "volume_mute" : pct < 40 ? "volume_low" : "volume_high");
         this._setButtonIcon(this.$("bigMuteBtn"), pct === 0 ? "volume_mute" : pct < 40 ? "volume_low" : "volume_high");
         this._setButtonIcon(backdrop.querySelector("#immersiveMuteBtn"), pct === 0 ? "volume_mute" : pct < 40 ? "volume_low" : "volume_high");
-        clearTimeout(this._bigVolumeTimer);
-        this._bigVolumeTimer = setTimeout(() => this._setVolume(pct / 100), 120);
+        this._setVolume(pct / 100);
       });
     }
 
@@ -8870,7 +6982,7 @@ export function createHomeiiBaseMusicCard({
       const total = backdrop.querySelector("#immersiveTotalTime");
       if (total) total.textContent = this._fmtDur(duration);
       const artBox = backdrop.querySelector("#immersiveArt");
-      if (artBox) artBox.innerHTML = art ? `<img src="${this._esc(art)}" alt="">` : this._artPlaceholderHtml("music_note");
+      if (artBox) artBox.innerHTML = art ? this._imgHtml(art, "", { loading: "eager", fetchpriority: "high", fallbackIcon: "album" }) : this._artPlaceholderHtml("album");
       const bg = backdrop.querySelector(".immersive-bg");
       if (bg) bg.style.backgroundImage = art ? `url("${art}")` : "";
       const glow = backdrop.querySelector(".immersive-cover-glow");
@@ -8911,7 +7023,8 @@ export function createHomeiiBaseMusicCard({
         this._lastViewportWidth = viewportWidth;
         this._lastViewportHeight = viewportHeight;
         if (resizeStrategy.keyboardLikeResize && !layoutModeStale) return;
-        if (resizeStrategy.softSync && !layoutModeStale) {
+        const responsiveImmersive = (this._state?.mobilePlayerDesign ?? this._config?.player_design ?? "immersive") === "immersive";
+        if ((resizeStrategy.softSync || responsiveImmersive) && !layoutModeStale) {
           this._syncTabletAutoFitUi();
           this._syncSleepTimerChip();
           this._syncSourceBadgesUi();
@@ -9155,7 +7268,7 @@ export function createHomeiiBaseMusicCard({
           <div class="now-layout">
             <div class="now-left">
               <div class="now-card now-art-card">
-                <div class="now-art" id="nowHeroArt">${art ? `<img src="${this._esc(art)}" alt="">` : this._artPlaceholderHtml("music_note")}</div>
+                <div class="now-art" id="nowHeroArt">${art ? this._imgHtml(art, "", { loading: "eager", fetchpriority: "high", fallbackIcon: "album" }) : this._artPlaceholderHtml("album")}</div>
                 <div class="now-track-meta">
                   <div class="now-track-title">${this._esc(title)}</div>
                   <div class="now-track-subtitle">${this._esc([artist, album].filter(Boolean).join(" · "))}</div>
@@ -9219,7 +7332,7 @@ export function createHomeiiBaseMusicCard({
 
     _getNowPlayingQueueItems() {
       const currentIndex = this._state.maQueueState?.current_index ?? -1;
-      return (this._state.queueItems || []).filter((item) => (item.sort_index ?? 0) >= currentIndex).slice(0, 1000);
+      return (this._state.queueItems || []).filter((item) => (item.sort_index ?? 0) >= currentIndex).slice(0, 100);
     }
 
     _queuePanelHtml(queueItems = []) {
@@ -9346,8 +7459,7 @@ export function createHomeiiBaseMusicCard({
           }
           this._setButtonIcon(this.$("btnMute"), pct === 0 ? "volume_mute" : pct < 40 ? "volume_low" : "volume_high");
           this._setButtonIcon(this.$("bigMuteBtn"), pct === 0 ? "volume_mute" : pct < 40 ? "volume_low" : "volume_high");
-          clearTimeout(this._bigVolumeTimer);
-          this._bigVolumeTimer = setTimeout(() => this._setVolume(pct / 100), 120);
+          this._setVolume(pct / 100);
         });
       }
     }
@@ -9370,7 +7482,7 @@ export function createHomeiiBaseMusicCard({
       const name = item.name || "";
       const artUrl = this._artUrl(item);
       const artist = mediaType === "artist" ? this._i18n("ui.artist") : mediaType === "radio" ? (item.metadata?.description || "") : this._artistName(item) || item.album?.name || "";
-      const placeholder = mediaType === "radio" ? "radio" : mediaType === "artist" ? "artist" : mediaType === "podcast" ? "podcast" : "music_note";
+      const placeholder = mediaType === "radio" ? "radio" : mediaType === "artist" ? "artist" : mediaType === "podcast" ? "podcast" : "album";
       const imgAttrs = artUrl ? `data-img="${this._esc(artUrl)}" data-placeholder="${placeholder}"` : "";
       return `<div class="media-card" data-uri="${this._esc(uri)}" data-type="${this._esc(mediaType)}"><div class="media-art" ${imgAttrs}><div class="media-placeholder">${this._artPlaceholderHtml(placeholder)}</div><div class="media-overlay"><div class="play-bubble">▶</div></div><div class="playing-badge">▶</div></div><div class="media-title">${this._esc(name)}</div><div class="media-sub">${this._esc(artist)}</div></div>`;
     }
@@ -9380,8 +7492,8 @@ export function createHomeiiBaseMusicCard({
       const name = item.name || "";
       const artist = this._artistName(item);
       const sub = [artist, item.album?.name].filter(Boolean).join(" · ");
-      const imgAttrs = artUrl ? `data-img="${this._esc(artUrl)}" data-placeholder="music_note"` : "";
-      return `<div class="track-row" data-uri="${this._esc(item.uri || "")}" data-type="track"><div class="track-num">${index}</div><div class="track-art" ${imgAttrs}>${this._artPlaceholderHtml("music_note")}</div><div class="track-meta"><div class="track-name">${this._esc(name)}</div><div class="track-sub">${this._esc(sub)}</div></div><div class="track-dur">${this._fmtDur(item.duration)}</div></div>`;
+      const imgAttrs = artUrl ? `data-img="${this._esc(artUrl)}" data-placeholder="album"` : "";
+      return `<div class="track-row" data-uri="${this._esc(item.uri || "")}" data-type="track"><div class="track-num">${index}</div><div class="track-art" ${imgAttrs}>${this._artPlaceholderHtml("album")}</div><div class="track-meta"><div class="track-name">${this._esc(name)}</div><div class="track-sub">${this._esc(sub)}</div></div><div class="track-dur">${this._fmtDur(item.duration)}</div></div>`;
     }
 
     _getQueueItemKey(item) {
@@ -9417,6 +7529,7 @@ export function createHomeiiBaseMusicCard({
 
     _queueRenderSignature() {
       return [
+        this._state.queueSnapshotError?.entityId === this._state.selectedPlayer ? "stale" : "confirmed",
         this._queueOrderSignature(this._state.queueItems || []),
         this._state.maQueueState?.current_index ?? "",
         this._getQueueItemStableId(this._state.maQueueState?.current_item || {}) || this._getQueueItemUri(this._state.maQueueState?.current_item || ""),
@@ -9726,15 +7839,22 @@ export function createHomeiiBaseMusicCard({
       const card = this.shadowRoot.querySelector(".card");
       const menu = document.createElement("div");
       menu.className = "ctx-menu";
-      menu.innerHTML = `
-        <div class="ctx-item" data-enqueue="play"><span class="ctx-ico">▶</span><span>${this._esc(this._i18n("ui.play_now"))}</span></div>
-        <div class="ctx-item" data-enqueue="shuffle"><span class="ctx-ico">⇄</span><span>${this._esc(this._i18n("ui.shuffle_play"))}</span></div>
-        <div class="ctx-item" data-enqueue="next"><span class="ctx-ico">⏭</span><span>${this._esc(this._i18n("ui.play_next"))}</span></div>
-        <div class="ctx-item" data-enqueue="add"><span class="ctx-ico">＋</span><span>${this._esc(this._i18n("ui.add_to_queue"))}</span></div>`;
+      menu.innerHTML = [
+        ["play", "play", "ui.play_now"], ["shuffle", "shuffle", "ui.shuffle_play"],
+        ["next", "queue_next", "ui.play_next"], ["add", "queue_add", "ui.add_to_queue"],
+      ].map(([action, icon, label]) => contextActionHtml(this, "data-enqueue", action, icon, this._i18n(label), "ctx-item")).join("");
       menu.querySelectorAll(".ctx-item").forEach((item) => item.addEventListener("click", async (e) => {
         e.stopPropagation();
-        await this._playMedia(uri, type, item.dataset.enqueue);
-        this._dismissCtx();
+        if (menu.dataset.pending) return;
+        menu.dataset.pending = "true";
+        const buttons = [...menu.querySelectorAll("button")];
+        buttons.forEach((button) => { button.disabled = true; });
+        try {
+          if (await this._playMedia(uri, type, item.dataset.enqueue) !== false) this._dismissCtx();
+        } finally {
+          delete menu.dataset.pending;
+          buttons.forEach((button) => { button.disabled = false; });
+        }
       }));
       card.appendChild(menu);
       this._ctxMenu = menu;
@@ -9770,7 +7890,7 @@ export function createHomeiiBaseMusicCard({
 
     _hasMusicAssistantBackend() {
       return this._hasMusicAssistantServiceSignal()
-        || this._hasDirectMAConnection()
+        || this._hasMusicAssistantCommandBridge()
         || this._hasUsableMusicAssistantConfigEntry();
     }
 
@@ -9792,7 +7912,7 @@ export function createHomeiiBaseMusicCard({
     }
 
     _hasMassQueueService(service) {
-      return this._hasService("mass_queue", service);
+      return false;
     }
 
     _setQueueBusy(isBusy) {
@@ -9827,8 +7947,83 @@ export function createHomeiiBaseMusicCard({
       }
     }
 
+    _scheduleQueueRefreshAfterMutation(delay = 700) {
+      window.clearTimeout(this._queueMutationRefreshTimer);
+      this._queueMutationRefreshTimer = window.setTimeout(() => {
+        this._queueMutationRefreshTimer = null;
+        this._refreshQueueAfterMutation(0).catch(() => {});
+      }, Math.max(0, Number(delay) || 0));
+    }
+
     _queueItemsContainCurrent(items = [], queueState = this._state.maQueueState) {
       return HomeiiMediaQueueFoundation.queueItemsContainCurrent(items, queueState);
+    }
+
+    _queueSnapshotCacheTtlMs() {
+      return 20 * 60 * 1000;
+    }
+
+    _queueSnapshotCacheKey(player = this._getSelectedPlayer(), queueId = "") {
+      const entityId = typeof player === "string" ? player : player?.entity_id;
+      const resolvedQueueId = String(queueId || this._queueIdForPlayer(player) || "").trim();
+      const scope = [entityId || "unknown", resolvedQueueId || "default"]
+        .map((part) => String(part || "").replace(/[^a-z0-9_.:-]+/gi, "_"))
+        .join("::");
+      return this._lsKey(`homeii_music_flow_queue_snapshot_v1::${scope}`);
+    }
+
+    _queueSnapshotUsefulForCache(queueState = null, items = []) {
+      const visible = Array.isArray(items) ? items.length : 0;
+      if (!visible) return false;
+      const expected = Number(queueState?.items ?? queueState?.items_count ?? 0);
+      if (Number.isFinite(expected) && expected > visible && visible < Math.min(expected, 25)) return false;
+      return true;
+    }
+
+    _writeQueueSnapshotCache(player = this._getSelectedPlayer(), queueState = null, items = []) {
+      if (!this._queueSnapshotUsefulForCache(queueState, items)) return;
+      try {
+        const key = this._queueSnapshotCacheKey(player, queueState?.queue_id || "");
+        const payload = {
+          ts: Date.now(),
+          state: queueState || {},
+          items: items.slice(0, 600),
+        };
+        sessionStorage.setItem(key, JSON.stringify(payload));
+      } catch (_) {}
+    }
+
+    _readQueueSnapshotCache(player = this._getSelectedPlayer(), queueId = "") {
+      try {
+        const raw = sessionStorage.getItem(this._queueSnapshotCacheKey(player, queueId));
+        if (!raw) return null;
+        const payload = JSON.parse(raw);
+        const age = Date.now() - Number(payload?.ts || 0);
+        const items = Array.isArray(payload?.items) ? payload.items : [];
+        if (!items.length || age < 0 || age > this._queueSnapshotCacheTtlMs()) return null;
+        return {
+          state: payload.state || {},
+          items: this._queueItemsWithSequentialSortIndexes(items),
+        };
+      } catch (_) {
+        return null;
+      }
+    }
+
+    _restoreQueueSnapshotFromCache(player = this._getSelectedPlayer(), force = false) {
+      const cached = this._readQueueSnapshotCache(player);
+      if (!cached?.items?.length) return false;
+      const existingItems = Array.isArray(this._state.queueItems) ? this._state.queueItems : [];
+      if (!force && existingItems.length >= cached.items.length) return false;
+      const liveState = this._state.maQueueState || {};
+      const restoredState = {
+        ...cached.state,
+        ...liveState,
+        items: Math.max(Number(cached.state?.items) || 0, Number(liveState?.items) || 0, cached.items.length),
+      };
+      if (liveState?.current_item && !this._queueItemsContainCurrent(cached.items, restoredState)) return false;
+      this._applyQueueSnapshot(restoredState, cached.items, true);
+      return true;
     }
 
     _queueItemMatchesPlayer(item, player = this._getSelectedPlayer()) {
@@ -9859,11 +8054,13 @@ export function createHomeiiBaseMusicCard({
         if (currentFromItems) normalizedState.current_item = currentFromItems;
         const normalizedIndex = Number(normalizedState.current_index);
         if (Number.isFinite(normalizedIndex)) {
+          const previousFromItems = nextItems.find((item) => Number(item?.sort_index) === normalizedIndex - 1);
           const nextFromItems = nextItems.find((item) => Number(item?.sort_index) === normalizedIndex + 1);
+          if (previousFromItems) normalizedState.previous_item = previousFromItems;
           if (nextFromItems) normalizedState.next_item = nextFromItems;
         }
       }
-      if (nextItems.length) {
+      if (nextItems.length && !this._homeiiEngineRequired?.()) {
         const player = this._getSelectedPlayer();
         const playerUri = String(player?.attributes?.media_content_id || "").trim();
         const playerTitle = String(player?.attributes?.media_title || "").trim().toLowerCase();
@@ -9916,6 +8113,11 @@ export function createHomeiiBaseMusicCard({
         }
       }
       this._state.maQueueState = normalizedState;
+      if (Number(queueState.items) === 0 && Array.isArray(items) && items.length === 0 && !hasPendingPlay) {
+        this._state.queueItems = [];
+        return;
+      }
+      if (nextItems.length) this._writeQueueSnapshotCache(this._getSelectedPlayer(), normalizedState, nextItems);
       if (!shouldConsiderReplace || !nextItems.length) return;
       if (freezeQueueItemsForPendingPlay) return;
       const existingItems = Array.isArray(this._state.queueItems) ? this._state.queueItems : [];
@@ -9930,57 +8132,13 @@ export function createHomeiiBaseMusicCard({
       const totalItems = Number(queueState?.items);
       const looksPartial = Number.isFinite(totalItems) && totalItems > 0 && nextItems.length < Math.min(totalItems, 25);
       const existingLooksBetter = existingItems.length > nextItems.length && this._queueItemsContainCurrent(existingItems, normalizedState);
-      if (looksPartial && existingLooksBetter) return;
+      if (looksPartial && existingLooksBetter) {
+        this._writeQueueSnapshotCache(this._getSelectedPlayer(), normalizedState, existingItems);
+        return;
+      }
       this._state.queueItems = nextItems;
       if (typeof this._prefetchQueueArtworkWindow === "function") {
         this._prefetchQueueArtworkWindow(nextItems, { immediate: false, before: 2, after: 14 });
-      }
-    }
-
-    async _callMassQueueService(service, queueItemId) {
-      const player = this._getSelectedPlayer();
-      if (!player || !queueItemId || !this._hasMassQueueService(service)) return false;
-      const itemId = String(queueItemId);
-      const playerId = this._directMaPlayerId(player) || player.attributes?.mass_player_id || player.attributes?.player_id || player.entity_id;
-      const queueId = player.attributes?.active_queue || player.attributes?.queue_id || this._state.maQueueState?.queue_id || this._directMaQueueId(player);
-      const attempts = [
-        { entity: player.entity_id, queue_item_id: itemId },
-        { entity_id: player.entity_id, queue_item_id: itemId },
-        { player_id: playerId, queue_item_id: itemId },
-        { queue_id: queueId, queue_item_id: itemId },
-        { entity: player.entity_id, item_id: itemId },
-        { entity_id: player.entity_id, item_id: itemId },
-        { player_id: playerId, item_id: itemId },
-        { queue_id: queueId, item_id: itemId },
-      ]
-        .map((payload) => Object.fromEntries(Object.entries(payload).filter(([, value]) => value !== undefined && value !== null && value !== "")))
-        .filter((payload, index, all) => all.findIndex((entry) => JSON.stringify(entry) === JSON.stringify(payload)) === index);
-      for (const payload of attempts) {
-        try {
-          await this._hass.callService("mass_queue", service, payload);
-          return true;
-        } catch (_) {}
-      }
-      return false;
-    }
-
-    async _callMassQueueCommand(command, data = {}) {
-      // Some mass_queue versions expose send_command but fail internally for MA queue
-      // actions. Keep it opt-in so queue selection does not surface HA service errors.
-      if (String(command || "").startsWith("player_queues/")) return false;
-      if (this._config?.use_mass_queue_send_command !== true) return false;
-      if (!command || !this._hasMassQueueService("send_command")) return false;
-      const configEntryId = await this._ensureConfigEntryId();
-      if (!configEntryId) return false;
-      try {
-        await this._hass.callService("mass_queue", "send_command", {
-          config_entry_id: configEntryId,
-          command,
-          data,
-        });
-        return true;
-      } catch (_) {
-        return false;
       }
     }
 
@@ -9994,10 +8152,10 @@ export function createHomeiiBaseMusicCard({
       ).trim();
     }
 
-    async _callDirectMaQueueAction(action, queueId, queueItemIdOrIndex, explicitPosShift = null) {
-      if (!queueId || queueItemIdOrIndex === "" || queueItemIdOrIndex === null || queueItemIdOrIndex === undefined || !this._hasDirectMAConnection()) return false;
+    async _callEngineMaQueueAction(action, queueId, queueItemIdOrIndex, explicitPosShift = null) {
+      if (!queueId || queueItemIdOrIndex === "" || queueItemIdOrIndex === null || queueItemIdOrIndex === undefined || !this._hasMusicAssistantCommandBridge()) return false;
       if (action === "remove") {
-        await this._callDirectMaCommand("player_queues/delete_item", {
+        await this._callEngineMaCommand("player_queues/delete_item", {
           queue_id: queueId,
           item_id_or_index: queueItemIdOrIndex,
         });
@@ -10013,7 +8171,7 @@ export function createHomeiiBaseMusicCard({
         if (!Number.isFinite(posShift)) return false;
         if (posShift === 0) return true;
         if (typeof queueItemIdOrIndex !== "string" || !queueItemIdOrIndex.trim()) return false;
-        await this._callDirectMaCommand("player_queues/move_item", {
+        await this._callEngineMaCommand("player_queues/move_item", {
           queue_id: queueId,
           queue_item_id: queueItemIdOrIndex,
           pos_shift: posShift,
@@ -10021,7 +8179,7 @@ export function createHomeiiBaseMusicCard({
         return true;
       }
       if (!(action in posShiftByAction) || typeof queueItemIdOrIndex !== "string" || !queueItemIdOrIndex.trim()) return false;
-      await this._callDirectMaCommand("player_queues/move_item", {
+      await this._callEngineMaCommand("player_queues/move_item", {
         queue_id: queueId,
         queue_item_id: queueItemIdOrIndex,
         pos_shift: posShiftByAction[action],
@@ -10067,13 +8225,16 @@ export function createHomeiiBaseMusicCard({
     async _playQueueItem(queueItemId, fallbackUri = "", mediaType = "track", sortIndex = "") {
       if ((!queueItemId && !fallbackUri) || this._state.queueActionPending) return false;
       this._setQueueBusy(true);
+      let player = null;
       try {
-        const player = this._getSelectedPlayer();
+        player = this._getSelectedPlayer();
         const playIndex = this._resolveQueuePlayIndex(queueItemId, fallbackUri, sortIndex);
-        const currentContextBeforePlay = this._mobileArtStackContext();
-        const currentSortIndexBeforePlay = Number(currentContextBeforePlay.queueItems?.[currentContextBeforePlay.baseIndex]?.sort_index);
-        const currentForStepBeforePlay = Number.isFinite(currentSortIndexBeforePlay) ? currentSortIndexBeforePlay : currentContextBeforePlay.baseIndex;
         const optimisticItem = this._getQueueItemByIndexOrKey(playIndex, queueItemId, fallbackUri);
+        const queueId = player?.attributes?.active_queue || player?.attributes?.queue_id || this._state.maQueueState?.queue_id || this._directMaQueueId(player);
+        const directPlayTarget = Number.isFinite(playIndex) ? Math.round(playIndex) : null;
+        if (!queueId || directPlayTarget === null || !this._hasMusicAssistantCommandBridge()) {
+          throw new Error(this._i18n("ui.queue_item_id_is_not_ready_yet_refresh_the_queue_and_try_again"));
+        }
         if (optimisticItem && Number.isFinite(playIndex)) {
           const optimisticUntil = Date.now() + 8500;
           this._markMobileQueuePlayPending(optimisticItem, playIndex);
@@ -10090,9 +8251,6 @@ export function createHomeiiBaseMusicCard({
           if (player?.entity_id) this._setPlayerPlaybackOptimistic(player.entity_id, { state: "playing", until: optimisticUntil });
           else this._syncNowPlayingUI();
         }
-        const queueId = player?.attributes?.active_queue || player?.attributes?.queue_id || this._state.maQueueState?.queue_id || this._directMaQueueId(player);
-        const queueItemPlaybackId = optimisticItem ? this._getQueueItemPlaybackId(optimisticItem) : "";
-        const directPlayTarget = queueItemPlaybackId || (Number.isFinite(playIndex) ? playIndex : null);
         this._debugLog("info", "[Homeii Queue] play item", {
           queueId,
           queueItemId,
@@ -10102,72 +8260,36 @@ export function createHomeiiBaseMusicCard({
           directPlayTarget,
           title: optimisticItem ? this._queueItemPrimaryTitle(optimisticItem) : "",
         });
-        if (queueId && directPlayTarget !== null && this._hasDirectMAConnection()) {
-          try {
-            await this._callDirectMaCommand("player_queues/play_index", { queue_id: queueId, index: directPlayTarget });
-            this._refreshQueueAfterMutation(700).catch(() => {});
-            this._refreshQueueAfterMutation(1450).catch(() => {});
-            this._refreshQueueAfterMutation(2850).catch(() => {});
-            return true;
-          } catch (_) {
-            // Keep falling through to Home Assistant service fallbacks.
-          }
-        }
-        if (queueId && directPlayTarget !== null) {
-          const usedMassCommand = await this._callMassQueueCommand("player_queues/play_index", { queue_id: queueId, index: directPlayTarget });
-          if (usedMassCommand) {
-            this._refreshQueueAfterMutation(700).catch(() => {});
-            this._refreshQueueAfterMutation(1450).catch(() => {});
-            this._refreshQueueAfterMutation(2850).catch(() => {});
-            return true;
-          }
-        }
-        const queueItemServiceId = optimisticItem ? (this._getQueueItemPlaybackId(optimisticItem) || this._getQueueItemStableId(optimisticItem)) : "";
-        const usedMassQueue = queueItemServiceId ? await this._callMassQueueService("play_queue_item", queueItemServiceId) : false;
-        if (usedMassQueue) {
-          this._refreshQueueAfterMutation(700).catch(() => {});
-          this._refreshQueueAfterMutation(1450).catch(() => {});
-          this._refreshQueueAfterMutation(2850).catch(() => {});
-          return true;
-        }
-
-        const stepDelta = Number.isFinite(playIndex) && Number.isFinite(currentForStepBeforePlay) ? playIndex - currentForStepBeforePlay : NaN;
-        if (Number.isFinite(stepDelta) && stepDelta !== 0) {
-          const stepped = await this._stepQueueByDelta(stepDelta);
-          if (stepped) {
-            this._refreshQueueAfterMutation(700).catch(() => {});
-            this._refreshQueueAfterMutation(1450).catch(() => {});
-            this._refreshQueueAfterMutation(2850).catch(() => {});
-            return true;
-          }
-        }
-
-        if (fallbackUri && !queueItemId && !Number.isFinite(playIndex)) {
-          if (!player?.entity_id && !this._state.selectedPlayer) return false;
-          await this._hass.callService("media_player", "play_media", {
-            entity_id: player?.entity_id || this._state.selectedPlayer,
-            media_content_id: fallbackUri,
-            media_content_type: mediaType,
-          });
-          this._refreshQueueAfterMutation(900).catch(() => {});
-          this._refreshQueueAfterMutation(2850).catch(() => {});
-          return true;
-        }
-        if (optimisticItem) {
-          this._clearMobileQueuePlayPending();
-          this._ensureQueueSnapshot(true).catch(() => {});
-        }
+        await this._callEngineMaCommand("player_queues/play_index", {
+          queue_id: queueId,
+          index: directPlayTarget,
+        });
+        this._scheduleQueueRefreshAfterMutation(700);
+        return true;
       } catch (e) {
         this._clearMobileQueuePlayPending();
+        if (player?.entity_id) this._clearPlayerPlaybackOptimistic(player.entity_id);
+        this._ensureQueueSnapshot(true).catch(() => {});
         this._toast(e?.message || this._i18n("ui.queue_action_failed"));
         return false;
       } finally {
         this._setQueueBusy(false);
       }
-      return false;
     }
 
     async _callService(service, data, options = {}) {
+      if (this._homeiiEngineRequired?.()) {
+        if (service === "search" && typeof this._homeiiEngineSearch === "function") {
+          return this._homeiiEngineSearch(data || {});
+        }
+        if (service === "get_library" && typeof this._homeiiEngineGetLibrary === "function") {
+          return this._homeiiEngineGetLibrary(data || {});
+        }
+        if (service === "get_queue" && typeof this._homeiiEngineGetQueue === "function") {
+          return this._homeiiEngineGetQueue(data || {});
+        }
+        throw new Error(`Music Assistant frontend service ${service} is disabled in HOMEii Flow 6. Use HOMEii Flow Engine.`);
+      }
       const includeConfigEntryId = options.includeConfigEntryId !== false;
       let serviceData = { ...data };
       if (includeConfigEntryId) {
@@ -10296,6 +8418,52 @@ export function createHomeiiBaseMusicCard({
     }
 
     _normalizeQueueSnapshot(raw, entityId = "") {
+      if (!HomeiiRevisionedSnapshotsFoundation.acceptEngineSnapshot(
+        this._engineSnapshotRevisions,
+        "queue",
+        raw,
+        entityId,
+      )) {
+        this._debugLog?.("debug", "[HOMEii Flow] Ignored stale Engine queue snapshot", {
+          entityId,
+          snapshot: HomeiiRevisionedSnapshotsFoundation.engineSnapshotMeta(raw),
+        });
+        return null;
+      }
+      const engineNormalized = raw?.normalized ?? raw?.data?.normalized ?? null;
+      if (engineNormalized && typeof engineNormalized === "object") {
+        const engineItems = Array.isArray(engineNormalized.items) ? engineNormalized.items : [];
+        const normalizedItems = engineItems
+          .map((item, index) => this._normalizeQueueItem(item, Number.isFinite(Number(item?.sort_index)) ? Number(item.sort_index) : index))
+          .filter(Boolean)
+          .map((item, index) => ({
+            ...item,
+            sort_index: Number.isFinite(Number(item.sort_index)) ? Number(item.sort_index) : index,
+          }));
+        const totalItems = Number.isFinite(Number(engineNormalized.items_count))
+          ? Number(engineNormalized.items_count)
+          : normalizedItems.length;
+        const currentIndex = engineNormalized.current_index != null && Number.isFinite(Number(engineNormalized.current_index))
+          ? Number(engineNormalized.current_index)
+          : null;
+        // Windowed queues use absolute indices; array offsets cannot identify the playing item.
+        const itemAt = (index) => index == null ? null : normalizedItems.find((item) => Number(item?.sort_index) === index) || null;
+        const currentFromItems = itemAt(currentIndex);
+        const previousFromItems = itemAt(currentIndex == null ? null : currentIndex - 1);
+        const nextFromItems = itemAt(currentIndex == null ? null : currentIndex + 1);
+        return {
+          state: {
+            ...engineNormalized,
+            items: totalItems,
+            items_count: totalItems,
+            current_index: currentIndex,
+            current_item: currentFromItems || this._normalizeQueueItem(engineNormalized.current_item, currentIndex),
+            previous_item: previousFromItems || this._normalizeQueueItem(engineNormalized.previous_item, Math.max(0, currentIndex - 1)),
+            next_item: nextFromItems || this._normalizeQueueItem(engineNormalized.next_item, currentIndex + 1),
+          },
+          items: normalizedItems,
+        };
+      }
       let src = raw?.response ?? raw;
       if (!src || typeof src !== "object") return null;
       if (entityId && src[entityId] && typeof src[entityId] === "object") {
@@ -10365,6 +8533,41 @@ export function createHomeiiBaseMusicCard({
       return visible > 0 && expected > visible;
     }
 
+    _queueSnapshotProxyArtworkCount(snapshot = null) {
+      const items = Array.isArray(snapshot?.items) ? snapshot.items : [];
+      return items.reduce((count, item) => {
+        const art = this._artUrl(item, { size: 120 }) || this._artUrl(item?.media_item || item, { size: 120 });
+        return count + (String(art || "").includes("/api/homeii_flow/artwork/item/") ? 1 : 0);
+      }, 0);
+    }
+
+    _homeiiEngineQueueSourceOfTruth() {
+      if (!this._homeiiEngineEnabled?.()) return false;
+      if (this._homeiiEngineRequired?.()) return true;
+      if (!this._state?.engineAvailable) return false;
+      const capabilities = this._state?.engineCapabilities || {};
+      return capabilities.queue_source_of_truth === true
+        || capabilities.queue_proxy === true
+        || capabilities.queue_artwork_proxy === true
+        || capabilities.item_artwork_proxy === true;
+    }
+
+    async _ensureHomeiiEngineReadyForAction() {
+      if (!this._homeiiEngineRequired?.()) return true;
+      if (this._state?.engineAvailable) return true;
+      if (typeof this._ensureHomeiiEngineHandshake === "function") {
+        return !!(await this._ensureHomeiiEngineHandshake());
+      }
+      if (typeof this._refreshHomeiiEngineContext === "function") {
+        const context = await this._refreshHomeiiEngineContext({ force: true }).catch((error) => {
+          this._state.engineLastError = error?.message || String(error || "HOMEii Flow Engine is not available.");
+          return null;
+        });
+        return !!(context && this._state?.engineAvailable);
+      }
+      return false;
+    }
+
     _betterQueueSnapshot(left = null, right = null) {
       if (!left) return right || null;
       if (!right) return left;
@@ -10374,25 +8577,31 @@ export function createHomeiiBaseMusicCard({
       if (leftVisible > rightVisible) return left;
       const leftExpected = this._queueSnapshotExpectedCount(left);
       const rightExpected = this._queueSnapshotExpectedCount(right);
-      return rightExpected > leftExpected ? right : left;
+      if (rightExpected > leftExpected) return right;
+      if (leftExpected > rightExpected) return left;
+      const leftProxyArtwork = this._queueSnapshotProxyArtworkCount(left);
+      const rightProxyArtwork = this._queueSnapshotProxyArtworkCount(right);
+      return rightProxyArtwork > leftProxyArtwork ? right : left;
     }
 
     async _fetchMusicAssistantQueueSnapshot(player) {
       if (!player?.entity_id) return null;
-      const basePayload = { entity_id: player.entity_id };
       const queueId = this._queueIdForPlayer(player);
-      const fetchSnapshot = async (payload) => this._normalizeQueueSnapshot(
-        await this._callService("get_queue", payload, { includeConfigEntryId: false }),
-        player.entity_id,
-      );
-      const primary = await fetchSnapshot(basePayload);
-      if (!queueId || (primary?.items?.length && !this._queueSnapshotLooksPartial(primary))) return primary;
+      const engineReady = await this._ensureHomeiiEngineReadyForAction();
+      if (!this._homeiiEngineRequired?.() || !engineReady || typeof this._homeiiEngineGetQueue !== "function") {
+        return null;
+      }
       try {
-        const scoped = await fetchSnapshot({ ...basePayload, queue_id: queueId });
-        return this._betterQueueSnapshot(primary, scoped);
+        const engineResult = await this._homeiiEngineGetQueue({
+          entity_id: player.entity_id,
+          queue_id: queueId,
+          limit_before: 50,
+          limit_after: 1000,
+        });
+        return this._normalizeQueueSnapshot(engineResult, player.entity_id);
       } catch (error) {
-        this._debugLog("debug", "[HOMEii Flow] scoped HA queue lookup skipped", error);
-        return primary;
+        this._debugLog("warn", "[HOMEii Flow] Engine queue source failed", error);
+        return null;
       }
     }
 
@@ -10409,149 +8618,83 @@ export function createHomeiiBaseMusicCard({
     }
 
     async _fetchMassQueueItemsSnapshot(player) {
-      if (!player || !this._hasMassQueueService("get_queue_items")) return null;
-      try {
-        const res = await this._hass.connection.sendMessagePromise({
-          type: "call_service",
-          domain: "mass_queue",
-          service: "get_queue_items",
-          service_data: {
-            entity: player.entity_id,
-            limit: 1000,
-            offset: 0,
-          },
-          return_response: true,
-        });
-        const raw = res?.response ?? res;
-        let items = raw?.items ?? raw?.queue_items ?? raw;
-        if (raw?.[player.entity_id]) {
-          const scoped = raw[player.entity_id];
-          items = scoped?.items ?? scoped?.queue_items ?? scoped;
-        }
-        if (!Array.isArray(items)) return null;
-        const queueState = raw?.queue_state || raw?.queue || raw;
-        const rawCurrentIndex = Number(queueState?.current_index ?? raw?.current_index);
-        const currentTitle = String(player?.attributes?.media_title || "").trim().toLowerCase();
-        const currentArtist = String(player?.attributes?.media_artist || "").trim().toLowerCase();
-        const currentOffset = items.findIndex((item) => {
-          const mediaItem = item?.media_item || item?.media || item?.item || item;
-          const title = String(mediaItem?.name || item?.media_title || item?.name || "").trim().toLowerCase();
-          const artist = String(item?.media_artist || (mediaItem?.artists || []).map((a) => a?.name).filter(Boolean).join(", ") || "").trim().toLowerCase();
-          return !!currentTitle && title === currentTitle && (!currentArtist || !artist || artist.includes(currentArtist) || currentArtist.includes(artist));
-        });
-        const baseSortIndex = Number.isFinite(rawCurrentIndex) && currentOffset >= 0
-          ? Math.max(0, rawCurrentIndex - currentOffset)
-          : 0;
-        const normalizedItems = items
-          .map((item, index) => this._normalizeQueueItem(item, baseSortIndex + index))
-          .filter(Boolean)
-          .map((item, index) => ({
-            ...item,
-            sort_index: Number.isFinite(item.sort_index) ? item.sort_index : (baseSortIndex + index),
-          }));
-        if (!normalizedItems.length) return null;
-        const guessedCurrentIndex = Number.isFinite(rawCurrentIndex)
-          ? rawCurrentIndex
-          : this._guessCurrentQueueIndexFromItems(normalizedItems, player);
-        return {
-          state: {
-            ...queueState,
-            current_index: guessedCurrentIndex,
-            items: Number.isFinite(Number(queueState?.items)) ? Number(queueState.items) : normalizedItems.length,
-          },
-          items: normalizedItems,
-        };
-      } catch (_) {
-        return null;
-      }
+      return null;
     }
 
-    async _fetchLibrary(mediaType, orderBy = "sort_name", limit = 500, favoritesOnly = false, search = "") {
-      const data = { media_type: mediaType, order_by: orderBy, limit };
-      if (favoritesOnly) data.favorite = true;
-      if (search) data.search = search;
-      try {
-        const res = await this._callService("get_library", data);
-        const raw = res?.response ?? res;
-        this._state.musicAssistantIssueMessage = "";
-        return raw?.items ?? (Array.isArray(raw) ? raw : []);
-      } catch (error) {
-        if (this._isMusicAssistantAvailabilityError(error)) {
-          try {
-            const directItems = await this._fetchLibraryDirect(mediaType, orderBy, limit, favoritesOnly, search);
-            if (Array.isArray(directItems)) {
-              this._state.musicAssistantIssueMessage = "";
-              return directItems;
-            }
-          } catch (directError) {
-            this._debugLog("warn", "[HOMEii Flow] direct Music Assistant library fallback failed", directError);
+    async _fetchLibrary(mediaType, orderBy = "sort_name", limit = 500, favoritesOnly = false, search = "", options = {}) {
+      if (limit > 500 && this._state.engineCapabilities?.library_pagination) {
+        const collected = [];
+        const seen = new Set();
+        const snapshot = {};
+        for (let offset = 0; offset < limit; offset += 500) {
+          const pageLimit = Math.min(500, limit - offset);
+          const page = await this._fetchLibrary(mediaType, orderBy, pageLimit, favoritesOnly, search, { offset, strict: true, snapshot });
+          for (const item of page) {
+            const id = item.uri || `${item.provider || ""}:${item.item_id || ""}`;
+            if (id !== ":" && seen.has(id)) throw new Error(this._m("Library changed while loading. Try again.", "הספרייה השתנתה בזמן הטעינה. נסה שוב."));
+            seen.add(id); collected.push(item);
           }
-          this._handleMusicAssistantIssue(error);
-          return [];
+          if (page.length < pageLimit) break;
         }
+        return collected;
+      }
+      const engineReady = await this._ensureHomeiiEngineReadyForAction();
+      const canUseEngineLibrary = this._homeiiEngineEnabled?.()
+        && engineReady
+        && typeof this._homeiiEngineGetLibrary === "function";
+      if (!canUseEngineLibrary) {
+        this._state.musicAssistantIssueMessage = this._i18n?.("diagnostics.engine_required_missing") || "HOMEii Flow Engine is required.";
+        throw new Error(this._state.musicAssistantIssueMessage);
+      }
+      try {
+        const engineResult = await this._homeiiEngineGetLibrary({
+          media_type: mediaType,
+          query: search,
+          order_by: orderBy,
+          limit,
+          favorite: !!favoritesOnly,
+          compact: true,
+          ...(this._state.engineCapabilities?.library_pagination ? { offset: options.offset || 0 } : {}),
+        });
+        const libraryIdentity = `${mediaType}:${orderBy}:${favoritesOnly ? "favorites" : "all"}:${search || ""}:${options.offset || 0}`;
+        if (options.snapshot) {
+          const meta = HomeiiRevisionedSnapshotsFoundation.engineSnapshotMeta(engineResult);
+          if (meta) {
+            const revision = `${meta.epoch || ""}:${meta.revision || 0}`;
+            if (options.snapshot.revision && options.snapshot.revision !== revision) throw new Error(this._m("Library changed while loading. Try again.", "הספרייה השתנתה בזמן הטעינה. נסה שוב."));
+            options.snapshot.revision = revision;
+          }
+        }
+        if (!HomeiiRevisionedSnapshotsFoundation.acceptEngineSnapshot(
+          this._engineSnapshotRevisions,
+          "library",
+          engineResult,
+          libraryIdentity,
+        )) {
+          if (options.strict) throw new Error(this._m("Library changed while loading. Try again.", "הספרייה השתנתה בזמן הטעינה. נסה שוב."));
+          this._debugLog?.("debug", "[HOMEii Flow] Ignored stale Engine library snapshot", {
+            libraryIdentity,
+            snapshot: HomeiiRevisionedSnapshotsFoundation.engineSnapshotMeta(engineResult),
+          });
+          const cachedPrefix = `${mediaType}:${orderBy}:`;
+          const cachedSuffix = `:${favoritesOnly}`;
+          const cachedItems = [...this._cache.library.entries()]
+            .filter(([key, value]) => key.startsWith(cachedPrefix) && key.endsWith(cachedSuffix) && Array.isArray(value?.items))
+            .map(([, value]) => value.items)
+            .sort((left, right) => right.length - left.length)[0];
+          return Array.isArray(cachedItems) ? cachedItems.slice(0, limit) : [];
+        }
+        this._state.musicAssistantIssueMessage = "";
+        const raw = engineResult?.data?.response ?? engineResult?.data ?? engineResult;
+        const items = Array.isArray(engineResult?.items)
+          ? engineResult.items
+          : (raw?.items ?? (Array.isArray(raw) ? raw : []));
+        return (Array.isArray(items) ? items : []).map((item) => this._normalizeSearchItem(item, mediaType));
+      } catch (error) {
+        this._debugLog("warn", "[HOMEii Flow] Engine library proxy failed", error);
+        this._handleMusicAssistantIssue?.(error);
         throw error;
       }
-    }
-
-    _libraryCommandSegment(mediaType = "") {
-      const type = String(mediaType || "").toLowerCase();
-      return {
-        album: "albums",
-        artist: "artists",
-        genre: "genres",
-        playlist: "playlists",
-        podcast: "podcasts",
-        radio: "radios",
-        track: "tracks",
-      }[type] || "";
-    }
-
-    _libraryResultGroup(mediaType = "") {
-      const type = String(mediaType || "").toLowerCase();
-      if (type === "radio") return "radio";
-      if (type === "podcast") return "podcasts";
-      if (type === "album") return "albums";
-      if (type === "artist") return "artists";
-      if (type === "track") return "tracks";
-      if (type === "playlist") return "playlists";
-      if (type === "genre") return "genres";
-      return "";
-    }
-
-    _libraryItemsFromDirectPayload(payload, mediaType = "playlist") {
-      const group = this._libraryResultGroup(mediaType);
-      if (!group) return [];
-      const normalized = this._normalizeSearchResponse({ [group]: payload });
-      const raw = payload?.response ?? payload?.result ?? payload;
-      const items = Array.isArray(normalized?.[group]) && normalized[group].length
-        ? normalized[group]
-        : (Array.isArray(raw?.items) ? raw.items : (Array.isArray(raw) ? raw : []))
-          .map((item) => this._normalizeSearchItem(item, mediaType));
-      const seen = new Set();
-      return items.filter((item) => {
-        const uri = String(item?.uri || item?.media_item?.uri || "").trim();
-        const name = String(item?.name || item?.title || item?.media_item?.name || "").trim().toLowerCase();
-        const provider = String(item?.provider || item?.provider_id || item?.provider_domain || item?.media_item?.provider || "").trim().toLowerCase();
-        const key = uri || `${provider}:${name}`;
-        if (!key || seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      });
-    }
-
-    async _fetchLibraryDirect(mediaType, orderBy = "sort_name", limit = 500, favoritesOnly = false, search = "") {
-      if (!this._hasDirectMAConnection()) return null;
-      const segment = this._libraryCommandSegment(mediaType);
-      if (!segment) return null;
-      const data = {
-        limit: Math.max(1, Math.min(1000, Number(limit) || 500)),
-        offset: 0,
-      };
-      if (orderBy) data.order_by = orderBy;
-      if (favoritesOnly) data.favorite = true;
-      if (search) data.search = search;
-      const raw = await this._callDirectMaCommand(`music/${segment}/library_items`, data);
-      return this._libraryItemsFromDirectPayload(raw, mediaType);
     }
 
     _recommendationFolderItems(raw = {}) {
@@ -10609,16 +8752,35 @@ export function createHomeiiBaseMusicCard({
       return entries.slice(0, Math.max(1, Math.min(100, Number(limit) || 48)));
     }
 
+    async _loadRecommendationFolders() {
+      const raw = await this._callEngineMaCommand("music/recommendations", {});
+      const folders = this._recommendationFolderItems(raw?.response ?? raw?.result ?? raw);
+      const resolved = [...folders];
+      let cursor = 0;
+      const worker = async () => {
+        while (cursor < folders.length) {
+          const index = cursor++, folder = folders[index];
+          if (folder?.items?.length || !folder?.provider || !folder?.item_id || !["folder", "recommendation_folder"].includes(String(folder.media_type || "folder"))) continue;
+          try {
+            const items = await this._callEngineMaCommand("music/recommendations/items", {provider:folder.provider, item_id:folder.item_id});
+            resolved[index] = {...folder, items:this._recommendationFolderItems(items?.response ?? items?.result ?? items)};
+          } catch (error) { this._debugLog?.("warn", "Recommendation shelf unavailable", error); }
+        }
+      };
+      await Promise.all(Array.from({length:Math.min(4, folders.length)}, worker));
+      return resolved;
+    }
+
     async _loadNativeRecommendationEntries(force = false, limit = 48) {
       const cached = Array.isArray(this._state.mobileNativeRecommendationItems)
         ? this._state.mobileNativeRecommendationItems
         : [];
       const fresh = cached.length && !force && (Date.now() - Number(this._state.mobileNativeRecommendationsFetchedAt || 0) < 10 * 60 * 1000);
       if (fresh || this._state.mobileNativeRecommendationsLoading) return cached;
-      if (!this._hasDirectMAConnection()) return cached;
+      if (!this._hasMusicAssistantCommandBridge()) return cached;
       this._state.mobileNativeRecommendationsLoading = true;
       try {
-        const raw = await this._callDirectMaCommand("music/recommendations", {});
+        const raw = await this._loadRecommendationFolders();
         const items = this._flattenNativeRecommendations(raw, limit);
         this._state.mobileNativeRecommendationItems = items;
         this._state.mobileNativeRecommendationsFetchedAt = Date.now();
@@ -10645,13 +8807,13 @@ export function createHomeiiBaseMusicCard({
     }
 
     async _nativeSimilarTrackEntries(entry = {}, limit = 12) {
-      if (!this._hasDirectMAConnection() || !entry?.uri) return [];
+      if (!this._hasMusicAssistantCommandBridge() || !entry?.uri) return [];
       const mediaType = String(entry.media_type || entry.type || "track").toLowerCase();
       if (mediaType !== "track") return [];
       const parsed = this._parseMediaReference(entry.uri, "track");
       if (!parsed?.provider || !parsed?.item_id) return [];
       try {
-        const raw = await this._callDirectMaCommand("music/tracks/similar_tracks", {
+        const raw = await this._callEngineMaCommand("music/tracks/similar_tracks", {
           item_id: parsed.item_id,
           provider_instance_id_or_domain: parsed.provider,
           limit: Math.max(1, Math.min(50, Number(limit) || 12)),
@@ -10714,23 +8876,57 @@ export function createHomeiiBaseMusicCard({
       const key = `${mediaType}:${orderBy}:${limit}:${favoritesOnly}`;
       const ttl = Number(this._config.cache_ttl || 300000);
       const cached = this._cache.library.get(key);
+      const staleItems = Array.isArray(cached?.items) ? cached.items : [];
       if (cached && Date.now() - cached.ts < ttl) return cached.items;
-      let items;
-      try {
-        items = await this._fetchLibrary(mediaType, orderBy, limit, favoritesOnly);
-      } catch (error) {
-        if (this._isMusicAssistantAvailabilityError(error)) {
-          this._handleMusicAssistantIssue(error);
-          items = [];
-        } else if (orderBy !== "sort_name") items = await this._fetchLibrary(mediaType, "sort_name", limit, favoritesOnly);
-        else throw error;
+      // A fresh larger page already contains this request; keep sort/favorites
+      // isolated and never reuse a random sample as a stable page.
+      if (orderBy !== "random") {
+        const prefix = `${mediaType}:${orderBy}:`;
+        const suffix = `:${favoritesOnly}`;
+        for (const [candidateKey, candidate] of this._cache.library) {
+          if (!candidateKey.startsWith(prefix) || !candidateKey.endsWith(suffix)) continue;
+          const candidateLimit = Number(candidateKey.slice(prefix.length, -suffix.length));
+          if (candidateLimit >= limit && Date.now() - candidate.ts < ttl && Array.isArray(candidate.items)) {
+            return candidate.items.slice(0, limit);
+          }
+        }
       }
-      this._cache.library.set(key, { ts: Date.now(), items });
-      return items;
+      const refresh = async () => {
+        let items;
+        try {
+          items = await this._fetchLibrary(mediaType, orderBy, limit, favoritesOnly);
+        } catch (error) {
+          if (this._isMusicAssistantAvailabilityError(error)) {
+            this._handleMusicAssistantIssue(error);
+            if (staleItems.length) return staleItems;
+            throw error;
+          } else if (orderBy !== "sort_name") items = await this._fetchLibrary(mediaType, "sort_name", limit, favoritesOnly);
+          else throw error;
+        }
+        if ((!Array.isArray(items) || !items.length) && staleItems.length && this._state.engineStatus === "degraded") {
+          return staleItems;
+        }
+        if ((Array.isArray(items) && items.length) || !this._state.musicAssistantIssueMessage) {
+          this._cache.library.set(key, { ts: Date.now(), items });
+        }
+        return items;
+      };
+      let loadPromise = this._libraryLoadPromises.get(key);
+      if (!loadPromise) {
+        loadPromise = refresh().finally(() => {
+          if (this._libraryLoadPromises.get(key) === loadPromise) this._libraryLoadPromises.delete(key);
+        });
+        this._libraryLoadPromises.set(key, loadPromise);
+      }
+      if (staleItems.length) {
+        loadPromise.catch(() => {});
+        return staleItems;
+      }
+      return loadPromise;
     }
 
     _mediaTypeCanOpenDetails(mediaType = "") {
-      return ["album", "artist", "playlist"].includes(String(mediaType || "").toLowerCase());
+      return ["album", "artist", "playlist", "podcast"].includes(String(mediaType || "").toLowerCase());
     }
 
     _libraryDetailParentPageForType(mediaType = "") {
@@ -10738,6 +8934,7 @@ export function createHomeiiBaseMusicCard({
       if (type === "album") return "library_albums";
       if (type === "artist") return "library_artists";
       if (type === "playlist") return "library_playlists";
+      if (type === "podcast") return "library_podcasts";
       return "library_playlists";
     }
 
@@ -10844,10 +9041,8 @@ export function createHomeiiBaseMusicCard({
         if (candidates.some((candidate) => candidate.key === key)) return;
         candidates.push({ key, item_id: itemId, provider });
       };
-      add(entry?.item_id || entry?.id || mediaItem?.item_id || mediaItem?.id, entry?.provider_instance || mediaItem?.provider_instance || entry?.provider_domain || mediaItem?.provider_domain || entry?.provider || mediaItem?.provider);
-      add(entry?.item_id || entry?.id || mediaItem?.item_id || mediaItem?.id, "library");
       add(parsed?.item_id, parsed?.provider);
-      add(parsed?.item_id, "library");
+      add(entry?.item_id || entry?.id || mediaItem?.item_id || mediaItem?.id, entry?.provider_instance || mediaItem?.provider_instance || entry?.provider_domain || mediaItem?.provider_domain || entry?.provider || mediaItem?.provider);
       add(mapping?.item_id || mapping?.provider_item_id, mapping?.provider_instance || mapping?.provider_domain || mapping?.provider || mapping?.provider_id);
       mappings.forEach((mapping) => {
         const itemId = mapping?.item_id || mapping?.provider_item_id || mapping?.media_item?.item_id || "";
@@ -10877,9 +9072,10 @@ export function createHomeiiBaseMusicCard({
         || raw.media_class
         || ""
       ).toLowerCase();
-      if (rawType && !["track", "song", "music", "album_track", "albumtrack"].includes(rawType)) return null;
+      if (rawType && !["track", "song", "music", "album_track", "albumtrack", "podcast_episode"].includes(rawType)) return null;
       if (!forceTrack && !rawType && !mediaItem.uri && !mediaItem.media_content_id && !mediaItem.item_id) return null;
-      const normalized = this._normalizeSearchItem(mediaItem, "track");
+      const detailType = rawType === "podcast_episode" ? "podcast_episode" : "track";
+      const normalized = this._normalizeSearchItem(mediaItem, detailType);
       const uri = String(normalized?.uri || mediaItem.uri || mediaItem.media_content_id || raw.uri || raw.media_content_id || "").trim();
       const name = normalized?.name || mediaItem.name || mediaItem.title || raw.name || raw.title || raw.media_title || "";
       if (!uri && !name) return null;
@@ -10898,7 +9094,7 @@ export function createHomeiiBaseMusicCard({
       const image = this._artUrl(normalized) || this._artUrl(mediaItem) || this._artUrl(raw) || "";
       return {
         ...normalized,
-        media_type: "track",
+        media_type: detailType,
         uri,
         name,
         artists,
@@ -10941,15 +9137,16 @@ export function createHomeiiBaseMusicCard({
     }
 
     _sortLibraryDetailTracks(tracks = []) {
-      return (Array.isArray(tracks) ? [...tracks] : []).sort((left, right) => {
-        const leftDisc = Number(left?.disc_number ?? left?.discNumber ?? left?.media_item?.disc_number ?? 0);
-        const rightDisc = Number(right?.disc_number ?? right?.discNumber ?? right?.media_item?.disc_number ?? 0);
-        if (Number.isFinite(leftDisc) && Number.isFinite(rightDisc) && leftDisc !== rightDisc) return leftDisc - rightDisc;
-        const leftTrack = Number(left?.track_number ?? left?.trackNumber ?? left?.media_item?.track_number ?? left?.sort_index ?? 0);
-        const rightTrack = Number(right?.track_number ?? right?.trackNumber ?? right?.media_item?.track_number ?? right?.sort_index ?? 0);
-        if (Number.isFinite(leftTrack) && Number.isFinite(rightTrack) && leftTrack !== rightTrack) return leftTrack - rightTrack;
-        return String(left?.name || "").localeCompare(String(right?.name || ""), this._isHebrew() ? "he" : "en", { sensitivity: "base", numeric: true });
-      });
+      const items = Array.isArray(tracks) ? [...tracks] : [];
+      const trackNumber = item => Number(item?.track_number ?? item?.trackNumber ?? item?.media_item?.track_number);
+      const discNumber = item => Number(item?.disc_number ?? item?.discNumber ?? item?.media_item?.disc_number);
+      const positive = number => Number.isInteger(number) && number > 0;
+      // Partial metadata is not a reliable ordering key. MA's returned order
+      // is authoritative in that case; never fall back to alphabetical titles.
+      if (!items.every(item => positive(trackNumber(item)))) return items;
+      const hasDiscs = items.some(item => positive(discNumber(item)));
+      if (hasDiscs && !items.every(item => positive(discNumber(item)))) return items;
+      return items.sort((left, right) => (hasDiscs ? discNumber(left) - discNumber(right) : 0) || trackNumber(left) - trackNumber(right));
     }
 
     _libraryTrackMatchesAlbum(track = {}, entry = {}) {
@@ -11332,17 +9529,7 @@ export function createHomeiiBaseMusicCard({
     }
 
     async _loadLibraryMediaDetailTracksViaHaBrowse(entry = {}) {
-      const player = this._getSelectedPlayer();
-      const entityId = this._selectedPlayerMoreInfoEntityId?.(player) || player?.entity_id || this._state.selectedPlayer || "";
-      const uri = String(entry?.uri || "").trim();
-      if (!this._hass?.connection || !entityId || !uri || this._isDirectMaEntityId?.(entityId)) return [];
-      const raw = await this._hass.connection.sendMessagePromise({
-        type: "media_player/browse_media",
-        entity_id: entityId,
-        media_content_id: uri,
-        media_content_type: entry.media_type || entry.type || "album",
-      });
-      return this._libraryMediaDetailTracksFromPayload(raw, { forceTrackItems: false });
+      return [];
     }
 
     async _loadLibraryMediaDetailTracks(entry = {}) {
@@ -11352,8 +9539,35 @@ export function createHomeiiBaseMusicCard({
       const ttl = Number(this._config.cache_ttl || 300000);
       const cached = this._cache.library.get(cacheKey);
       if (cached && Date.now() - cached.ts < ttl) return cached.items;
+      if (entry?._homeiiSingleflight !== true) {
+        const existing = this._libraryDetailLoadPromises.get(cacheKey);
+        if (existing) return existing;
+        const task = this._loadLibraryMediaDetailTracks({ ...entry, _homeiiSingleflight: true });
+        this._libraryDetailLoadPromises.set(cacheKey, task);
+        try {
+          return await task;
+        } finally {
+          if (this._libraryDetailLoadPromises.get(cacheKey) === task) {
+            this._libraryDetailLoadPromises.delete(cacheKey);
+          }
+        }
+      }
       const attempts = [];
       const commandArgsList = this._libraryMediaDetailCommandArgsList(entry, type);
+      if (type === "podcast") {
+        let episodeError;
+        for (const args of commandArgsList) {
+          try {
+            const raw = await this._callEngineMaCommand("music/podcasts/podcast_episodes", {
+              item_id: args.item_id, provider_instance_id_or_domain: args.provider,
+            });
+            const episodes = this._libraryMediaDetailTracksFromPayload(raw);
+            this._cache.library.set(cacheKey, { ts: Date.now(), items: episodes });
+            return episodes;
+          } catch (error) { episodeError = error; }
+        }
+        throw episodeError || new Error(this._m("Could not resolve this podcast.", "לא ניתן לזהות את הפודקאסט."));
+      }
       if (commandArgsList.length) {
         if (type === "album") {
           commandArgsList.forEach((commandArgs) => {
@@ -11362,19 +9576,9 @@ export function createHomeiiBaseMusicCard({
               args: { item_id: commandArgs.item_id, provider_instance_id_or_domain: commandArgs.provider, in_library_only: false },
               forceTrackItems: true,
             });
-            attempts.push({
-              command: "music/albums/album_tracks",
-              args: { item_id: commandArgs.item_id, provider_instance_or_domain: commandArgs.provider, in_library_only: false },
-              forceTrackItems: true,
-            });
           });
         } else if (type === "playlist") {
           commandArgsList.forEach((commandArgs) => {
-            attempts.push({
-              command: "music/playlists/playlist_tracks",
-              args: { item_id: commandArgs.item_id, provider_instance_or_domain: commandArgs.provider, force_refresh: false },
-              forceTrackItems: true,
-            });
             attempts.push({
               command: "music/playlists/playlist_tracks",
               args: { item_id: commandArgs.item_id, provider_instance_id_or_domain: commandArgs.provider, force_refresh: false },
@@ -11388,10 +9592,15 @@ export function createHomeiiBaseMusicCard({
       let bestTracks = [];
       for (const attempt of attempts) {
         try {
-          const raw = await this._callDirectMaCommand(attempt.command, attempt.args);
-          const tracks = this._sortLibraryDetailTracks(this._libraryMediaDetailTracksFromPayload(raw, { forceTrackItems: attempt.forceTrackItems }));
+          const raw = await this._callEngineMaCommand(attempt.command, attempt.args);
+          const returnedTracks = this._libraryMediaDetailTracksFromPayload(raw, { forceTrackItems: attempt.forceTrackItems });
+          const tracks = type === "playlist" ? returnedTracks : this._sortLibraryDetailTracks(returnedTracks);
+          if (attempt.forceTrackItems) {
+            this._cache.library.set(cacheKey, { ts: Date.now(), items: tracks });
+            return tracks;
+          }
           if (tracks.length > bestTracks.length) bestTracks = tracks;
-          if (tracks.length > 1 && attempt.command.includes("album_tracks")) break;
+          if ((tracks.length > 1 && attempt.command.includes("album_tracks")) || (tracks.length && type === "playlist")) break;
         } catch (error) {
           lastError = error;
         }
@@ -11402,7 +9611,7 @@ export function createHomeiiBaseMusicCard({
       }
       try {
         const tracks = await this._loadLibraryMediaDetailTracksViaHaBrowse(entry);
-        const sortedTracks = this._sortLibraryDetailTracks(tracks);
+        const sortedTracks = type === "playlist" ? tracks : this._sortLibraryDetailTracks(tracks);
         if (sortedTracks.length > bestTracks.length) bestTracks = sortedTracks;
       } catch (_) {}
       if (type === "album" && entry?.name) {
@@ -11415,8 +9624,7 @@ export function createHomeiiBaseMusicCard({
         this._cache.library.set(cacheKey, { ts: Date.now(), items: bestTracks });
         return bestTracks;
       }
-      if (lastError && !attempts.length) throw lastError;
-      this._cache.library.set(cacheKey, { ts: Date.now(), items: [] });
+      if (lastError) throw lastError;
       return [];
     }
 
@@ -11427,11 +9635,25 @@ export function createHomeiiBaseMusicCard({
       const ttl = Number(this._config.cache_ttl || 300000);
       const cached = this._cache.library.get(cacheKey);
       if (cached && Date.now() - cached.ts < ttl && cached.detail) return cached.detail;
+      if (entry?._homeiiSingleflight !== true) {
+        const existing = this._artistDetailLoadPromises.get(cacheKey);
+        if (existing) return existing;
+        const task = this._loadLibraryArtistDetail({ ...entry, _homeiiSingleflight: true });
+        this._artistDetailLoadPromises.set(cacheKey, task);
+        try {
+          return await task;
+        } finally {
+          if (this._artistDetailLoadPromises.get(cacheKey) === task) {
+            this._artistDetailLoadPromises.delete(cacheKey);
+          }
+        }
+      }
       let artistInfo = { ...entry, media_type: "artist", uri };
+      delete artistInfo._homeiiSingleflight;
       let rawArtistPayload = null;
       if (uri) {
         try {
-          const rawArtist = await this._callDirectMaCommand("music/item_by_uri", { uri });
+          const rawArtist = await this._callEngineMaCommand("music/item_by_uri", { uri });
           rawArtistPayload = rawArtist;
           const rawItem = rawArtist?.media_item || rawArtist?.item || rawArtist;
           if (rawItem && typeof rawItem === "object") {
@@ -11462,18 +9684,8 @@ export function createHomeiiBaseMusicCard({
           type: "albums",
         });
         attempts.push({
-          command: "music/artists/artist_albums",
-          args: { item_id: commandArgs.item_id, provider_instance_or_domain: commandArgs.provider, in_library_only: false },
-          type: "albums",
-        });
-        attempts.push({
           command: "music/artists/artist_tracks",
           args: { item_id: commandArgs.item_id, provider_instance_id_or_domain: commandArgs.provider, in_library_only: false },
-          type: "tracks",
-        });
-        attempts.push({
-          command: "music/artists/artist_tracks",
-          args: { item_id: commandArgs.item_id, provider_instance_or_domain: commandArgs.provider, in_library_only: false },
           type: "tracks",
         });
       });
@@ -11490,31 +9702,32 @@ export function createHomeiiBaseMusicCard({
         addAlbums(this._libraryMediaItemsFromPayload(rawArtistPayload, "album"), { trusted: true });
       }
       for (const attempt of attempts) {
+        if (albums.length) break;
         try {
-          const raw = await this._callDirectMaCommand(attempt.command, attempt.args);
+          const raw = await this._callEngineMaCommand(attempt.command, attempt.args);
           const attemptAlbums = attempt.type === "tracks"
             ? this._artistAlbumsFromTracksPayload(raw, name)
             : this._libraryMediaItemsFromPayload(raw, "album");
           addAlbums(attemptAlbums, { trusted: true });
         } catch (_) {}
       }
-      if (name) {
+      if (name && !albums.length) {
         try {
           const searchResults = await this._search(name);
           const searchAlbums = (Array.isArray(searchResults?.albums) ? searchResults.albums : [])
             .map((item) => this._normalizeArtistAlbumCandidate(item, name))
             .filter(Boolean);
           const artistMatches = searchAlbums.filter((album) => this._artistAlbumMatches(album, name));
-          addAlbums(artistMatches.length ? artistMatches : searchAlbums.slice(0, 60), { trusted: !artistMatches.length });
+          addAlbums(artistMatches);
         } catch (_) {}
       }
-      if (name) {
+      if (name && !albums.length) {
         const libraryAlbumQueries = [
-          ["artist_name", 2000, ""],
           ["sort_name", 1000, name],
           ["artist_name", 1000, name],
         ];
         for (const [orderBy, limit, search] of libraryAlbumQueries) {
+          if (albums.length) break;
           try {
             const rawAlbums = await this._fetchLibrary("album", orderBy, limit, false, search);
             addAlbums(rawAlbums);
@@ -11529,9 +9742,23 @@ export function createHomeiiBaseMusicCard({
           if (leftYear !== rightYear) return rightYear - leftYear;
           return String(left?.name || "").localeCompare(String(right?.name || ""), this._isHebrew() ? "he" : "en", { sensitivity: "base", numeric: true });
         });
-      const playlists = await this._loadArtistPlaylistRecommendations(name);
+      // Albums are the primary content. Recommendations enrich the same cached
+      // detail afterwards, without holding the album screen behind provider search.
+      const playlists = [];
       const detail = { artistInfo, albums, playlists };
-      this._cache.library.set(cacheKey, { ts: Date.now(), detail });
+      if (albums.length || playlists.length || !this._state.musicAssistantIssueMessage) {
+        this._cache.library.set(cacheKey, { ts: Date.now(), detail });
+      }
+      this._loadArtistPlaylistRecommendations(name).then((recommendations) => {
+        if (this._cache.library.get(cacheKey)?.detail !== detail) return;
+        detail.playlists = recommendations;
+        const current = this._state.mobileLibraryDetail;
+        if (!current || current.media_type !== "artist" || current.uri !== uri || current.loading) return;
+        current.playlists = recommendations;
+        if (recommendations.length && this._state.menuOpen && this._state.menuPage === "media_detail") {
+          this._renderMobileMenu().catch(() => {});
+        }
+      }).catch(() => {});
       return detail;
     }
 
@@ -11553,7 +9780,7 @@ export function createHomeiiBaseMusicCard({
       else if (!previousDetail) this._clearLibraryDetailStack();
       const albumBrowseContext = options?.albumBrowseContext
         || (mediaType === "album" ? this._albumBrowseContextFromDetail(previousDetail, entry) : null);
-      const parentPage = String(this._state.menuPage || "").startsWith("library_")
+      const parentPage = this._state.menuPage === "discovery" || String(this._state.menuPage || "").startsWith("library_")
         ? this._state.menuPage
         : this._libraryDetailParentPageForType(mediaType);
       this._state.mobileLibraryDetailParentPage = parentPage;
@@ -11702,17 +9929,22 @@ export function createHomeiiBaseMusicCard({
     }
 
     async _fetchRadioBrowserStations(query = "", limit = 40, options = {}) {
+      if (this._state?.engineCapabilities?.radio_directory) {
+        return this._homeiiEngineCommand("radio/search", {query, limit:Math.max(8,Math.min(80,Number(limit) || 40)), country:options.countryCode || "", tag:options.tag || ""}, {timeoutMs:15000});
+      }
       const safeLimit = Math.max(8, Math.min(80, Number(limit) || 40));
       const q = String(query || "").trim();
       const countryCode = String(options.countryCode || "").trim().toUpperCase();
+      const tag = String(options.tag || "").trim();
       const hasCountry = countryCode && countryCode !== "ALL";
       let endpoint;
-      if (q) {
+      if (q || tag) {
         const params = new URLSearchParams({
           hidebroken: "true",
           limit: String(safeLimit),
-          name: q,
         });
+        if (q) params.set("name", q);
+        if (tag) { params.set("tag", tag); params.set("tagExact", "true"); params.set("order", "votes"); params.set("reverse", "true"); }
         if (hasCountry) params.set("countrycode", countryCode);
         endpoint = `https://de1.api.radio-browser.info/json/stations/search?${params.toString()}`;
       } else if (hasCountry) {
@@ -11721,6 +9953,7 @@ export function createHomeiiBaseMusicCard({
         endpoint = `https://de1.api.radio-browser.info/json/stations/topvote/${safeLimit}`;
       }
       const res = await fetch(endpoint, {
+        signal: globalThis.AbortSignal?.timeout?.(12000),
         headers: {
           "Accept": "application/json",
         },
@@ -11918,6 +10151,7 @@ export function createHomeiiBaseMusicCard({
       const sources = [src];
       if (src?.response) sources.push(src.response);
       if (src?.result) sources.push(src.result);
+      if (src?.data) sources.push(src.data);
       if (src && typeof src === "object" && !Array.isArray(src)) {
         Object.values(src).forEach((value) => {
           if (!value || typeof value !== "object" || Array.isArray(value)) return;
@@ -11929,6 +10163,9 @@ export function createHomeiiBaseMusicCard({
         addGroupedItems(source);
         addFlatItems(Array.isArray(source) ? source : []);
         addFlatItems(source?.items);
+        addFlatItems(source?.media);
+        addFlatItems(source?.media_items);
+        addFlatItems(source?.library_items);
         addFlatItems(source?.results);
       });
       return out;
@@ -12019,21 +10256,16 @@ export function createHomeiiBaseMusicCard({
       if (this._hasSearchResults(cached)) return cached;
       if (!q) return this._emptySearchResults();
       const previewLimit = Math.max(4, Math.min(20, Number(limit || 8) || 8));
-      const [radioRes, podcastRes, albumRes, artistRes, trackRes, playlistRes] = await Promise.allSettled([
-        this._fetchLibrary("radio", "sort_name", previewLimit, false, q),
-        this._fetchLibrary("podcast", "sort_name", previewLimit, false, q),
-        this._fetchLibrary("album", "sort_name", previewLimit, false, q),
-        this._fetchLibrary("artist", "sort_name", previewLimit, false, q),
-        this._fetchLibrary("track", "sort_name", previewLimit, false, q),
-        this._fetchLibrary("playlist", "sort_name", previewLimit, false, q),
-      ]);
+      const results = await this._search(q, { fastOnly: true, limit: previewLimit });
+      const trimGroup = (items) => (Array.isArray(items) ? items : []).slice(0, previewLimit);
       return {
-        radio: radioRes.status === "fulfilled" ? radioRes.value : [],
-        podcasts: podcastRes.status === "fulfilled" ? podcastRes.value : [],
-        albums: albumRes.status === "fulfilled" ? albumRes.value : [],
-        artists: artistRes.status === "fulfilled" ? artistRes.value : [],
-        tracks: trackRes.status === "fulfilled" ? trackRes.value : [],
-        playlists: playlistRes.status === "fulfilled" ? playlistRes.value : [],
+        radio: trimGroup(results.radio),
+        podcasts: trimGroup(results.podcasts),
+        albums: trimGroup(results.albums),
+        artists: trimGroup(results.artists),
+        tracks: trimGroup(results.tracks),
+        playlists: trimGroup(results.playlists),
+        genres: trimGroup(results.genres),
       };
     }
 
@@ -12043,270 +10275,52 @@ export function createHomeiiBaseMusicCard({
       const mode = options?.providerOnly ? "provider" : options?.fastOnly ? "fast" : "full";
       const limit = Math.max(5, Math.min(80, Number(options?.limit || 25) || 25));
       const mediaTypes = ["radio", "podcast", "album", "artist", "track", "playlist", "genre"];
-      let globalResults = this._emptySearchResults();
-      const wait = (ms) => new Promise((resolve) => setTimeout(resolve, Math.max(0, Number(ms) || 0)));
-      const runHaSearch = async (providerSearch = false) => {
-        let results = this._emptySearchResults();
-        const attempts = providerSearch
-          ? [
-              { search_query: q, limit, media_types: mediaTypes, library_only: false },
-              { query: q, limit },
-            ]
-          : [
-              { query: q, limit },
-              { name: q, limit, media_type: mediaTypes },
-              { name: q, limit },
-            ];
-        for (const data of attempts) {
-          try {
-            const raw = await this._callService("search", data);
-            results = this._normalizeSearchResponse(raw);
-            if (this._hasSearchResults(results)) return results;
-          } catch (_) {}
-        }
-        return results;
-      };
-      const loadLibraryFallback = async (fallbackLimit = 50) => {
-        const [radioRes, podcastRes, albumRes, artistRes, trackRes, playlistRes] = await Promise.allSettled([
-          this._fetchLibrary("radio", "sort_name", fallbackLimit, false, q),
-          this._fetchLibrary("podcast", "sort_name", fallbackLimit, false, q),
-          this._fetchLibrary("album", "sort_name", fallbackLimit, false, q),
-          this._fetchLibrary("artist", "sort_name", fallbackLimit, false, q),
-          this._fetchLibrary("track", "sort_name", fallbackLimit, false, q),
-          this._fetchLibrary("playlist", "sort_name", fallbackLimit, false, q),
-        ]);
-        return {
-          radio: radioRes.status === "fulfilled" ? radioRes.value : [],
-          podcasts: podcastRes.status === "fulfilled" ? podcastRes.value : [],
-          albums: albumRes.status === "fulfilled" ? albumRes.value : [],
-          artists: artistRes.status === "fulfilled" ? artistRes.value : [],
-          tracks: trackRes.status === "fulfilled" ? trackRes.value : [],
-          playlists: playlistRes.status === "fulfilled" ? playlistRes.value : [],
-        };
-      };
-      if (mode !== "provider") {
-        for (const delay of (mode === "fast" ? [0, 650] : [0, 650, 1400])) {
-          if (delay) await wait(delay);
-          globalResults = await runHaSearch(false);
-          if (this._hasSearchResults(globalResults)) break;
-        }
-        if (mode === "fast") {
-          return this._hasSearchResults(globalResults) ? globalResults : loadLibraryFallback(24);
-        }
-      }
-      if (mode === "provider") {
-        try {
-          const directResults = await this._searchDirectMusicAssistant(q, limit);
-          if (this._hasSearchResults(directResults)) return directResults;
-        } catch (error) {
-          this._debugLog("warn", "[HOMEii Flow] direct Music Assistant provider search failed", error);
-        }
-        const providerResults = await runHaSearch(true);
-        if (this._hasSearchResults(providerResults)) return providerResults;
+      const canUseEngineSearch = this._homeiiEngineEnabled?.()
+        && await this._ensureHomeiiEngineReadyForAction()
+        && typeof this._homeiiEngineSearch === "function";
+      if (!canUseEngineSearch) {
+        this._state.musicAssistantIssueMessage = this._i18n?.("diagnostics.engine_required_missing") || "HOMEii Flow Engine is required.";
+        if (options.strict) throw new Error(this._state.musicAssistantIssueMessage);
         return this._emptySearchResults();
       }
-      let providerResults = this._emptySearchResults();
       try {
-        providerResults = await this._search(q, { providerOnly: true, limit });
+        const engineResult = await this._homeiiEngineSearch({
+          query: q,
+          limit,
+          media_types: mediaTypes,
+          library_only: mode === "fast",
+          provider_only: mode === "provider",
+        });
+        const engineResults = this._normalizeSearchResponse(
+          engineResult?.groups
+            ? { ...engineResult.groups, items: engineResult.items || [] }
+            : (engineResult?.data?.response ?? engineResult?.data ?? engineResult),
+        );
+        this._state.musicAssistantIssueMessage = "";
+        return engineResults;
       } catch (error) {
-        this._debugLog("warn", "[HOMEii Flow] direct Music Assistant search fallback failed", error);
+        this._debugLog("warn", "[HOMEii Flow] Engine search failed", error);
+        this._handleMusicAssistantIssue?.(error);
+        if (options.strict) throw error;
+        return this._emptySearchResults();
       }
-      const merged = this._mergeSearchResults(globalResults, providerResults);
-      if (this._hasSearchResults(merged)) return merged;
-      return loadLibraryFallback(50);
-    }
-
-    async _searchDirectMusicAssistant(query = "", limit = 25) {
-      const q = String(query || "").trim();
-      if (!q || !this._hasDirectMAConnection()) return this._emptySearchResults();
-      const mediaTypes = ["radio", "podcast", "album", "artist", "track", "playlist", "genre"];
-      const raw = await this._callDirectMaCommand("music/search", {
-        search_query: q,
-        media_types: mediaTypes,
-        limit,
-        library_only: false,
-      });
-      return this._normalizeSearchResponse(raw);
-    }
-
-    _rejectWsPending(error = new Error("MA WS disconnected")) {
-      this._wsPending.forEach((pending) => {
-        if (pending?.timer) clearTimeout(pending.timer);
-        try { pending.reject(error); } catch (_) {}
-      });
-      this._wsPending.clear();
-    }
-
-    _scheduleMaReconnect(delay = 8000) {
-      clearTimeout(this._maReconnectTimer);
-      this._maReconnectTimer = setTimeout(() => {
-        this._maReconnectTimer = null;
-        if (this.isConnected && this._hasRealtimeDirectMA()) this._connectMA();
-      }, Math.max(500, Number(delay) || 8000));
     }
 
     _connectMA() {
-      clearTimeout(this._maReconnectTimer);
-      this._maReconnectTimer = null;
-      const maUrl = this._maBrowserUrl();
-      const directIssue = maUrl ? this._directMaSetupIssue(maUrl) || this._directMaCooldownIssue(maUrl) : "";
-      if (directIssue) {
-        this._rejectWsPending(new Error(directIssue));
-        this._state.wsReady = false;
-        this._syncStatus();
-        const hasIntegration = this._hasMusicAssistantServiceSignal?.();
-        this._handleDirectMaConfigurationIssue(directIssue, {
-          severity: hasIntegration ? "warning" : "error",
-          global: !hasIntegration,
-        });
-        return;
-      }
-      if (!maUrl || !this._maToken) {
-        this._rejectWsPending(new Error("MA WS disabled"));
-        this._state.wsReady = false;
-        this._syncStatus();
-        return;
-      }
-      if (this._ws) {
-        this._rejectWsPending(new Error("MA WS reconnecting"));
-        try {
-          this._ws.onclose = null;
-          this._ws.close();
-        } catch (_) {}
-        this._ws = null;
-      }
-      const wsUrl = maUrl.replace(/^http:\/\//, "ws://").replace(/^https:\/\//, "wss://") + "/ws";
-      try {
-        const ws = new WebSocket(wsUrl);
-        this._ws = ws;
-        this._state.wsReady = false;
-        this._syncStatus();
-        ws.onmessage = (e) => {
-          let msg;
-          try { msg = JSON.parse(e.data); } catch (_) { return; }
-          if (msg.server_version && !msg.message_id) {
-            try {
-              ws.send(JSON.stringify({ message_id: "auth", command: "auth", args: { token: this._maToken } }));
-            } catch (_) {
-              try { ws.close(); } catch (_) {}
-            }
-            return;
-          }
-          const messageId = String(msg.message_id ?? "");
-          if (messageId === "auth") {
-            this._state.wsReady = !!msg.result?.authenticated;
-            this._syncStatus();
-            if (this._state.wsReady) {
-              this._refreshDirectMaPlayers({ renderMenu: true }).catch(() => {});
-            }
-            return;
-          }
-          const pending = this._wsPending.get(messageId);
-          if (pending) {
-            this._wsPending.delete(messageId);
-            if (pending.timer) clearTimeout(pending.timer);
-            if (msg.error_code) pending.reject(new Error(msg.details || `MA error ${msg.error_code}`));
-            else pending.resolve(msg.result);
-          }
-        };
-        ws.onerror = () => { this._state.wsReady = false; this._syncStatus(); };
-        ws.onclose = () => {
-          if (this._ws === ws) this._ws = null;
-          this._rejectWsPending(new Error("MA WS closed"));
-          this._state.wsReady = false;
-          this._syncStatus();
-          this._scheduleMaReconnect(8000);
-        };
-      } catch (_) {
-        this._rejectWsPending(new Error("MA WS connection failed"));
-        this._state.wsReady = false;
-        this._syncStatus();
-        this._scheduleMaReconnect(8000);
-      }
+      this._state.wsReady = false;
+      this._syncStatus();
     }
 
-    _wsSend(command, args = {}) {
-      return new Promise((resolve, reject) => {
-        if (!this._ws || !this._state.wsReady) return reject(new Error("MA WS not ready"));
-        const id = String(++this._wsMsgId);
-        const timer = setTimeout(() => {
-          if (this._wsPending.has(id)) {
-            this._wsPending.delete(id);
-            reject(new Error("MA WS timeout"));
-          }
-        }, 10000);
-        this._wsPending.set(id, { resolve, reject, timer });
-        try {
-          this._ws.send(JSON.stringify({ message_id: id, command, args }));
-        } catch (error) {
-          clearTimeout(timer);
-          this._wsPending.delete(id);
-          reject(error);
-        }
-      });
-    }
-
-    async _callDirectMaCommand(command, args = {}) {
-      if (this._state.wsReady && this._ws) {
-        return this._wsSend(command, args);
+    async _callEngineMaCommand(command, args = {}) {
+      const engineReady = await this._ensureHomeiiEngineReadyForAction();
+      if (typeof this._homeiiEngineMaCommand !== "function" || !engineReady) {
+        throw new Error(this._i18n?.("diagnostics.engine_required_missing") || "HOMEii Flow Engine is required.");
       }
-      const maUrl = this._maBrowserUrl();
-      if (!maUrl) {
-        throw new Error("Direct Music Assistant API is not configured");
+      const response = await this._homeiiEngineMaCommand?.(command, args);
+      if (response === undefined || response === null) {
+        throw new Error(`HOMEii Flow Engine did not return a response for ${command}.`);
       }
-      const directIssue = this._directMaSetupIssue(maUrl) || this._directMaCooldownIssue(maUrl);
-      if (directIssue) {
-        const hasIntegration = this._hasMusicAssistantServiceSignal?.();
-        this._handleDirectMaConfigurationIssue(directIssue, {
-          severity: hasIntegration ? "warning" : "error",
-          global: !hasIntegration,
-        });
-        throw new Error(directIssue);
-      }
-      const headers = {
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-      };
-      if (this._maToken) headers.Authorization = `Bearer ${this._maToken}`;
-      const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
-      const timeout = controller ? setTimeout(() => controller.abort(), 12000) : null;
-      let response;
-      try {
-        response = await fetch(`${maUrl}/api`, {
-          method: "POST",
-          credentials: "include",
-          mode: "cors",
-          headers,
-          signal: controller?.signal,
-          body: JSON.stringify({
-            message_id: `rest_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-            command,
-            args,
-          }),
-        });
-      } catch (error) {
-        const message = this._recordDirectMaFailure(maUrl, error, 0) || (error?.message || `${command} failed`);
-        throw new Error(message);
-      } finally {
-        if (timeout) clearTimeout(timeout);
-      }
-      const rawText = await response.text().catch(() => "");
-      let raw = {};
-      try {
-        raw = rawText ? JSON.parse(rawText) : {};
-      } catch (_) {
-        raw = { error: rawText || `${command} failed` };
-      }
-      if (!response.ok || raw?.error_code) {
-        const error = new Error(raw?.details || raw?.error || `${command} failed`);
-        if (!response.ok) {
-          const message = this._recordDirectMaFailure(maUrl, error, response.status);
-          throw new Error(message || error.message);
-        }
-        throw error;
-      }
-      this._clearDirectMaFailure(maUrl);
-      return raw?.result ?? raw;
+      return response?.data ?? response?.result ?? response;
     }
 
     async _callHaServiceRaw(domain, service, serviceData = {}, returnResponse = false) {
@@ -12342,48 +10356,40 @@ export function createHomeiiBaseMusicCard({
       const targetId = String(entityId || "").trim();
       if (!targetId) return null;
       const data = { ...(serviceData || {}) };
-      try {
-        return await this._callHaServiceTargeted("media_player", service, data, { entity_id: targetId });
-      } catch (targetError) {
-        try {
-          return await this._callHaServiceRaw("media_player", service, { entity_id: targetId, ...data });
-        } catch (rawError) {
-          throw rawError || targetError;
-        }
-      }
+      const commandByService = {
+        media_play: "play",
+        media_pause: "pause",
+        media_stop: "stop",
+        media_next_track: "next",
+        media_previous_track: "previous",
+        clear_playlist: "clear",
+        shuffle_set: "shuffle",
+        repeat_set: "repeat",
+        volume_set: "volume",
+        volume_mute: "volume_mute",
+      };
+      const command = commandByService[service] || service;
+      return this._callHomeiiEnginePlayerCommand(targetId, command, data);
     }
 
     async _callMusicAssistantTransferQueue(sourcePlayerEntityId, targetPlayerEntityId) {
       const sourceId = String(sourcePlayerEntityId || "").trim();
       const targetId = String(targetPlayerEntityId || "").trim();
       if (!sourceId || !targetId || sourceId === targetId) return false;
+      const engineReady = await this._ensureHomeiiEngineReadyForAction();
       const canUseHomeiiEngineTransfer = typeof this._homeiiEngineTransferQueue === "function"
-        && this._homeiiEngineEnabled?.()
-        && (this._state?.engineAvailable || this._homeiiEngineRequired?.());
-      if (canUseHomeiiEngineTransfer) {
-        try {
-          const result = await this._homeiiEngineTransferQueue({
-            source_player: sourceId,
-            target_player: targetId,
-            auto_play: true,
-          });
-          if (result?.ok) return true;
-        } catch (engineError) {
-          this._debugLog?.("warn", "[HOMEii Flow] HOMEii Flow Engine queue transfer fallback failed", engineError);
-        }
+        && this._homeiiEngineRequired?.()
+        && engineReady;
+      if (!canUseHomeiiEngineTransfer) {
+        throw new Error(this._i18n?.("diagnostics.engine_required_missing") || "HOMEii Flow Engine is required.");
       }
-      const data = { source_player: sourceId, auto_play: true };
-      try {
-        await this._callHaServiceTargeted("music_assistant", "transfer_queue", data, { entity_id: targetId });
-        return true;
-      } catch (targetError) {
-        try {
-          await this._callHaServiceRaw("music_assistant", "transfer_queue", { entity_id: targetId, ...data });
-          return true;
-        } catch (rawError) {
-          throw rawError || targetError;
-        }
-      }
+      const result = await this._homeiiEngineTransferQueue({
+        source_player: sourceId,
+        target_player: targetId,
+        auto_play: true,
+      });
+      if (!result?.ok) throw new Error(result?.error || "HOMEii Flow Engine could not transfer the queue.");
+      return true;
     }
 
     _activePlayerHelperEntity() {
@@ -12491,6 +10497,19 @@ export function createHomeiiBaseMusicCard({
 
     _handleMusicAssistantIssue(error = null) {
       const rawMessage = String(error?.message || error || "").trim();
+      if (
+        this._homeiiEngineRequired?.()
+        && this._state?.engineContext
+        && this._isMusicAssistantAvailabilityError(error)
+      ) {
+        this._state.engineStatus = "degraded";
+        this._state.engineAvailable = true;
+        this._state.musicAssistantIssueMessage = "";
+        return rawMessage || this._m(
+          "HOMEii Flow Engine is reconnecting.",
+          "HOMEii Flow Engine מתחבר מחדש.",
+        );
+      }
       const message = this._isMusicAssistantAvailabilityError(error)
         ? this._musicAssistantSetupMessage(rawMessage)
         : (rawMessage || this._musicAssistantSetupMessage());
@@ -12507,27 +10526,34 @@ export function createHomeiiBaseMusicCard({
       );
     }
 
-    _musicAssistantRequiredMessage() {
-      const configuredDirectUrl = this._normalizeMaConfigUrl(
-        this._maUrl
-        || this._maExternalUrl
-        || this._config?.ma_url
-        || this._config?.music_assistant_external_url
-        || this._config?.ma_external_url,
-      );
-      if (configuredDirectUrl && !this._hasMusicAssistantServiceSignal()) {
+    _engineRequiredConnectionMessage() {
+      const snapshot = this._state?.engineRequiredConnections;
+      if (!snapshot || typeof snapshot !== "object") return "";
+      const connection = snapshot.music_assistant || snapshot.connections?.music_assistant;
+      if (!connection || typeof connection !== "object") return "";
+      const playerCount = Number(connection.music_assistant_player_count || 0);
+      const detail = String(connection.message || snapshot.summary || "").trim();
+      if (connection.ok === true && playerCount > 0) {
         return this._m(
-          "A direct Music Assistant URL is configured, but Direct/Sendspin access does not replace the Home Assistant Music Assistant integration. Connect Music Assistant to Home Assistant and expose at least one Music Assistant media_player for the full card. ma_url and ma_token are only needed for Direct/Sendspin features.",
-          "A direct Music Assistant URL is configured, but Direct/Sendspin access does not replace the Home Assistant Music Assistant integration. Connect Music Assistant to Home Assistant and expose at least one Music Assistant media_player for the full card. ma_url and ma_token are only needed for Direct/Sendspin features.",
+          "HOMEii Flow Engine reports Music Assistant is connected, but the card did not receive the player list yet. Open HOMEii Flow Engine in Home Assistant and check Required connections, then reload the dashboard.",
+          "HOMEii Flow Engine מדווח ש-Music Assistant מחובר, אבל הכרטיס עדיין לא קיבל את רשימת הנגנים. פתח את אינטגרציית HOMEii Flow Engine ובדוק Required connections ואז רענן את הדשבורד.",
         );
       }
-      return this._i18n(
-        "ui.no_music_assistant_players_were_found_check_music_assistant_and_media_pl",
-        {},
-        this._m(
-          "Enable the Music Assistant integration in Home Assistant and expose at least one Music Assistant media_player for this card to work. Other Home Assistant media players are intentionally hidden.",
-          "צריך להפעיל את אינטגרציית Music Assistant ב-Home Assistant ולחשוף לפחות נגן Music Assistant אחד כדי שהכרטיס יפעל. נגני Home Assistant רגילים מוסתרים בכוונה.",
-        ),
+      if (!detail) return "";
+      return this._m(
+        `HOMEii Flow Engine reports: ${detail} Open the HOMEii Flow Engine integration page and check Required connections.`,
+        `HOMEii Flow Engine מדווח: ${detail} פתח את דף אינטגרציית HOMEii Flow Engine ובדוק Required connections.`,
+      );
+    }
+
+    _musicAssistantRequiredMessage() {
+      const engineMessage = this._engineRequiredConnectionMessage();
+      if (engineMessage) return engineMessage;
+      const engineError = String(this._state?.engineLastError || "").trim();
+      const suffix = engineError ? ` Last Engine error: ${engineError}` : "";
+      return this._m(
+        `HOMEii Flow 6 requires HOMEii Flow Engine 0.7.6 with a healthy Music Assistant required connection snapshot.${suffix}`,
+        `HOMEii Flow 6 דורש HOMEii Flow Engine 0.7.6 עם תמונת חיבורים נדרשים תקינה של Music Assistant.${suffix}`,
       );
     }
 
@@ -12538,18 +10564,18 @@ export function createHomeiiBaseMusicCard({
     }
 
     async _fetchRecentlyPlayed(limit = 18) {
-      if (!this._state.wsReady) {
+      try {
+        const items = await this._callEngineMaCommand("music/recently_played_items", {
+          limit,
+          media_types: ["album"],
+        });
+        return this._normalizeMediaItems(Array.isArray(items) ? items : []);
+      } catch (_) {
         try {
           return this._normalizeMediaItems(await this._fetchLibrary("album", "last_played", limit, false));
         } catch (_) {
           return [];
         }
-      }
-      try {
-        const items = await this._wsSend("music/recently_played_items", { limit, media_types: ["album"] });
-        return this._normalizeMediaItems(Array.isArray(items) ? items : []);
-      } catch (_) {
-        return [];
       }
     }
 
@@ -12619,19 +10645,126 @@ export function createHomeiiBaseMusicCard({
       }) || null;
     }
 
+    _normalizeEnginePlayerEntity(player = {}) {
+      if (!player || typeof player !== "object") return null;
+      const entityId = String(player.entity_id || player.entityId || player.player || player.id || "").trim();
+      if (!entityId) return null;
+      const attrs = player.attributes && typeof player.attributes === "object" ? { ...player.attributes } : {};
+      attrs.friendly_name = attrs.friendly_name || player.name || player.friendly_name || entityId;
+      attrs.media_title = attrs.media_title || player.media_title || player.title || "";
+      attrs.media_artist = attrs.media_artist || player.media_artist || player.artist || "";
+      attrs.media_album_name = attrs.media_album_name || player.media_album_name || player.album || "";
+      attrs.entity_picture = attrs.entity_picture || player.entity_picture || player.homeii_artwork_url || player.media_image_url || "";
+      attrs.homeii_artwork_url = attrs.homeii_artwork_url || player.homeii_artwork_url || attrs.entity_picture || "";
+      attrs.volume_level = attrs.volume_level ?? player.volume_level ?? null;
+      attrs.homeii_playback_state = player.state || "idle";
+      attrs.is_volume_muted = attrs.is_volume_muted ?? player.is_volume_muted ?? false;
+      attrs.shuffle = attrs.shuffle ?? player.shuffle ?? false;
+      attrs.repeat = attrs.repeat || player.repeat || "off";
+      attrs.active_queue = attrs.active_queue || player.active_queue || player.queue_id || "";
+      attrs.active_source = attrs.active_source || player.active_source || player.source || "";
+      attrs.queue_active = attrs.queue_active ?? player.queue_active ?? false;
+      attrs.mass_player_type = attrs.mass_player_type || player.mass_player_type || "player";
+      attrs.app_id = attrs.app_id || player.app_id || "music_assistant";
+      return {
+        ...player,
+        entity_id: entityId,
+        state: HomeiiPlayersFoundation.isPlayerAvailable(player) ? (player.state || "idle") : "unavailable",
+        attributes: attrs,
+      };
+    }
+
+    _enginePlayerEntities() {
+      return Array.isArray(this._state.enginePlayers) ? this._state.enginePlayers : [];
+    }
+
+    async _refreshEnginePlayers(options = {}) {
+      if (this._enginePlayersRefreshPromise) {
+        if (!options.requireFresh) return this._enginePlayersRefreshPromise;
+        // A mutation confirmation must start a read after the command, not
+        // reuse a request that may have started before it.
+        try { await this._enginePlayersRefreshPromise; } catch {}
+        return this._refreshEnginePlayers(options);
+      }
+      if (!this._homeiiEngineRequired?.() || typeof this._homeiiEngineGetPlayers !== "function") {
+        this._state.enginePlayers = [];
+        return [];
+      }
+      const lastGoodPlayers = this._enginePlayerEntities();
+      this._state.enginePlayersLastAttemptAt = Date.now();
+      this._enginePlayersRefreshPromise = (async () => {
+        try {
+          if (!this._state?.engineAvailable && typeof this._refreshHomeiiEngineContext === "function") {
+            await this._refreshHomeiiEngineContext({ force: true });
+          }
+          if (!this._state?.engineAvailable) {
+            if (options.requireFresh) throw new Error("HOMEii Flow Engine is unavailable.");
+            return lastGoodPlayers;
+          }
+          const result = await this._homeiiEngineGetPlayers({ include_all: false });
+          if (!Array.isArray(result?.music_assistant_players) && !Array.isArray(result?.players)) {
+            throw new Error("HOMEii Flow Engine returned an invalid player catalog.");
+          }
+          if (!HomeiiRevisionedSnapshotsFoundation.acceptEngineSnapshot(
+            this._engineSnapshotRevisions,
+            "players",
+            result,
+            "music_assistant",
+          )) {
+            this._debugLog?.("debug", "[HOMEii Flow] Ignored stale Engine player snapshot", {
+              snapshot: HomeiiRevisionedSnapshotsFoundation.engineSnapshotMeta(result),
+            });
+            if (options.requireFresh) throw new Error("HOMEii Flow Engine returned a stale player snapshot.");
+            return lastGoodPlayers;
+          }
+          const source = Array.isArray(result?.music_assistant_players)
+            ? result.music_assistant_players
+            : (Array.isArray(result?.players) ? result.players : []);
+          const players = source.map((player) => this._normalizeEnginePlayerEntity(player)).filter(Boolean);
+          this._state.engineStatus = "connected";
+          this._state.engineAvailable = true;
+          this._state.engineLastError = "";
+          this._state.enginePlayers = players;
+          if (players.length) this._state.enginePlayersLastGoodAt = Date.now();
+          return players;
+        } catch (error) {
+          if (lastGoodPlayers.length) {
+            this._state.engineStatus = "degraded";
+            this._state.engineAvailable = true;
+          }
+          this._debugLog?.("warn", "[HOMEii Flow] Engine player snapshot failed", error);
+          if (options.requireFresh) throw error;
+          return lastGoodPlayers;
+        } finally {
+          this._enginePlayersRefreshPromise = null;
+        }
+      })();
+      return this._enginePlayersRefreshPromise;
+    }
+
     _loadPlayers() {
       const sel = this.$("playerSel");
-      const hassStates = this._hass?.states || {};
-      const hassEntities = this._hass?.entities || {};
-      const musicAssistantEntities = Object.values(hassStates)
-        .filter((entity) => HomeiiPlayersFoundation.isMusicAssistantPlayer(entity, hassEntities?.[entity.entity_id]));
-      const genericMediaPlayerEntities = Object.values(hassStates)
-        .filter((entity) => entity?.entity_id?.startsWith("media_player."));
-      let entities = musicAssistantEntities.length
-        ? musicAssistantEntities
-        : (this._hasMusicAssistantBackend() ? genericMediaPlayerEntities : []);
+      let entities = this._enginePlayerEntities();
+      const enginePlayersRetryReady = Date.now() - Number(this._state.enginePlayersLastAttemptAt || 0) > 5000;
+      if (
+        !entities.length
+        && this._homeiiEngineRequired?.()
+        && !this._enginePlayersRefreshPromise
+        && enginePlayersRetryReady
+      ) {
+        this._refreshEnginePlayers({ force: true }).then(() => {
+          this._loadPlayers();
+          this._syncNowPlayingUI();
+        }).catch(() => {});
+        const visiblePlayers = Array.isArray(this._state.players) ? this._state.players : [];
+        if (visiblePlayers.length) return;
+        if (sel) {
+          sel.innerHTML = `<option value="">${this._esc(this._m("Loading players…", "טוען נגנים…"))}</option>`;
+        }
+        return;
+      }
       if (!entities.length) {
-        const message = this._handleMusicAssistantIssue(this._musicAssistantRequiredMessage());
+        this._handleMusicAssistantIssue(this._musicAssistantRequiredMessage());
         this._state.players = [];
         this._state.selectedPlayer = null;
         this._state.hasAutoSelectedPlayer = false;
@@ -12639,12 +10772,9 @@ export function createHomeiiBaseMusicCard({
         this._state.queueItems = [];
         if (sel) sel.innerHTML = `<option value="">${this._esc(this._musicAssistantRequiredTitle())}</option>`;
         this._syncActivePlayerHelper(null);
-        this._notifyCardIssue("no-music-assistant-players", message, "error", 45000);
         return;
       }
       this._state.musicAssistantIssueMessage = "";
-      const directPlayers = this._mergeDirectMaPlayers(entities);
-      if (directPlayers.length) entities = [...entities, ...directPlayers];
       entities = entities.filter((entity) => !this._isLocalSendspinPlayer(entity) || this._isAvailableThisDevicePlayer(entity));
       this._state.configurableMusicAssistantPlayers = entities.slice();
       const excludedPrefs = typeof this._excludedPlayerPreferences === "function" ? this._excludedPlayerPreferences() : [];
@@ -12683,7 +10813,9 @@ export function createHomeiiBaseMusicCard({
         this._state.queueItems = [];
         if (sel) sel.innerHTML = `<option value="">${this._esc(this._musicAssistantRequiredTitle())}</option>`;
         this._syncActivePlayerHelper(null);
-        this._notifyCardIssue("no-music-assistant-players", message, excludedPrefs.length ? "warning" : "error", 45000);
+        if (excludedPrefs.length) {
+          this._notifyCardIssue("no-music-assistant-players", message, "warning", 45000);
+        }
         return;
       }
       const rememberedThisDevice = this._getThisDevicePlayer(entities);
@@ -12756,7 +10888,19 @@ export function createHomeiiBaseMusicCard({
 
     _getSelectedPlayer() {
       if (!this._state.selectedPlayer) return null;
-      return this._playerByEntityId(this._state.selectedPlayer);
+      const player = this._playerByEntityId(this._state.selectedPlayer);
+      const queue = this._state.maQueueState;
+      const attrs = player?.attributes || {};
+      const queueId = attrs.active_queue || attrs.queue_id || attrs.mass_player_id || attrs.player_id;
+      if (!player || !queueId || queue?.queue_id !== queueId) return player;
+      // Shuffle/repeat belong to the MA queue, not the physical player.
+      // Retain immediate command feedback while the authoritative event arrives.
+      const merged = { ...player, attributes: {
+        ...attrs,
+        ...(typeof queue.shuffle_enabled === "boolean" ? { shuffle: queue.shuffle_enabled } : {}),
+        ...(["off", "one", "all"].includes(queue.repeat_mode) ? { repeat: queue.repeat_mode } : {}),
+      } };
+      return this._applyOptimisticPlayerVolumeState(merged);
     }
 
     _selectedPlayerMoreInfoEntityId(player = this._getSelectedPlayer()) {
@@ -12807,62 +10951,42 @@ export function createHomeiiBaseMusicCard({
       if (!entityId) return false;
       const label = this._mediaFeedbackLabel(uri, options.label || "");
       try {
-        if (this._isDirectMaPlayer(entityId)) {
-          return await this._playMediaOnDirectMaPlayer(entityId, uri, mediaType, enqueue, options);
+        const targetPlayer = this._playerByEntityId(entityId);
+        if (targetPlayer && !HomeiiPlayersFoundation.isPlayerAvailable(targetPlayer)) {
+          throw new Error(this._m("This player is offline. Choose an available player.", "הנגן אינו מחובר. בחר נגן זמין."));
         }
+        const engineReady = await this._ensureHomeiiEngineReadyForAction();
         const canUseHomeiiEnginePlayback = typeof this._homeiiEnginePlayMedia === "function"
-          && this._config?.homeii_engine_playback_proxy === true
-          && this._homeiiEngineEnabled?.()
-          && (this._state?.engineAvailable || this._homeiiEngineRequired?.());
-        if (canUseHomeiiEnginePlayback) {
-          try {
-            const engineResult = await this._homeiiEnginePlayMedia({
-              player: entityId,
-              media_id: uri,
-              media_type: mediaType,
-              enqueue,
-              radio_mode: !!options.radioMode,
-            });
-            if (engineResult?.ok) {
-              if (!options.silent) {
-                const targetPlayer = this._playerByEntityId(entityId);
-                this._toastMediaQueued(label, targetPlayer?.attributes?.friendly_name || entityId);
-              }
-              if (entityId === this._state.selectedPlayer) setTimeout(() => this._ensureQueueSnapshot(true), 600);
-              return true;
-            }
-          } catch (engineError) {
-            this._debugLog?.("warn", "[HOMEii Flow] HOMEii Flow Engine playback fallback failed", engineError);
-          }
+          && this._homeiiEngineRequired?.()
+          && engineReady;
+        if (!canUseHomeiiEnginePlayback) {
+          throw new Error(this._i18n?.("diagnostics.engine_required_missing") || "HOMEii Flow Engine is required.");
         }
-        if (enqueue === "shuffle") {
-          await this._callHaServiceRaw("media_player", "shuffle_set", { entity_id: entityId, shuffle: true });
-        }
-        const serviceData = {
-          entity_id: entityId,
+        const engineResult = await this._homeiiEnginePlayMedia({
+          player: entityId,
           media_id: uri,
           media_type: mediaType,
-          enqueue: enqueue === "shuffle" ? "play" : enqueue,
-        };
-        if (options.radioMode) serviceData.radio_mode = true;
-        await this._callHaServiceRaw("music_assistant", "play_media", serviceData);
+          enqueue,
+          radio_mode: !!options.radioMode,
+          verify_playback: options.verifyPlayback !== false && ["play", "replace", "shuffle"].includes(enqueue),
+        });
+        if (!engineResult?.ok) {
+          throw new Error(engineResult?.error || "HOMEii Flow Engine did not confirm playback.");
+        }
         if (!options.silent) {
           const targetPlayer = this._playerByEntityId(entityId);
           this._toastMediaQueued(label, targetPlayer?.attributes?.friendly_name || entityId);
         }
-        if (entityId === this._state.selectedPlayer) setTimeout(() => this._ensureQueueSnapshot(true), 600);
+        if (entityId === this._state.selectedPlayer) this._scheduleQueueRefreshAfterMutation(600);
         return true;
       } catch (error) {
-        if (this._isMusicAssistantAvailabilityError(error) && this._hasDirectMAConnection()) {
-          try {
-            return await this._playMediaOnDirectMaPlayer(entityId, uri, mediaType, enqueue, options);
-          } catch (directError) {
-            this._debugLog("warn", "[HOMEii Flow] direct Music Assistant play fallback failed", directError);
-          }
-        }
         if (!options.silent) {
           if (this._isMusicAssistantAvailabilityError(error)) this._handleMusicAssistantIssue(error);
-          else this._toastError(this._i18n("ui.could_not_play_label", { label }));
+          else {
+            const summary = this._i18n("ui.could_not_play_label", { label });
+            const detail = String(error?.message || "").trim();
+            this._toastError(detail ? `${summary}: ${detail}` : summary);
+          }
         }
         return false;
       }
@@ -12899,35 +11023,28 @@ export function createHomeiiBaseMusicCard({
     async _playAll(items = [], shuffle = false) {
       if (!items.length) return;
       if (!this._state.selectedPlayer) return this._toast(this._i18n("ui.select_a_player_first"));
-      const selectedPlayer = this._getSelectedPlayer();
-      if (this._isDirectMaPlayer(this._state.selectedPlayer) || (this._hasDirectMAConnection() && this._directMaQueueId(selectedPlayer))) {
-        const playable = items.map((item) => item?.uri).filter(Boolean);
-        if (!playable.length) return;
-        await this._playMediaOnPlayer(this._state.selectedPlayer, playable, items[0]?.media_type || "track", shuffle ? "shuffle" : "play", {
-          label: items[0]?.name || "",
-          silent: true,
-        });
-        setTimeout(() => this._ensureQueueSnapshot(true), 600);
-        return;
+      const playable = items.filter((item) => String(item?.uri || "").trim());
+      if (!playable.length) return;
+      const first = playable[0];
+      const firstOk = await this._playMediaOnPlayer(
+        this._state.selectedPlayer,
+        first.uri,
+        first.media_type || "track",
+        shuffle ? "shuffle" : "play",
+        { label: first.name || "", silent: true },
+      );
+      if (!firstOk) return;
+      for (let i = 1; i < playable.length; i++) {
+        const item = playable[i];
+        await this._playMediaOnPlayer(
+          this._state.selectedPlayer,
+          item.uri,
+          item.media_type || "track",
+          "add",
+          { label: item.name || "", silent: true, verifyPlayback: false },
+        );
       }
-      if (shuffle) {
-        await this._callHaServiceRaw("media_player", "shuffle_set", { entity_id: this._state.selectedPlayer, shuffle: true });
-      }
-      await this._callHaServiceRaw("music_assistant", "play_media", {
-        entity_id: this._state.selectedPlayer,
-        media_id: items[0].uri,
-        media_type: items[0].media_type || "album",
-        enqueue: "play",
-      });
-      for (let i = 1; i < items.length; i++) {
-        await this._callHaServiceRaw("music_assistant", "play_media", {
-          entity_id: this._state.selectedPlayer,
-          media_id: items[i].uri,
-          media_type: items[i].media_type || "album",
-          enqueue: "add",
-        });
-      }
-      setTimeout(() => this._ensureQueueSnapshot(true), 600);
+      this._scheduleQueueRefreshAfterMutation(600);
     }
 
     _likedPlayableEntries(entries = [], selectedOnly = false) {
@@ -12945,20 +11062,10 @@ export function createHomeiiBaseMusicCard({
     _togglePlay() {
       const player = this._getSelectedPlayer();
       if (!player) return;
-      const nextState = player.state === "playing" ? "paused" : "playing";
+      const action = this._playPauseActionForPlayer(player);
+      const nextState = action === "stop" ? "idle" : (action === "pause" ? "paused" : "playing");
       this._setPlayerPlaybackOptimistic(player.entity_id, { state: nextState });
-      if (this._isDirectMaPlayer(player)) {
-        this._callDirectMaPlayerCommand(player, player.state === "playing" ? "players/cmd/pause" : "players/cmd/play")
-          .then(() => this._refreshDirectMaPlayers().catch(() => {}))
-          .catch((error) => {
-            this._clearPlayerPlaybackOptimistic(player.entity_id);
-            this._toastError(this._mediaControlFailureMessage(error));
-            this._refreshDirectMaPlayers().catch(() => {});
-          });
-        return;
-      }
-      const service = player.state === "playing" ? "media_pause" : "media_play";
-      this._callHaServiceRaw("media_player", service, { entity_id: player.entity_id })
+      this._callHomeiiEnginePlayerCommand(player.entity_id, action)
         .catch((error) => {
           this._clearPlayerPlaybackOptimistic(player.entity_id);
           this._toastError(this._mediaControlFailureMessage(error));
@@ -12988,67 +11095,34 @@ export function createHomeiiBaseMusicCard({
         this._refreshMobileArtStack(true);
         this._syncNowPlayingUI();
       }
-      if (this._isDirectMaPlayer(player)) {
-        this._callDirectMaPlayerCommand(player, cmd === "previous" ? "players/cmd/previous" : "players/cmd/next")
-          .then(() => {
-            setTimeout(() => this._ensureQueueSnapshot(true), 700);
-            setTimeout(() => this._ensureQueueSnapshot(true), 1500);
-            setTimeout(() => this._ensureQueueSnapshot(true), 2850);
-          })
-          .catch((error) => this._toastError(error?.message || this._i18n("ui.playback_command_failed")));
-        return;
-      }
-      this._callHaServiceRaw("media_player", cmd === "previous" ? "media_previous_track" : "media_next_track", { entity_id: player.entity_id })
+      this._callHomeiiEnginePlayerCommand(player.entity_id, cmd === "previous" ? "previous" : "next")
         .catch((error) => this._toastError(this._mediaControlFailureMessage(error)));
-      setTimeout(() => this._ensureQueueSnapshot(true), 700);
-      setTimeout(() => this._ensureQueueSnapshot(true), 1500);
-      setTimeout(() => this._ensureQueueSnapshot(true), 2850);
+      this._scheduleQueueRefreshAfterMutation(700);
     }
 
     async _playerCmdFor(entityId, cmd = "next") {
       const player = this._playerByEntityId(entityId);
       if (!player) return;
-      if (this._isDirectMaPlayer(player)) {
-        await this._callDirectMaPlayerCommand(player, cmd === "previous" ? "players/cmd/previous" : "players/cmd/next");
-        if (entityId === this._state.selectedPlayer) {
-          setTimeout(() => this._ensureQueueSnapshot(true), 700);
-          setTimeout(() => this._ensureQueueSnapshot(true), 1500);
-        }
-        return;
-      }
-      const service = cmd === "previous" ? "media_previous_track" : "media_next_track";
-      await this._callHaServiceRaw("media_player", service, { entity_id: player.entity_id });
+      await this._callHomeiiEnginePlayerCommand(player.entity_id, cmd === "previous" ? "previous" : "next");
       if (entityId === this._state.selectedPlayer) {
-        setTimeout(() => this._ensureQueueSnapshot(true), 700);
-        setTimeout(() => this._ensureQueueSnapshot(true), 1500);
+        this._scheduleQueueRefreshAfterMutation(700);
       }
     }
 
     async _togglePlayFor(entityId) {
       if (!entityId) return;
-      if (this._isDirectMaPlayer(entityId)) {
-        await this._callDirectMaPlayerCommand(entityId, "players/cmd/play_pause");
-        return;
-      }
       const player = this._playerByEntityId(entityId);
+      const action = player ? this._playPauseActionForPlayer(player) : "play";
       if (player) {
-        this._setPlayerPlaybackOptimistic(entityId, { state: player.state === "playing" ? "paused" : "playing" });
+        this._setPlayerPlaybackOptimistic(entityId, { state: action === "stop" ? "idle" : (action === "pause" ? "paused" : "playing") });
       }
-      await this._callHaServiceRaw("media_player", "media_play_pause", { entity_id: entityId });
-    }
-
-    async _stepQueueByDelta(delta) {
-      const player = this._getSelectedPlayer();
-      const steps = Math.abs(Math.trunc(Number(delta) || 0));
-      if (!player || !steps) return !steps;
-      const service = delta > 0 ? "media_next_track" : "media_previous_track";
-      for (let i = 0; i < steps; i += 1) {
-        await this._callHaServiceRaw("media_player", service, { entity_id: player.entity_id });
-        if (i < steps - 1) {
-          await new Promise((resolve) => window.setTimeout(resolve, 85));
-        }
+      try {
+        await this._callHomeiiEnginePlayerCommand(entityId, action);
+      } catch (error) {
+        this._clearPlayerPlaybackOptimistic(entityId);
+        this._schedulePlayerStateRefresh(0);
+        throw error;
       }
-      return true;
     }
 
     _toggleShuffle() {
@@ -13056,24 +11130,7 @@ export function createHomeiiBaseMusicCard({
       if (!player) return;
       const nextShuffle = !player.attributes.shuffle;
       this._setPlayerPlaybackOptimistic(player.entity_id, { shuffle: nextShuffle });
-      if (this._isDirectMaPlayer(player)) {
-        const queueId = this._directMaQueueId(player);
-        if (!queueId) {
-          this._clearPlayerPlaybackOptimistic(player.entity_id);
-          this._syncNowPlayingUI();
-          return;
-        }
-        this._callDirectMaCommand("player_queues/shuffle", { queue_id: queueId, shuffle_enabled: nextShuffle })
-          .then(() => this._refreshDirectMaPlayers().catch(() => {}))
-          .catch((error) => {
-            this._clearPlayerPlaybackOptimistic(player.entity_id);
-            this._toastError(this._mediaControlFailureMessage(error));
-            this._refreshDirectMaPlayers().catch(() => {});
-            this._syncNowPlayingUI();
-          });
-        return;
-      }
-      this._callHaServiceRaw("media_player", "shuffle_set", { entity_id: player.entity_id, shuffle: nextShuffle })
+      this._callHomeiiEnginePlayerCommand(player.entity_id, "shuffle", { shuffle: nextShuffle })
         .catch((error) => {
           this._clearPlayerPlaybackOptimistic(player.entity_id);
           this._toastError(this._mediaControlFailureMessage(error));
@@ -13096,24 +11153,7 @@ export function createHomeiiBaseMusicCard({
       const current = player.attributes.repeat || "off";
       const next = modes[(modes.indexOf(current) + 1) % modes.length];
       this._setPlayerPlaybackOptimistic(player.entity_id, { repeat: next });
-      if (this._isDirectMaPlayer(player)) {
-        const queueId = this._directMaQueueId(player);
-        if (!queueId) {
-          this._clearPlayerPlaybackOptimistic(player.entity_id);
-          this._syncNowPlayingUI();
-          return;
-        }
-        this._callDirectMaCommand("player_queues/repeat", { queue_id: queueId, repeat_mode: next })
-          .then(() => this._refreshDirectMaPlayers().catch(() => {}))
-          .catch((error) => {
-            this._clearPlayerPlaybackOptimistic(player.entity_id);
-            this._toastError(this._mediaControlFailureMessage(error));
-            this._refreshDirectMaPlayers().catch(() => {});
-            this._syncNowPlayingUI();
-          });
-        return;
-      }
-      this._callHaServiceRaw("media_player", "repeat_set", { entity_id: player.entity_id, repeat: next })
+      this._callHomeiiEnginePlayerCommand(player.entity_id, "repeat", { repeat: next })
         .catch((error) => {
           this._clearPlayerPlaybackOptimistic(player.entity_id);
           this._toastError(this._mediaControlFailureMessage(error));
@@ -13125,16 +11165,59 @@ export function createHomeiiBaseMusicCard({
     _setVolume(level) {
       const player = this._getSelectedPlayer();
       if (!player) return;
+      return this._setPlayerVolumeFor(player.entity_id, level);
+    }
+
+    _setPlayerVolumeFor(entityId, level) {
+      const playerId = String(entityId || "").trim();
+      if (!playerId) return Promise.resolve(false);
       const normalized = Math.max(0, Math.min(1, Number(level) || 0));
-      this._setPlayerVolumeOptimistic(player.entity_id, normalized, normalized <= 0 ? true : false);
-      if (this._isDirectMaPlayer(player)) {
-        this._callDirectMaPlayerCommand(player, "players/cmd/volume_set", { volume_level: Math.round(normalized * 100) })
-          .then(() => this._refreshDirectMaPlayers().catch(() => {}))
-          .catch((error) => this._toastError(this._mediaControlFailureMessage(error)));
-        return;
+      this._setPlayerVolumeOptimistic(playerId, normalized);
+      this._volumeRequestsByPlayer ||= new Map();
+      const running = this._volumeRequestsByPlayer.get(playerId);
+      if (running) {
+        running.pending = normalized;
+        return running.promise;
       }
-      this._callHaServiceRaw("media_player", "volume_set", { entity_id: player.entity_id, volume_level: normalized })
-        .catch((error) => this._toastError(this._mediaControlFailureMessage(error)));
+      const request = { pending: normalized, promise: null };
+      this._volumeRequestsByPlayer.set(playerId, request);
+      request.promise = (async () => {
+        let succeeded = false;
+        try {
+          while (request.pending !== null) {
+            const target = request.pending;
+            request.pending = null;
+            try {
+              await this._callHomeiiEnginePlayerCommand(playerId, "volume", { volume_level: target });
+              // Set the requested level before unmuting, so the previous loudness never leaks through.
+              if (target > 0) {
+                const muteRequest = this._muteRequestsByPlayer?.get(playerId);
+                if (muteRequest) await muteRequest;
+                if (this._isMuted(this._playerByEntityId(playerId))) {
+                  await this._callHomeiiEnginePlayerCommand(playerId, "volume_mute", { is_volume_muted: false });
+                  this._setPlayerVolumeOptimistic(playerId, request.pending ?? target, false);
+                }
+              }
+              succeeded = true;
+            } catch (error) {
+              succeeded = false;
+              // A newer drag value supersedes this failure; never retry the failed value.
+              if (request.pending === null) {
+                this._optimisticVolumeByPlayer.delete(playerId);
+                this._loadPlayers();
+                this._syncNowPlayingUI();
+                this._toastError(this._mediaControlFailureMessage(error));
+              }
+            }
+            // Send immediately, then bound the rate while retaining only the latest value.
+            await new Promise((resolve) => setTimeout(resolve, 120));
+          }
+          return succeeded;
+        } finally {
+          this._volumeRequestsByPlayer.delete(playerId);
+        }
+      })();
+      return request.promise;
     }
 
     _stepSelectedVolume(direction = 0) {
@@ -13251,59 +11334,8 @@ export function createHomeiiBaseMusicCard({
       this._syncPlayerVolumeControls(playerId, Math.round(normalized * 100), { muted });
     }
 
-    _syncPlayerVolumeControls(entityId, pct, options = {}) {
-      const playerId = String(entityId || "").trim();
-      if (!playerId) return;
-      const value = Math.max(0, Math.min(100, Math.round(Number(pct) || 0)));
-      const muted = options.muted !== undefined ? !!options.muted : value === 0;
-      const icon = muted || value === 0 ? "volume_mute" : value < 40 ? "volume_low" : "volume_high";
-      if (playerId === String(this._state.selectedPlayer || "")) {
-        const slider = this.$("volSlider");
-        if (slider) {
-          if (String(slider.value) !== String(value)) slider.value = String(value);
-          slider.style.setProperty("--vol-pct", `${value}%`);
-        }
-        const label = this.$("mobileVolPctLabel");
-        if (label) label.textContent = `${value}%`;
-        const muteBtn = this.$("btnMute");
-        if (muteBtn) {
-          muteBtn.classList.toggle("active", muted);
-          muteBtn.classList.toggle("muted", muted);
-          this._setButtonIcon(muteBtn, icon);
-        }
-        const controlVolumeBtn = this.$("controlVolumeBtn");
-        if (controlVolumeBtn) {
-          controlVolumeBtn.classList.toggle("muted", muted);
-          this._setButtonIcon(controlVolumeBtn, icon);
-        }
-        const popupSlider = this.$("tabletPopupVolSlider");
-        if (popupSlider) {
-          if (String(popupSlider.value) !== String(value)) popupSlider.value = String(value);
-          popupSlider.style.setProperty("--vol-pct", `${value}%`);
-        }
-        const popupValue = this.$("tabletPopupVolPct");
-        if (popupValue) popupValue.textContent = `${value}%`;
-        const popupMuteBtn = this.$("tabletPopupMuteBtn");
-        if (popupMuteBtn) this._setButtonIcon(popupMuteBtn, icon);
-      }
-      this.shadowRoot?.querySelectorAll("[data-player-volume]")?.forEach((input) => {
-        if (input.dataset.playerVolume !== playerId) return;
-        if (String(input.value) !== String(value)) input.value = String(value);
-        input.style.setProperty("--vol-pct", `${value}%`);
-        const row = input.closest(".player-volume-row");
-        const valueEl = row?.querySelector(".player-mini-value");
-        if (valueEl) valueEl.textContent = `${value}%`;
-        const muteBtn = row?.querySelector("[data-player-mute]");
-        if (muteBtn) {
-          muteBtn.classList.toggle("active", muted);
-          this._setButtonIcon(muteBtn, icon);
-        }
-      });
-      this.shadowRoot?.querySelectorAll("[data-player-mute]")?.forEach((button) => {
-        if (button.dataset.playerMute !== playerId) return;
-        button.classList.toggle("active", muted);
-        this._setButtonIcon(button, icon);
-      });
+    _syncPlayerVolumeControls(...args) {
+      return syncPlayerVolumeControls.apply(this, args);
     }
 
     _isMuted(player) {
@@ -13311,49 +11343,44 @@ export function createHomeiiBaseMusicCard({
       return !!player.attributes?.is_volume_muted || this._softMutedPlayers.has(player.entity_id);
     }
 
+    async _setPlayerMutedFor(entityId, muted) {
+      const player = this._playerByEntityId(entityId);
+      if (!player) return false;
+      this._muteRequestsByPlayer ||= new Map();
+      this._muteTargetsByPlayer ||= new Map();
+      this._muteTargetsByPlayer.set(entityId, !!muted);
+      if (this._muteRequestsByPlayer.has(entityId)) return this._muteRequestsByPlayer.get(entityId);
+      const request = (async () => {
+        try {
+          let applied;
+          do {
+            applied = this._muteTargetsByPlayer.get(entityId);
+            await this._callHomeiiEnginePlayerCommand(entityId, "volume_mute", { is_volume_muted: applied });
+            const current = this._playerByEntityId(entityId) || player;
+            this._setPlayerVolumeOptimistic(entityId, Number(current.attributes?.volume_level ?? 0), applied);
+          } while (this._muteTargetsByPlayer.get(entityId) !== applied);
+          return true;
+        } catch (error) {
+          this._optimisticMuteByPlayer.delete(entityId);
+          this._softMutedPlayers.delete(entityId);
+          this._schedulePlayerStateRefresh(0);
+          this._toastError(this._mediaControlFailureMessage(error));
+          return false;
+        } finally {
+          this._muteRequestsByPlayer.delete(entityId);
+          this._muteTargetsByPlayer.delete(entityId);
+        }
+      })();
+      this._muteRequestsByPlayer.set(entityId, request);
+      return request;
+    }
+
     async _toggleMute() {
       const player = this._getSelectedPlayer();
       if (!player) return;
-      const entityId = player.entity_id;
-      const currentlyMuted = this._isMuted(player);
-      const currentVolume = Number(player.attributes.volume_level ?? 0);
-      if (!currentlyMuted && currentVolume > 0) this._lastVolumeByPlayer.set(entityId, currentVolume);
-      const restoreVolume = this._lastVolumeByPlayer.get(entityId) ?? 0.35;
-      const targetVolume = currentlyMuted ? (currentVolume === 0 ? restoreVolume : currentVolume) : 0;
-      if (this._isDirectMaPlayer(player)) {
-        this._setPlayerVolumeOptimistic(entityId, currentVolume, !currentlyMuted);
-        try {
-          await this._callDirectMaPlayerCommand(player, "players/cmd/volume_mute", { muted: !currentlyMuted });
-        } catch (error) {
-          this._toastError(this._mediaControlFailureMessage(error));
-        }
-        this._refreshDirectMaPlayers().catch(() => {});
-        setTimeout(() => this._syncNowPlayingUI(), 120);
-        return;
-      }
-      this._setPlayerVolumeOptimistic(entityId, targetVolume, !currentlyMuted);
-      try {
-        await this._callHaServiceRaw("media_player", "volume_mute", { entity_id: entityId, is_volume_muted: !currentlyMuted });
-      } catch (error) {
-        this._toastError(this._mediaControlFailureMessage(error));
-      }
-      if (!currentlyMuted) {
-        if (currentVolume > 0) {
-          this._callHaServiceRaw("media_player", "volume_set", { entity_id: entityId, volume_level: 0 })
-            .catch((error) => this._toastError(this._mediaControlFailureMessage(error)));
-        }
-      } else {
-        if (currentVolume === 0) {
-          this._callHaServiceRaw("media_player", "volume_set", { entity_id: entityId, volume_level: restoreVolume })
-            .catch((error) => this._toastError(this._mediaControlFailureMessage(error)));
-        }
-        try {
-          await this._callHaServiceRaw("media_player", "volume_mute", { entity_id: entityId, is_volume_muted: false });
-        } catch (error) {
-          this._toastError(this._mediaControlFailureMessage(error));
-        }
-      }
-      setTimeout(() => this._syncNowPlayingUI(), 120);
+      const muted = this._muteTargetsByPlayer?.has(player.entity_id)
+        ? this._muteTargetsByPlayer.get(player.entity_id) : this._isMuted(player);
+      return this._setPlayerMutedFor(player.entity_id, !muted);
     }
 
     _syncStatus() {
@@ -13387,7 +11414,17 @@ export function createHomeiiBaseMusicCard({
     }
 
     _getCurrentPosition() {
+      if (this._progressSeekDragging && Number.isFinite(this._progressSeekPreview)) return this._progressSeekPreview;
       const player = this._getSelectedPlayer();
+      const duration = this._getCurrentDuration();
+      const coercePosition = (value = 0) => {
+        const numeric = Number(value);
+        if (Number.isFinite(numeric) && duration > 0 && numeric > duration + 5) {
+          const asMilliseconds = numeric / 1000;
+          if (asMilliseconds <= duration + 5) return Math.max(0, asMilliseconds);
+        }
+        return HomeiiMediaPresentationFoundation.coercePlaybackSeconds(value || 0);
+      };
       const hasPlayerPosition = player?.attributes?.media_position !== undefined
         && player?.attributes?.media_position !== null
         && player?.attributes?.media_position !== "";
@@ -13395,7 +11432,7 @@ export function createHomeiiBaseMusicCard({
         && this._state.maQueueState?.elapsed_time !== null
         && this._state.maQueueState?.elapsed_time !== "";
       const applyLiveDelta = (basePosition = 0, updatedAtValue = "") => {
-        let position = HomeiiMediaPresentationFoundation.coercePlaybackSeconds(basePosition || 0);
+        let position = coercePosition(basePosition || 0);
         if (player?.state === "playing" && updatedAtValue) {
           const updatedAt = HomeiiMediaPresentationFoundation.parsePlaybackTimestampMs(updatedAtValue);
           if (updatedAt) position += Math.max(0, (Date.now() - updatedAt) / 1000);
@@ -13409,11 +11446,7 @@ export function createHomeiiBaseMusicCard({
         ? applyLiveDelta(this._state.maQueueState?.elapsed_time, this._state.maQueueState?.elapsed_time_last_updated)
         : 0;
       let position = hasPlayerPosition ? playerPosition : queuePosition;
-      if (hasPlayerPosition && hasQueuePosition) {
-        const delta = Math.abs(queuePosition - playerPosition);
-        position = delta <= 2 ? Math.max(playerPosition, queuePosition) : playerPosition;
-      }
-      const duration = this._getCurrentDuration();
+      if (hasPlayerPosition && hasQueuePosition) position = playerPosition;
       if (duration && position > duration + 2) return duration;
       return Math.max(0, position || 0);
     }
@@ -13424,6 +11457,8 @@ export function createHomeiiBaseMusicCard({
         ? Math.max(0, Math.min(safeDuration, HomeiiMediaPresentationFoundation.coercePlaybackSeconds(position)))
         : Math.max(0, HomeiiMediaPresentationFoundation.coercePlaybackSeconds(position));
       const pct = safeDuration ? Math.min(100, (safePosition / safeDuration) * 100) : 0;
+      const wave = this.$("progressBar")?.querySelector?.(".waveform-played");
+      if (wave) wave.style.clipPath = `inset(0 ${100 - pct}% 0 0)`;
       ["progressFill", "bigProgressFill", "immersiveProgressFill"].forEach((id) => {
         const el = this.$(id) || this.shadowRoot?.querySelector?.(`#${id}`);
         if (el) el.style.width = `${pct}%`;
@@ -13438,37 +11473,7 @@ export function createHomeiiBaseMusicCard({
       });
     }
 
-    _bindProgressSeekBar(el) {
-      if (!el || el.dataset.homeiiSeekBound === "1") return;
-      el.dataset.homeiiSeekBound = "1";
-      let dragging = false;
-      const seek = (event, immediate = false) => this._seekFromProgress(event, { immediate });
-      el.addEventListener("pointerdown", (event) => {
-        if (event.button !== undefined && event.button > 0) return;
-        event.preventDefault();
-        dragging = true;
-        this._lastProgressPointerSeekAt = Date.now();
-        try { el.setPointerCapture?.(event.pointerId); } catch {}
-        seek(event, true);
-      });
-      el.addEventListener("pointermove", (event) => {
-        if (!dragging) return;
-        event.preventDefault();
-        seek(event, false);
-      });
-      const finish = (event) => {
-        if (!dragging) return;
-        dragging = false;
-        try { el.releasePointerCapture?.(event.pointerId); } catch {}
-        seek(event, true);
-      };
-      el.addEventListener("pointerup", finish);
-      el.addEventListener("pointercancel", finish);
-      el.addEventListener("click", (event) => {
-        if (Date.now() - Number(this._lastProgressPointerSeekAt || 0) < 240) return;
-        seek(event, true);
-      });
-    }
+    _bindProgressSeekBar(el) { bindProgressSeek(this, el); }
 
     async _seekFromProgress(e, options = {}) {
       const player = this._getSelectedPlayer();
@@ -13480,19 +11485,19 @@ export function createHomeiiBaseMusicCard({
       const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
       const newPos = Math.floor(duration * pct);
       this._applyProgressUi(newPos, duration);
-      if (this._state.maQueueState) {
-        this._state.maQueueState.elapsed_time = newPos;
-        this._state.maQueueState.elapsed_time_last_updated = Date.now() / 1000;
-      }
       clearTimeout(this._seekTimer);
-      const runSeek = () => {
-        if (this._isDirectMaPlayer(player)) {
-          this._callDirectMaPlayerCommand(player, "players/cmd/seek", { position: newPos }).catch(() => {});
-          return;
+      const runSeek = async () => {
+        try {
+          await this._callHomeiiEnginePlayerCommand(player.entity_id, "seek", { seek_position: newPos });
+          if (this._getSelectedPlayer()?.entity_id === player.entity_id) await this._ensureQueueSnapshot?.(true);
+          return true;
+        } catch (error) {
+          this._toastError(this._mediaControlFailureMessage(error));
+          this._schedulePlayerStateRefresh();
+          return false;
         }
-        this._hass.callService("media_player", "media_seek", { entity_id: player.entity_id, seek_position: newPos });
       };
-      if (options.immediate) runSeek();
+      if (options.immediate) return runSeek();
       else this._seekTimer = setTimeout(runSeek, 20);
     }
 
@@ -13602,8 +11607,8 @@ export function createHomeiiBaseMusicCard({
         player.attributes.entity_picture,
       ], { size: 420, cacheKey: this._currentArtworkCacheKey(player, queueItem) });
       const artBox = this.$("npArt");
-      if (art && artBox?.querySelector("img")?.getAttribute("src") !== art) artBox.innerHTML = `<img src="${this._esc(art)}" alt="">`;
-      else if (!art) artBox.innerHTML = this._artPlaceholderHtml("music_note");
+      if (art && artBox?.querySelector("img")?.getAttribute("src") !== art) artBox.innerHTML = this._imgHtml(art, "", { loading: "eager", fetchpriority: "high", fallbackIcon: "album" });
+      else if (!art) artBox.innerHTML = this._artPlaceholderHtml("album");
       const vol = Math.round((player.attributes.volume_level || 0) * 100);
       const slider = this.$("volSlider");
       if (slider) {
@@ -13662,7 +11667,7 @@ export function createHomeiiBaseMusicCard({
       this.$("bigCurTime") && (this.$("bigCurTime").textContent = this._fmtDur(position));
       this.$("bigTotalTime") && (this.$("bigTotalTime").textContent = this._fmtDur(duration));
       const heroArt = this.$("nowHeroArt");
-      if (heroArt) heroArt.innerHTML = art ? `<img src="${this._esc(art)}" alt="">` : this._artPlaceholderHtml("music_note");
+      if (heroArt) heroArt.innerHTML = art ? this._imgHtml(art, "", { loading: "eager", fetchpriority: "high", fallbackIcon: "album" }) : this._artPlaceholderHtml("album");
       const trackTitle = this.shadowRoot.querySelector(".now-track-title");
       if (trackTitle) trackTitle.textContent = title;
       const trackSubtitle = this.shadowRoot.querySelector(".now-track-subtitle");
@@ -13767,56 +11772,42 @@ export function createHomeiiBaseMusicCard({
       );
       const player = this._getSelectedPlayer();
       if (!player) return;
-      const queueId = this._queueIdForPlayer(player);
 
       try {
         const normalized = await this._fetchMusicAssistantQueueSnapshot(player);
         if (!isCurrentSnapshot()) return;
-        let queueData = normalized;
-        if (!queueData?.items?.length || this._queueSnapshotLooksPartial(queueData)) {
-          const massQueueData = await this._fetchMassQueueItemsSnapshot(player);
-          if (!isCurrentSnapshot()) return;
-          queueData = this._betterQueueSnapshot(queueData, massQueueData);
+        if (normalized) {
+          this._state.queueSnapshotError = null;
+          this._applyQueueSnapshot(normalized.state, normalized.items, force);
+          this._scheduleVisibleQueueSync?.();
+          return;
         }
+      } catch (error) {
         if (!isCurrentSnapshot()) return;
-        if (queueData) {
-          this._applyQueueSnapshot(queueData.state, queueData.items, force);
-          if (!this._queueSnapshotLooksPartial(queueData)) return;
-        }
-      } catch (_) {
-        const queueData = await this._fetchMassQueueItemsSnapshot(player);
-        if (!isCurrentSnapshot()) return;
-        if (queueData) {
-          this._applyQueueSnapshot(queueData.state, queueData.items, force);
-          if (!this._queueSnapshotLooksPartial(queueData)) return;
-        }
+        this._state.queueSnapshotError = { entityId: selectedEntityId, message: error?.message || "Queue refresh failed" };
       }
-
-      if (queueId && this._hasDirectMAConnection()) {
-        try {
-          const queueState = await this._callDirectMaCommand("player_queues/get", { queue_id: queueId });
-          if (!isCurrentSnapshot()) return;
-          let queueItems = [];
-          if (force || !this._state.queueItems.length || this._isQueueUiVisible()) {
-            const totalItems = Math.max(1, Number(queueState.items) || 0);
-            const limit = Math.min(1000, Math.max(50, totalItems));
-            const fullSnapshot = await this._callDirectMaCommand("player_queues/items", { queue_id: queueId, limit, offset: 0 });
-            if (!isCurrentSnapshot()) return;
-            const snapshotItems = Array.isArray(fullSnapshot?.items)
-              ? fullSnapshot.items
-              : (Array.isArray(fullSnapshot?.queue_items)
-                ? fullSnapshot.queue_items
-                : (Array.isArray(fullSnapshot) ? fullSnapshot : []));
-            queueItems = snapshotItems.map((item, index) => this._normalizeQueueItem(item, index)).filter(Boolean);
-          }
-          if (!isCurrentSnapshot()) return;
-          this._applyQueueSnapshot(queueState, queueItems, force);
-        } catch (_) {}
+      if (!isCurrentSnapshot()) return;
+      if ((this._state.queueItems || []).length || this._state.maQueueState?.current_item) {
+        if (this._state.engineContext) {
+          this._state.engineStatus = "degraded";
+          this._state.engineAvailable = true;
+        }
+        return;
+      }
+      if (this._restoreQueueSnapshotFromCache(player, true)) return;
+      if (!this._state.queueSnapshotError) {
+        this._state.queueSnapshotError = { entityId: selectedEntityId, message: "No confirmed queue snapshot" };
       }
     }
 
     _queueItemImageUrl(item, size = 120) {
-      return this._imageUrl(item?.streamdetails?.stream_metadata?.image_url, size)
+      if (this._homeiiEngineRequired?.()) {
+        return this._artUrl(item, { size })
+          || this._artUrl(item?.media_item || item, { size })
+          || null;
+      }
+      return this._artUrl(item, { size })
+        || this._artUrl(item?.media_item || item, { size })
         || this._imageUrl(item?.local_image_encoded, size)
         || this._imageUrl(item?.local_image_url, size)
         || this._imageUrl(item?.local_image, size)
@@ -13824,420 +11815,98 @@ export function createHomeiiBaseMusicCard({
         || this._imageUrl(item?.media_image_url, size)
         || this._imageUrl(item?.image_url, size)
         || this._imageUrl(item?.image, size)
-        || this._artUrl(item, { size })
-        || this._artUrl(item?.media_item || item, { size })
         || this._imageUrl(item?.media_item?.image_url, size)
         || this._imageUrl(item?.media_item?.image, size)
         || this._imageUrl(item?.media_item?.metadata?.images, size)
         || this._imageUrl(item?.media_item?.album?.image_url, size)
         || this._imageUrl(item?.media_item?.album?.image, size)
         || this._imageUrl(item?.media_item?.album?.metadata?.images, size)
+        || this._imageUrl(item?.streamdetails?.stream_metadata?.image_url, size)
         || null;
     }
 
-    _getAvailableGroupPlayers() {
-      return (this._state.players || [])
-        .filter((p) => !(typeof this._isLikelyBrowserPlayer === "function" && this._isLikelyBrowserPlayer(p)))
-        .filter((p) => !(typeof this._isStaticGroupPlayer === "function" && this._isStaticGroupPlayer(p)));
+    _getAvailableGroupPlayers(...args) {
+      return SpeakerGroups._getAvailableGroupPlayers.apply(this, args);
     }
 
-    _currentSpeakerGroupMemberIds(entityId = this._state.selectedPlayer) {
-      const primaryId = String(entityId || "").trim();
-      if (!primaryId) return [];
-      const players = Array.isArray(this._state.players) ? this._state.players : [];
-      const primary = players.find((player) => player?.entity_id === primaryId) || this._playerByEntityId(primaryId);
-      let ids = this._playerGroupMemberIds(primary).filter(Boolean);
-      if (ids.length <= 1) {
-        const owner = players.find((player) => {
-          const members = this._playerGroupMemberIds(player);
-          return members.length > 1 && members.includes(primaryId);
-        });
-        if (owner) ids = this._playerGroupMemberIds(owner).filter(Boolean);
-      }
-      if (!ids.includes(primaryId)) ids.unshift(primaryId);
-      return [...new Set(ids)];
+    _currentSpeakerGroupMemberIds(...args) {
+      return SpeakerGroups._currentSpeakerGroupMemberIds.apply(this, args);
     }
 
-    _currentSpeakerGroupOwnerId(entityId = this._state.selectedPlayer) {
-      const primaryId = String(entityId || "").trim();
-      if (!primaryId) return "";
-      const players = Array.isArray(this._state.players) ? this._state.players : [];
-      const primary = players.find((player) => player?.entity_id === primaryId) || this._playerByEntityId(primaryId);
-      const primaryMembers = this._playerGroupMemberIds(primary);
-      if (primaryMembers.length > 1) return primaryMembers[0] || primaryId;
-      const owner = players.find((player) => {
-        const members = this._playerGroupMemberIds(player);
-        return members.length > 1 && members.includes(primaryId);
-      });
-      const ownerMembers = this._playerGroupMemberIds(owner);
-      return ownerMembers[0] || owner?.entity_id || primaryId;
+    _currentSpeakerGroupOwnerId(...args) {
+      return SpeakerGroups._currentSpeakerGroupOwnerId.apply(this, args);
     }
 
-    _selectedSpeakerGroupCount(player = this._getSelectedPlayer()) {
-      const entityId = String(player?.entity_id || this._state.selectedPlayer || "").trim();
-      if (!entityId) return 0;
-      return this._currentSpeakerGroupMemberIds(entityId).length;
+    _selectedSpeakerGroupCount(...args) {
+      return SpeakerGroups._selectedSpeakerGroupCount.apply(this, args);
     }
 
-    _syncGroupVolumeShortcut(player = this._getSelectedPlayer()) {
-      const count = this._selectedSpeakerGroupCount(player);
-      const show = count > 1;
-      const label = this._i18n("ui.group_volume", {}, "Group volume");
-      this.shadowRoot?.querySelectorAll?.(".group-volume-btn").forEach((btn) => {
-        btn.hidden = !show;
-        btn.classList.toggle("active", show);
-        btn.dataset.groupCount = show ? String(count) : "";
-        const title = show ? `${label} · ${count}` : label;
-        btn.title = title;
-        btn.setAttribute("aria-label", title);
-      });
+    _syncGroupVolumeShortcut(...args) {
+      return SpeakerGroups._syncGroupVolumeShortcut.apply(this, args);
     }
 
-    _openGroupVolumeShortcut() {
-      const player = this._getSelectedPlayer();
-      if (!player || this._selectedSpeakerGroupCount(player) <= 1) {
-        this._toast?.(this._m("No active group for this player.", "אין קבוצה פעילה לנגן הזה."));
-        return;
-      }
-      const layoutMode = typeof this._layoutModeConfig === "function" ? this._layoutModeConfig() : "";
-      if (layoutMode && layoutMode !== "desktop" && typeof this._openMobileMenu === "function") {
-        this._openMobileMenu("group");
-        return;
-      }
-      this._openGroupModal();
+    _openGroupVolumeShortcut(...args) {
+      return SpeakerGroups._openGroupVolumeShortcut.apply(this, args);
     }
 
-    _currentSpeakerGroupChildIds(entityId = this._state.selectedPlayer) {
-      const primaryId = String(entityId || "").trim();
-      return this._currentSpeakerGroupMemberIds(primaryId).filter((id) => id && id !== primaryId);
+    _currentSpeakerGroupChildIds(...args) {
+      return SpeakerGroups._currentSpeakerGroupChildIds.apply(this, args);
     }
 
-    _normalizeGroupMemberSelection(ownerId, groupMembers = []) {
-      const primaryId = String(ownerId || "").trim();
-      return [...new Set((Array.isArray(groupMembers) ? groupMembers : [])
-        .map((id) => String(id || "").trim())
-        .filter((id) => id && id !== primaryId))];
+    _normalizeGroupMemberSelection(...args) {
+      return SpeakerGroups._normalizeGroupMemberSelection.apply(this, args);
     }
 
-    _groupSelectionDelta(entityId = this._state.selectedPlayer, groupMembers = this._state.pendingGroupSelections || []) {
-      const primaryId = String(entityId || "").trim();
-      const owner = this._currentSpeakerGroupOwnerId(primaryId) || primaryId;
-      const groupAll = this._currentSpeakerGroupMemberIds(primaryId);
-      const current = groupAll.filter((id) => id && id !== owner);
-      const desired = this._normalizeGroupMemberSelection(owner, groupMembers);
-      const currentSet = new Set(current);
-      const desiredSet = new Set(desired);
-      const desiredAll = [...new Set((Array.isArray(groupMembers) ? groupMembers : [])
-        .map((id) => String(id || "").trim())
-        .filter(Boolean))];
-      const ownerRemoved = !!(
-        owner
-        && groupAll.length > 1
-        && this._state.pendingGroupOwnerRemoval
-        && !desiredAll.includes(owner)
-      );
-      return {
-        owner,
-        currentAll: groupAll,
-        desiredAll,
-        ownerRemoved,
-        current,
-        desired,
-        added: desired.filter((id) => !currentSet.has(id)),
-        removed: current.filter((id) => !desiredSet.has(id)),
-      };
+    _groupSelectionDelta(...args) {
+      return SpeakerGroups._groupSelectionDelta.apply(this, args);
     }
 
-    _sameSpeakerGroupMembers(left = [], right = []) {
-      const leftSet = new Set((Array.isArray(left) ? left : []).map((id) => String(id || "").trim()).filter(Boolean));
-      const rightSet = new Set((Array.isArray(right) ? right : []).map((id) => String(id || "").trim()).filter(Boolean));
-      if (leftSet.size !== rightSet.size) return false;
-      for (const id of leftSet) {
-        if (!rightSet.has(id)) return false;
-      }
-      return true;
+    _sameSpeakerGroupMembers(...args) {
+      return SpeakerGroups._sameSpeakerGroupMembers.apply(this, args);
     }
 
-    async _waitForSpeakerGroupConfirmation(ownerId, expectedMembers = [], options = {}) {
-      if (!this._hass?.states || typeof this._loadPlayers !== "function") {
-        return { ok: true, skipped: true, members: expectedMembers };
-      }
-      const leaderId = String(ownerId || "").trim();
-      const expected = [...new Set((Array.isArray(expectedMembers) ? expectedMembers : [])
-        .map((id) => String(id || "").trim())
-        .filter(Boolean))];
-      const timeoutMs = Math.max(700, Number(options.timeoutMs || 3200) || 3200);
-      const intervalMs = Math.max(150, Number(options.intervalMs || 350) || 350);
-      const deadline = Date.now() + timeoutMs;
-      let latest = [];
-      do {
-        try { await this._loadPlayers(); } catch (_) {}
-        latest = this._currentSpeakerGroupMemberIds(leaderId);
-        if (expected.length <= 1) {
-          if (latest.length <= 1) return { ok: true, skipped: false, members: latest };
-        } else if (this._sameSpeakerGroupMembers(latest, expected)) {
-          return { ok: true, skipped: false, members: latest };
-        }
-        await new Promise((resolve) => setTimeout(resolve, intervalMs));
-      } while (Date.now() < deadline);
-      return { ok: false, skipped: false, members: latest };
+    async _waitForSpeakerGroupConfirmation(...args) {
+      return SpeakerGroups._waitForSpeakerGroupConfirmation.apply(this, args);
     }
 
-    _refreshGroupingState(options = {}) {
-      const player = this._getSelectedPlayer();
-      if (!player) return;
-      const members = this._currentSpeakerGroupMemberIds(player.entity_id);
-      if (options.force || !this._state.pendingGroupSelectionsDirty) {
-        this._state.pendingGroupSelections = [...members];
-        this._state.pendingGroupOwnerRemoval = false;
-      }
+    _refreshGroupingState(...args) {
+      return SpeakerGroups._refreshGroupingState.apply(this, args);
     }
 
-    _openGroupModal() {
-      this._refreshGroupingState({ force: true });
-      this.shadowRoot.querySelector(".card")?.appendChild(this.$("groupModal"));
-      const players = this._getAvailableGroupPlayers();
-      const list = this.$("groupList");
-      if (!list) return;
-      const selected = this._getSelectedPlayer();
-      const subtitle = this.$("groupModalSubtitle");
-      const badge = this.$("groupCountBadge");
-      const groupOwner = this._currentSpeakerGroupOwnerId(selected?.entity_id);
-      const groupDelta = this._groupSelectionDelta(selected?.entity_id, this._state.pendingGroupSelections || []);
-      const currentAllSet = new Set(groupDelta.currentAll || []);
-      const desiredAllSet = new Set(groupDelta.desiredAll || []);
-      if (subtitle) subtitle.textContent = this._playerDisplayName(selected) || this._i18n("ui.choose_player");
-      if (badge) badge.textContent = String(players.length);
-      list.innerHTML = players.length ? players.map((p) => {
-        const checked = desiredAllSet.has(p.entity_id);
-        const connected = currentAllSet.has(p.entity_id);
-        const isOwner = p.entity_id === groupOwner;
-        return `<label class="group-item ${checked ? "checked" : ""} ${connected ? "connected" : ""} ${isOwner ? "group-owner" : ""}"><span class="group-meta"><span class="group-name">${this._esc(this._playerDisplayName(p, players))}<span class="group-item-toggle ${checked ? "checked" : ""}" aria-hidden="true">${this._iconSvg(checked ? "check" : "plus")}</span></span><span class="group-sub">${isOwner ? this._esc(this._m("Master", "מוביל")) : ""}</span></span><input type="checkbox" data-group-player="${this._esc(p.entity_id)}" data-group-owner="${isOwner ? "true" : "false"}" ${checked ? "checked" : ""}></label>`;
-      }).join("") : `<div class="state-box" style="min-height:80px;padding:8px 0;">${this._esc(this._i18n("ui.no_extra_ma_players"))}</div>`;
-      this._syncGroupModalApplyButton();
-      this.$("groupModal").classList.add("open");
+    _openGroupModal(...args) {
+      return SpeakerGroups._openGroupModal.apply(this, args);
     }
 
-    _closeGroupModal() { this.$("groupModal").classList.remove("open"); }
-
-    _syncGroupModalApplyButton() {
-      const applyButton = this.$("applyGroupBtn");
-      if (!applyButton) return;
-      const selected = this._getSelectedPlayer();
-      const delta = this._groupSelectionDelta(selected?.entity_id, this._state.pendingGroupSelections || []);
-      applyButton.textContent = this._m("Update group", "עדכן קבוצה");
-      applyButton.disabled = !delta.ownerRemoved && !delta.added.length && !delta.removed.length;
+    _closeGroupModal(...args) {
+      return SpeakerGroups._closeGroupModal.apply(this, args);
     }
 
-    _handleGroupChange(e) {
-      const checkbox = e.target.closest("input[data-group-player]");
-      if (!checkbox) return;
-      const entityId = checkbox.dataset.groupPlayer;
-      const isOwner = checkbox.dataset.groupOwner === "true";
-      const next = new Set(this._state.pendingGroupSelections || []);
-      if (checkbox.checked) next.add(entityId); else next.delete(entityId);
-      this._state.pendingGroupSelections = Array.from(next);
-      if (isOwner) this._state.pendingGroupOwnerRemoval = !checkbox.checked;
-      this._state.pendingGroupSelectionsDirty = true;
-      const groupItem = checkbox.closest(".group-item");
-      groupItem?.classList.toggle("checked", checkbox.checked);
-      const toggle = groupItem?.querySelector(".group-item-toggle");
-      if (toggle) {
-        toggle.classList.toggle("checked", checkbox.checked);
-        toggle.innerHTML = this._iconSvg(checkbox.checked ? "check" : "plus");
-      }
-      this._syncGroupModalApplyButton();
+    _syncGroupModalApplyButton(...args) {
+      return SpeakerGroups._syncGroupModalApplyButton.apply(this, args);
     }
 
-    async _applySpeakerGroupFor(entityId, groupMembers = []) {
-      const primaryId = String(entityId || "").trim();
-      if (!primaryId) return false;
-      const { owner, current, desired: members, added, removed } = this._groupSelectionDelta(primaryId, groupMembers);
-      const leaderId = owner || primaryId;
-      if (!members.length && !current.length) return false;
-      const ownerRemovedFromMemberView = !!(owner && owner !== primaryId && removed.includes(owner));
-      const ownerRemovalRequested = !!(owner && this._state.pendingGroupOwnerRemoval);
-      if (ownerRemovedFromMemberView || ownerRemovalRequested) {
-        await this._clearSpeakerGroupFor(owner);
-        this._state.pendingGroupSelections = [];
-        this._state.pendingGroupOwnerRemoval = false;
-        this._state.pendingGroupSelectionsDirty = false;
-        return true;
-      }
-      if (!added.length && !removed.length) return false;
-      const canUseHomeiiEngineGroup = typeof this._homeiiEngineApplyGroup === "function"
-        && this._homeiiEngineEnabled?.()
-        && (this._state?.engineAvailable || this._homeiiEngineRequired?.());
-      if (canUseHomeiiEngineGroup) {
-        try {
-          await this._homeiiEngineApplyGroup({
-            owner: leaderId,
-            entity_id: leaderId,
-            members,
-            remove_members: removed,
-          });
-          const expectedMembers = [...new Set([leaderId, ...members])];
-          const confirmed = await this._waitForSpeakerGroupConfirmation(leaderId, expectedMembers);
-          if (!confirmed.ok) {
-            throw new Error(this._m("Group command was sent, but Home Assistant did not confirm the new group state.", "×¤×§×•×“×ª ×”×§×‘×•×¦×” × ×©×œ×—×”, ××‘×œ Home Assistant ×œ× ××™×©×¨ ×©×”×§×‘×•×¦×” ×”×ª×¢×“×›× ×”."));
-          }
-          this._state.pendingGroupSelections = expectedMembers;
-          this._state.pendingGroupOwnerRemoval = false;
-          this._state.pendingGroupSelectionsDirty = false;
-          setTimeout(() => {
-            this._loadPlayers();
-            this._refreshGroupingState();
-            if (this._state.menuOpen) this._renderMobileMenu();
-            if (this._state.controlRoomOpen) this._syncControlRoomUi({ force: true });
-          }, 650);
-          return true;
-        } catch (engineError) {
-          this._debugLog?.("warn", "[HOMEii Flow] HOMEii Flow Engine group fallback failed", engineError);
-        }
-      }
-      const removalResults = removed.length
-        ? await Promise.allSettled(removed.map((id) => this._callHaMediaPlayerService(id, "unjoin")))
-        : [];
-      if (added.length && members.length) {
-        await this._callHaMediaPlayerService(leaderId, "join", { group_members: members });
-      }
-      const failedRemoval = removalResults.find((result) => result.status === "rejected");
-      if (failedRemoval && !added.length) throw failedRemoval.reason || new Error(this._i18n("ui.player_groups_could_not_be_disconnected"));
-      const expectedMembers = [...new Set([leaderId, ...members])];
-      const confirmed = await this._waitForSpeakerGroupConfirmation(leaderId, expectedMembers);
-      if (!confirmed.ok) {
-        throw new Error(this._m("Group command was sent, but Home Assistant did not confirm the new group state.", "פקודת הקבוצה נשלחה, אבל Home Assistant לא אישר שהקבוצה התעדכנה."));
-      }
-      this._state.pendingGroupSelections = expectedMembers;
-      this._state.pendingGroupOwnerRemoval = false;
-      this._state.pendingGroupSelectionsDirty = false;
-      setTimeout(() => {
-        this._loadPlayers();
-        this._refreshGroupingState();
-        if (this._state.menuOpen) this._renderMobileMenu();
-        if (this._state.controlRoomOpen) this._syncControlRoomUi({ force: true });
-      }, 650);
-      return true;
+    _handleGroupChange(...args) {
+      return SpeakerGroups._handleGroupChange.apply(this, args);
     }
 
-    async _applySpeakerGroup() {
-      const player = this._getSelectedPlayer();
-      if (!player) return false;
-      const groupMembers = [...(this._state.pendingGroupSelections || [])];
-      let ok = false;
-      try {
-        ok = await this._applySpeakerGroupFor(player.entity_id, groupMembers);
-      } catch (error) {
-        this._toastError(error?.message || this._i18n("ui.queue_action_failed"));
-        return false;
-      }
-      if (!ok) {
-        this._toastError(this._m("Choose at least one speaker to add or remove.", "בחר לפחות רמקול אחד לצירוף או להסרה."));
-        return false;
-      }
-      this._toastSuccess(this._i18n("ui.group_updated"));
-      this._closeGroupModal();
-      setTimeout(() => { this._refreshGroupingState(); if (this._state.view === "now_playing") this._renderNowPlayingPage(); }, 500);
-      return true;
+    async _applySpeakerGroupFor(...args) {
+      return SpeakerGroups._applySpeakerGroupFor.apply(this, args);
     }
 
-    _clearLocalGroupState(entityId) {
-      const primaryId = String(entityId || "").trim();
-      if (!primaryId) return;
-      const sourcePlayers = Array.isArray(this._state.players) ? this._state.players : [];
-      const selectedPlayer = sourcePlayers.find((player) => player?.entity_id === primaryId) || this._playerByEntityId(primaryId);
-      const related = new Set([primaryId, ...this._playerGroupMemberIds(selectedPlayer).filter(Boolean)]);
-      for (const player of sourcePlayers) {
-        const members = this._playerGroupMemberIds(player);
-        if (members.includes(primaryId)) members.forEach((id) => related.add(id));
-      }
-      this._state.players = sourcePlayers.map((player) => {
-        if (!player?.entity_id) return player;
-        const attrs = player.attributes || {};
-        const rawMembers = Array.isArray(attrs.group_members) ? attrs.group_members.filter(Boolean) : [];
-        const touchesGroup = related.has(player.entity_id) || rawMembers.some((id) => related.has(id));
-        if (!touchesGroup && !rawMembers.length) return player;
-        const nextAttrs = { ...attrs };
-        if (rawMembers.length) {
-          const nextMembers = rawMembers.filter((id) => id && !related.has(id));
-          if (nextMembers.length > 1) nextAttrs.group_members = nextMembers;
-          else delete nextAttrs.group_members;
-        }
-        if (related.has(player.entity_id)) {
-          delete nextAttrs.group_members;
-          delete nextAttrs.group_childs;
-          delete nextAttrs.group_children;
-          delete nextAttrs.group_leader;
-          delete nextAttrs.group_parent;
-          delete nextAttrs.group_master;
-        }
-        return { ...player, attributes: nextAttrs };
-      });
-      this._state.pendingGroupSelections = [];
-      this._state.pendingGroupOwnerRemoval = false;
-      this._state.pendingGroupSelectionsDirty = false;
-      this._refreshGroupingState();
-      this._syncNowPlayingUI();
-      if (this._state.view === "now_playing") this._renderNowPlayingPage();
-      if (this._state.menuOpen && this._state.menuPage === "group") this._renderMobileMenu().catch(() => {});
+    async _applySpeakerGroup(...args) {
+      return SpeakerGroups._applySpeakerGroup.apply(this, args);
     }
 
-    async _clearSpeakerGroupFor(entityId) {
-      const requestedId = String(entityId || "").trim();
-      const ownerId = this._currentSpeakerGroupOwnerId(requestedId) || requestedId;
-      const player = this._playerByEntityId(ownerId) || this._playerByEntityId(requestedId);
-      if (!player) return;
-      if (typeof this._isStaticGroupPlayer === "function" && this._isStaticGroupPlayer(player)) {
-        const targets = this._playerGroupMemberIds(player)
-          .filter((id) => id && id !== player.entity_id)
-          .filter((id) => {
-            const target = (this._state.players || []).find((p) => p.entity_id === id) || this._hass?.states?.[id];
-            return target && !this._isStaticGroupPlayer(target);
-        });
-        if (targets.length) {
-          await Promise.allSettled(targets.map((id) => this._callHaMediaPlayerService(id, "unjoin")));
-        }
-        this._clearLocalGroupState(player.entity_id);
-        setTimeout(() => {
-          this._loadPlayers();
-          this._refreshGroupingState();
-          if (this._state.menuOpen) this._renderMobileMenu();
-          if (this._state.view === "now_playing") this._renderNowPlayingPage();
-        }, 500);
-        return true;
-      }
-      const groupIds = this._currentSpeakerGroupMemberIds(ownerId);
-      const targets = groupIds.length > 1
-        ? groupIds.filter((id) => {
-            const target = (this._state.players || []).find((p) => p.entity_id === id) || this._hass?.states?.[id];
-            return target && !(typeof this._isStaticGroupPlayer === "function" && this._isStaticGroupPlayer(target));
-          })
-        : [player.entity_id];
-      try {
-        await Promise.allSettled(targets.map((id) => this._callHaMediaPlayerService(id, "unjoin")));
-      } catch (_) {}
-      const confirmed = await this._waitForSpeakerGroupConfirmation(ownerId, [ownerId], { timeoutMs: 2600 });
-      if (!confirmed.ok) {
-        throw new Error(this._m("Group disconnect was sent, but Home Assistant did not confirm the group is clear.", "פקודת ניתוק הקבוצה נשלחה, אבל Home Assistant לא אישר שהקבוצה התנתקה."));
-      }
-      this._clearLocalGroupState(ownerId);
-      setTimeout(() => {
-        this._loadPlayers();
-        this._refreshGroupingState();
-        if (this._state.menuOpen) this._renderMobileMenu();
-        if (this._state.view === "now_playing") this._renderNowPlayingPage();
-      }, 500);
-      return true;
+    _clearLocalGroupState(...args) {
+      return SpeakerGroups._clearLocalGroupState.apply(this, args);
     }
 
-    async _clearSpeakerGroup() {
-      const player = this._getSelectedPlayer();
-      if (!player) return false;
-      await this._clearSpeakerGroupFor(this._currentSpeakerGroupOwnerId(player.entity_id) || player.entity_id);
-      this._state.pendingGroupSelectionsDirty = false;
-      this._toast(this._i18n("ui.group_cleared"));
-      this._closeGroupModal();
-      return true;
+    async _clearSpeakerGroupFor(...args) {
+      return SpeakerGroups._clearSpeakerGroupFor.apply(this, args);
+    }
+
+    async _clearSpeakerGroup(...args) {
+      return SpeakerGroups._clearSpeakerGroup.apply(this, args);
     }
 
     _toggleQueue() {
@@ -14259,7 +11928,7 @@ export function createHomeiiBaseMusicCard({
       panel.innerHTML = `
         <div class="queue-shell">
         <div class="queue-header">
-          <div class="queue-art">${art ? `<img src="${this._esc(art)}" alt="">` : this._artPlaceholderHtml("music_note")}</div>
+          <div class="queue-art">${art ? this._imgHtml(art, "", { loading: "eager", fetchpriority: "high", fallbackIcon: "album" }) : this._artPlaceholderHtml("album")}</div>
           <div class="queue-meta"><div class="queue-title">${this._esc(player.attributes.media_title || this._i18n("ui.queue"))}</div><div class="queue-sub" id="queueSub">${this._esc(player.attributes.media_artist || "")}</div></div>
           <button class="close-btn" id="queueClose">✕</button>
         </div>
@@ -14388,19 +12057,22 @@ export function createHomeiiBaseMusicCard({
 
     async _handleQueueAction(action, queueItemId, fallbackUri = "", sortIndex = "", targetPosition = null) {
       const player = this._getSelectedPlayer();
-      if (!player || !queueItemId || this._state.queueActionPending) return;
+      if (!player || !queueItemId || this._state.queueActionPending) return false;
 
       const allItems = [...(this._state.queueItems || [])];
       const targetItem = this._resolveQueueActionTarget(allItems, queueItemId, fallbackUri, sortIndex);
       const targetKey = targetItem ? this._getQueueItemKey(targetItem) : String(queueItemId || "").trim();
       const idx = targetItem ? allItems.indexOf(targetItem) : allItems.findIndex((i) => this._getQueueItemKey(i) === targetKey);
-      if (idx === -1) return;
+      if (idx === -1) return false;
 
       try {
         this._setQueueBusy(true);
         const numericTargetPosition = Math.round(Number(targetPosition));
         const moveToIndex = action === "move_to" && Number.isFinite(numericTargetPosition) ? this._queueMoveGlobalIndexForDisplayPosition(allItems, numericTargetPosition) : null;
-        const posShift = action === "move_to" && Number.isFinite(moveToIndex) && moveToIndex >= 0 ? moveToIndex - idx : null;
+        const nextIndex = action === "next" ? this._queueFirstMovableIndex(allItems) : null;
+        const posShift = action === "move_to" && Number.isFinite(moveToIndex) && moveToIndex >= 0
+          ? moveToIndex - idx
+          : (action === "next" && Number.isFinite(nextIndex) ? nextIndex - idx : null);
         const optimisticItems = this._queueItemsAfterLocalAction(action, targetKey, allItems, numericTargetPosition);
         const queueId = this._queueIdForPlayer(player);
         const massQueueServiceByAction = {
@@ -14413,7 +12085,6 @@ export function createHomeiiBaseMusicCard({
           ? String(targetItem.queue_service_id || (targetItem.queue_item_id_trusted !== false ? targetItem.queue_item_id : "") || this._getQueueItemPlaybackId(targetItem) || "").trim()
           : "";
         const numericSortIndex = HomeiiMediaQueueFoundation.normalizeFiniteNumber(targetItem?.sort_index ?? sortIndex);
-        const directTarget = serviceQueueItemId || (action === "remove" && Number.isFinite(numericSortIndex) ? numericSortIndex : null);
         this._debugLog("info", "[Homeii Queue] action", {
           action,
           queueId,
@@ -14425,17 +12096,20 @@ export function createHomeiiBaseMusicCard({
         });
 
         let acted = false;
-        try {
-          acted = await this._callDirectMaQueueAction(action, queueId, directTarget, posShift);
-        } catch (error) {
-          this._debugLog("warn", "[Homeii Queue] direct action failed", error);
+        const engineReady = await this._ensureHomeiiEngineReadyForAction();
+        if (typeof this._homeiiEngineQueueAction !== "function" || !this._homeiiEngineRequired?.() || !engineReady) {
+          throw new Error(this._i18n?.("diagnostics.engine_required_missing") || "HOMEii Flow Engine is required.");
         }
-        if (!acted && serviceQueueItemId && massQueueServiceByAction[action]) {
-          acted = await this._callMassQueueService(massQueueServiceByAction[action], serviceQueueItemId);
-        }
-        if (!acted && optimisticItems && this._config?.queue_rebuild_fallback === true) {
-          await this._rebuildQueue(player.entity_id, optimisticItems, this._getCurrentPosition());
-          acted = true;
+        if (serviceQueueItemId && (massQueueServiceByAction[action] || action === "move_to")) {
+          const result = await this._homeiiEngineQueueAction({
+            entity_id: player.entity_id,
+            queue_id: queueId,
+            action,
+            queue_item_id: serviceQueueItemId,
+            position: Number.isFinite(numericTargetPosition) ? numericTargetPosition : undefined,
+            position_shift: Number.isFinite(posShift) ? posShift : undefined,
+          });
+          acted = !!result?.ok;
         }
         if (!acted) {
           await this._ensureQueueSnapshot(true).catch(() => {});
@@ -14443,7 +12117,7 @@ export function createHomeiiBaseMusicCard({
             ? this._i18n("ui.queue_action_is_not_available_for_this_player")
             : this._i18n("ui.queue_item_id_is_not_ready_yet_refresh_the_queue_and_try_again");
           this._toast(message);
-          return;
+          return false;
         }
 
         if (optimisticItems) {
@@ -14457,26 +12131,17 @@ export function createHomeiiBaseMusicCard({
           else this._syncNowPlayingUI();
         }
         await this._refreshQueueAfterMutation(220);
-        this._refreshQueueAfterMutation(900).catch(() => {});
-        this._refreshQueueAfterMutation(1800).catch(() => {});
+        this._scheduleQueueRefreshAfterMutation(900);
+        return true;
       } catch (e) {
-        this._toast(e?.message || this._i18n("ui.queue_action_failed"));
+        this._toastError(e?.message || this._i18n("ui.queue_action_failed"));
+        return false;
       } finally {
         this._setQueueBusy(false);
       }
     }
 
     async _clearQueueForPlayer(entityId) {
-      if (this._isDirectMaPlayer(entityId)) {
-        const queueId = this._directMaQueueId(entityId);
-        if (queueId) {
-          try {
-            await this._callDirectMaCommand("player_queues/clear", { queue_id: queueId });
-            this._refreshDirectMaPlayers().catch(() => {});
-          } catch (_) {}
-        }
-        return;
-      }
       try {
         await this._callHaMediaPlayerService(entityId, "clear_playlist");
       } catch (_) {}
@@ -14487,16 +12152,6 @@ export function createHomeiiBaseMusicCard({
 
     async _stopPlayer(entityId) {
       if (!entityId) return;
-      if (this._isDirectMaPlayer(entityId)) {
-        try {
-          await this._callDirectMaPlayerCommand(entityId, "players/cmd/stop");
-          this._refreshDirectMaPlayers().catch(() => {});
-          return;
-        } catch (_) {
-          await this._clearQueueForPlayer(entityId);
-          return;
-        }
-      }
       await this._callHaMediaPlayerService(entityId, "media_stop");
     }
 
@@ -14512,65 +12167,20 @@ export function createHomeiiBaseMusicCard({
       if (!currentUri) throw new Error(this._i18n("ui.no_queue_item_to_rebuild"));
 
       const uriList = [currentUri, ...itemsAfterCurrent.map((i) => this._getQueueItemUri(i)).filter(Boolean)];
-
-      if (this._isDirectMaPlayer(targetEntityId)) {
-        const queueId = this._directMaQueueId(targetEntityId);
-        if (!queueId) throw new Error("Direct Music Assistant player is not ready");
-        await this._clearQueueForPlayer(targetEntityId);
-        try {
-          await this._callDirectMaCommand("player_queues/play_media", {
-            queue_id: queueId,
-            media: uriList,
-            option: "replace",
-          });
-        } catch (error) {
-          await this._callDirectMaCommand("player_queues/play_media", {
-            queue_id: queueId,
-            media: currentUri,
-            option: "replace",
-          });
-          const rest = uriList.slice(1);
-          if (rest.length) {
-            await this._callDirectMaCommand("player_queues/play_media", {
-              queue_id: queueId,
-              media: rest,
-              option: "add",
-            }).catch(async () => {
-              for (const uri of rest) {
-                await this._callDirectMaCommand("player_queues/play_media", {
-                  queue_id: queueId,
-                  media: uri,
-                  option: "add",
-                });
-              }
-            });
-          }
-        }
-        if (seekPosition > 0) {
-          setTimeout(() => {
-            this._callDirectMaPlayerCommand(targetEntityId, "players/cmd/seek", {
-              position: Math.floor(seekPosition),
-            }).catch(() => {});
-          }, 900);
-        }
-        this._refreshDirectMaPlayers().catch(() => {});
-        return;
-      }
-
       await this._clearQueueForPlayer(targetEntityId);
-
-      await this._hass.callService("music_assistant", "play_media", {
-        entity_id: targetEntityId,
-        media_id: uriList,
-        enqueue: "play",
-      });
+      for (const [index, uri] of uriList.entries()) {
+        const parsed = this._parseMediaReference(uri, "track");
+        await this._playMediaOnPlayer(targetEntityId, uri, parsed.media_type || "track", index === 0 ? "play" : "add", {
+          silent: true,
+          verifyPlayback: index === 0,
+        });
+      }
 
       if (seekPosition > 0) {
         setTimeout(() => {
-          this._hass.callService("media_player", "media_seek", {
-            entity_id: targetEntityId,
+          this._callHomeiiEnginePlayerCommand(targetEntityId, "seek", {
             seek_position: Math.floor(seekPosition),
-          });
+          }).catch(() => {});
         }, 900);
       }
     }
@@ -14606,7 +12216,7 @@ export function createHomeiiBaseMusicCard({
                 return `
                   <button class="player-card ${p.state === "playing" ? "playing" : p.state === "paused" ? "paused" : "idle"}" data-transfer-player="${this._esc(p.entity_id)}">
                     <span class="player-card-dot"></span>
-                    <span class="player-card-art">${art ? `<img src="${this._esc(art)}" alt="">` : this._artPlaceholderHtml("speaker")}</span>
+                    <span class="player-card-art">${art ? this._imgHtml(art, "", { fallbackIcon: "speaker" }) : this._artPlaceholderHtml("speaker")}</span>
                     <span class="player-card-meta">
                       <span class="player-card-top">
                         <span class="player-card-title">${this._esc(this._playerDisplayName(p, others))}</span>
@@ -14634,28 +12244,11 @@ export function createHomeiiBaseMusicCard({
       const sourcePlayer = this._playerByEntityId(sourcePlayerEntityId);
       if (!sourcePlayer || !targetPlayerEntityId || sourcePlayer.entity_id === targetPlayerEntityId) return false;
       try {
-        let items = [];
-        let currentPos = 0;
-        const usingSelectedSource = sourcePlayer.entity_id === this._state.selectedPlayer;
-        if (usingSelectedSource) {
-          await this._ensureQueueSnapshot(true);
-          items = [...(this._state.queueItems || [])];
-          currentPos = this._getCurrentPosition();
-        }
-
-        try {
-          await this._callMusicAssistantTransferQueue(sourcePlayer.entity_id, targetPlayerEntityId);
-        } catch (transferError) {
-          if (!usingSelectedSource || !items.length) throw transferError;
-          await this._rebuildQueue(targetPlayerEntityId, items, currentPos);
-          try {
-            await this._callHaMediaPlayerService(sourcePlayer.entity_id, "media_stop");
-          } catch (_) {}
-        }
+        await this._callMusicAssistantTransferQueue(sourcePlayer.entity_id, targetPlayerEntityId);
 
         if (options.selectTarget !== false) this._selectPlayer(targetPlayerEntityId, true);
         if (!options.silent) this._toast(this._i18n("ui.queue_transferred"));
-        setTimeout(() => this._ensureQueueSnapshot(true), 1200);
+        this._scheduleQueueRefreshAfterMutation(700);
         return true;
       } catch (e) {
         if (!options.silent) this._toast(e?.message || this._i18n("ui.queue_action_failed"));
@@ -14682,18 +12275,76 @@ export function createHomeiiBaseMusicCard({
     }
 
     _imageUrl(value, size = 300, seen = new Set(), depth = 0) {
+      const maUrl = this._maArtworkBaseUrl();
       const raw = HomeiiMediaPresentationFoundation.imageUrl(value, size, {
-        maUrl: this._maArtworkBaseUrl(),
+        maUrl,
         seen,
         depth,
       });
-      return this._normalizeArtworkUrl(raw, { size });
+      const resolved = this._normalizeArtworkUrl(raw, { size });
+      const rebasedRaw = HomeiiMediaPresentationFoundation.rebaseImageProxyUrl(raw, size, maUrl);
+      const rebased = this._normalizeArtworkUrl(rebasedRaw, { size });
+      const fallbackRaw = HomeiiMediaPresentationFoundation.legacyImageProxyFallbackUrl(value, size, {
+        maUrl,
+      });
+      const fallback = this._normalizeArtworkUrl(fallbackRaw, { size });
+      const primary = resolved || rebased;
+      return this._rememberArtworkFallback(primary, [rebased, fallback]);
     }
 
     _artUrl(item, options = {}) {
       const size = Number(options?.size || 300) || 300;
-      const raw = HomeiiMediaPresentationFoundation.artUrl(item, this._maArtworkBaseUrl(), size);
-      return this._normalizeArtworkUrl(raw, { size, cacheKey: options?.cacheKey || "" });
+      const engineArt = String(
+        item?.homeii_artwork_url
+        || item?.homeiiArtworkUrl
+        || item?.media_item?.homeii_artwork_url
+        || item?.media_item?.homeiiArtworkUrl
+        || item?.album?.homeii_artwork_url
+        || item?.album?.homeiiArtworkUrl
+        || item?.metadata?.homeii_artwork_url
+        || ""
+      ).trim();
+      if (engineArt) return this._normalizeArtworkUrl(engineArt, { size, cacheKey: options?.cacheKey || "" }) || engineArt;
+      if (this._homeiiEngineRequired?.()) {
+        const safeCandidates = [
+          item?.image,
+          item?.image_url,
+          item?.media_image,
+          item?.media_image_url,
+          item?.entity_picture,
+          item?.media_item?.image,
+          item?.media_item?.image_url,
+          item?.album?.image,
+          item?.album?.image_url,
+          item?.metadata?.image,
+          item?.metadata?.image_url,
+        ];
+        for (const candidate of safeCandidates) {
+          const raw = String(candidate || "").trim();
+          if (!raw) continue;
+          try {
+            const parsed = new URL(raw, window.location.origin);
+            if (
+              parsed.origin === window.location.origin
+              && /^\/(?:api\/homeii_flow\/artwork\/|api\/media_player_proxy\/|local\/)/.test(parsed.pathname)
+            ) {
+              return this._normalizeArtworkUrl(raw, { size, cacheKey: options?.cacheKey || "" }) || raw;
+            }
+          } catch (_) {}
+        }
+        return "";
+      }
+      const maUrl = this._maArtworkBaseUrl();
+      const raw = HomeiiMediaPresentationFoundation.artUrl(item, maUrl, size);
+      const resolved = this._normalizeArtworkUrl(raw, { size, cacheKey: options?.cacheKey || "" });
+      const rebasedRaw = HomeiiMediaPresentationFoundation.rebaseImageProxyUrl(raw, size, maUrl);
+      const rebased = this._normalizeArtworkUrl(rebasedRaw, { size, cacheKey: options?.cacheKey || "" });
+      const fallbackRaw = HomeiiMediaPresentationFoundation.legacyImageProxyFallbackUrl(item, size, {
+        maUrl,
+      });
+      const fallback = this._normalizeArtworkUrl(fallbackRaw, { size, cacheKey: options?.cacheKey || "" });
+      const primary = resolved || rebased;
+      return this._rememberArtworkFallback(primary, [rebased, fallback]);
     }
     _artistName(item) { return HomeiiMediaPresentationFoundation.artistName(item); }
     _fmtDur(sec) {
@@ -14711,60 +12362,12 @@ export function createHomeiiBaseMusicCard({
       const className = options.className ? ` class="${this._esc(options.className)}"` : "";
       const fetchPriority = options.fetchpriority || options.fetchPriority || "low";
       const fetchPriorityAttr = fetchPriority ? ` fetchpriority="${this._esc(fetchPriority)}"` : "";
-      return `<img${className} src="${this._esc(url)}" alt="${this._esc(alt)}" loading="${this._esc(loading)}" decoding="${this._esc(decoding)}"${fetchPriorityAttr}>`;
+      const fallbackIcon = options.fallbackIcon || options.placeholder || "album";
+      return `<img${className} src="${this._esc(url)}" alt="${this._esc(alt)}" loading="${this._esc(loading)}" decoding="${this._esc(decoding)}"${fetchPriorityAttr} data-homeii-inline-art="1" data-homeii-art-src="${this._esc(url)}" data-homeii-art-fallback-icon="${this._esc(fallbackIcon)}">`;
     }
 
     _toast(message, variant = "info", options = {}) {
-      if (this._state?.controlRoomOpen && options?.allowStudio !== true) return;
-      const wrap = this.$("toastWrap");
-      if (!wrap) return;
-      const text = String(message ?? "").trim();
-      if (!text) return;
-      const safeVariant = ["success", "error", "info"].includes(variant) ? variant : "info";
-      const now = Date.now();
-      const key = `${safeVariant}:${text}`;
-      const lastShown = this._toastHistory?.get(key) || 0;
-      if (now - lastShown < 2500) return;
-      if (!this._toastHistory) this._toastHistory = new Map();
-      this._toastHistory.set(key, now);
-      for (const [toastKey, at] of this._toastHistory.entries()) {
-        if (now - at > 12000) this._toastHistory.delete(toastKey);
-      }
-      const activeToasts = Array.from(wrap.querySelectorAll(".toast"));
-      while (activeToasts.length >= 3) activeToasts.shift()?.remove();
-      const centered = options?.position === "center";
-      const top = options?.position === "top";
-      wrap.classList.toggle("studio-toast", !!this._state.controlRoomOpen && !centered);
-      if (centered) wrap.classList.add("center-toast");
-      if (top) wrap.classList.add("top-toast");
-      const el = document.createElement("div");
-      el.className = `toast ${safeVariant}${centered ? " centered" : ""}${top ? " top" : ""}`;
-      const icon = safeVariant === "success" ? "✓" : safeVariant === "error" ? "×" : "i";
-      el.innerHTML = `<span class="toast-icon">${icon}</span><span class="toast-text">${this._esc(text)}</span>`;
-      const issueAckKey = String(options?.issueAckKey || "").trim();
-      const issueAckText = String(options?.issueAckText || text).trim();
-      let removed = false;
-      const removeToast = () => {
-        if (removed) return;
-        removed = true;
-        el.remove();
-        if (centered && !wrap.querySelector(".toast.centered")) wrap.classList.remove("center-toast");
-        if (top && !wrap.querySelector(".toast.top")) wrap.classList.remove("top-toast");
-      };
-      if (issueAckKey) {
-        const ack = document.createElement("button");
-        ack.type = "button";
-        ack.className = "toast-ack";
-        ack.textContent = this._i18n("ui.confirm", {}, "OK") || "OK";
-        ack.addEventListener("click", (event) => {
-          event?.stopPropagation?.();
-          this._acknowledgeCardIssue(issueAckKey, issueAckText);
-          removeToast();
-        });
-        el.appendChild(ack);
-      }
-      wrap.appendChild(el);
-      setTimeout(removeToast, Number(options?.duration || 3300));
+      return showToast.call(this, message, variant, options);
     }
 
     _toastSuccess(message, options = {}) {
@@ -14784,7 +12387,7 @@ export function createHomeiiBaseMusicCard({
       host.innerHTML = `
         <div class="surprise-popup-card">
           <div class="surprise-popup-player">${this._esc(playerName)}</div>
-          <div class="surprise-popup-art">${art ? `<img src="${this._esc(art)}" alt="">` : this._iconSvg("wand")}</div>
+          <div class="surprise-popup-art">${art ? this._imgHtml(art, "", { loading: "eager", fetchpriority: "high", fallbackIcon: "album" }) : this._iconSvg("wand")}</div>
           <div class="surprise-popup-title">${this._esc(title)}</div>
         </div>
       `;
@@ -14841,12 +12444,34 @@ export function createHomeiiBaseMusicCard({
       const root = rootOverride || this.$("content");
       if (!root) return;
       if (rootOverride) {
-        root.querySelectorAll("[data-img]").forEach((el) => {
+        const hydrate = (el) => {
+          if (!el?.dataset?.img) return;
           const url = el.dataset.img;
-          const placeholder = el.dataset.placeholder || "music_note";
+          const placeholder = el.dataset.placeholder || "album";
           delete el.dataset.img;
           this._loadImgInto(url, el, placeholder);
-        });
+        };
+        const pending = Array.from(root.querySelectorAll("[data-img]"));
+        this._menuImgObserver?.disconnect?.();
+        this._menuImgObserver = null;
+        const priority = [
+          ...Array.from(root.querySelectorAll(".active[data-img], .active [data-img], [data-homeii-art-priority='1'][data-img]")),
+          ...pending.slice(0, 6),
+        ].filter((el, index, list) => el?.dataset?.img && list.indexOf(el) === index);
+        priority.forEach(hydrate);
+        const remaining = pending.filter((el) => el?.dataset?.img);
+        if (typeof IntersectionObserver !== "undefined" && remaining.length) {
+          this._menuImgObserver = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+              if (!entry.isIntersecting) return;
+              this._menuImgObserver?.unobserve?.(entry.target);
+              hydrate(entry.target);
+            });
+          }, { root, rootMargin: "280px 180px" });
+          remaining.forEach((el) => this._menuImgObserver.observe(el));
+        } else {
+          remaining.slice(0, 18).forEach(hydrate);
+        }
         return;
       }
       if (this._imgObserver && this._imgObserverRoot !== root) {
@@ -14873,7 +12498,7 @@ export function createHomeiiBaseMusicCard({
 
     async _loadImgInto(url, el, fallback = "💿") {
       const supportedFallbacks = ["artist", "radio", "podcast", "music_note", "album", "playlist", "tracks", "speaker", "repeat"];
-      const fallbackIcon = supportedFallbacks.includes(String(fallback || "")) ? fallback : (fallback === "🎤" ? "artist" : fallback === "📻" ? "radio" : "music_note");
+      const fallbackIcon = supportedFallbacks.includes(String(fallback || "")) ? fallback : (fallback === "🎤" ? "artist" : fallback === "📻" ? "radio" : "album");
       const setPlaceholder = () => {
         if (el?.isConnected) el.innerHTML = `<div class="media-placeholder">${this._artPlaceholderHtml(fallbackIcon)}</div>`;
       };
@@ -14886,10 +12511,22 @@ export function createHomeiiBaseMusicCard({
           img.alt = "";
           img.loading = "lazy";
           img.decoding = "async";
-          img.onload = () => this._imageFailed.delete(url);
+          const fallbackUrls = src === url ? this._artworkFallbackCandidates(url) : [];
+          let fallbackIndex = 0;
+          img.onload = () => {
+            this._clearImageFailed(url);
+            fallbackUrls.forEach((fallbackUrl) => this._clearImageFailed(fallbackUrl));
+          };
           img.onerror = () => {
-            this._imageFailed.add(url);
+            const fallbackUrl = fallbackUrls[fallbackIndex] || "";
+            if (fallbackUrl) {
+              fallbackIndex += 1;
+              img.src = fallbackUrl;
+              return;
+            }
+            this._markImageFailed(url);
             setPlaceholder();
+            this._scheduleImageRetry(url, el, fallbackIcon);
           };
           img.src = src;
           el.innerHTML = "";
@@ -14912,13 +12549,19 @@ export function createHomeiiBaseMusicCard({
         setPlaceholder();
         return;
       }
-      if (this._imageFailed.has(url) && !this._shouldFetchArtworkUrl(url, { crossOrigin: isCrossOrigin })) {
+      if (this._isImageFailureFresh(url) && !this._shouldFetchArtworkUrl(url, { crossOrigin: isCrossOrigin })) {
         setPlaceholder();
+        this._scheduleImageRetry(url, el, fallbackIcon);
         return;
       }
       const existing = this._imageBlobCache.get(url);
       if (existing) {
         setDirectImage(existing);
+        return;
+      }
+      const shouldFetch = this._shouldFetchArtworkUrl(url, { crossOrigin: isCrossOrigin });
+      if (!shouldFetch) {
+        setDirectImage();
         return;
       }
       if (isCrossOrigin) {
@@ -14954,6 +12597,7 @@ export function createHomeiiBaseMusicCard({
       if (typeof this._refreshHomeiiEngineContext === "function") {
         setTimeout(() => this._refreshHomeiiEngineContext({ force: true }).catch(() => {}), 800);
       }
+      this._subscribeHomeiiEngineMusicAssistantEvents?.();
     }
 
     disconnectedCallback() {
@@ -14967,6 +12611,8 @@ export function createHomeiiBaseMusicCard({
       clearTimeout(this._seekTimer);
       clearTimeout(this._resizeTimer);
       clearTimeout(this._layoutRecoveryTimer);
+      clearTimeout(this._homeiiMaContextEventTimer);
+      this._unsubscribeHomeiiEngineMusicAssistantEvents?.();
       if (this._layoutRecoveryFrame && typeof cancelAnimationFrame === "function") {
         cancelAnimationFrame(this._layoutRecoveryFrame);
         this._layoutRecoveryFrame = null;
@@ -14977,7 +12623,6 @@ export function createHomeiiBaseMusicCard({
       clearTimeout(this._mobileArtBrowseResetTimer);
       clearTimeout(this._surprisePopupTimer);
       clearTimeout(this._simpleWizardPopupTimer);
-      clearTimeout(this._maReconnectTimer);
       clearTimeout(this._voiceAssistantDialogCloseTimer);
       clearTimeout(this._screensaverTimer);
       clearTimeout(this._screensaverExitTimer);
@@ -14994,19 +12639,11 @@ export function createHomeiiBaseMusicCard({
       try { this._voiceRecognition?.abort?.(); } catch {}
       this._voiceRecognition = null;
       this._stopScreensaverVisibilityTracking();
-      this._maReconnectTimer = null;
       clearInterval(this._mobileSmartVoiceTimer);
       this._mobileSmartVoiceTimer = null;
       if (this._imgObserver) {
         this._imgObserver.disconnect();
         this._imgObserver = null;
-      }
-      if (this._ws) {
-        this._rejectWsPending(new Error("MA WS disconnected"));
-        try { this._ws.onclose = null; this._ws.close(); } catch (_) {}
-        this._ws = null;
-      } else {
-        this._rejectWsPending(new Error("MA WS disconnected"));
       }
       if (this._ctxMenu) {
         this._ctxMenu.remove();
@@ -15023,11 +12660,12 @@ export function createHomeiiBaseMusicCard({
       }
       document.removeEventListener("click", this._boundDocClick);
       this._stopResizeTracking();
-      this._imageBlobCache.forEach((url) => {
-        try { URL.revokeObjectURL(url); } catch (_) {}
-      });
-      this._imageBlobCache.clear();
+      this._clearImageBlobCache();
       this._imageFailed.clear();
+      this._imageFailedAt.clear();
+      this._imageRetryTimers.forEach((timer) => clearTimeout(timer));
+      this._imageRetryTimers.clear();
     }
   };
 }
+

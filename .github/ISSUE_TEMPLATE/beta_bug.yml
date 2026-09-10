@@ -1,0 +1,34 @@
+name: Beta bug report
+description: Report a reproducible HOMEii Flow beta problem.
+title: "[Beta] "
+body:
+  - type: markdown
+    attributes:
+      value: "Include both Card and Engine versions. Never attach tokens, cookies, or full HA backups."
+  - type: textarea
+    id: versions
+    attributes:
+      label: Versions and environment
+      description: Card, Engine, HA Core, Music Assistant, browser/device, player model and protocol.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: What did you do, what happened, and what did you expect? Does the same action work in native MA?
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Screenshots and redacted diagnostics
+      description: Include light/dark mode, screen size and performance profile for UI problems. Remove secrets and personal details.
+  - type: dropdown
+    id: frequency
+    attributes:
+      label: Frequency
+      options:
+        - Every time
+        - Sometimes
+        - Once

@@ -214,7 +214,7 @@ describe("settings accordion open-set persistence (real methods on real card)", 
     expect(html).toContain('data-menu-nav="diagnostics"');
   });
 
-  it("explains that direct Music Assistant access does not replace the HA integration", async () => {
+  it("explains that HOMEii Flow 6 requires the Engine before direct browser settings", async () => {
     await import("../src/homeii-music-flow.js?settings-direct-ma-without-ha-integration");
     await settleModule();
     const card = newCard();
@@ -227,8 +227,7 @@ describe("settings accordion open-set persistence (real methods on real card)", 
 
     const message = card._musicAssistantRequiredMessage();
 
-    expect(message).toContain("direct Music Assistant URL is configured");
-    expect(message).toContain("does not replace the Home Assistant Music Assistant integration");
-    expect(message).toContain("ma_url and ma_token are only needed for Direct/Sendspin features");
+    expect(message).toContain("HOMEii Flow 6 requires HOMEii Flow Engine");
+    expect(message).toContain("required connection snapshot");
   });
 });

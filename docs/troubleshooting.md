@@ -102,45 +102,16 @@ Common problems:
 
 Run Diagnostics and check:
 
-- Direct Music Assistant API
+- HOMEii Flow Engine
+- Music Assistant transport
 - Queue artwork sample
 - Library artwork sample
 - Mixed content
 - Access path
 
-## Direct Music Assistant API Fails
+## Music Assistant transport fails
 
-This does not always mean Music Assistant is broken.
-
-Direct API can fail because of:
-
-- CORS/preflight restrictions
-- HTTPS/HTTP mixed content
-- remote browser cannot reach local Music Assistant
-- proxy rules
-- missing token
-
-If the Home Assistant integration path is healthy, core card features may still work normally.
-
-Direct API matters more for:
-
-- Sendspin / This device
-- direct realtime status
-- direct artwork access
-- direct library/queue fallback checks
-
-## Sendspin / This Device Does Not Connect
-
-Check:
-
-- `ma_url` is configured.
-- `ma_token` is configured.
-- the browser can reach `ma_url`.
-- HTTPS dashboard uses HTTPS Music Assistant URL.
-- Diagnostics shows WebSocket and AudioContext support.
-- Music Assistant supports Sendspin and accepts browser players.
-
-Mobile note: phones can pause browser audio when the app goes to the background or the phone locks.
+Open the HOMEii Flow Engine integration options and check the internal HTTP URL, optional external HTTPS URL, and API token there. The card intentionally has no duplicate URL or token fields. Restart the integration after changing connection options, then run the card diagnostics and verify Engine, Music Assistant health, player discovery, and artwork proxy status.
 
 ## Phone Shows Compact Instead Of Full
 
@@ -195,4 +166,3 @@ What fails:
 Diagnostics report:
 Screenshots:
 ```
-
