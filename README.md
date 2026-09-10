@@ -1,4 +1,5 @@
 <p align="center"><img src="artifacts/HOMEii-Flow-Beta-Launch.png" alt="HOMEii Flow 6 — Your music. Within reach. Public beta." width="1200"></p>
+<p align="center"><a href="https://r11a.github.io/homeii-music-flow/"><img src="https://img.shields.io/badge/%E2%96%B6_WATCH_THE_FILM-60_SECONDS-c89b56?style=for-the-badge&amp;labelColor=151619" alt="Watch the HOMEii Flow film — 60 seconds"></a><br><sub>Watch in your browser · Edited interface demonstration</sub></p>
 <h1 align="center">HOMEii Music Flow</h1>
 <p align="center"><strong>Make your Home Assistant dashboard feel like a place for music.</strong><br>Artwork-driven atmosphere, contextual controls and your Music Assistant library — across the screens in your home.</p>
 <p align="center"><img alt="Card beta candidate" src="https://img.shields.io/badge/Card-6.0.0--beta.1-c89b56"><img alt="Matching Engine" src="https://img.shields.io/badge/Engine-1.0.0--beta.1-41BDF5"><img alt="Public beta" src="https://img.shields.io/badge/Status-PUBLIC_BETA-c89b56"></p>
@@ -37,7 +38,7 @@ This explicitly enables the immersive edge-to-edge presentation and full visual 
 
 ## See it in motion
 
-[Watch the 60-second HOMEii Flow film](artifacts/HOMEii-Flow-Film-60s.mp4). Edited interface demonstration with staged playback; see [production notes](artifacts/VIDEO-NOTES.md).
+[Watch the 60-second HOMEii Flow film](https://r11a.github.io/homeii-music-flow/). Edited interface demonstration with staged playback; see [production notes](artifacts/VIDEO-NOTES.md).
 
 [Tester checklist and reporting](docs/BETA_TESTING.md) · [Report a beta bug](https://github.com/r11a/homeii-music-flow/issues/new?template=beta_bug.yml)
 
@@ -903,6 +904,7 @@ Credit and thanks:
 ## German translation
 
 Thank you to [Richard Treichl (@rtreichl)](https://github.com/rtreichl) for contributing German language support in [PR #89](https://github.com/r11a/homeii-music-flow/pull/89).
+
 
 
 
