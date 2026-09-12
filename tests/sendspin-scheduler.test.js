@@ -3,9 +3,16 @@ import { AudioScheduler } from "../src/sendspin-js/audio/scheduler.js";
 import { SendspinPlayer } from "../src/sendspin-js/index.js";
 describe("local playback scheduling", () => {
  it.each([true, false])("only recovers active playback (playing=%s)", async (isPlaying) => {
-   const player = { isPlaying, scheduler: { resumeAudioContext: vi.fn(async () => {}) } };
+   const player = { isPlaying, scheduler: { resumeAudioContext: vi.fn(async () => {}), startAudioElement: vi.fn() } };
    await SendspinPlayer.prototype.resumePlayback.call(player);
    expect(player.scheduler.resumeAudioContext).toHaveBeenCalledTimes(isPlaying ? 1 : 0);
+   expect(player.scheduler.startAudioElement).toHaveBeenCalledTimes(isPlaying ? 1 : 0);
+ });
+ it("does not restart the output if playback stops during audio recovery", async () => {
+   const player = { isPlaying: true, scheduler: { startAudioElement: vi.fn() } };
+   player.scheduler.resumeAudioContext = vi.fn(async () => { player.isPlaying = false; });
+   await SendspinPlayer.prototype.resumePlayback.call(player);
+   expect(player.scheduler.startAudioElement).not.toHaveBeenCalled();
  });
  it("batches incoming audio without depending on throttled background timers", async () => {
    const card={cancelScheduledRefill:vi.fn(),queueProcessScheduled:false,processAudioQueue:vi.fn()};

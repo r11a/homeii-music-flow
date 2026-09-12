@@ -248,6 +248,8 @@ export function getMobileEditorTexts() {
       mobile_footer_search_enabled: homeiiEditorI18n("ui.footer_search"),
       mobile_mic_mode: homeiiEditorI18n("ui.microphone_2"),
       mobile_footer_mode: homeiiEditorI18n("ui.footer_style_2"),
+      show_source_badge: HomeiiEditorLocale.detectEditorHebrew() ? "הצגת ספק המוזיקה" : "Show music provider badge",
+      show_quality_badge: HomeiiEditorLocale.detectEditorHebrew() ? "הצגת איכות השמע" : "Show audio quality badge",
       fan_theme: HomeiiEditorLocale.detectEditorHebrew() ? "מראה המניפה" : "Fan appearance",
       volume_wheel: HomeiiEditorLocale.detectEditorHebrew() ? "גלגל עוצמה" : "Volume wheel",
       action_menu_labels: homeiiEditorI18n("ui.action_menu_labels", {}, "Action menu labels"),
@@ -666,6 +668,8 @@ export function getMobileCardConfigForm() {
               { name: "mobile_icon_scale", selector: { number: { min: 0.8, max: 1.25, step: 0.05, mode: "slider" } } },
               { name: "mobile_footer_mode", selector: { select: { mode: "dropdown", options: t.options.mobile_footer_mode } } },
               { name: "action_menu_labels", selector: { boolean: {} } },
+              { name: "show_source_badge", selector: { boolean: {} } },
+              { name: "show_quality_badge", selector: { boolean: {} } },
               { name: "volume_wheel", selector: { boolean: {} } },
               { name: "fan_theme", selector: { select: { mode: "dropdown", options: [{value:"adaptive",label:HomeiiEditorLocale.detectEditorHebrew() ? "מותאם לעטיפה" : "Artwork"},{value:"dark",label:HomeiiEditorLocale.detectEditorHebrew() ? "כהה" : "Dark"},{value:"light",label:HomeiiEditorLocale.detectEditorHebrew() ? "בהיר" : "Light"}] } } },
 

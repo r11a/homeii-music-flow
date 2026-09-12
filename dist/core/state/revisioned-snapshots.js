@@ -17,7 +17,8 @@ export function engineSnapshotKey(domain = "", payload = null, fallbackIdentity 
   const meta = engineSnapshotMeta(payload);
   const cleanDomain = String(meta?.domain || domain || "state").trim().toLowerCase();
   const epoch = String(meta?.epoch || "legacy").trim().toLowerCase();
-  const identity = String(meta?.identity || fallbackIdentity || "default").trim().toLowerCase();
+  // Library responses share a media-type identity across distinct filters in older Engines.
+  const identity = String((cleanDomain === "library" && fallbackIdentity) || meta?.identity || fallbackIdentity || "default").trim().toLowerCase();
   return `${cleanDomain}:${epoch}:${identity}`;
 }
 

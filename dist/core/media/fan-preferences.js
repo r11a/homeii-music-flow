@@ -65,6 +65,11 @@ export function preferredFanPages(card, context, pages) {
 
 // One catalogue serves both the complete action screen and the configurable wheel.
 export function openFanCatalogue(card, host, context, getActions, dispatch, onSave = () => {}) {
+  const restoreCompact = card._isCompactTileMode?.() === true;
+  if (restoreCompact) {
+    card._setCompactExpanded(true);
+    host = card.shadowRoot.querySelector(".card");
+  }
   host.querySelector(":scope > .fan-catalogue")?.remove();
   const panel = document.createElement("section");
   panel.className = "screen-all-actions fan-catalogue";
@@ -73,7 +78,10 @@ export function openFanCatalogue(card, host, context, getActions, dispatch, onSa
   let editing = false, draft = null, dragged = null, rendered = "", scope = "device", saving = false;
   const esc = value => card._esc(value);
   const label = (en,he) => esc(card._m(en,he));
-  const close = () => panel.remove();
+  const close = () => {
+    panel.remove();
+    if (restoreCompact) card._setCompactExpanded(false);
+  };
   const render = () => {
     const preference = draft || fanPreference(card, context);
     const ordered = orderedFanActions(getActions(), preference);

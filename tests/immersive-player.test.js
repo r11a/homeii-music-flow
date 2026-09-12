@@ -259,3 +259,13 @@ it('rotation retains queue choices and never dispatches another toggle', () => {
  expect(root.querySelector('[data-immersive-action="repeat"]').getAttribute('aria-pressed')).toBe('true');
  expect(card._toggleShuffle).not.toHaveBeenCalled();expect(card._toggleRepeat).not.toHaveBeenCalled();
 });
+
+it("keeps wheel touch gestures inside the card instead of swiping dashboards", () => {
+  const {root,open}=fixture(); open();
+  const listener=vi.fn(); document.addEventListener("touchmove",listener);
+  const event=new globalThis.Event("touchmove",{bubbles:true,composed:true,cancelable:true});
+  root.querySelector(".immersive-fan-actions").dispatchEvent(event);
+  expect(listener).not.toHaveBeenCalled();
+  expect(event.defaultPrevented).toBe(false);
+  document.removeEventListener("touchmove",listener);
+});

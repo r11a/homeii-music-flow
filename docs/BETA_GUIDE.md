@@ -1,15 +1,15 @@
 # HOMEii Flow Beta — your music, throughout your home
 
-**Prepared versions: Music Flow `6.0.0-beta.1` + Flow Engine `1.0.0-beta.1`.**
+**Beta versions: Music Flow `6.0.0-beta.2` + Flow Engine `1.0.0-beta.1`.**
 
-Status: source and documentation preparation only. No beta release or tag has been published as part of this preparation. Stable users should remain on **5.9.3** until they deliberately choose a published beta.
+Status: opt-in public beta. Beta 2 retains compatibility with Engine 1.0.0-beta.1; no Engine reinstall is needed when upgrading from card Beta 1. Stable users may remain on **5.9.3**.
 
 | Project | Role | Repository |
 |---|---|---|
 | HOMEii Music Flow | The dashboard experience: artwork, library, contextual controls and player selection | [Card](https://github.com/r11a/homeii-music-flow) |
 | HOMEii Flow Engine | The Home Assistant integration: authenticated MA access, shared state and automation services | [Engine](https://github.com/r11a/homeii-flow-engine) |
 
-The Engine repository is currently private. A missing/404 page may mean access is not granted. Public accessibility or a deliberately published Engine package must be resolved before opening the beta to everyone; there is no public download promise yet.
+The Engine repository is public. Install it as a Home Assistant custom integration, not as an App/add-on.
 
 > [!WARNING]
 > **UPGRADING FROM 5.9.3 IS A BREAKING CHANGE. DO NOT UPDATE ONLY THE CARD.**
@@ -44,7 +44,7 @@ These are implemented candidate capabilities, not a guarantee of identical behav
 
 | Requirement | Beta expectation |
 |---|---|
-| Card / Engine pair | Use `6.0.0-beta.1` with `1.0.0-beta.1`; earlier development Engine versions are not the recommended beta pair |
+| Card / Engine pair | Use `6.0.0-beta.2` with `1.0.0-beta.1`; earlier development Engine versions are not the recommended beta pair |
 | Home Assistant | Engine metadata declares HA `2025.1.0` as its floor; this is not certification of every release since then. Prefer a current supported HA release and report your exact Core version |
 | Music Assistant | Running server with **API schema 63 or newer**, a valid MA API token and the official Music Assistant HA integration loaded |
 | MA versions | Development testing includes MA 2.10/2.11 beta work; do not infer support for every 2.10 build. The schema handshake and capability checks decide compatibility; some early builds do not meet the schema requirement |

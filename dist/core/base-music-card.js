@@ -5603,7 +5603,10 @@ export function createHomeiiBaseMusicCard({
         });
         return;
       }
-      const meta = player ? this._currentSourceBadgeMeta(player, queueItem) : null;
+      const sourceMeta = player ? this._currentSourceBadgeMeta(player, queueItem) : null;
+      const meta = sourceMeta ? { ...sourceMeta } : null;
+      if (meta && this._config?.show_source_badge === false) meta.providerLabel = "";
+      if (meta && this._config?.show_quality_badge === false) meta.qualityLabel = "";
       this.shadowRoot?.querySelectorAll("[data-art-source-badges]")?.forEach((host) => {
         if (!meta?.providerLabel && !meta?.qualityLabel) {
           if (host.dataset.renderedBadgesHtml !== "") {
@@ -8656,7 +8659,7 @@ export function createHomeiiBaseMusicCard({
           compact: true,
           ...(this._state.engineCapabilities?.library_pagination ? { offset: options.offset || 0 } : {}),
         });
-        const libraryIdentity = `${mediaType}:${orderBy}:${favoritesOnly ? "favorites" : "all"}:${search || ""}:${options.offset || 0}`;
+        const libraryIdentity = `${mediaType}:${orderBy}:${favoritesOnly ? "favorites" : "all"}:${search || ""}:${options.offset || 0}:${limit}`;
         if (options.snapshot) {
           const meta = HomeiiRevisionedSnapshotsFoundation.engineSnapshotMeta(engineResult);
           if (meta) {

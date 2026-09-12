@@ -56,3 +56,11 @@ describe("revisioned Engine snapshots", () => {
     expect(revisions.has("players:boot-a:music_assistant")).toBe(true);
   });
 });
+
+it("isolates cached library filters even when the Engine reports the same media identity", () => {
+  const revisions = new Map();
+  const response = revision => ({snapshot:{domain:"library",epoch:"boot",identity:"playlist",revision}});
+  expect(acceptEngineSnapshot(revisions,"library",response(8),"playlist:recent:60:false")).toBe(true);
+  expect(acceptEngineSnapshot(revisions,"library",response(4),"playlist:name:60:false")).toBe(true);
+  expect(acceptEngineSnapshot(revisions,"library",response(3),"playlist:name:60:false")).toBe(false);
+});

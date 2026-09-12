@@ -251,9 +251,10 @@ export function bindImmersivePlayer(card, options = {}) {
     buttons.forEach((button, index) => {
       const distance = (((index - position + count / 2) % count + count) % count) - count / 2;
       const angle = distance * Math.PI / 5;
-      const visible = Math.abs(distance) < 2.65;
+      const compact = card._isCompactTileMode?.() === true;
+      const visible = Math.abs(distance) < (compact ? 1.65 : 2.65);
       button.style.setProperty("--fan-x", `${50 + 43 * Math.sin(angle)}%`);
-      button.style.setProperty("--fan-y", `${112 - 100 * Math.cos(angle)}px`);
+      button.style.setProperty("--fan-y", `${compact ? 58 - 48 * Math.cos(angle) : 112 - 100 * Math.cos(angle)}px`);
       button.style.opacity = visible ? String(Math.min(1, (2.65 - Math.abs(distance)) * 3)) : "0";
       button.style.visibility = visible ? "visible" : "hidden";
       button.tabIndex = visible ? 0 : -1;
@@ -336,7 +337,12 @@ export function bindImmersivePlayer(card, options = {}) {
     wheelPosition = Math.round(wheelPosition); positionWheel(wheelPosition);
     fan._refreshAvailableActions();
   };
+  // Contain native touch events too: dashboard swipe navigation listens to them.
+  for (const type of ["touchstart", "touchmove", "touchend", "touchcancel"]) {
+    fan.addEventListener(type, event => event.stopPropagation(), { passive: true });
+  }
   fan.addEventListener("pointerdown", (event) => {
+    event.stopPropagation();
     if (event.isPrimary === false || event.button > 0 || event.target.closest(".immersive-fan-navigation")) return;
     pointerStart = { x: event.clientX, lastX: event.clientX, id: event.pointerId, moved: false };
   });

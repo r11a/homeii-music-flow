@@ -183,7 +183,11 @@ export class SendspinPlayer {
     async resumePlayback() {
         // A live connection can survive an iOS audio interruption. Recover its
         // context without reconnecting or restarting a deliberately paused stream.
-        if (this.isPlaying) await this.scheduler.resumeAudioContext();
+        if (!this.isPlaying) return;
+        await this.scheduler.resumeAudioContext();
+        // Route changes can pause the media element independently of Web Audio.
+        // Recheck intent after resume, which may wait for an OS interruption.
+        if (this.isPlaying) this.scheduler.startAudioElement();
     }
     async connect() {
         this.suppressDisconnectPlaybackReset = false;

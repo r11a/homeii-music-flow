@@ -209,4 +209,59 @@ export const immersivePlayerStyles = `
   .card.player-design-immersive #btnPlay { width:48px!important; height:48px!important; min-width:48px!important; }
   .card.player-design-immersive .immersive-dock > button > span { display:none; }
 }
+
+/* Compact player uses the same dock and actions with its own density. */
+.card.compact-mode.compact-mode .compact-content { display:grid!important; grid-template-columns:minmax(100px,34%) minmax(0,1fr)!important; grid-template-rows:88px 64px 12px 26px 12px 48px!important; grid-template-areas:"cover copy" "cover controls" ". ." "progress progress" ". ." "dock dock"!important; gap:0 16px!important; align-content:center!important; }
+.card.compact-mode.compact-mode .compact-stage { display:contents!important; }
+.card.compact-mode.compact-mode .compact-cover-wrap { grid-area:cover; width:min(100%,152px)!important; height:auto!important; aspect-ratio:1; max-width:152px; justify-self:center!important; }
+.card.compact-mode.compact-mode .compact-cover { width:100%!important; height:100%!important; padding:0!important; border:0!important; box-shadow:none!important; border-radius:18px!important; }
+.card.compact-mode.compact-mode .compact-cover-image { object-fit:cover; padding:0!important; }
+.card.compact-mode.compact-mode .compact-cover-echo,.card.compact-mode.compact-mode .compact-brand-signature,.card.compact-mode.compact-mode .compact-up-next { display:none!important; }
+.card.compact-mode.compact-mode .compact-main { grid-area:copy; min-width:0; padding:0!important; }
+.card.compact-mode.compact-mode .compact-title { font-size:clamp(18px,2.5vw,26px)!important; line-height:1.2!important; }
+.card.compact-mode.compact-mode .compact-sub { font-size:13px!important; line-height:1.4!important; }
+.card.compact-mode.compact-mode .compact-controls { grid-area:controls; gap:18px!important; margin:0!important; justify-content:center!important; }
+.card.compact-mode.compact-mode .compact-controls button { width:44px!important; height:44px!important; min-width:44px!important; min-height:44px!important; }
+.card.compact-mode.compact-mode .compact-controls .main-btn { width:52px!important; height:52px!important; }
+.card.compact-mode.compact-mode .compact-controls svg { width:26px!important; height:26px!important; }
+.card.compact-mode.compact-mode .compact-progress-row { display:flex!important; grid-area:progress; gap:8px; align-items:center; width:100%; height:26px!important; margin:0!important; padding:0!important; }
+.card.compact-mode.compact-mode .compact-progress-track { flex:1; min-width:0; height:24px; cursor:pointer; }
+.card.compact-mode.compact-mode .compact-progress-time { font-size:10px; font-variant-numeric:tabular-nums; }
+.card.compact-mode.compact-mode .compact-volume-inline { grid-area:volume; width:100%!important; min-width:0; gap:4px!important; margin:0!important; }
+.card.compact-mode.compact-mode .compact-volume-track { min-width:0!important; }
+.card.compact-mode.compact-mode .compact-content > .immersive-dock { grid-area:dock; display:flex!important; align-items:center; height:48px!important; padding:0!important; max-width:none; border-top:1px solid var(--homeii-surface-border); }
+.card.compact-mode.compact-mode .immersive-dock > button { height:44px!important; min-height:44px!important; width:44px; border-radius:12px; }
+.card.compact-mode.compact-mode .immersive-library-shortcuts { display:flex!important; order:1; }
+.card.compact-mode.compact-mode .immersive-library-shortcuts [data-immersive-search] { display:none; }
+.card.compact-mode.compact-mode #mobileVolPctLabel { order:2; }
+.card.compact-mode.compact-mode #compactExpandBtn { order:3; }
+.card.compact-mode.compact-mode .immersive-dock #activePlayerChip { flex:1; max-width:55%!important; width:auto!important; flex-direction:row; background:transparent!important; box-shadow:none!important; }
+.card.compact-mode.compact-mode .immersive-player-copy { min-width:0; }
+.card.compact-mode.compact-mode #selectedPlayerTitle { font-size:12px; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.card.compact-mode.compact-mode #selectedPlayerTags { display:none; }
+.card.compact-mode.compact-mode .immersive-fan { height:154px; bottom:100%; width:min(400px,100%); border-radius:50% 50% 16px 16px / 65% 65% 16px 16px; }
+.card.compact-mode.compact-mode .immersive-fan .immersive-fan-actions button { width:52px; min-height:48px; font-size:10px; }
+.card.compact-mode.compact-mode .immersive-fan-navigation { height:36px; }
+.card.theme-light.compact-mode.compact-mode .compact-volume-inline button { color:#20252b!important; background:transparent!important; }
+
+.card.compact-mode.compact-mode .compact-shell { box-sizing:border-box!important; padding:4px 16px!important; min-height:244px!important; height:auto!important; }
+.card.compact-mode.compact-mode .compact-content { height:auto!important; min-height:0!important; margin:auto!important; align-items:center!important; }
+.card.compact-mode.compact-mode .compact-main { align-self:center!important; }
+.card.compact-mode.compact-mode .compact-cover-wrap { align-self:center!important; }
+.card.compact-mode.compact-mode #btnPlay { width:52px!important; height:52px!important; min-width:52px!important; min-height:52px!important; max-height:52px!important; padding:0!important; }
+.card.compact-mode.compact-mode #btnPrev,.card.compact-mode.compact-mode #btnNext { width:44px!important; height:44px!important; min-width:44px!important; min-height:44px!important; padding:0!important; }
+.card.compact-mode.compact-mode #btnPlay svg { width:24px!important; height:24px!important; }
+.card.compact-mode.compact-mode #progressBar { height:26px!important; min-height:26px!important; position:relative!important; }
+.card.compact-mode.compact-mode .immersive-waveform { height:26px!important; overflow:hidden; }
+.card.compact-mode.compact-mode .immersive-dock { box-sizing:border-box; border-radius:16px; padding:2px 6px!important; background:rgba(128,128,128,.08); margin:0!important; }
+.card.compact-mode.compact-mode .immersive-dock #activePlayerChip { order:-1; max-width:48%!important; min-width:0!important; }
+.card.compact-mode.compact-mode .immersive-dock #mobileVolPctLabel { width:52px!important; font-size:12px!important; font-variant-numeric:tabular-nums; }
+.card.compact-mode.compact-mode .compact-title { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+.card.compact-mode.compact-collapsed { height:272px!important; min-height:272px!important; max-height:272px!important; }
+.card.compact-mode.compact-collapsed .stage { box-sizing:border-box!important; height:272px!important; padding:6px!important; align-items:center!important; }
+.card.compact-mode.compact-mode .compact-shell { height:260px!important; max-height:260px!important; align-self:center!important; }
+.card.compact-mode.compact-mode .compact-content { width:100%!important; max-width:none!important; }
+.card.compact-mode.compact-mode #compactExpandBtn svg,
+.card.compact-expanded.compact-expanded #compactCollapseBtn svg { width:18px!important; height:18px!important; }
 `;

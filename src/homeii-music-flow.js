@@ -8,7 +8,7 @@ import { renderSavedPlaylists } from "./core/media/playlist-actions.js";
 import { mountLiveDiagnostics } from "./core/media/live-diagnostics.js";
 import { renderVolumeRules } from "./core/media/volume-rules.js";
 import { actionIconSvg, actionMenuHtml, mediaActionSheetHtml, handleMediaActionClick } from "./core/media/action-menu.js";
-import { immersivePlayerEnabled, immersivePlayerStage, bindImmersivePlayer, syncImmersivePlayer, commitImmersiveSwipe, reconcileImmersiveCovers } from "./core/media/immersive-player.js";
+import { immersivePlayerEnabled, immersivePlayerStage, immersivePlayerDock, bindImmersivePlayer, syncImmersivePlayer, commitImmersiveSwipe, reconcileImmersiveCovers } from "./core/media/immersive-player.js";
 import { loadQueueSettings, saveQueueSettings, updateQueueSettingVisibility } from "./core/media/queue-settings.js";
 import { queuePlaybackOptionsHtml, toggleQueueAutoplay, toggleQueueCrossfade, setPlaybackSpeed } from "./core/media/queue-options.js";
 import { loadDiscoverySections, discoveryPlayerFocusHtml, updateDiscoveryMenuBody, discoveryMenuHtml } from "./core/media/discovery.js";
@@ -113,7 +113,7 @@ function ensureHaEditorComponents() {
   } catch (_) {}
 }
 
-const HOMEII_CARD_VERSION = "6.0.0-beta.1";
+const HOMEII_CARD_VERSION = "6.0.0-beta.2";
 const HOMEII_BROWSER_EDITOR_TAG = "homeii-music-flow-browser-editor-v6001";
 const HOMEII_MOBILE_EDITOR_TAG = "homeii-music-flow-editor-v6001";
 const AMBIENT_LIGHT_PAIR_PLAYER_PREFIX = "__homeii_ambient_light_pair_player_";
@@ -763,6 +763,8 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
       mobile_studio_shortcut: true,
       volume_wheel: true,
       fan_theme: "adaptive",
+      show_source_badge: true,
+      show_quality_badge: true,
       mobile_home_shortcut: false,
       mobile_home_shortcut_path: "/",
       mobile_volume_mode: "button",
@@ -1055,7 +1057,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     if (this._compactMiniWidgetMode({ width })) {
       return this._sectionGridHeightForRows(5);
     }
-    const targetRows = width < 430 ? 8 : width < 560 ? 8 : width < 760 ? 7 : 6;
+    const targetRows = 5;
     return this._sectionGridHeightForRows(targetRows);
   }
 
@@ -7423,7 +7425,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
         <button class="volume-btn" id="btnMute" title="${this._i18n("ui.mute")}" aria-label="${this._i18n("ui.mute")}">${this._iconSvg("volume_high")}</button>
       </div>`;
     const compactCollapseFabHtml = compactPopupMode
-      ? `<button class="compact-collapse-fab ${rtl ? "rtl" : "ltr"}" id="compactCollapseBtn" title="${this._i18n("ui.collapse_compact_player")}">${this._iconSvg("close")}</button>`
+      ? `<button class="compact-collapse-fab ${rtl ? "rtl" : "ltr"}" id="compactCollapseBtn" title="${this._i18n("ui.collapse_compact_player")}" aria-label="${this._i18n("ui.collapse_compact_player")}">${actionIconSvg(this, "minimize")}</button>`
       : ``;
     const mobileEdgeCornerClass = rtl ? "rtl" : "ltr";
     const mobileEdgeOverlayOpen = !!(
@@ -7481,16 +7483,6 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
         <div class="compact-backdrop-shade"></div>
         <div class="compact-sheen"></div>
         <div class="compact-content">
-          <div class="compact-header">
-            <button class="compact-expand-btn compact-expand-ref" id="compactExpandBtn" title="${this._i18n("ui.expand_player")}">
-              ${this._iconSvg("fullscreen")}
-            </button>
-            <button class="compact-player-chip" id="activePlayerChip" title="${this._i18n("ui.choose_player")}">
-              <span class="compact-player-copy">
-                <span class="compact-player-label" id="selectedPlayerTitle">${this._i18n("ui.selected_player")}</span>
-              </span>
-            </button>
-          </div>
           <div class="compact-stage">
             <div class="compact-cover-wrap">
               <div class="compact-brand-signature" aria-hidden="true">${this._tabletBrandSignatureHtml("compact-brand-logo")}</div>
@@ -7526,16 +7518,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
             <div class="progress compact-progress-track" id="progressBar"><div class="progress-fill" id="progressFill"></div></div>
             <span class="compact-progress-time" id="bigTotalTime">0:00</span>
           </div>
-          <div class="compact-volume-inline${volumeInlineClass}" data-volume-step-percent="${this._esc(String(volumeStepPercent))}">
-            <button class="volume-btn compact-mute-btn" id="btnMute" title="${this._i18n("ui.mute")}" aria-label="${this._i18n("ui.mute")}">${this._iconSvg("volume_high")}</button>
-            <button class="volume-btn group-volume-btn compact-group-volume-btn" id="compactGroupVolumeBtn" hidden title="${this._esc(this._i18n("ui.group_volume", {}, "Group volume"))}" aria-label="${this._esc(this._i18n("ui.group_volume", {}, "Group volume"))}">${this._iconSvg("speaker_group")}</button>
-            ${volumeDownButtonHtml}
-            <div class="tablet-volume-track compact-volume-track">
-              <input class="volume-slider compact-volume-slider" id="volSlider" type="range" min="0" max="100" value="50" style="--vol-pct:50%">
-            </div>
-            ${volumeUpButtonHtml}
-            <button class="volume-value compact-volume-value" id="mobileVolPctLabel" title="${this._i18n("ui.volume_presets")}">50%</button>
-          </div>
+          ${immersivePlayerDock(this, `<button type="button" class="compact-volume-trigger" id="mobileVolPctLabel" title="${this._i18n("ui.volume_presets")}" aria-label="${this._i18n("ui.volume_presets")}">50%</button><button type="button" id="compactExpandBtn" aria-label="${this._i18n("ui.expand_player")}" title="${this._i18n("ui.expand_player")}">${actionIconSvg(this, "maximize")}</button>`)}
         </div>
       </div>`;
     const centerHtml = `
@@ -9459,7 +9442,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
         slider.style.setProperty("--vol-pct", `${volumePct}%`);
       }
       const label = this.$("mobileVolPctLabel");
-      if (label) label.textContent = `${volumePct}%`;
+      if (label) label.innerHTML = compactTileMode && this._isMuted(player) ? this._iconSvg("volume_mute") : `${volumePct}%`;
       this._setButtonIcon(this.$("btnMute"), this._volumeIconName(player));
       this.$("btnMute")?.classList.toggle("active", this._isMuted(player));
       this.$("btnMute")?.classList.toggle("muted", this._isMuted(player));
