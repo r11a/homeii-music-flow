@@ -659,8 +659,11 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
       }
     } catch (_) {}
     try {
-      const rawPinned = JSON.parse(localStorage.getItem(this._lsKey("homeii_music_flow_mobile_pinned_players")) || "[]");
-      if (Array.isArray(rawPinned)) this._state.pinnedPlayerEntities = rawPinned.filter(Boolean);
+      const storedPinned = localStorage.getItem(this._lsKey("homeii_music_flow_mobile_pinned_players"));
+      if (storedPinned !== null) {
+        const rawPinned = JSON.parse(storedPinned);
+        if (Array.isArray(rawPinned)) this._state.pinnedPlayerEntities = rawPinned.filter(Boolean);
+      }
     } catch (_) {}
     if (!Array.isArray(this._state.pinnedPlayerEntities) || !this._state.pinnedPlayerEntities.length) {
       try {
@@ -716,7 +719,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     try { this._state.discoveryModeEnabled = JSON.parse(localStorage.getItem(this._lsKey("homeii_music_flow_discovery_mode_enabled")) ?? "true"); } catch {}
     try { this._state.discoveryCategoryKey = localStorage.getItem(this._lsKey("homeii_music_flow_discovery_category_key")) || "pop"; } catch {}
     try { this._state.discoveryGenreKey = localStorage.getItem(this._lsKey("homeii_music_flow_discovery_genre_key")) || "all"; } catch {}
-    try { this._state.excludedPlayerEntities = HomeiiMobileSettingsFoundation.normalizePinnedPlayerEntityList(JSON.parse(localStorage.getItem(this._lsKey("homeii_music_flow_excluded_players")) || "[]")); } catch {}
+    try { const storedExcluded = localStorage.getItem(this._lsKey("homeii_music_flow_excluded_players")); if (storedExcluded !== null) this._state.excludedPlayerEntities = HomeiiMobileSettingsFoundation.normalizePinnedPlayerEntityList(JSON.parse(storedExcluded)); } catch {}
     try { this._state.playerSortMode = HomeiiMobileSettingsFoundation.normalizePlayerSortMode(localStorage.getItem(this._lsKey("homeii_music_flow_player_sort_mode")) || "default"); } catch {}
     try { this._state.playerOrderEntities = HomeiiMobileSettingsFoundation.normalizePinnedPlayerEntityList(JSON.parse(localStorage.getItem(this._lsKey("homeii_music_flow_player_order")) || "[]")); } catch {}
   }
