@@ -61,6 +61,7 @@ describe("editor forms", () => {
     const form = getMobileCardConfigForm();
 
     expect(texts.options.mobile_quick_action_slots[0]).toEqual({ value: "", label: "ui.none" });
+    expect(texts.options.mobile_main_bar_item_slots.some((option) => option.value === "home")).toBe(true);
     expect(texts.options.mobile_quick_actions.some((option) => option.value === "voice")).toBe(true);
     expect(texts.options.mobile_quick_actions.some((option) => option.value === "queue_flow")).toBe(true);
     expect(texts.options.homeii_engine_mode.map((option) => option.value)).toEqual(["required"]);
@@ -91,6 +92,8 @@ describe("editor forms", () => {
     expect(JSON.stringify(form.schema)).not.toContain("ma_token");
     expect(JSON.stringify(form.schema)).toContain("mobile_cover_flow");
     expect(JSON.stringify(form.schema)).toContain("mobile_radio_source_mode");
+    expect(JSON.stringify(form.schema.find((section) => section.name === "mainbar_section"))).toContain("mobile_main_bar_item_1");
+    expect(JSON.stringify(form.schema.find((section) => section.name === "mainbar_section"))).toContain("show_empty_quick_shelf");
     expect(JSON.stringify(form.schema)).not.toContain('"mobile_queue_flow"');
     expect(form.computeHelper({ name: "voice_assistant_enabled" })).toBe("ui.show_a_push_to_talk_button_for_music_and_assist_commands");
     expect(form.computeHelper({ name: "mobile_layout_mode" })).toContain("Edge to edge opens");

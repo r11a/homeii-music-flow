@@ -152,6 +152,9 @@ export function validateMobileCardEditorConfig(config) {
   assertStringArrayIfDefined(config.mobile_library_tabs, "mobile_library_tabs");
   assertValueInList(config.mobile_library_default_layout, "mobile_library_default_layout", ["grid", "list"]);
   assertStringArrayIfDefined(config.mobile_main_bar_items, "mobile_main_bar_items");
+  for (let index = 1; index <= 7; index += 1) {
+    assertStringIfDefined(config[`mobile_main_bar_item_${index}`], `mobile_main_bar_item_${index}`);
+  }
   assertStringArrayIfDefined(config.mobile_quick_actions, "mobile_quick_actions");
   for (let index = 1; index <= 10; index += 1) {
     assertStringIfDefined(config[`mobile_quick_action_${index}`], `mobile_quick_action_${index}`);
@@ -171,6 +174,7 @@ export function validateMobileCardEditorConfig(config) {
   assertBooleanIfDefined(config.mobile_cover_flow, "mobile_cover_flow");
   assertBooleanIfDefined(config.mobile_queue_flow, "mobile_queue_flow");
   assertBooleanIfDefined(config.mobile_show_up_next, "mobile_show_up_next");
+  assertBooleanIfDefined(config.show_empty_quick_shelf, "show_empty_quick_shelf");
   assertStringIfDefined(config.pinned_player_entity, "pinned_player_entity");
   assertStringArrayIfDefined(config.pinned_player_entities, "pinned_player_entities");
   assertStringIfDefined(config.pinned_player_master, "pinned_player_master");

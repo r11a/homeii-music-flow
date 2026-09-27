@@ -53,7 +53,10 @@ export const immersivePlayerStyles = `
 .card.player-design-immersive .art-stack-slide.prev { transform:translateX(calc(-150% - 12px + var(--art-drag-x)))!important; }
 .card.player-design-immersive .art-stack-slide.next { transform:translateX(calc(50% + 12px + var(--art-drag-x)))!important; }
 .card.player-design-immersive .art-stack-slide.center { transform:translateX(calc(-50% + var(--art-drag-x)))!important; }
-.card.player-design-immersive .art-stack-slide { transition:transform .16s cubic-bezier(.2,.75,.25,1)!important; will-change:transform; }
+.card.player-design-immersive .art-stack-slide { transition:transform .3s cubic-bezier(.2,.75,.25,1)!important; will-change:transform; }
+.card.player-design-immersive #npArt.cover-crossfading .art-stack-slide { transition:none!important; }
+.immersive-cover-outgoing { position:absolute; inset:0; z-index:4; overflow:hidden; border-radius:inherit; pointer-events:none; }
+.immersive-cover-outgoing img { display:block; width:100%; height:100%; object-fit:cover; border-radius:inherit; }
 .card.player-design-immersive #npArt:is(.dragging,.resetting) .art-stack-slide { transition:none!important; }
 .card.player-design-immersive .art-stack-card { width:100%!important; max-height:100%!important; transform:none!important; }
 .card.player-design-immersive #npArt[aria-busy=true] { cursor:progress; }
@@ -157,30 +160,47 @@ export const immersivePlayerStyles = `
 .immersive-library-shortcuts button { display:grid;place-items:center;min-width:44px;min-height:44px;padding:8px;border:0;border-radius:50%;background:transparent; }
 #immersiveActionsToggle > svg { fill:none; padding:12px; box-sizing:content-box; border:1px solid var(--homeii-surface-border); border-radius:50%; background:var(--homeii-surface); }
 #immersiveActionsToggle[aria-expanded=true] > svg { background:color-mix(in srgb,currentColor 15%,transparent); }
-.immersive-fan { position:absolute; bottom:calc(100% + 8px); left:50%; width:min(440px,100%); height:220px; box-sizing:border-box; transform:translateX(-50%); display:block; padding:0 12px 6px; border:1px solid var(--homeii-surface-border); border-radius:50% 50% 18px 18px / 94% 94% 18px 18px; background:rgba(20,22,26,.84); backdrop-filter:blur(48px) saturate(.85); -webkit-backdrop-filter:blur(48px) saturate(.85); box-shadow:0 16px 48px #0004,inset 0 1px 0 #ffffff12; color:var(--homeii-surface-text); touch-action:pan-y; }
-.theme-light .immersive-fan { background:rgba(250,251,252,.86); }
-.immersive-fan { touch-action:none; user-select:none; -webkit-user-select:none; overflow:hidden; }
-.immersive-fan-actions { transform-origin:50% 100%; transform:rotate(var(--fan-rotation,0deg)); transition:transform .2s cubic-bezier(.2,.8,.2,1); }
-.immersive-fan.rotating .immersive-fan-actions,.immersive-fan.rotating .immersive-fan-actions button { transition:none!important; }
-.immersive-fan-actions { position:absolute; inset:0 10px 44px; }
-.immersive-fan .immersive-fan-actions button { position:absolute; left:var(--fan-x); top:var(--fan-y); transform:translateX(-50%) rotate(calc(-1 * var(--fan-rotation,0deg))); transition:left .18s ease-out,top .18s ease-out,opacity .12s; width:62px; min-height:64px; height:auto; padding:4px 0; border-radius:24px; gap:6px; font-size:11px; touch-action:none; }
-.immersive-fan-actions button svg { width:28px; height:28px; }
-.immersive-fan-navigation { position:absolute; bottom:4px; inset-inline:22px; display:flex; align-items:center; justify-content:space-between; gap:6px; margin-top:0; border-top:1px solid var(--homeii-surface-border); }
-.immersive-fan .immersive-fan-navigation button { min-height:44px; min-width:44px; padding:4px 8px; font-size:12px; }
-.immersive-page-status { font-size:11px; color:var(--homeii-surface-muted); direction:ltr; }
+/* The wheel is anchored to the existing dock; player geometry stays untouched. */
+.immersive-fan { position:absolute; bottom:calc(100% + 8px); left:50%; width:min(440px,100%); height:228px; box-sizing:border-box; transform:translateX(-50%); display:block; padding:0; border:1px solid var(--homeii-surface-border); border-radius:50% 50% 24px 24px / 78% 78% 24px 24px; color:var(--homeii-surface-text); touch-action:none; user-select:none; -webkit-user-select:none; overflow:hidden; isolation:isolate; transform-origin:50% 100%; }
+.immersive-fan-actions { position:absolute; inset:0; direction:ltr; }
+.immersive-fan .immersive-fan-actions button { position:absolute; left:0; top:0; width:var(--fan-item-size,56px); min-width:44px; min-height:66px; height:auto; padding:7px 0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:7px; border:0; border-radius:18px; background:transparent; color:inherit; font:500 12px/1.3 var(--homeii-font-family); touch-action:none; transform:translate3d(calc(var(--fan-x) - 50%),var(--fan-y),0) scale(var(--fan-depth,1)); transition:background .14s ease,color .14s ease; }
+.immersive-fan-actions button > svg { width:25px; height:25px; flex-shrink:0; }
+.immersive-fan-actions button > span:not(.fan-player-art) { width:max-content; max-width:72px; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; white-space:normal; direction:inherit; overflow-wrap:normal; }
+.immersive-fan-actions button.fan-center { background:color-mix(in srgb,currentColor 7%,transparent); }
+.immersive-fan.rotating .immersive-fan-actions button,.immersive-fan.coasting .immersive-fan-actions button { will-change:transform,opacity; transition:none; }
+.immersive-fan-actions button:is(:hover,:focus-visible) { background:color-mix(in srgb,var(--ma-accent) 15%,transparent); }
+.immersive-fan-actions button[aria-pressed="true"] { color:var(--ma-accent); }
+.immersive-fan-actions button[aria-pressed="true"]::after { content:""; width:4px; height:4px; background:currentColor; border-radius:50%; position:absolute; bottom:0; }
+.immersive-fan-navigation { position:absolute; bottom:6px; inset-inline:12px; min-height:44px; display:grid; grid-template-columns:44px minmax(0,1fr) auto 44px; align-items:center; gap:3px; border-top:1px solid var(--homeii-surface-border); padding-top:6px; }
+.immersive-fan .immersive-fan-navigation button { display:grid; place-items:center; min-height:44px; min-width:44px; padding:5px 7px; border:0; background:transparent; color:inherit; font:500 12px/1.3 var(--homeii-font-family); border-radius:12px; }
+.immersive-fan-navigation button svg { width:18px; height:18px; }
+.immersive-fan-navigation button:is(:hover,:focus-visible) { background:color-mix(in srgb,currentColor 7%,transparent); }
+.immersive-fan-navigation:has([data-player-screen]) { grid-template-columns:44px minmax(0,1fr) auto 44px 44px; }
+.immersive-fan-navigation:has([data-player-screen]) button { min-width:44px; padding-inline:3px; }
+.immersive-page-status { display:flex; flex-direction:column; align-items:center; gap:2px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font:500 12px/1.3 var(--homeii-font-family); color:inherit; text-align:center; }
+.immersive-page-status::after { content:attr(data-position); font-size:10px; font-weight:400; color:var(--homeii-surface-muted); direction:ltr; font-variant-numeric:tabular-nums; }
 .immersive-fan button:disabled { opacity:.35; cursor:default; }
 .immersive-fan[hidden] { display:none!important; }
+.immersive-fan.fan-pulling { overflow:visible; }
+.immersive-fan.fan-pulling .immersive-fan-actions button:not(.fan-pull-item) { opacity:calc(1 - var(--fan-pull-progress,0) * .7)!important; }
+.immersive-fan .immersive-fan-actions button.fan-pull-item { translate:0 var(--fan-pull-y,0px); z-index:2; background:var(--homeii-surface); box-shadow:0 8px 24px #0002; }
+.immersive-fan .immersive-fan-actions button.fan-pull-ready { color:var(--ma-accent); box-shadow:0 0 0 1px color-mix(in srgb,var(--ma-accent) 45%,transparent),0 8px 24px #0002; }
 @media (prefers-reduced-motion:no-preference) {
-  .immersive-fan:not([hidden]) { transform-origin:50% 100%; animation:homeii-fan-reveal .22s cubic-bezier(.2,.8,.2,1); }
-  @keyframes homeii-fan-reveal {
-    from { opacity:0; transform:translateX(-50%) translateY(10px) scale(.94); }
-    to { opacity:1; transform:translateX(-50%) translateY(0) scale(1); }
-  }
+  .immersive-fan.fan-opening { animation:homeii-fan-reveal .36s cubic-bezier(.16,1,.3,1) both; }
+  .immersive-fan.fan-opening .immersive-fan-actions button { animation:homeii-fan-unfold .34s cubic-bezier(.16,1,.3,1) var(--fan-delay,0ms) backwards; }
+  .immersive-fan.fan-opening .immersive-fan-navigation { animation:homeii-fan-footer .25s .12s ease both; }
+  .immersive-fan.fan-closing { animation:homeii-fan-dismiss .22s ease-out both; pointer-events:none; }
+  .card:not(.performance-lite) button > svg[data-icon="fan"] { transition:rotate .38s cubic-bezier(.2,.7,.2,1); }
+  .card:not(.performance-lite) button[aria-expanded="true"] > svg[data-icon="fan"] { rotate:-32deg; }
+  .card.player-design-immersive:not(.performance-lite) :is(.immersive-dock,.screen-dock,.immersive-transport) > button { transition:scale .18s ease,background .18s ease; }
+  .card.player-design-immersive:not(.performance-lite) :is(.immersive-dock,.screen-dock,.immersive-transport) > button:active { scale:.94; }
+  .card.player-design-immersive:not(.performance-lite) :is(#btnPrev,#btnPlay,#btnNext) { transition:scale .18s ease,background .18s ease; }
+  .card.player-design-immersive:not(.performance-lite) :is(#btnPrev,#btnPlay,#btnNext):active { scale:.96; }
+  @keyframes homeii-fan-reveal { from { opacity:0; clip-path:ellipse(4% 2% at 50% 100%); transform:translateX(-50%) scale(.94); } to { opacity:1; clip-path:ellipse(110% 110% at 50% 100%); transform:translateX(-50%) scale(1); } }
+  @keyframes homeii-fan-unfold { from { opacity:0; transform:translate3d(calc(var(--fan-origin-x) - 50%),var(--fan-origin-y),0) rotate(var(--fan-angle)) scale(.45); } to { transform:translate3d(calc(var(--fan-x) - 50%),var(--fan-y),0) scale(var(--fan-depth,1)); } }
+  @keyframes homeii-fan-footer { from { opacity:0; translate:0 5px; } to { opacity:1; translate:0 0; } }
+  @keyframes homeii-fan-dismiss { to { opacity:0; filter:blur(5px); transform:translateX(-50%) translateY(-5px) scale(1.025); } }
 }
-.immersive-fan button { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; min-height:72px; min-width:0; border:0; border-radius:18px; background:transparent; font-size:12px; }
-.immersive-fan button:is(:hover,:focus-visible) { background:color-mix(in srgb,currentColor 9%,transparent); }
-.immersive-fan button[aria-pressed="true"] { color:inherit; background:transparent; box-shadow:none; }
-.immersive-fan button[aria-pressed="true"] > :is(svg,.fan-player-art,.fan-value) { border-radius:50%; outline:2px solid var(--ma-accent,#ffa83b); outline-offset:6px; }
 
 .immersive-dock button:focus-visible { outline:2px solid currentColor; outline-offset:3px; }
 .card.player-design-immersive .mobile-brand-signature { display:none!important; }
@@ -190,8 +210,8 @@ export const immersivePlayerStyles = `
 .card.player-design-immersive .immersive-dock .immersive-player-copy { flex:0 1 auto; max-width:78px; }
 .card.player-design-immersive .immersive-dock #selectedPlayerTags { display:none!important; }
 .card.player-design-immersive .immersive-dock > button > svg { width:25px!important; height:25px!important; flex-basis:25px!important; }
-.card.player-design-immersive #immersiveActionsToggle > svg { border:0; background:transparent; padding:9px!important; border-radius:14px; }
-@container (max-width:320px) { .immersive-fan { width:100%; } .immersive-fan .immersive-fan-actions button { width:52px; font-size:10px; } }
+.card.player-design-immersive #immersiveActionsToggle > svg { border:0; background:transparent; padding:0!important; border-radius:14px; }
+@container (max-width:320px) { .immersive-fan { width:100%; } .immersive-fan .immersive-fan-actions button { font-size:12px; } }
 @media(prefers-reduced-motion:no-preference) { .card.player-design-immersive #progressBar:not(.immersive-seeking) #progressFill { transition:width .8s linear,height .15s ease; } }
 @media(prefers-reduced-motion:reduce) {
   .card.player-design-immersive .art-stack-slide,
@@ -247,7 +267,7 @@ export const immersivePlayerStyles = `
 .card.compact-mode.compact-mode #selectedPlayerTitle { font-size:12px; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .card.compact-mode.compact-mode #selectedPlayerTags { display:none; }
 .card.compact-mode.compact-mode .immersive-fan { height:154px; bottom:100%; width:min(400px,100%); border-radius:50% 50% 16px 16px / 65% 65% 16px 16px; }
-.card.compact-mode.compact-mode .immersive-fan .immersive-fan-actions button { width:52px; min-height:48px; font-size:10px; }
+.card.compact-mode.compact-mode .immersive-fan .immersive-fan-actions button { width:var(--fan-item-size,54px); min-height:54px; font-size:11px; }
 .card.compact-mode.compact-mode .immersive-fan-navigation { height:36px; }
 .card.theme-light.compact-mode.compact-mode .compact-volume-inline button { color:#20252b!important; background:transparent!important; }
 

@@ -13,8 +13,14 @@ import {
   tabletAutoFitEnabled,
   tabletStabilityModeEnabled,
 } from "../src/core/layout/responsive.js";
+import { interfaceStyles } from "../src/core/theme/interface.js";
 
 describe("responsive layout foundation", () => {
+  it("keeps library category navigation visible with the global screen dock", () => {
+    expect(interfaceStyles).toContain(".card .has-screen-dock .library-nav { display:grid!important; }");
+    expect(interfaceStyles).not.toContain(".card .has-screen-dock .library-nav { display:none!important; }");
+  });
+
   it("resolves layout mode from config and measured widths", () => {
     expect(resolveLayoutMode("tablet", { rectWidth: 200 })).toBe("tablet");
     expect(resolveLayoutMode("mobile", { rectWidth: 1200 })).toBe("mobile");

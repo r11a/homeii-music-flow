@@ -1,6 +1,6 @@
 # HOMEii Music Flow Documentation
 
-> **Preparing 6.0.0 Beta:** install Engine `1.0.0-beta.1` first. Read the [breaking upgrade and beta guide](BETA_GUIDE.md) before replacing 5.9.3. No beta release has been published by this preparation.
+> **Stable pair: card 6.0.2 + Engine 1.0.2.** Install and verify the Engine first. Follow the [installation and upgrade guide](INSTALL_STEP_BY_STEP.md) before replacing 5.9.3.
 
 HOMEii Music Flow is a premium Music Assistant dashboard card for Home Assistant. This documentation is the main place to learn how to install it, configure it, understand every major feature, and troubleshoot real-world Music Assistant setups.
 
@@ -32,14 +32,14 @@ HOMEii Music Flow needs:
 
 - Home Assistant with dashboards/custom cards enabled.
 - Music Assistant installed and connected to Home Assistant.
-- HOMEii Flow Engine `1.0.0-beta.1` for the prepared 6.0.0 beta pair installed and loaded for HOMEii Music Flow 6.0.0 and newer.
+- HOMEii Flow Engine `1.0.2` for the stable 6.0.2 pair installed and loaded for HOMEii Music Flow 6.0.0 and newer.
 - At least one Music Assistant player exposed as a Home Assistant `media_player`.
 - HACS, or manual access to `/config/www/community/`.
 - A modern browser: Chrome, Edge, Safari, iOS WebKit, Android WebView, or a current Home Assistant Companion app.
 
 Optional features need optional setup:
 
-- **This device / Sendspin browser player:** disabled in 6.0.0 Engine-only mode so MA credentials remain server-side.
+- **This device / Sendspin browser player:** provided through the authenticated Engine bridge when supported; MA credentials remain server-side.
 - **Announcements:** a working Home Assistant TTS entity.
 - **Automation helper:** an `input_text` helper for the active HOMEii player.
 - **Remote artwork:** served through the authenticated HOMEii Flow Engine artwork proxy; the browser does not need a Music Assistant URL.
@@ -67,9 +67,9 @@ For the most polished experience:
 
 ## Current Documentation Target
 
-Current documentation target: **HOMEii Music Flow 6.0.0 in progress**
+Current documentation target: **HOMEii Music Flow 6.0.2**
 
-6.0.0 documentation highlights:
+6.0.2 documentation highlights:
 
 - Required HOMEii Flow Engine backend.
 - Card as visual interface, Engine as source of truth for players, queue, library, search, artwork, playback, schedules, timers, statistics, and diagnostics.
@@ -83,6 +83,7 @@ Current documentation target: **HOMEii Music Flow 6.0.0 in progress**
 
 Release notes:
 
+- [6.0.2 release notes, credits and issue ledger](../RELEASE_NOTES_6.0.2.md)
 - [Changelog](../CHANGELOG.md)
 - [HOMEii Music Flow 5.9.3](../RELEASE_NOTES_5.9.3.md)
 
@@ -90,4 +91,4 @@ Release notes:
 
 HOMEii Music Flow is an independent community project. It is not an official Home Assistant or Music Assistant project.
 
-Thanks to the Music Assistant, Home Assistant, HACS, Sendspin, and Embla projects, and to all community testers and translators who helped shape the card.
+Thanks to the Music Assistant, Home Assistant, HACS, Sendspin, and Embla projects, and to all community testers and translators who helped shape the card. Brazilian Portuguese was contributed by [Gabriel Caputo (@gabrielcaputo)](https://github.com/gabrielcaputo) in [PR #103](https://github.com/r11a/homeii-music-flow/pull/103).

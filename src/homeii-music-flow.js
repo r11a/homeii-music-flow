@@ -113,9 +113,9 @@ function ensureHaEditorComponents() {
   } catch (_) {}
 }
 
-const HOMEII_CARD_VERSION = "6.0.1";
-const HOMEII_BROWSER_EDITOR_TAG = "homeii-music-flow-browser-editor-v601";
-const HOMEII_MOBILE_EDITOR_TAG = "homeii-music-flow-editor-v601";
+const HOMEII_CARD_VERSION = "6.0.2";
+const HOMEII_BROWSER_EDITOR_TAG = "homeii-music-flow-browser-editor-v602";
+const HOMEII_MOBILE_EDITOR_TAG = "homeii-music-flow-editor-v602";
 const AMBIENT_LIGHT_PAIR_PLAYER_PREFIX = "__homeii_ambient_light_pair_player_";
 const AMBIENT_LIGHT_PAIR_LIGHTS_PREFIX = "__homeii_ambient_light_pair_lights_";
 
@@ -432,6 +432,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     this._state.mobileLibraryTabs = ["library_search", "library_liked", "library_playlists", "library_artists", "library_albums", "library_tracks", "library_radio", "library_podcasts"];
     this._state.mobileLibraryFavoritesOnlyTabs = [];
     this._state.mobileMainBarItems = ["actions", "players", "library", "settings"];
+    this._state.showEmptyQuickShelf = true;
     this._state.mobileQuickActions = ["timer", "like", "lyrics", "queue", "queue_flow", "radio", "history"];
     this._state.mobileLikedMode = "ma";
     this._state.mobileSwipeMode = "browse";
@@ -651,6 +652,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
       const rawMainBar = JSON.parse(localStorage.getItem(this._lsKey("homeii_music_flow_mobile_main_bar_items")) || "[]");
       if (Array.isArray(rawMainBar) && rawMainBar.length) this._state.mobileMainBarItems = rawMainBar;
     } catch (_) {}
+    try { this._state.showEmptyQuickShelf = JSON.parse(localStorage.getItem(this._lsKey("homeii_music_flow_show_empty_quick_shelf")) ?? "true"); } catch (_) {}
     try {
       const storedQuickActions = localStorage.getItem(this._lsKey("homeii_music_flow_mobile_quick_actions"));
       if (storedQuickActions !== null) {
@@ -783,6 +785,14 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
       flow_assistant_auto_close_ms: 4200,
       mobile_library_tabs: ["library_search", "library_liked", "library_playlists", "library_artists", "library_albums", "library_tracks", "library_radio", "library_podcasts"],
       mobile_main_bar_items: ["actions", "players", "library", "settings"],
+      mobile_main_bar_item_1: "",
+      mobile_main_bar_item_2: "",
+      mobile_main_bar_item_3: "",
+      mobile_main_bar_item_4: "",
+      mobile_main_bar_item_5: "",
+      mobile_main_bar_item_6: "",
+      mobile_main_bar_item_7: "",
+      show_empty_quick_shelf: true,
       mobile_quick_actions: ["timer", "like", "lyrics", "queue", "queue_flow", "radio", "history"],
       mobile_quick_action_1: "timer",
       mobile_quick_action_2: "like",
@@ -3863,6 +3873,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
       });
       localStorage.setItem(this._lsKey("homeii_music_flow_mobile_main_bar_items"), JSON.stringify(storedMainBarItems));
     } catch (_) {}
+    try { localStorage.setItem(this._lsKey("homeii_music_flow_show_empty_quick_shelf"), JSON.stringify(this._emptyQuickShelfEnabled())); } catch (_) {}
     try { localStorage.setItem(this._lsKey("homeii_music_flow_mobile_quick_actions"), JSON.stringify(this._mobileQuickActions())); } catch (_) {}
     this._state.mobileLikedMode = "ma";
     try { localStorage.setItem(this._lsKey("homeii_music_flow_mobile_swipe_mode"), this._state.mobileSwipeMode || "play"); } catch (_) {}
@@ -4893,6 +4904,10 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
       hidePlayers,
       fallbackItems: this._defaultMobileMainBarItems(),
     });
+  }
+
+  _emptyQuickShelfEnabled() {
+    return this._state.showEmptyQuickShelf !== false;
   }
 
   _mobileLibraryTabs() {
@@ -7154,7 +7169,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     this._preloadMobileArtImages(stack);
     const renderKey = this._mobileArtStackRenderKey();
     if (artHost && (force || this._state.mobileArtRenderKey !== renderKey)) {
-      if (this._immersiveSwipeApplying) reconcileImmersiveCovers(artHost, this._mobileArtworkStackHtml());
+      if (immersivePlayerEnabled(this) && !this._mobileCoverFlowEnabled()) reconcileImmersiveCovers(artHost, this._mobileArtworkStackHtml(), {animate:!this._immersiveSwipeApplying});
       else artHost.innerHTML = this._mobileArtworkStackHtml();
       this._state.mobileArtRenderKey = renderKey;
       queueMicrotask(() => {
@@ -7282,6 +7297,8 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
   }
 
   _build() {
+    for (const dispose of this._fanDisposers?.values() || []) dispose();
+    this.$('npArt')?._cancelCoverTransition?.();
     this.classList.toggle("action-labels", this._mobileFooterMode() !== "icon");
     const rtl = this._isHebrew();
     const visualTheme = this._visualTheme();
@@ -7429,27 +7446,19 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     if (!hotelMode && controlRoomEnabled && studioShortcutEnabled) {
       mainBarButtons.push(`<button class="footer-btn control-room-entry" data-mainbar-action="control_room" title="${this._controlRoomLabel()}">${this._mobileFooterButtonInner("grid", this._controlRoomLabel())}</button>`);
     }
-    if (mainBarItems.includes("actions")) {
-      mainBarButtons.push(`<button class="footer-btn" data-mainbar-action="actions" title="${this._i18n("ui.actions_2")}">${this._mobileFooterButtonInner("menu", this._i18n("ui.actions_2"))}</button>`);
-    }
-    if (mainBarItems.includes("players")) {
-      mainBarButtons.push(`<button class="footer-btn" data-mainbar-action="players" title="${this._i18n("ui.players")}">${this._mobileFooterButtonInner("speaker", this._i18n("ui.players"))}</button>`);
-    }
-    if (mainBarItems.includes("library")) {
-      mainBarButtons.push(`<button class="footer-btn soft-accent" data-mainbar-action="library" title="${this._i18n("ui.library")}">${this._mobileFooterButtonInner("library_music", this._i18n("ui.library"))}</button>`);
-    }
-    if (mainBarItems.includes("search")) {
-      mainBarButtons.push(`<button class="footer-btn" data-mainbar-action="search" title="${this._i18n("ui.search")}">${this._mobileFooterButtonInner("search", this._i18n("ui.search"))}</button>`);
-    }
-    if (mainBarItems.includes("home")) {
-      mainBarButtons.push(`<button class="footer-btn" data-mainbar-action="home" title="${this._i18n("ui.home")}">${this._mobileFooterButtonInner("home", this._i18n("ui.home"))}</button>`);
-    }
-    if (mainBarItems.includes("settings")) {
-      mainBarButtons.push(`<button class="footer-btn accent" data-mainbar-action="settings" title="${this._i18n("ui.settings")}">${this._mobileFooterButtonInner("settings", this._i18n("ui.settings"))}</button>`);
-    }
-    if (mainBarItems.includes("theme")) {
-      mainBarButtons.push(`<button class="footer-btn" data-mainbar-action="theme" title="${this._i18n("ui.theme_2")}">${this._mobileThemeFooterInner()}</button>`);
-    }
+    const mainBarButtonBuilders = {
+      actions: () => `<button class="footer-btn" data-mainbar-action="actions" title="${this._i18n("ui.actions_2")}">${this._mobileFooterButtonInner("menu", this._i18n("ui.actions_2"))}</button>`,
+      players: () => `<button class="footer-btn" data-mainbar-action="players" title="${this._i18n("ui.players")}">${this._mobileFooterButtonInner("speaker", this._i18n("ui.players"))}</button>`,
+      library: () => `<button class="footer-btn soft-accent" data-mainbar-action="library" title="${this._i18n("ui.library")}">${this._mobileFooterButtonInner("library_music", this._i18n("ui.library"))}</button>`,
+      search: () => `<button class="footer-btn" data-mainbar-action="search" title="${this._i18n("ui.search")}">${this._mobileFooterButtonInner("search", this._i18n("ui.search"))}</button>`,
+      home: () => `<button class="footer-btn" data-mainbar-action="home" title="${this._i18n("ui.home")}">${this._mobileFooterButtonInner("home", this._i18n("ui.home"))}</button>`,
+      settings: () => `<button class="footer-btn accent" data-mainbar-action="settings" title="${this._i18n("ui.settings")}">${this._mobileFooterButtonInner("settings", this._i18n("ui.settings"))}</button>`,
+      theme: () => `<button class="footer-btn" data-mainbar-action="theme" title="${this._i18n("ui.theme_2")}">${this._mobileThemeFooterInner()}</button>`,
+    };
+    mainBarItems.forEach((item) => {
+      const buildButton = mainBarButtonBuilders[item];
+      if (buildButton) mainBarButtons.push(buildButton());
+    });
     const volumeStepButtonsEnabled = hotelMode || this._mobileVolumeStepButtonsEnabled();
     const volumeStepPercent = this._mobileVolumeStepPercent();
     const volumeDownButtonHtml = volumeStepButtonsEnabled
@@ -9099,6 +9108,13 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
   async _renderEmptyQuickShelf() {
     const host = this.$("emptyQuickShelf");
     if (!host) return;
+    if (!this._emptyQuickShelfEnabled()) {
+      this._emptyQuickShelfToken = "";
+      this._state.emptyQuickShelfItems = [];
+      host.hidden = true;
+      host.innerHTML = "";
+      return;
+    }
     if (this._state.musicAssistantIssueMessage && !(this._state.players || []).length) {
       this._state.emptyQuickShelfItems = [];
       host.hidden = true;
@@ -9326,7 +9342,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     this._setDecodedBackgroundImage(this.$("mobileHeroAura"), !this._isHotelMode() ? displayArt : "");
     this._setDecodedBackgroundCrossfade(this.$("compactBackdropArt"), !this._isHotelMode() ? displayArt : "");
     this._setDecodedBackgroundImage(this.$("compactCoverAura"), !this._isHotelMode() ? displayArt : "");
-    if (disableShelf) {
+    if (disableShelf || !this._emptyQuickShelfEnabled()) {
       this._state.emptyQuickShelfItems = [];
       const shelf = this.$("emptyQuickShelf");
       if (shelf) {
@@ -11893,7 +11909,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
   _settingsAccordionWrap(id, title, body) {
     const openSet = this._settingsAccordionOpenSet();
     const isOpen = openSet.has(id);
-    const chevron = `<svg class="settings-accordion-chevron" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+    const chevron = this._iconSvg("forward").replace('class="ui-ic"', 'class="ui-ic settings-accordion-chevron"');
     return `
       <details class="settings-accordion" data-settings-accordion="${this._esc(id)}"${isOpen ? " open" : ""}>
         <summary class="settings-accordion-summary">
@@ -12220,7 +12236,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
         </div>
         <div class="settings-group">
           <div class="settings-label">${this._i18n("ui.main_bar_items")}</div>
-          <div class="settings-check-grid">
+          <div class="settings-check-grid quick-actions-grid">
             ${showStudioMainBarOption ? `
               <label class="settings-check-pill">
                 <input type="checkbox" data-setting-studio-shortcut ${studioShortcut ? "checked" : ""}>
@@ -12230,12 +12246,23 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
             ${visibleMainBarOptions.map(([value, label]) => {
               const locked = settingsMainBarLocked && value === "settings";
               return `
-              <label class="settings-check-pill ${locked ? "is-locked" : ""}">
+              <div class="settings-check-pill quick-action-pill ${locked ? "is-locked" : ""}">
                 <input type="checkbox" data-setting-main-bar-item="${this._esc(value)}" ${selectedMainBar.has(value) || locked ? "checked" : ""} ${locked ? "disabled" : ""}>
                 <span>${this._esc(label)}</span>
                 ${locked ? `<span class="settings-fixed-badge">${this._esc(this._i18n("ui.fixed"))}</span>` : ""}
-              </label>`;
+                ${selectedMainBar.has(value) ? `
+                  <span class="quick-action-order-controls">
+                    <button type="button" class="quick-action-order-btn" data-setting-main-bar-move="${this._esc(value)}" data-direction="-1" title="${this._esc(this._i18n("ui.move_up"))}" ${this._mobileMainBarItems().indexOf(value) <= 0 ? "disabled" : ""}>${this._iconSvg("up")}</button>
+                    <button type="button" class="quick-action-order-btn" data-setting-main-bar-move="${this._esc(value)}" data-direction="1" title="${this._esc(this._i18n("ui.move_down"))}" ${this._mobileMainBarItems().indexOf(value) >= this._mobileMainBarItems().length - 1 ? "disabled" : ""}>${this._iconSvg("down")}</button>
+                  </span>
+                ` : ""}
+              </div>`;
             }).join("")}
+          </div>
+          <div class="settings-label">${this._esc(this._m("Idle recommendations shelf", "מדף המלצות כשלא מתנגן דבר"))}</div>
+          <div class="settings-pills">
+            ${this._settingsPill(this._i18n("ui.enabled"), "on", this._emptyQuickShelfEnabled() ? "on" : "off", "data-setting-empty-quick-shelf")}
+            ${this._settingsPill(this._i18n("ui.disabled"), "off", this._emptyQuickShelfEnabled() ? "on" : "off", "data-setting-empty-quick-shelf")}
           </div>
           <div class="settings-label">${this._i18n("ui.volume_control_large_screen_only")}</div>
           <div class="settings-pills">
@@ -15825,6 +15852,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
       ["fr-FR", "Français"],
       ["es-ES", "Español"],
       ["it-IT", "Italiano"],
+      ["pt-BR", "Portugu\u00eas (Brasil)"],
     ];
   }
 
@@ -16520,7 +16548,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
       const queueLead = this._esc(String(displayPosition));
       return `
         <div class="queue-row ${current ? "active" : ""} ${expanded ? "expanded" : ""}" data-queue-item-id="${this._esc(key)}" data-uri="${this._esc(item.media_item?.uri || "")}" data-type="track" data-sort-index="${this._esc(item.sort_index ?? "")}" data-queue-position="${this._esc(String(displayPosition))}">
-          <button class="queue-index queue-drag-handle" data-queue-drag title="${this._esc(this._m("Drag to reorder; use Actions to choose a position", "גרור לשינוי סדר; בתפריט הפעולות ניתן לבחור מיקום"))}" aria-label="${this._esc(this._m("Reorder", "שינוי סדר"))} ${queueLead}"><svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><circle cx="8" cy="6" r="1.6"/><circle cx="16" cy="6" r="1.6"/><circle cx="8" cy="12" r="1.6"/><circle cx="16" cy="12" r="1.6"/><circle cx="8" cy="18" r="1.6"/><circle cx="16" cy="18" r="1.6"/></svg></button>
+          <button class="queue-index queue-drag-handle" data-queue-drag title="${this._esc(this._m("Drag to reorder; use Actions to choose a position", "גרור לשינוי סדר; בתפריט הפעולות ניתן לבחור מיקום"))}" aria-label="${this._esc(this._m("Reorder", "שינוי סדר"))} ${queueLead}">${this._iconSvg("grip")}</button>
           <div class="menu-thumb" ${img ? `data-img="${this._esc(img)}" data-placeholder="album"` : ""}>${this._iconSvg("album")}</div>
           <div class="queue-meta">
             <div class="queue-title">${this._esc(item.media_item?.name || item.name || "")}</div>
@@ -17348,6 +17376,24 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
       this._refreshAfterSettingsChange({ quickActionsChanged: true });
       return;
     }
+    const mainBarOrderBtn = eventTarget.closest("button[data-setting-main-bar-move]");
+    if (mainBarOrderBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (mainBarOrderBtn.disabled) return;
+      const item = String(mainBarOrderBtn.dataset.settingMainBarMove || "").trim();
+      const direction = Number(mainBarOrderBtn.dataset.direction || 0);
+      const items = this._mobileMainBarItems().slice();
+      const index = items.indexOf(item);
+      const nextIndex = index + (direction < 0 ? -1 : 1);
+      if (index < 0 || nextIndex < 0 || nextIndex >= items.length) return;
+      [items[index], items[nextIndex]] = [items[nextIndex], items[index]];
+      this._flashInteraction(mainBarOrderBtn);
+      this._state.mobileMainBarItems = items;
+      this._persistMobileAppearance();
+      this._refreshAfterSettingsChange({ mainBarChanged: true });
+      return;
+    }
     const playerOrderMoveBtn = eventTarget.closest("[data-setting-player-order-move]");
     if (playerOrderMoveBtn) {
       e.preventDefault();
@@ -17823,6 +17869,21 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
       return;
     }
     const screensaverBtn = eventTarget.closest("[data-setting-screensaver]");
+    const emptyQuickShelfBtn = eventTarget.closest("[data-setting-empty-quick-shelf]");
+    if (emptyQuickShelfBtn?.dataset.settingEmptyQuickShelf) {
+      this._flashInteraction(emptyQuickShelfBtn);
+      this._state.showEmptyQuickShelf = emptyQuickShelfBtn.dataset.settingEmptyQuickShelf === "on";
+      this._persistMobileAppearance();
+      if (this._state.showEmptyQuickShelf) this._renderEmptyQuickShelf().catch(() => {});
+      else {
+        this._emptyQuickShelfToken = "";
+        this._state.emptyQuickShelfItems = [];
+        const shelf = this.$("emptyQuickShelf");
+        if (shelf) { shelf.hidden = true; shelf.innerHTML = ""; }
+      }
+      this._reopenSettingsMenuPreservingScroll();
+      return;
+    }
     if (screensaverBtn?.dataset.settingScreensaver) {
       this._flashInteraction(screensaverBtn);
       this._state.screensaverEnabled = screensaverBtn.dataset.settingScreensaver === "on";

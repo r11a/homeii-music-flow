@@ -1,6 +1,6 @@
 # Getting Started
 
-> **Preparing 6.0.0 Beta:** install Engine `1.0.0-beta.1` first. Read the [breaking upgrade and beta guide](BETA_GUIDE.md) before replacing 5.9.3. No beta release has been published by this preparation.
+> **Stable pair: card 6.0.2 + Engine 1.0.2.** Install and verify the Engine first. Follow the [installation and upgrade guide](INSTALL_STEP_BY_STEP.md) before replacing 5.9.3.
 
 This guide gets HOMEii Music Flow running in Home Assistant for the first time.
 
@@ -10,7 +10,7 @@ Confirm these first:
 
 - Music Assistant is installed and running.
 - Music Assistant is connected to Home Assistant.
-- HOMEii Flow Engine `1.0.0-beta.1` for the prepared 6.0.0 beta pair is installed and loaded when using HOMEii Music Flow 6.0.0 or newer.
+- HOMEii Flow Engine `1.0.2` for the stable 6.0.2 pair is installed and loaded when using HOMEii Music Flow 6.0.0 or newer.
 - Home Assistant shows at least one Music Assistant player as a `media_player`.
 - You can control that player from Home Assistant before adding HOMEii Music Flow.
 
@@ -55,7 +55,7 @@ If HACS does not add the resource automatically, add:
 3. Add this Dashboard resource:
 
 ```text
-/local/community/homeii-music-flow/homeii-music-flow.js?v=6.0.0
+/local/community/homeii-music-flow/homeii-music-flow.js?v=6.0.2
 ```
 
 4. Add the card:

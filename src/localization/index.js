@@ -6,6 +6,7 @@ import fr from "./fr.js";
 import he from "./he.js";
 import it from "./it.js";
 import lt from "./lt.js";
+import pt from "./pt.js";
 import zh from "./zh.js";
 
 export const DEFAULT_LANGUAGE = "en";
@@ -19,6 +20,7 @@ export const DICTIONARIES = Object.freeze({
   he,
   it,
   lt,
+  pt,
   zh,
 });
 
@@ -34,6 +36,7 @@ export const LANGUAGE_OPTIONS = Object.freeze([
   { value: "he", label: "\u05e2\u05d1\u05e8\u05d9\u05ea / Hebrew" },
   { value: "it-IT", label: "Italiano" },
   { value: "lt", label: "Lithuanian / Lietuvi\u0173" },
+  { value: "pt-BR", label: "Portugu\u00eas (Brasil)" },
   { value: "zh-CN", label: "\u7b80\u4f53\u4e2d\u6587 / Simplified Chinese" },
 ]);
 

@@ -1,5 +1,28 @@
 # Changelog
 
+## 6.0.2 — 2026-09-27
+
+- Rotating action fans with momentum, unfold/dissolve animations and upward pull-to-select.
+- Consistent local Lucide icons, Heebo typography, dark/light surfaces and cover transitions; main-player layout preserved.
+- Main-bar ordering, immersive editor controls, optional idle recommendations, and accessibility/animation cleanup.
+- Brazilian Portuguese from @gabrielcaputo (PR #103).
+- Ship the physical Sendspin player fix (#99, @JustinGT) and kiosk pinned/excluded player preservation (PR #100, @cjlist).
+- Pair with Engine 1.0.2 maintenance packaging and retain the 6.x reliability fixes.
+- [Full release notes, credits, cumulative issue ledger and known limitations](RELEASE_NOTES_6.0.2.md).
+
+## 6.0.1 — 2026-09-17
+
+- Current-track action sheet with supported favorites/playlist actions; consistent Sticky/Master selection.
+- Artwork recovery, restricted-WebView diagnostics copying and clearer This device controls.
+- [Release notes](RELEASE_NOTES_6.0.1.md).
+
+## 6.0.0 — 2026-09-14
+
+- Engine-required stable release, immersive interface, contextual wheels and MA library/queue integration.
+- [Release notes](RELEASE_NOTES_6.0.0.md).
+
+The preparation entries below are historical; their in-progress/beta status and version requirements do not describe the current stable release.
+
 ## 6.0.0-beta.1 — preparation, not released
 
 - Label the first card beta and pair it with HOMEii Flow Engine `1.0.0-beta.1`.
@@ -11,6 +34,7 @@
 
 Release preparation (2026-09-08, local candidate):
 
+- Add Brazilian Portuguese from PR #103 by Gabriel Caputo, including automatic `pt-BR` locale selection and complete key/placeholder validation.
 - Add German from PR #89 by rtreichl, including automatic locale selection and the current action-label translation.
 - Add configurable search section ordering (`search_result_order`, #86).
 - Preserve MA album order when disc/track metadata is incomplete (#85); keep playlist order unchanged (#88).

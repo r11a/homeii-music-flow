@@ -106,11 +106,12 @@ export function screenActions(card, page) {
 
 export function syncScreenDock(card, sheet, page, closeScreen) {
   if (!sheet) return;
+  const closeCatalogue = () => { const panel = sheet.querySelector(":scope > .screen-all-actions"); if (panel?._closeCatalogue) panel._closeCatalogue(); else panel?.remove(); };
   // The history/recommendations drawer already sits beside the persistent player dock.
   // A second full dock inside the drawer wastes space and reads as duplicate navigation.
   if (page === "history" && sheet.classList.contains("history-drawer")) {
     sheet.querySelector(":scope > .screen-dock")?.remove();
-    sheet.querySelector(":scope > .screen-all-actions")?.remove();
+    closeCatalogue();
     sheet.classList.remove("has-screen-dock");
     delete sheet.dataset.dockPage;
     return;
@@ -128,7 +129,7 @@ export function syncScreenDock(card, sheet, page, closeScreen) {
     sheet.append(dock);
     dock.querySelector("[data-screen-back]").onclick = () => {
       const panel = sheet.querySelector(":scope > .screen-all-actions");
-      if (panel) { panel.remove(); return; }
+      if (panel) { closeCatalogue(); return; }
       if (dock.dataset.page === "studio" && card._state.controlRoomPanel) {
         card._toggleControlRoomPanel(card._state.controlRoomPanel);
         return;
@@ -206,7 +207,7 @@ export function syncScreenDock(card, sheet, page, closeScreen) {
         } else { dock._closeScreen?.(); card._openMobileMenu(id); }
     };
   }
-  if (dock.dataset.page !== page) { sheet.querySelector(":scope > .screen-all-actions")?.remove(); dock.querySelector(".immersive-fan").hidden = true; dock.querySelector("[data-screen-wheel]").setAttribute("aria-expanded","false"); }
+  if (dock.dataset.page !== page) { closeCatalogue(); dock.querySelector(".immersive-fan").hidden = true; dock.querySelector("[data-screen-wheel]").setAttribute("aria-expanded","false"); }
   dock.dataset.page = page; dock._closeScreen = closeScreen;
   const selected = card._getSelectedPlayer?.();
   const playerName = selected ? (card._playerDisplayName?.(selected,card._state.players) || selected.attributes?.friendly_name || selected.entity_id) : card._m("Choose player","בחירת נגן");

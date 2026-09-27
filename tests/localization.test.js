@@ -15,6 +15,7 @@ describe("localization", () => {
     expect(translate("da", "ui.home")).toBe("Hjem");
     expect(translate("fr", "ui.home")).toBe("Accueil");
     expect(translate("it", "ui.now_playing")).toBe("In riproduzione");
+    expect(translate("pt-BR", "ui.home")).toBe("In\u00edcio");
     expect(translate("zh-CN", "ui.home")).toBe("首页");
     expect(translate("de", "ui.home")).toBe("Startseite");
     expect(translate("nl", "ui.home")).toBe("Home");
@@ -37,6 +38,8 @@ describe("localization", () => {
     expect(detectLanguage({ configLanguage: "zh-CN" })).toBe("zh");
     expect(detectLanguage({ configLanguage: "de" })).toBe("de");
     expect(detectLanguage({ configLanguage: "de-AT" })).toBe("de");
+    expect(detectLanguage({ configLanguage: "pt-BR" })).toBe("pt");
+    expect(detectLanguage({ configLanguage: "auto", hass: { locale: { language: "pt-BR" } } })).toBe("pt");
     expect(detectLanguage({ configLanguage: "nl" })).toBe("en");
     expect(detectLanguage({ configLanguage: "auto", hass: { locale: { language: "de-DE" } } })).toBe("de");
     expect(detectLanguage({ configLanguage: "auto", hass: { locale: { language: "he-IL" } } })).toBe("he");
@@ -65,6 +68,10 @@ describe("localization", () => {
       label: "Lithuanian / Lietuvių",
     });
     expect(LANGUAGE_OPTIONS).toContainEqual({
+      value: "pt-BR",
+      label: "Português (Brasil)",
+    });
+    expect(LANGUAGE_OPTIONS).toContainEqual({
       value: "zh-CN",
       label: "简体中文 / Simplified Chinese",
     });
@@ -86,6 +93,11 @@ describe("localization", () => {
   it("preserves every German interpolation placeholder", () => {
     for (const [key,value] of Object.entries(DICTIONARIES.en)) {
       expect((DICTIONARIES.de[key].match(/\{\w+\}/g) || []).sort(),key).toEqual((value.match(/\{\w+\}/g) || []).sort());
+    }
+  });
+  it("preserves every Brazilian Portuguese interpolation placeholder", () => {
+    for (const [key,value] of Object.entries(DICTIONARIES.en)) {
+      expect((DICTIONARIES.pt[key].match(/\{\w+\}/g) || []).sort(),key).toEqual((value.match(/\{\w+\}/g) || []).sort());
     }
   });
 });

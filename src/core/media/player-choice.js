@@ -12,7 +12,7 @@ export function playerChoiceHtml(card, player, { attrs, active, available, name,
         <span class="player-choice-state"><i class="${player.state === "playing" ? "playing" : ""}" aria-hidden="true"></i>${card._esc(state)}${active ? ` · ${card._esc(card._m("Selected", "נבחר"))}` : ""}</span>
         ${available && track ? `<span class="player-choice-track" dir="auto">${card._esc(track)}</span>` : ""}
       </span>
-      ${active ? '<svg class="player-choice-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>' : ""}
+      ${active ? actionIconSvg(card,"check").replace('class="ui-ic"', 'class="ui-ic player-choice-check"') : ""}
     </button>
     ${pinHtml}
     ${canGroup ? `<button class="player-group-drag" data-group-drag draggable="true" aria-label="${card._esc(card._m("Drag onto another player to group", "גרור לנגן אחר ליצירת קבוצה"))}">${actionIconSvg(card,"speaker_group")}</button>` : ""}

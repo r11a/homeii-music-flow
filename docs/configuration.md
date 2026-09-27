@@ -33,7 +33,11 @@ phone_display_mode: auto
 
 German is available as `language: de`, in the language picker, or automatically when Home Assistant uses German (`language: auto`). The German dictionary incorporates [PR #89](https://github.com/r11a/homeii-music-flow/pull/89), contributed by rtreichl, and includes the current action-label setting.
 
+Brazilian Portuguese is available as `language: pt-BR`, in the language picker, or automatically when Home Assistant uses Portuguese (`language: auto`). The translation was contributed by [Gabriel Caputo (@gabrielcaputo)](https://github.com/gabrielcaputo) in [PR #103](https://github.com/r11a/homeii-music-flow/pull/103).
+
 Search section order can be configured in YAML. Omitted sections retain their default relative order after the configured sections; sections with no results remain hidden.
+
+In 6.0.2, `mobile_main_bar_items` selects the main-bar buttons; optional `mobile_main_bar_item_1` through `mobile_main_bar_item_7` order the selected buttons. Unspecified selected items follow in their existing relative order. Values: `home`, `search`, `library`, `players`, `actions`, `settings`, `theme`. Duplicate, unselected or unknown slot values are ignored. The visual editor and in-card settings expose these controls. Set `show_empty_quick_shelf: false` to hide idle recommendations and skip loading that shelf (default: `true`).
 
 ```yaml
 search_result_order:

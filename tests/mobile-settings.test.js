@@ -18,6 +18,7 @@ import {
   normalizeMobileLibraryDefaultLayout,
   normalizeMobileLibraryTabs,
   normalizeMobileMainBarItems,
+  normalizeMobileMainBarSlots,
   normalizeMobileMicMode,
   normalizeMobileQuickActions,
   normalizeMobileQuickActionSlots,
@@ -76,6 +77,9 @@ describe("mobile settings foundation", () => {
       mobile_radio_browser_country: "il",
       mobile_library_tabs: ["library_albums"],
       mobile_main_bar_items: ["theme", "settings"],
+      mobile_main_bar_item_1: "settings",
+      mobile_main_bar_item_2: "theme",
+      show_empty_quick_shelf: false,
       mobile_quick_actions: ["voice", "timer", "queue_flow", "disconnect_all", "voice"],
       mobile_quick_action_1: "timer",
       mobile_quick_action_2: "queue_flow",
@@ -167,7 +171,8 @@ describe("mobile settings foundation", () => {
     expect(state.mobileRadioSourceMode).toBe("ma_first");
     expect(state.mobileRadioBrowserCountry).toBe("il");
     expect(state.mobileLibraryTabs).toEqual(["library_albums"]);
-    expect(state.mobileMainBarItems).toEqual(["theme", "settings"]);
+    expect(state.mobileMainBarItems).toEqual(["settings", "theme"]);
+    expect(state.showEmptyQuickShelf).toBe(false);
     expect(state.mobileQuickActions).toEqual(["timer", "queue_flow", "voice", "disconnect_all"]);
     expect(state.mobileAnnouncementPresets).toEqual(["One", "Two", "Three"]);
     expect(state.mobileAnnouncementVolume).toBe(20);
@@ -340,4 +345,15 @@ describe("mobile settings foundation", () => {
       attributes: { supported_color_modes: ["brightness"] },
     })).toBe(false);
   });
+});
+
+it("keeps Home and explicit ordering in the main bar", () => {
+  expect(normalizeMobileMainBarItems(["home", "library", "actions"], {
+    usesVisualSettings: true,
+    fallbackItems: ["actions", "players", "library"],
+  })).toEqual(["home", "library", "actions"]);
+  expect(normalizeMobileMainBarSlots({
+    mobile_main_bar_item_1: "home",
+    mobile_main_bar_item_2: "actions",
+  }, ["actions", "home", "library"])).toEqual(["home", "actions", "library"]);
 });

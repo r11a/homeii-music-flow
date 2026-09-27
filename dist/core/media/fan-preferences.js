@@ -70,18 +70,37 @@ export function openFanCatalogue(card, host, context, getActions, dispatch, onSa
     card._setCompactExpanded(true);
     host = card.shadowRoot.querySelector(".card");
   }
-  host.querySelector(":scope > .fan-catalogue")?.remove();
+  const previousPanel = host.querySelector(":scope > .fan-catalogue");
+  if (previousPanel?._closeCatalogue) previousPanel._closeCatalogue();
+  else previousPanel?.remove();
+  const origin = card.shadowRoot?.activeElement || document.activeElement;
   const panel = document.createElement("section");
   panel.className = "screen-all-actions fan-catalogue";
   panel.setAttribute("role", "dialog");
+  panel.setAttribute("aria-modal", "true");
   panel.setAttribute("aria-label", card._m("All actions", "כל האפשרויות"));
   let editing = false, draft = null, dragged = null, rendered = "", scope = "device", saving = false;
   const esc = value => card._esc(value);
   const label = (en,he) => esc(card._m(en,he));
   const close = () => {
+    for (const [element, wasInert] of background) element.inert = wasInert;
     panel.remove();
     if (restoreCompact) card._setCompactExpanded(false);
+    const target = origin?.isConnected && !origin.closest?.("[hidden]") ? origin : host.querySelector("[data-screen-wheel],#immersiveActionsToggle");
+    target?.focus?.({preventScroll:true});
   };
+  const background = [...host.children].filter(element => !["STYLE","SCRIPT"].includes(element.tagName)).map(element => [element, element.inert]);
+  for (const [element] of background) element.inert = true;
+  panel._closeCatalogue = close;
+  panel.addEventListener("keydown", event => {
+    if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); close(); }
+    if (event.key !== "Tab") return;
+    const controls = [...panel.querySelectorAll("button,input,select,textarea,a[href]")].filter(element => !element.disabled && !element.closest("[hidden]"));
+    const first = controls[0], last = controls.at(-1);
+    const active = panel.getRootNode().activeElement;
+    if (event.shiftKey && active === first) { event.preventDefault(); last?.focus(); }
+    else if (!event.shiftKey && active === last) { event.preventDefault(); first?.focus(); }
+  });
   const render = () => {
     const preference = draft || fanPreference(card, context);
     const ordered = orderedFanActions(getActions(), preference);
@@ -95,7 +114,7 @@ export function openFanCatalogue(card, host, context, getActions, dispatch, onSa
       return `<h3 class="fan-catalogue-category">${label(...categoryLabels[category])}</h3>`;
     };
     const focused = panel.querySelector("[data-catalogue-action]:focus")?.closest("[data-catalogue-id]")?.dataset.catalogueId;
-    const html = `<header><button data-catalogue-back aria-label="${label("Back","חזרה")}">${actionIconSvg(card,"back")}</button><h2>${label("All actions","כל האפשרויות")}</h2><button data-catalogue-edit>${editing ? label("Save","אישור") : label("Edit wheel","עריכת המניפה")}</button></header>${editing ? `<p>${label("Choose wheel shortcuts. Drag the handle to reorder, or use the arrow buttons.","בחר מה יופיע במניפה. גרור את הידית לסידור, או השתמש בכפתורי החצים.")}</p>` : ""}<div class="fan-catalogue-list">${actions.map(action => `${categoryHeading(action)}<article data-catalogue-id="${esc(action.id)}">${editing ? `<input type="checkbox" data-catalogue-check aria-label="${esc(action.label)}" ${preference.hidden?.includes(action.id) ? "" : "checked"}>` : ""}<button data-catalogue-action ${editing ? "disabled" : ""}>${actionSymbolHtml(card,action)}<span>${esc(action.label)}</span></button>${editing ? `<button draggable="true" data-catalogue-drag aria-label="${label("Drag","גרירה")}: ${esc(action.label)}">⠿</button><button data-catalogue-move="-1" aria-label="${label("Move up","העבר למעלה")}">↑</button><button data-catalogue-move="1" aria-label="${label("Move down","העבר למטה")}">↓</button>` : ""}</article>`).join("")}</div>`;
+    const html = `<header><button data-catalogue-back aria-label="${label("Back","חזרה")}">${actionIconSvg(card,"back")}</button><h2>${label("All actions","כל האפשרויות")}</h2><button data-catalogue-edit>${editing ? label("Save","אישור") : label("Edit wheel","עריכת המניפה")}</button></header>${editing ? `<p>${label("Choose wheel shortcuts. Drag the handle to reorder, or use the arrow buttons.","בחר מה יופיע במניפה. גרור את הידית לסידור, או השתמש בכפתורי החצים.")}</p>` : ""}<div class="fan-catalogue-list">${actions.map(action => `${categoryHeading(action)}<article data-catalogue-id="${esc(action.id)}">${editing ? `<input type="checkbox" data-catalogue-check aria-label="${esc(action.label)}" ${preference.hidden?.includes(action.id) ? "" : "checked"}>` : ""}<button data-catalogue-action ${editing ? "disabled" : ""}>${actionSymbolHtml(card,action)}<span>${esc(action.label)}</span></button>${editing ? `<button draggable="true" data-catalogue-drag aria-label="${label("Drag","גרירה")}: ${esc(action.label)}">${actionIconSvg(card,"grip")}</button><button data-catalogue-move="-1" aria-label="${label("Move up","העבר למעלה")}">${actionIconSvg(card,"up")}</button><button data-catalogue-move="1" aria-label="${label("Move down","העבר למטה")}">${actionIconSvg(card,"down")}</button>` : ""}</article>`).join("")}</div>`;
     if (html !== rendered) {
       panel.innerHTML = html; rendered = html;
       if (editing && card._state?.engineCapabilities?.wheel_preferences) {
@@ -173,5 +192,6 @@ export function openFanCatalogue(card, host, context, getActions, dispatch, onSa
 
   panel._refreshAvailableActions = () => { if (!editing) render(); };
   host.append(panel); render();
+  panel.querySelector("[data-catalogue-back]")?.focus({preventScroll:true});
   return panel;
 }

@@ -6,6 +6,74 @@ const { document, KeyboardEvent, MouseEvent, WheelEvent } = globalThis;
 
 afterEach(() => document.body.replaceChildren());
 
+function animatedClock() {
+  vi.useFakeTimers();
+  vi.stubGlobal("requestAnimationFrame", callback => setTimeout(() => callback(performance.now()), 16));
+  vi.stubGlobal("cancelAnimationFrame", clearTimeout);
+}
+
+it("finishes consecutive keyboard steps at the intended action and restores focus", async () => {
+  animatedClock();
+  try {
+    const {card,root,open}=fixture(); open();
+    const fan=card.$("immersiveActionFan");
+    const buttons=[...fan.querySelectorAll(".immersive-fan-actions button")];
+    fan.dispatchEvent(new KeyboardEvent("keydown",{key:"ArrowRight",bubbles:true}));
+    fan.dispatchEvent(new KeyboardEvent("keydown",{key:"ArrowRight",bubbles:true}));
+    await vi.advanceTimersByTimeAsync(300);
+    expect(root.activeElement).toBe(buttons[4]);
+    expect(buttons[4].classList.contains("fan-center")).toBe(true);
+    expect(fan.classList.contains("coasting")).toBe(false);
+    expect(card._openMobileMenu).not.toHaveBeenCalled();
+  } finally {vi.useRealTimers();vi.unstubAllGlobals();}
+});
+
+it("stops wheel animation when closed or disposed without dispatching a command", async () => {
+  animatedClock();
+  try {
+    const {card,root,open}=fixture(); open();
+    const fan=card.$("immersiveActionFan");
+    fan.dispatchEvent(new KeyboardEvent("keydown",{key:"ArrowRight",bubbles:true}));
+    expect(fan.classList.contains("coasting")).toBe(true);
+    fan.dispatchEvent(new KeyboardEvent("keydown",{key:"Escape",bubbles:true}));
+    const x=root.querySelector('[data-immersive-action="queue"]').style.getPropertyValue("--fan-x");
+    await vi.advanceTimersByTimeAsync(300);
+    expect(fan.hidden).toBe(true);
+    expect(root.activeElement).toBe(card.$("immersiveActionsToggle"));
+    expect(root.querySelector('[data-immersive-action="queue"]').style.getPropertyValue("--fan-x")).toBe(x);
+    open(); fan._disposeFan();
+    expect(card._fanDisposers.has(fan)).toBe(false);
+    expect(card._openMobileMenu).not.toHaveBeenCalled();
+  } finally {vi.useRealTimers();vi.unstubAllGlobals();}
+});
+
+it("supports vertical movement around the wheel and cancels without activating an action", () => {
+  const {card,root,open}=fixture(); open();
+  const fan=card.$("immersiveActionFan");
+  fan.getBoundingClientRect=()=>({left:0,top:0,width:360,height:228});
+  const button=root.querySelector('[data-immersive-action="queue"]');
+  const before=button.style.getPropertyValue("--fan-x");
+  fan.dispatchEvent(new MouseEvent("pointerdown",{clientX:280,clientY:60,bubbles:true}));
+  fan.dispatchEvent(new MouseEvent("pointermove",{clientX:280,clientY:110,bubbles:true,cancelable:true}));
+  expect(button.style.getPropertyValue("--fan-x")).not.toBe(before);
+  fan.dispatchEvent(new MouseEvent("pointercancel",{bubbles:true}));
+  expect(fan.classList.contains("rotating")).toBe(false);
+  expect(fan.classList.contains("coasting")).toBe(false);
+  button.click(); expect(card._openMobileMenu).not.toHaveBeenCalled();
+});
+
+it("settles immediately when reduced motion is requested", () => {
+  vi.stubGlobal("matchMedia",()=>({matches:true}));
+  const frame=vi.fn(); vi.stubGlobal("requestAnimationFrame",frame);
+  try {
+    const {card,root,open}=fixture();open();
+    root.querySelector('[data-fan-step="1"]').click();
+    expect(frame).not.toHaveBeenCalled();
+    expect(card.$("immersiveActionFan").classList.contains("coasting")).toBe(false);
+    expect(root.querySelectorAll('.fan-center')).toHaveLength(1);
+  } finally {vi.unstubAllGlobals();}
+});
+
 it("opens the player/style/play wizard from Music Flow rather than queue covers", () => {
   const {card,root,open}=fixture();open();
   root.querySelector('[data-immersive-action="music_flow"]').click();
@@ -32,6 +100,118 @@ function fixture() {
   bindImmersivePlayer(card);
   return { card, player, root: shadowRoot, open: () => card.$("immersiveActionsToggle").click() };
 }
+
+describe('pull a fan action upward', () => {
+  const pointer = (target, type, x, y) => target.dispatchEvent(new MouseEvent(type, {clientX:x, clientY:y, bubbles:true, cancelable:true}));
+  afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); });
+
+  it('dissolves before dispatching exactly the action that was pulled', async () => {
+    animatedClock();
+    const {card,root,open}=fixture(); open();
+    const fan=card.$('immersiveActionFan'), button=root.querySelector('[data-immersive-action="queue"]');
+    const x=button.style.getPropertyValue('--fan-x');
+    pointer(button,'pointerdown',80,150); pointer(fan,'pointermove',82,70);
+    expect(button.classList.contains('fan-pull-ready')).toBe(true);
+    expect(button.style.getPropertyValue('--fan-x')).toBe(x);
+    expect(card._openMobileMenu).not.toHaveBeenCalled();
+    pointer(fan,'pointerup',82,70);
+    expect(fan.classList.contains('fan-closing')).toBe(true);
+    expect(fan.hidden).toBe(false);
+    button.click();
+    await vi.advanceTimersByTimeAsync(240);
+    expect(fan.hidden).toBe(true);
+    expect(card._openMobileMenu).toHaveBeenCalledExactlyOnceWith('queue');
+    expect(fan.classList.contains('fan-pulling')).toBe(false);
+  });
+
+  it.each(['short','return','cancel'])('does not activate a %s pull', async kind => {
+    animatedClock();
+    const {card,root,open}=fixture(); open();
+    const fan=card.$('immersiveActionFan'), button=root.querySelector('[data-immersive-action="queue"]');
+    pointer(button,'pointerdown',80,150);
+    pointer(fan,'pointermove',80,kind==='short'?125:60);
+    if(kind==='return') pointer(fan,'pointermove',80,140);
+    pointer(fan,kind==='cancel'?'pointercancel':'pointerup',80,kind==='short'?125:kind==='return'?140:60);
+    button.click(); await vi.advanceTimersByTimeAsync(450);
+    expect(fan.hidden).toBe(false);
+    expect(fan.classList.contains('fan-pulling')).toBe(false);
+    expect(card._openMobileMenu).not.toHaveBeenCalled();
+  });
+
+  it('locks an arc gesture to rotation instead of selecting on its upward segment', async () => {
+    animatedClock();
+    const {card,root,open}=fixture(); open();
+    const fan=card.$('immersiveActionFan'), button=root.querySelector('[data-immersive-action="queue"]');
+    pointer(button,'pointerdown',80,150); pointer(fan,'pointermove',115,148); pointer(fan,'pointerup',140,70);
+    await vi.advanceTimersByTimeAsync(450);
+    expect(fan.hidden).toBe(false); expect(card._openMobileMenu).not.toHaveBeenCalled();
+  });
+
+  it.each(['player','unavailable','dispose','reopen'])('cancels a queued activation on %s', async change => {
+    animatedClock();
+    const {card,player,root,open}=fixture(); open();
+    const fan=card.$('immersiveActionFan'), button=root.querySelector('[data-immersive-action="queue"]');
+    pointer(button,'pointerdown',80,150); pointer(fan,'pointerup',80,60);
+    if(change==='player') card._state.selectedPlayer='another-player';
+    if(change==='unavailable') player.available=false;
+    if(change==='dispose') fan._disposeFan();
+    if(change==='reopen') open();
+    await vi.advanceTimersByTimeAsync(450);
+    expect(card._openMobileMenu).not.toHaveBeenCalled();
+    if(change==='unavailable') expect(card._toast).toHaveBeenCalled();
+  });
+
+  it('closes after a pull even for repeat, while a normal tap keeps the wheel open', async () => {
+    animatedClock();
+    const {card,root,open}=fixture(); open();
+    const fan=card.$('immersiveActionFan'), button=root.querySelector('[data-immersive-action="repeat"]');
+    pointer(button,'pointerdown',260,150); pointer(fan,'pointerup',260,60);
+    await vi.advanceTimersByTimeAsync(240);
+    expect(card._toggleRepeat).toHaveBeenCalledOnce(); expect(fan.hidden).toBe(true);
+  });
+
+  it('supports immediate activation with reduced motion and animated closing from the toggle otherwise', async () => {
+    animatedClock();
+    const {card,root,open}=fixture(); open();
+    const fan=card.$('immersiveActionFan');
+    expect(fan.classList.contains('fan-opening')).toBe(true);
+    open(); expect(fan.classList.contains('fan-closing')).toBe(true);
+    await vi.advanceTimersByTimeAsync(240); expect(fan.hidden).toBe(true);
+    vi.stubGlobal('matchMedia',()=>({matches:true})); open();
+    expect(fan.classList.contains('fan-opening')).toBe(false);
+    const button=root.querySelector('[data-immersive-action="queue"]');
+    pointer(button,'pointerdown',80,150); pointer(fan,'pointerup',80,60);
+    expect(fan.hidden).toBe(true); expect(card._openMobileMenu).toHaveBeenCalledExactlyOnceWith('queue');
+  });
+});
+
+it('crossfades only changed covers and cleans up rapid replacements', async () => {
+  const prototype=globalThis.Element.prototype, original=Object.getOwnPropertyDescriptor(prototype,'animate');
+  const motions=[];
+  Object.defineProperty(prototype,'animate',{configurable:true,value:function(){
+    let finish; const motion={cancel:vi.fn(),finished:new Promise(resolve=>{finish=resolve;}),finish:()=>finish()};
+    motions.push(motion); return motion;
+  }});
+  const host=document.createElement('div');document.body.append(host);
+  const markup=(id)=>`<div class="art-stack-container"><div class="art-stack-slide center" data-uri="library://track/${id}" data-queue-item-id="${id}"><div class="art-stack-card center"><img src="cover-${id}.jpg" data-homeii-art-src="cover-${id}.jpg"></div></div></div>`;
+  try {
+    host.innerHTML=markup(1);
+    reconcileImmersiveCovers(host,markup(1),{animate:true});expect(motions).toHaveLength(0);
+    reconcileImmersiveCovers(host,markup(2),{animate:true});expect(motions).toHaveLength(2);
+    reconcileImmersiveCovers(host,markup(2),{animate:true});expect(motions[0].cancel).not.toHaveBeenCalled();
+    expect(host.querySelector('.immersive-cover-outgoing img').getAttribute('src')).toBe('cover-1.jpg');
+    expect(host.querySelector('.immersive-cover-outgoing img').hasAttribute('data-homeii-art-src')).toBe(false);
+    reconcileImmersiveCovers(host,markup(3),{animate:true});
+    expect(motions[0].cancel).toHaveBeenCalled();expect(host.querySelectorAll('.immersive-cover-outgoing')).toHaveLength(1);
+    motions[0].finish();motions[1].finish();await Promise.resolve();await Promise.resolve();
+    expect(host.classList.contains('cover-crossfading')).toBe(true);
+    motions[2].finish();motions[3].finish();await Promise.resolve();await Promise.resolve();
+    expect(host.querySelector('.immersive-cover-outgoing')).toBeNull();expect(host.classList.contains('cover-crossfading')).toBe(false);
+    host.classList.add('performance-lite');reconcileImmersiveCovers(host,markup(4),{animate:true});expect(motions).toHaveLength(4);
+  } finally {
+    if(original) Object.defineProperty(prototype,'animate',original);else delete prototype.animate;
+  }
+});
 describe("optional immersive player", () => {
   it("shows confirmed shuffle and repeat states without closing the wheel", () => {
     const {card, player, root, open} = fixture();
@@ -110,7 +290,7 @@ describe("optional immersive player", () => {
       const command = vi.fn(async () => { throw new Error("Offline"); });
       const task = commitImmersiveSwipe(card, "next", command);
       commitImmersiveSwipe(card, "next", command);
-      await vi.advanceTimersByTimeAsync(230); await task;
+      await vi.advanceTimersByTimeAsync(340); await task;
       expect(command).toHaveBeenCalledOnce();
       expect(card._immersiveSwipePending).toBe(false);
       expect(art.hasAttribute("aria-busy")).toBe(false);
@@ -127,7 +307,7 @@ describe("optional immersive player", () => {
       card._state.selectedPlayer="computer";
       const command=vi.fn();const pending=commitImmersiveSwipe(card,"next",command);
       card._state.selectedPlayer="kitchen";
-      await vi.advanceTimersByTimeAsync(200);await pending;
+      await vi.advanceTimersByTimeAsync(340);await pending;
       expect(command).not.toHaveBeenCalled();
       expect(card._immersiveSwipePending).toBe(false);
     } finally {vi.useRealTimers();vi.unstubAllGlobals();}

@@ -72,10 +72,19 @@ jobs:
                 --latest
             fi
           fi
+          release_dir="$RUNNER_TEMP/homeii-release"
+          mkdir -p "$release_dir"
+          cp dist/homeii-music-flow.js dist/homeii-flow-icon.png dist/homeii-flow-logo-v2.png \
+            artifacts/HOMEii-Flow-Film-60s.mp4 src/core/Lucide-LICENSE.txt src/core/theme/Heebo-OFL.txt "$release_dir/"
+          (cd "$release_dir" && sha256sum homeii-music-flow.js homeii-flow-icon.png \
+            homeii-flow-logo-v2.png HOMEii-Flow-Film-60s.mp4 Lucide-LICENSE.txt Heebo-OFL.txt > SHA256SUMS.txt)
           gh release upload "$TAG_NAME" \
             dist/homeii-music-flow.js \
             dist/homeii-flow-icon.png \
             dist/homeii-flow-logo-v2.png \
             artifacts/HOMEii-Flow-Film-60s.mp4 \
+            src/core/Lucide-LICENSE.txt \
+            src/core/theme/Heebo-OFL.txt \
+            "$release_dir/SHA256SUMS.txt" \
             --repo "$GITHUB_REPOSITORY" --clobber
 

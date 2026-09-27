@@ -26,9 +26,13 @@
 
 ## 2. Create the current release
 
-- Create a Git tag named `v5.9.2` for the current stable release or `vX.Y.Z` for a later stable release.
+- Run lint, the full test suite and production build before tagging; verify committed `dist` matches a clean build.
+- Include the complete Lucide license in the single-file bundle and attach it with SHA-256 checksums.
+- Publish and verify companion Engine 1.0.2 before the card release.
+
+- Create a Git tag named `v6.0.2` for the current stable release or `vX.Y.Z` for a later stable release.
 - Create a GitHub release from that tag.
-- Title the release `HOMEii Music Flow 5.9.2` for the current stable release.
+- Title the release `HOMEii Music Flow 6.0.2` for the current stable release.
 - Use the matching section from `CHANGELOG.md` or the matching `RELEASE_NOTES_*.md` file as the release notes.
 - Tags with a prerelease suffix, such as `v5.8.2-beta.1`, should publish as GitHub pre-releases and must not be marked as Latest.
 - Do not attach a custom release zip asset for HACS. Keep the complete installable runtime in `dist/` and let HACS use the normal repository release/tag contents.
@@ -37,13 +41,13 @@
 
 - Confirm `hacs.json` still points to `homeii-music-flow.js`.
 - Confirm `dist/homeii-music-flow.js` matches the released runtime.
-- Confirm `dist/localization/` includes English, Hebrew, Spanish, French, Italian, Lithuanian, and Simplified Chinese dictionaries.
+- Confirm `dist/localization/` includes English, Hebrew, Danish, German, Spanish, French, Italian, Lithuanian, Brazilian Portuguese, and Simplified Chinese dictionaries.
 - Confirm `dist/sendspin-js/` exists for the local Sendspin browser player.
 - Confirm `dist/vendor/embla-carousel.umd.js` exists for mobile swipe support.
 - Confirm `dist/homeii-flow-logo.svg` and `docs/brand/homeii-flow-logo.svg` exist.
 - Confirm the HACS validation workflow is enabled on GitHub.
 - Confirm the README requirements section still matches the current release.
-- Confirm the README Sendspin section explains `ma_url`, `ma_token`, local network preference, and the `This device` flow.
+- Confirm the README explains Engine-owned MA credentials and the authenticated `This device` flow.
 
 ## 4. Add the repository to HACS as a custom repository
 
@@ -82,7 +86,7 @@ to:
 
 Then load:
 
-`/local/community/homeii-music-flow/homeii-music-flow.js?v=5.9.2`
+`/local/community/homeii-music-flow/homeii-music-flow.js?v=6.0.2`
 
 ## 7. Final pre-release smoke test
 

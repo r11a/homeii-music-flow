@@ -6,6 +6,10 @@ const packageVersion = JSON.parse(
   readFileSync(new URL("./package.json", import.meta.url), "utf8"),
 ).version;
 
+const lucideLicense = readFileSync(new URL("./src/core/Lucide-LICENSE.txt", import.meta.url), "utf8").replace(/\r\n?/g, "\n").replace(/[ \t]+$/gm, "");
+
+const heeboLicense = readFileSync(new URL("./src/core/theme/Heebo-OFL.txt", import.meta.url), "utf8").replace(/\r\n?/g, "\n").replace(/[ \t]+$/gm, "");
+
 export default defineConfig({
   build: {
     target: "es2020",
@@ -21,7 +25,7 @@ export default defineConfig({
     rollupOptions: {
       output: {
         inlineDynamicImports: true,
-        banner: `/*! HOMEII_CARD_VERSION = "${packageVersion}"; */`,
+        banner: `/*! HOMEII_CARD_VERSION = "${packageVersion}"; */\n/*! Lucide / Feather icon license\n${lucideLicense}\n*/\n/*! Heebo font license\n${heeboLicense}\n*/`,
       },
     },
   },

@@ -16,7 +16,7 @@ const SCREENSAVER_CONTROL_BUTTONS = ["previous", "play_pause", "next", "mute", "
 const POWER_BUTTON_ACTIONS = ["stop_player", "toggle", "turn_on", "turn_off", "scene", "script"];
 const AUXILIARY_BUTTON_ICONS = ["power", "home", "speaker", "music_note", "wand", "grid", "settings", "heart_outline", "play", "stop", "radio", "timer", "info"];
 const PLAYER_SORT_MODES = ["default", "alphabetical", "custom"];
-const MOBILE_MAIN_BAR_ITEMS = ["search", "library", "players", "actions", "settings", "theme"];
+const MOBILE_MAIN_BAR_ITEMS = ["home", "search", "library", "players", "actions", "settings", "theme"];
 const MOBILE_QUICK_ACTIONS = ["home", "search", "timer", "like", "lyrics", "queue", "queue_flow", "radio", "voice", "history", "info", "disconnect_all"];
 const MOBILE_LIBRARY_TABS = ["library_playlists", "library_artists", "library_albums", "library_tracks", "library_radio", "library_podcasts", "library_liked", "library_search"];
 const COLOR_LIGHT_MODES = ["hs", "xy", "rgb", "rgbw", "rgbww"];
@@ -262,6 +262,21 @@ export function normalizeMobileMainBarItems(items, {
   return normalized;
 }
 
+export function normalizeMobileMainBarSlots(config = {}, selectedItems = []) {
+  const allowed = new Set(MOBILE_MAIN_BAR_ITEMS);
+  const selected = normalizeStringArray(selectedItems).filter((item) => allowed.has(item));
+  const ordered = [];
+  for (let index = 1; index <= MOBILE_MAIN_BAR_ITEMS.length; index += 1) {
+    const item = String(config?.[`mobile_main_bar_item_${index}`] || "").trim();
+    if (!allowed.has(item) || !selected.includes(item) || ordered.includes(item)) continue;
+    ordered.push(item);
+  }
+  selected.forEach((item) => {
+    if (!ordered.includes(item)) ordered.push(item);
+  });
+  return ordered;
+}
+
 export function normalizeMobileLibraryTabs(tabs, fallbackTabs = []) {
   const allowed = new Set(MOBILE_LIBRARY_TABS);
   const fallback = normalizeStringArray(fallbackTabs);
@@ -356,9 +371,11 @@ export function normalizeVisualMobileState(config = {}, {
     mobileLibraryTabs: Array.isArray(config.mobile_library_tabs) && config.mobile_library_tabs.length
       ? config.mobile_library_tabs.slice()
       : normalizeStringArray(defaultLibraryTabs),
-    mobileMainBarItems: Array.isArray(config.mobile_main_bar_items) && config.mobile_main_bar_items.length
-      ? config.mobile_main_bar_items.slice()
-      : normalizeStringArray(defaultMainBarItems),
+    mobileMainBarItems: normalizeMobileMainBarSlots(config,
+      Array.isArray(config.mobile_main_bar_items) && config.mobile_main_bar_items.length
+        ? config.mobile_main_bar_items.slice()
+        : normalizeStringArray(defaultMainBarItems)),
+    showEmptyQuickShelf: config.show_empty_quick_shelf !== false,
     mobileQuickActions: normalizeMobileQuickActionSlots(config, normalizeMobileQuickActions(
       config.mobile_quick_actions,
       defaultQuickActions,

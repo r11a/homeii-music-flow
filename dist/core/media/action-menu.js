@@ -1,3 +1,4 @@
+import { interfaceIconSvg } from "../ui-icons.js";
 import { openPlaylistDestination } from "./playlist-actions.js";
 // The action hub reuses the existing navigation and command handlers.
 export function actionLabelsEnabled(card) {
@@ -12,60 +13,9 @@ export function actionSymbolHtml(card, action) {
   return action.svg || actionIconSvg(card, action.icon);
 }
 
-// One optical weight for navigation and media actions; existing icons remain the fallback.
+// Main player, screen actions and wheels share one local icon registry.
 export function actionIconSvg(card, name) {
-  const paths = {
-    clock: '<circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/>',
-    moon: '<path d="M20 15.5A9 9 0 0 1 8.5 4 9 9 0 1 0 20 15.5Z"/>',
-    lightbulb: '<path d="M8 15c-1-1-2-3-2-5a6 6 0 0 1 12 0c0 2-1 4-2 5l-1 2H9l-1-2Zm2 5h4m-3 2h2"/>',
-    repeat_one: '<path d="M4 10V8a3 3 0 0 1 3-3h13m-3-3 3 3-3 3M20 14v2a3 3 0 0 1-3 3H4m3-3-3 3 3 3m4-11 2-1v7"/>',
-    karaoke: '<path d="m14 10-8 10H3v-3l10-8M12 6l6 6"/><circle cx="16" cy="6" r="4"/>',
-    home: '<path d="m3 10 9-7 9 7M5 9v12h5v-7h4v7h5V9"/>',
-    studio: '<rect x="2" y="3" width="20" height="18" rx="3"/><path d="M7 7v10M12 7v10M17 7v10M5 10h4m1 4h4m1-5h4"/>',
-    library: '<path d="M4 4v16M9 4v16M14 4v16m4-16 3 16"/>',
-    playlist: '<path d="M3 5h12M3 10h12M3 15h7M18 9v9"/><ellipse cx="15.5" cy="18" rx="2.5" ry="2"/>',
-    playlist_add: '<path d="M3 4h12M3 9h12M3 14h7M17 13v8m-4-4h8"/><path d="M3 19h5"/>',
-    info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7h.01"/>',
-    album: '<rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
-    artist: '<circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/>',
-    music_note: '<path d="M10 18V5l10-2v13M10 9l10-2"/><ellipse cx="7" cy="18" rx="3" ry="2"/><ellipse cx="17" cy="16" rx="3" ry="2"/>',
-    history: '<path d="M3 4v5h5M3 9a9 9 0 1 1 1 9M12 7v5l3 2"/>',
-    repeat: '<path d="M4 10V8a3 3 0 0 1 3-3h13m-3-3 3 3-3 3M20 14v2a3 3 0 0 1-3 3H4m3-3-3 3 3 3"/>',
-    copy: '<rect x="8" y="8" width="12" height="13" rx="2"/><path d="M16 8V3H3v13h5"/>',
-    refresh: '<path d="M20 7v5h-5M4 17v-5h5M5 8a8 8 0 0 1 13-3l2 3M4 16l2 3a8 8 0 0 0 13-3"/>',
-    group_add: '<rect x="3" y="4" width="9" height="16" rx="2"/><circle cx="7.5" cy="15" r="2"/><path d="M7 8h1M18 8v8m-4-4h8"/>',
-    group_remove: '<rect x="3" y="4" width="9" height="16" rx="2"/><circle cx="7.5" cy="15" r="2"/><path d="M7 8h1m6 4h8"/>',
-    schedule_add: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4m10-4v4M3 10h18m-9 3v5m-3-2.5h6"/>',
-    minimize: '<path d="m21 3-7 7m0-6v6h6M3 21l7-7m-6 0h6v6"/>',
-    maximize: '<path d="M14 3h7v7m0-7-7 7M10 21H3v-7m0 7 7-7"/>',
-    back: '<path d="m14 5-7 7 7 7"/>',
-    fan: '<path d="M12 21 2 11a14 14 0 0 1 20 0L12 21ZM12 21V7m0 14L7 8m5 13 5-13"/>',
-    shuffle: '<path d="M3 6h3c5 0 7 12 12 12h3M3 18h3c5 0 7-12 12-12h3M18 3l3 3-3 3M18 15l3 3-3 3"/>',
-    library_add: '<path d="M4 3v18M9 3v18M14 3v8M18 14v8m-4-4h8"/>',
-    crossfade: '<path d="M3 5h3c6 0 6 14 12 14h3M3 19h3c6 0 6-14 12-14h3"/><path d="M3 9v6m18-6v6" opacity=".5"/>',
-    lyrics: '<path d="M5 4h14v16H5Z M8 8h8M8 12h8M8 16h5"/>',
-    search: '<circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/>',
-    compass: '<circle cx="12" cy="12" r="9"/><path d="m16 8-2.5 5.5L8 16l2.5-5.5Z"/>',
-    heart_filled: '<path d="M12 20S3 14.7 3 8.5a4.5 4.5 0 0 1 9-1 4.5 4.5 0 0 1 9 1C21 14.7 12 20 12 20Z" fill="currentColor" stroke="none"/>',
-    heart_outline: '<path d="M12 20S3 14.7 3 8.5a4.5 4.5 0 0 1 9-1 4.5 4.5 0 0 1 9 1C21 14.7 12 20 12 20Z"/>',
-    wand: '<path d="M3 15c4 0 4-6 8-6s4 6 10 6M3 9c4 0 4 6 8 6s4-6 10-6"/><circle cx="12" cy="12" r="9"/>',
-    speaker: '<rect x="6" y="2" width="12" height="20" rx="3"/><circle cx="12" cy="15" r="3.5"/><circle cx="12" cy="7" r="1"/>',
-    volume: '<path d="M4 9h4l5-4v14l-5-4H4zM17 8a6 6 0 0 1 0 8M20 5a10 10 0 0 1 0 14"/>',
-    speaker_group: '<rect x="8" y="3" width="8" height="18" rx="2"/><circle cx="12" cy="15" r="2"/><path d="M11 7h2M4 6H2v12h2M20 6h2v12h-2"/>',
-    queue: '<path d="M4 5h16M4 10h16M4 15h7M4 20h7"/><path d="m16 14 5 3-5 3Z"/>',
-    queue_transfer: '<path d="M3 4h12M3 8h9M3 12h6M8 17h13m-4-4 4 4-4 4"/><rect x="2" y="16" width="3" height="5" rx="1"/>',
-    timer: '<circle cx="12" cy="13" r="8"/><path d="M9 2h6M12 9v5l3 2M18 5l2-2"/>',
-    announcement: '<path d="M4 9h4l8-5v16l-8-5H4Z M8 15l1 5H6l-1-5M20 8a7 7 0 0 1 0 8"/>',
-    settings: '<path d="M4 6h16M4 12h16M4 18h16"/><circle cx="8" cy="6" r="2" fill="var(--homeii-surface,#18191c)"/><circle cx="16" cy="12" r="2" fill="var(--homeii-surface,#18191c)"/><circle cx="10" cy="18" r="2" fill="var(--homeii-surface,#18191c)"/>',
-    this_device: '<rect x="3" y="3" width="18" height="13" rx="2"/><path d="M8 21h8M12 16v5m-2-14 5 3-5 3Z"/>',
-    play: '<path d="m8 5 11 7-11 7Z" fill="currentColor" stroke="none"/>',
-    queue_next: '<path d="m4 6 9 6-9 6Z M17 6v12M21 9v6"/>',
-    queue_add: '<path d="M3 5h15M3 10h10M3 15h7M17 13v8M13 17h8"/>',
-    radio: '<rect x="3" y="7" width="18" height="14" rx="3"/><path d="m5 7 13-5M14 12h4M14 16h4"/><circle cx="8" cy="14" r="2.5"/>',
-    close: '<path d="m6 6 12 12M18 6 6 18"/>',
-    trash: '<path d="M4 6h16M9 6V3h6v3M6 6l1 15h10l1-15M10 10v7M14 10v7"/>',
-  };
-  return paths[name] ? `<svg class="ui-ic" data-icon="${name}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name]}</svg>` : card._iconSvg(name);
+  return interfaceIconSvg(name) || card._iconSvg(name);
 }
 
 export function contextActionHtml(card, attribute, action, icon, label, className = "queue-action-item") {

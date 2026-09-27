@@ -4,6 +4,18 @@ import {orderedFanActions,openFanCatalogue,preferredFanPages,fanActionCategory} 
 const {document,localStorage,Event} = globalThis;
 afterEach(()=>{document.body.replaceChildren();localStorage.clear();});
 const actions=[{id:"a",label:"Alpha",icon:"play"},{id:"b",label:"Beta",icon:"stop"}];
+it("keeps catalogue focus inside its dialog and restores the background on Escape",()=>{
+ const {host,card}=setup();
+ const trigger=document.createElement("button");trigger.textContent="Actions";host.append(trigger);trigger.focus();
+ const panel=openFanCatalogue(card,host,"main",()=>actions,vi.fn());
+ expect(panel.getAttribute("aria-modal")).toBe("true");expect(trigger.inert).toBe(true);
+ const first=panel.querySelector('[data-catalogue-back]');
+ expect(document.activeElement).toBe(first);
+ first.dispatchEvent(new globalThis.KeyboardEvent("keydown",{key:"Tab",shiftKey:true,bubbles:true,cancelable:true}));
+ expect(document.activeElement).toBe([...panel.querySelectorAll("button")].at(-1));
+ panel.dispatchEvent(new globalThis.KeyboardEvent("keydown",{key:"Escape",bubbles:true}));
+ expect(panel.isConnected).toBe(false);expect(trigger.inert).not.toBe(true);expect(document.activeElement).toBe(trigger);
+});
 function setup(){const host=document.createElement("div");document.body.append(host);const card={_lsKey:()=>"test-wheel",_m:a=>a,_esc:String,_iconSvg:()=>"<svg></svg>",_toastError:vi.fn(),_mediaControlFailureMessage:e=>e.message};return {host,card};}
 it("hides only wheel shortcuts, keeps new capabilities and restores returning actions in order",()=>{
  const preference={hidden:["a"],order:["b","a"]};

@@ -1,3 +1,4 @@
+import { interfaceIconSvg } from "../core/ui-icons.js";
 import * as HomeiiEngineFoundation from "../core/engine-client.js";
 import { ensureInterfaceFont, interfaceStyles } from "../core/theme/interface.js";
 
@@ -768,16 +769,7 @@ return class HomeiiBaseMusicEditor extends HTMLElement {
               title="${this._esc(this._editorSponsorTitle())}"
               aria-label="${this._esc(this._editorSponsorTitle())}"
             >
-              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                <path
-                  d="M20.8 4.6c-1.8-1.7-4.7-1.6-6.4.2L12 7.3 9.6 4.8C7.9 3 5 2.9 3.2 4.6 1.2 6.5 1.1 9.6 3 11.6l8.2 8.5c.4.4 1.1.4 1.5 0l8.2-8.5c2-2 1.9-5.1-.1-7Z"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.8"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                ></path>
-              </svg>
+              ${interfaceIconSvg("heart_outline")}
             </a>
             <button class="editor-diagnostics" type="button" title="Run and copy diagnostics report" aria-label="Run and copy diagnostics report">Diagnostics</button>
             <div class="editor-version">v${HOMEII_CARD_VERSION}</div>
@@ -1243,10 +1235,10 @@ return class HomeiiBaseMusicEditor extends HTMLElement {
     const pinnedOptions = this._editorPinnedPlayerOptions();
     const colorLightOptions = this._editorColorLightOptions();
     const immersive = (this._config?.player_design || "immersive") === "immersive";
-    const classicOnly = new Set(["mobile_footer_mode", "mobile_main_bar_items", "mobile_quick_actions", "mobile_cover_flow", "mobile_show_up_next", "mobile_volume_mode"]);
+    const classicOnly = new Set(["mobile_footer_mode", "mobile_cover_flow", "mobile_show_up_next", "mobile_volume_mode"]);
     const immersiveOnly = new Set(["volume_wheel", "fan_theme"]);
     const cloneItem = (item) => {
-      if (immersive && (classicOnly.has(item?.name) || /^mobile_quick_action_\d+$/.test(item?.name || ""))) return null;
+      if (immersive && classicOnly.has(item?.name)) return null;
       if (!immersive && immersiveOnly.has(item?.name)) return null;
       if (!item || typeof item !== "object") return item;
       if (item.name === "ambient_light_player_map") return this._ambientLightPlayerPairSchema();

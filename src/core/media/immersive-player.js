@@ -5,12 +5,19 @@ import { isPlayerAvailable } from "../state/players.js";
 
 export const immersivePlayerEnabled = (card) => (card._state?.mobilePlayerDesign ?? card._config?.player_design ?? "immersive") === "immersive";
 
-export function reconcileImmersiveCovers(host, html) {
+export function reconcileImmersiveCovers(host, html, { animate = false } = {}) {
   const template = document.createElement("template");
   template.innerHTML = html;
   const container = host.querySelector(".art-stack-container");
   const nextContainer = template.content.querySelector(".art-stack-container");
-  if (!container || !nextContainer) { host.innerHTML = html; return; }
+  if (!container || !nextContainer) { host._cancelCoverTransition?.(); host.innerHTML = html; return; }
+  const oldCard = container.querySelector('.art-stack-slide.center .art-stack-card');
+  const oldImage = oldCard?.querySelector('img');
+  const nextImage = nextContainer.querySelector('.art-stack-slide.center img');
+  if (!animate || oldImage?.getAttribute('src') !== nextImage?.getAttribute('src')) host._cancelCoverTransition?.();
+  const reduced = globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches || host.closest('.performance-lite');
+  const outgoing = animate && !reduced && oldImage?.getAttribute('src') && nextImage?.getAttribute('src')
+    && oldImage.getAttribute('src') !== nextImage.getAttribute('src') ? oldCard.cloneNode(true) : null;
   const key = (slide) => slide.dataset.queueItemId || `${slide.dataset.uri || ""}:${slide.dataset.sortIndex || ""}`;
   const previous = new Map([...container.children].map((slide) => [key(slide), slide]));
   const slides = [...nextContainer.children].map((next) => {
@@ -28,6 +35,7 @@ export function reconcileImmersiveCovers(host, html) {
       if (value === null) oldImage.removeAttribute(attribute);
       else oldImage.setAttribute(attribute, value);
     }
+    Object.assign(oldImage.dataset, newImage.dataset);
     existing.querySelector(".art-stack-card").className = next.querySelector(".art-stack-card").className;
     return existing;
   });
@@ -35,12 +43,36 @@ export function reconcileImmersiveCovers(host, html) {
   if (children.length !== slides.length || slides.some((slide, index) => children[index] !== slide)) {
     container.replaceChildren(...slides);
   }
+  const incoming = container.querySelector('.art-stack-slide.center .art-stack-card');
+  if (!outgoing || !host.isConnected || !incoming?.animate) return;
+  outgoing.className = 'immersive-cover-outgoing';
+  outgoing.setAttribute('aria-hidden', 'true');
+  // Freeze the outgoing image; only the live cover participates in hydration.
+  outgoing.querySelectorAll('img').forEach(img => {
+    for (const name of Object.keys(img.dataset)) delete img.dataset[name];
+  });
+  host.append(outgoing);
+  host.classList.add('cover-crossfading');
+  const timing = {duration:360, easing:'cubic-bezier(.2,.7,.2,1)'};
+  const motions = [
+    incoming.animate([{opacity:.4, scale:'1.025'}, {opacity:1, scale:'1'}], timing),
+    outgoing.animate([{opacity:1, scale:'1', filter:'blur(0px)'}, {opacity:0, scale:'.975', filter:'blur(3px)'}], timing),
+  ];
+  const cleanup = () => {
+    motions.forEach(motion => motion.cancel()); outgoing.remove();
+    if (host._cancelCoverTransition === cleanup) {
+      host.classList.remove('cover-crossfading'); host._cancelCoverTransition = null;
+    }
+  };
+  host._cancelCoverTransition = cleanup;
+  Promise.all(motions.map(motion => motion.finished)).then(cleanup, cleanup);
 }
 
 export function commitImmersiveSwipe(card, direction, applyChange) {
   if (card._immersiveSwipePending) return;
   const art = card.$("npArt");
   if (!art) return applyChange?.();
+  art._cancelCoverTransition?.();
   const playerId = card._state.selectedPlayer;
   const queueId = card._state.maQueueState?.queue_id;
   card._immersiveSwipePending = true;
@@ -50,7 +82,8 @@ export function commitImmersiveSwipe(card, direction, applyChange) {
   const width = (art.clientWidth || 280) + 12;
   card._setArtDragOffset(direction === "next" ? -width : width);
   // Settle the outgoing cover before changing its identity; never slide the new cover out.
-  return new Promise((resolve) => setTimeout(resolve, card._performanceModeEnabled?.() ? 0 : 160)).then(() => {
+  const reduced = card._performanceModeEnabled?.() || globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+  return new Promise((resolve) => setTimeout(resolve, reduced ? 0 : 300)).then(() => {
     if (card.$("npArt") !== art || card._state.selectedPlayer !== playerId || card._state.maQueueState?.queue_id !== queueId) return;
     art.classList.add("resetting");
     card._immersiveSwipeApplying = true;
@@ -165,7 +198,7 @@ export function immersivePlayerDock(card, edgeHtml = "") {
       </div>
     </div>
     <div class="immersive-library-shortcuts">${homeButton}<button type="button" data-mainbar-action="library" aria-label="${label("Library", "ספרייה")}" title="${label("Library", "ספרייה")}">${actionIconSvg(card, "library")}</button><button type="button" data-immersive-search aria-label="${label("Quick search", "חיפוש מהיר")}" title="${label("Quick search", "חיפוש מהיר")}">${actionIconSvg(card, "search")}</button></div>
-    <button type="button" id="immersiveActionsToggle" aria-expanded="false" aria-controls="immersiveActionFan" aria-label="${label("Actions", "פעולות")}" title="${label("Actions", "פעולות")}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20 2.5 10.5a13.4 13.4 0 0 1 19 0L12 20Z"/><path d="m12 20-5-12.5M12 20V6.6M12 20l5-12.5"/></svg></button>
+    <button type="button" id="immersiveActionsToggle" aria-expanded="false" aria-controls="immersiveActionFan" aria-label="${label("Actions", "פעולות")}" title="${label("Actions", "פעולות")}">${actionIconSvg(card,"fan")}</button>
     ${immersivePlayerChoice(card)}
     ${edgeHtml}
   </div>`;
@@ -184,6 +217,9 @@ export function bindImmersivePlayer(card, options = {}) {
   const toggle = options.toggle || card.$("immersiveActionsToggle");
   const fan = options.fan || card.$("immersiveActionFan");
   if (!toggle || !fan) return;
+  fan.querySelectorAll("[data-fan-step]").forEach(button => {
+    button.innerHTML = actionIconSvg(card, Number(button.dataset.fanStep) < 0 ? "back" : "forward");
+  });
   if (!options.fan) card.shadowRoot.querySelector("[data-immersive-search]")?.addEventListener("click", () => card._openMobileMenu("quick_search"));
   if (!options.fan) card.shadowRoot.querySelector(".card")?.classList.add("player-design-immersive");
   const allPages = () => options.pages ? options.pages() : immersiveActionPages(card);
@@ -195,8 +231,8 @@ export function bindImmersivePlayer(card, options = {}) {
     fan.parentElement.append(picker);
     const pickerToggle = document.createElement("button");
     bindImmersivePlayer(card,{fan:picker,toggle:pickerToggle,context:()=>"player_picker",pages:()=>[ [...playerWheelActions(card), {id:"group",icon:"speaker_group",label:card._m("Group","קבוצה")}] ],onAction:id=>id === "group" ? card._openMobileMenu("group") : card._selectPlayer(id.slice("control:players:".length),true)});
-    card._openPlayerFan = () => { fan.hidden = true; toggle.setAttribute("aria-expanded","false"); pickerToggle.click(); };
-    picker.querySelector("[data-player-screen]").onclick = event => { event.stopPropagation(); picker.hidden = true; card._openMobileMenu("players"); };
+    card._openPlayerFan = () => { fan._closeFan?.(); pickerToggle.click(); };
+    picker.querySelector("[data-player-screen]").onclick = event => { event.stopPropagation(); picker._closeFan?.(); card._openMobileMenu("players"); };
   }
 
   const progress = options.fan ? null : card.$("progressBar");
@@ -241,26 +277,61 @@ export function bindImmersivePlayer(card, options = {}) {
   let suppressClickUntil = 0;
   let wheelPosition = 2;
   let pointerStart;
+  let wheelFrame = 0, settleTimer = 0, closeTimer = 0, openTimer = 0;
+  let wheelTarget = null;
+  let wheelButtons = [];
+  let wheelGeometry;
+  const reduceMotion = () => globalThis.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches || fan.closest(".performance-lite");
+  const finishOpening = () => { clearTimeout(openTimer); fan.classList.remove('fan-opening'); };
+  const clearPull = () => {
+    fan.classList.remove('fan-pulling'); fan.style.removeProperty('--fan-pull-progress');
+    wheelButtons.forEach(button => { button.classList.remove('fan-pull-item', 'fan-pull-ready'); button.style.removeProperty('--fan-pull-y'); });
+  };
+  const stopMotion = () => {
+    if (wheelFrame) globalThis.cancelAnimationFrame?.(wheelFrame);
+    clearTimeout(settleTimer);
+    wheelFrame = 0; wheelTarget = null;
+    fan.classList.remove("coasting");
+  };
   const updateWheelStatus = () => {
     const items = pages.flat();
     if (!items.length) { fan.querySelector(".immersive-page-status").textContent = card._m("Edit wheel", "עריכת המניפה"); return; }
     const index = ((Math.round(wheelPosition) % items.length) + items.length) % items.length;
     const mixed = items.some(item => item.player) && items.some(item => !item.player);
     const category = mixed ? (items[index]?.player ? card._m("Players", "נגנים") : card._m("Actions", "פעולות")) : "";
-    fan.querySelector(".immersive-page-status").textContent = `${category ? `${category} · ` : ""}${index + 1} / ${items.length}`;
+    const status = fan.querySelector(".immersive-page-status");
+    status.setAttribute("aria-live", pointerStart?.moved || wheelTarget !== null ? "off" : "polite");
+    status.textContent = `${category ? `${category} · ` : ""}${items[index]?.label || ""}`;
+    status.dataset.position = `${index + 1} / ${items.length}`;
+    status.setAttribute("aria-label", `${status.textContent}, ${index + 1} / ${items.length}`);
   };
   const positionWheel = (position) => {
-    const buttons = [...fan.querySelectorAll(".immersive-fan-actions button")];
+    const buttons = wheelButtons;
     const count = buttons.length;
+    const width = fan.clientWidth || 360;
+    const compact = card._isCompactTileMode?.() === true;
+    const narrow = compact || width < 312;
+    const size = narrow ? 54 : Math.max(44, Math.min(60, Math.floor((width - 32) / 6.4)));
+    const radius = Math.max(72, (width - size - 24) / 2);
+    wheelGeometry = { radius, rise:compact ? 48 : 98, top:compact ? 12 : 22, size, angleStep:Math.PI / (narrow ? 3.5 : 6) };
+    fan.style.setProperty("--fan-item-size", `${size}px`);
+    fan.style.setProperty('--fan-origin-x', `${width / 2}px`);
+    fan.style.setProperty('--fan-origin-y', `${compact ? 106 : 174}px`);
+    fan.classList.toggle("fan-narrow", narrow);
     buttons.forEach((button, index) => {
       const distance = (((index - position + count / 2) % count + count) % count) - count / 2;
-      const angle = distance * Math.PI / 5;
-      const compact = card._isCompactTileMode?.() === true;
-      const visible = Math.abs(distance) < (compact ? 1.65 : 2.65);
-      button.style.setProperty("--fan-x", `${50 + 43 * Math.sin(angle)}%`);
-      button.style.setProperty("--fan-y", `${compact ? 58 - 48 * Math.cos(angle) : 112 - 100 * Math.cos(angle)}px`);
-      button.style.opacity = visible ? String(Math.min(1, (2.65 - Math.abs(distance)) * 3)) : "0";
+      const angle = distance * Math.PI / (narrow ? 3.5 : 6);
+      const limit = narrow ? 1.6 : 2.55;
+      const visible = Math.abs(distance) < limit;
+      button.style.setProperty("--fan-x", `${width / 2 + radius * Math.sin(angle)}px`);
+      button.style.setProperty("--fan-y", `${(compact ? 12 : 22) + (compact ? 48 : 98) * (1 - Math.cos(angle))}px`);
+      button.style.setProperty("--fan-depth", String(1 - Math.min(Math.abs(distance), 2.5) * .025));
+      button.style.setProperty('--fan-angle', `${angle}rad`);
+      button.style.setProperty('--fan-delay', `${Math.max(0, Math.min(4, distance + 2)) * 22}ms`);
+      button.style.opacity = visible ? String(Math.min(1, (limit - Math.abs(distance)) * 3)) : "0";
       button.style.visibility = visible ? "visible" : "hidden";
+      button.classList.toggle("fan-center", Math.abs(distance) < .5);
+      button.setAttribute("aria-hidden", String(!visible));
       button.tabIndex = visible ? 0 : -1;
     });
   };
@@ -273,30 +344,62 @@ export function bindImmersivePlayer(card, options = {}) {
     if (Math.round(wheelPosition) !== before) { try { globalThis.navigator?.vibrate?.(8); } catch {} }
     updateWheelStatus();
   };
+  const settleWheel = (target = Math.round(wheelPosition), focus = false) => {
+    stopMotion();
+    const count = pages.flat().length;
+    if (!count) return;
+    const start = wheelPosition;
+    const finish = () => {
+      wheelPosition = ((target % count) + count) % count;
+      wheelFrame = 0; wheelTarget = null;
+      fan.classList.remove("coasting");
+      positionWheel(wheelPosition); updateWheelStatus();
+      if (focus) wheelButtons[Math.round(wheelPosition)]?.focus({preventScroll:true});
+      fan._refreshAvailableActions?.();
+    };
+    if (reduceMotion() || !globalThis.requestAnimationFrame || Math.abs(target - start) < .001) { finish(); return; }
+    wheelTarget = target;
+    fan.classList.add("coasting");
+    const started = performance.now();
+    const tick = (now) => {
+      if (fan.hidden || !fan.isConnected) { stopMotion(); return; }
+      if (reduceMotion()) { finish(); return; }
+      const progress = Math.min(1, (now - started) / 240);
+      wheelPosition = start + (target - start) * (1 - Math.pow(1 - progress, 3));
+      positionWheel(wheelPosition); updateWheelStatus();
+      if (progress < 1) wheelFrame = requestAnimationFrame(tick);
+      else finish();
+    };
+    wheelFrame = requestAnimationFrame(tick);
+  };
   const renderPage = (focus = false) => {
     fan.style.setProperty("--fan-count", String((pages[page] || []).length));
     fan.querySelector(".immersive-fan-actions").innerHTML = pages.flat().map((item) => `<button type="button" data-immersive-action="${card._esc(item.id)}" ${typeof item.selected === "boolean" ? `aria-pressed="${item.selected}"` : ""} aria-label="${card._esc(item.label)}" title="${card._esc(item.label)}">${actionSymbolHtml(card,item)}${!item.genre && (item.player || item.artwork || actionLabelsEnabled(card)) ? `<span>${card._esc(item.label)}</span>` : ""}</button>`).join("");
+    wheelButtons = [...fan.querySelectorAll(".immersive-fan-actions button")];
     wheelPosition = pages.slice(0, page).flat().length + Math.min(2, Math.floor((pages[page]?.length || 0) / 2));
     positionWheel(wheelPosition);
     updateWheelStatus();
     fan.querySelectorAll("[data-fan-step]").forEach((button) => { button.disabled = pages.flat().length < 2; });
-    if (focus) fan.querySelector(".immersive-fan-actions button")?.focus({ preventScroll: true });
+    if (focus) wheelButtons[Math.round(wheelPosition)]?.focus({ preventScroll: true });
   };
   const step = (direction, focus = false) => {
-    rotateWheel(direction);
-    if (focus) {
-      const buttons = [...fan.querySelectorAll(".immersive-fan-actions button")];
-      const index = ((Math.round(wheelPosition) % buttons.length) + buttons.length) % buttons.length;
-      buttons[index]?.focus({ preventScroll:true });
-    }
+    finishOpening();
+    settleWheel(Math.round(wheelTarget ?? wheelPosition) + direction, focus);
   };
-  const close = (restoreFocus = false) => {
-    fan.hidden = true;
+  const close = (restoreFocus = false, animate = false, afterClose) => {
+    stopMotion(); clearTimeout(closeTimer); pointerStart = null;
+    finishOpening();
+    fan.classList.remove("rotating");
     toggle.setAttribute("aria-expanded", "false");
+    const finish = () => { fan.hidden = true; fan.classList.remove("fan-closing"); fan.inert = false; clearPull(); afterClose?.(); };
+    if (animate && !reduceMotion() && !fan.hidden) {
+      fan.inert = true; fan.classList.add("fan-closing"); closeTimer = setTimeout(finish, 220);
+    } else finish();
     if (restoreFocus) toggle.focus({ preventScroll: true });
   };
+  fan._closeFan = close;
   fan._refreshAvailableActions = () => {
-    if (fan.hidden || pointerStart) return;
+    if (fan.hidden || pointerStart || wheelTarget !== null || fan.classList.contains("fan-closing")) return;
     const next = getPages();
     const signature = entries => JSON.stringify(entries.flat().map(({id,label,icon,image,selected,value}) => [id,label,icon,image,selected,value]));
     if (signature(next) === signature(pages)) return;
@@ -314,10 +417,13 @@ export function bindImmersivePlayer(card, options = {}) {
     }
   };
   toggle.addEventListener("click", (event) => {
-    if (fan.hidden) fan.parentElement?.querySelectorAll(".immersive-fan").forEach(other=>{if(other !== fan) other.hidden=true;});
-    fan.hidden = !fan.hidden;
-    toggle.setAttribute("aria-expanded", String(!fan.hidden));
-    if (!fan.hidden) { pages = getPages(); page = 0; renderPage(event.detail === 0); }
+    if (!fan.hidden && !fan.classList.contains("fan-closing")) { close(false, true); return; }
+    clearTimeout(closeTimer); fan.classList.remove("fan-closing"); fan.inert = false;
+    clearPull(); finishOpening();
+    fan.parentElement?.querySelectorAll(".immersive-fan").forEach(other=>{if(other !== fan) { if (other._closeFan) other._closeFan(); else other.hidden=true; }});
+    fan.hidden = false; toggle.setAttribute("aria-expanded", "true");
+    pages = getPages(); page = 0; renderPage(event.detail === 0);
+    if (!reduceMotion()) { fan.classList.add('fan-opening'); openTimer = setTimeout(finishOpening, 430); }
   });
   (options.fan ? fan.parentElement : card.shadowRoot.querySelector(".card"))?.addEventListener("click", (event) => {
     if (!event.target.closest(".immersive-dock")) close();
@@ -330,16 +436,24 @@ export function bindImmersivePlayer(card, options = {}) {
     }
   });
   fan.addEventListener("wheel", (event) => {
-    if (fan.hidden || event.ctrlKey) return;
+    if (fan.hidden || event.ctrlKey || pointerStart || fan.classList.contains('fan-closing')) return;
     event.preventDefault(); event.stopPropagation();
+    stopMotion(); finishOpening();
     const delta = (Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY) * (event.deltaMode === 1 ? 16 : 1);
     rotateWheel(delta / 90);
+    settleTimer = setTimeout(() => { if (!fan.hidden && fan.isConnected) settleWheel(); }, 90);
     suppressClickUntil = Date.now() + 300;
   }, { passive: false });
-  const resetWheel = () => {
+  const resetWheel = (cancelled = false) => {
+    const pointer = pointerStart;
     pointerStart = null; fan.classList.remove("rotating");
-    wheelPosition = Math.round(wheelPosition); positionWheel(wheelPosition);
-    fan._refreshAvailableActions();
+    clearPull();
+    const velocity = !cancelled && pointer?.moved && performance.now() - pointer.time < 90 ? pointer.velocity : 0;
+    const travel = reduceMotion() ? 0 : Math.max(-1.25, Math.min(1.25, (velocity || 0) * 85));
+    if (cancelled) {
+      stopMotion(); wheelPosition = Math.round(wheelPosition); positionWheel(wheelPosition); updateWheelStatus();
+      fan._refreshAvailableActions();
+    } else settleWheel(Math.round(wheelPosition + travel));
   };
   // Contain native touch events too: dashboard swipe navigation listens to them.
   for (const type of ["touchstart", "touchmove", "touchend", "touchcancel"]) {
@@ -347,37 +461,80 @@ export function bindImmersivePlayer(card, options = {}) {
   }
   fan.addEventListener("pointerdown", (event) => {
     event.stopPropagation();
-    if (event.isPrimary === false || event.button > 0 || event.target.closest(".immersive-fan-navigation")) return;
-    pointerStart = { x: event.clientX, lastX: event.clientX, id: event.pointerId, moved: false };
+    if (fan.hidden || fan.classList.contains('fan-closing') || pointerStart || event.isPrimary === false || event.button > 0 || event.target.closest(".immersive-fan-navigation")) return;
+    stopMotion(); finishOpening();
+    const rect = fan.getBoundingClientRect();
+    const angleAt = rect.width && wheelGeometry ? (x,y) => Math.atan2((x - rect.left - rect.width / 2) / wheelGeometry.radius, (rect.top + wheelGeometry.top + wheelGeometry.rise + 33 - y) / wheelGeometry.rise) : null;
+    const button = event.target.closest('.immersive-fan-actions [data-immersive-action]');
+    pointerStart = { x:event.clientX, y:event.clientY, lastX:event.clientX, id:event.pointerId, moved:false, time:performance.now(), velocity:0, angleAt, angle:angleAt?.(event.clientX,event.clientY), button:button?.disabled ? null : button, player:card._state.selectedPlayer, mode:null, pull:0 };
   });
   const moveWheel = (event) => {
     if (!pointerStart || pointerStart.id !== event.pointerId) return;
-    if (!pointerStart.moved && Math.abs(event.clientX - pointerStart.x) < 6) return;
+    const dx = event.clientX - pointerStart.x, dy = event.clientY - pointerStart.y;
+    if (!pointerStart.moved && Math.hypot(dx, dy) < 10) return;
     event.preventDefault(); event.stopPropagation();
     if (!pointerStart.moved) {
       try { fan.setPointerCapture(event.pointerId); } catch {}
     }
-    pointerStart.moved = true; fan.classList.add("rotating");
-    rotateWheel((pointerStart.lastX - event.clientX) / 65);
-    pointerStart.lastX = event.clientX;
+    pointerStart.moved = true;
+    pointerStart.mode ||= pointerStart.button && dy < -8 && -dy > Math.abs(dx) * 1.35 ? 'pull' : 'rotate';
     suppressClickUntil = Date.now() + 400;
+    if (pointerStart.mode === 'pull') {
+      const button = pointerStart.button;
+      pointerStart.pull = Math.max(0, Math.min(100, -dy));
+      const ready = pointerStart.pull >= 56;
+      fan.classList.add('fan-pulling'); button.classList.add('fan-pull-item');
+      button.classList.toggle('fan-pull-ready', ready);
+      button.style.setProperty('--fan-pull-y', `${-pointerStart.pull * .72}px`);
+      fan.style.setProperty('--fan-pull-progress', String(Math.min(1, pointerStart.pull / 56)));
+      const status = fan.querySelector('.immersive-page-status');
+      status.textContent = ready ? card._m('Release to open', 'שחרור להפעלה') : card._m('Pull up to open', 'משיכה למעלה להפעלה');
+      status.dataset.position = button.getAttribute('aria-label') || '';
+      status.setAttribute('aria-label', `${status.textContent}, ${status.dataset.position}`);
+      return;
+    }
+    fan.classList.add("rotating");
+    let delta = (pointerStart.lastX - event.clientX) / 65;
+    if (pointerStart.angleAt) {
+      const angle = pointerStart.angleAt(event.clientX,event.clientY);
+      const change = pointerStart.angle - angle;
+      delta = Math.atan2(Math.sin(change),Math.cos(change)) / wheelGeometry.angleStep;
+      pointerStart.angle = angle;
+    }
+    const now = performance.now();
+    if (delta) pointerStart.velocity = .6 * pointerStart.velocity + .4 * delta / Math.max(8, now - pointerStart.time);
+    rotateWheel(delta);
+    if (delta) pointerStart.time = now;
+    pointerStart.lastX = event.clientX;
   };
   fan.addEventListener("pointermove", moveWheel);
-  fan.addEventListener("pointercancel", resetWheel);
+  fan.addEventListener("pointercancel", event => { if (pointerStart?.id === event.pointerId) resetWheel(true); });
   fan.addEventListener("lostpointercapture", (event) => {
     // Touch starts with implicit capture on the button. Its loss bubbles when
     // capture moves to the fan; that transfer must not cancel the gesture.
-    if (event.target === fan && pointerStart?.id === event.pointerId) resetWheel();
+    if (event.target === fan && pointerStart?.id === event.pointerId) resetWheel(true);
   });
-  fan.addEventListener("pointerup", (event) => { moveWheel(event); resetWheel(); });
+  fan.addEventListener("pointerup", (event) => {
+    if (!pointerStart || pointerStart.id !== event.pointerId) return;
+    moveWheel(event);
+    const pointer = pointerStart;
+    if (pointer.mode === 'pull' && pointer.pull >= 56) {
+      close(true, true, () => {
+        if (fan.isConnected && pointer.player === card._state.selectedPlayer) activateAction(pointer.button);
+      });
+    } else resetWheel(pointer.mode === 'pull');
+  });
   fan.addEventListener("click", async (event) => {
     event.stopPropagation();
-    if (Date.now() < suppressClickUntil) { event.preventDefault(); return; }
+    if (Date.now() < suppressClickUntil || fan.classList.contains("fan-closing")) { event.preventDefault(); return; }
     const pager = event.target.closest("[data-fan-step]");
     if (pager && !pager.disabled) { step(Number(pager.dataset.fanStep)); return; }
     const button = event.target.closest("[data-immersive-action]");
     if (!button || button.disabled) return;
-    event.stopPropagation();
+    await activateAction(button);
+  });
+  const activateAction = async (button) => {
+    if (!button || button.disabled) return;
     const action = button.dataset.immersiveAction;
     // Revalidate at dispatch without moving targets while the fan is open.
     if (action !== "more" && !allPages().flat().some((item) => item.id === action)) {
@@ -391,7 +548,7 @@ export function bindImmersivePlayer(card, options = {}) {
       return;
     }
     await dispatch(action, button);
-  });
+  };
   const dispatch = async (action, button) => {
     if (options.onAction) { if (!options.keepOpen?.(action)) close(); try { await options.onAction(action); } catch (error) { card._toastError(card._mediaControlFailureMessage(error)); } return; }
     if (action === "like") {
@@ -432,4 +589,13 @@ export function bindImmersivePlayer(card, options = {}) {
     else if (action === "home") card._goHomeAssistantDashboard();
     else card._openMobileMenu({ announcements:"announcements", ai_radio: "ai_radio", queue: "queue", players: "players", timer: "sleep_timer", more: "main", transfer: "transfer", group: "group", preferences: "queue_settings", discovery: "discovery", settings: "settings" }[action]);
   };
+  const disposers = card._fanDisposers ||= new Map();
+  for (const [node, dispose] of disposers) if (!node.isConnected) dispose();
+  const resize = typeof ResizeObserver === "function" ? new ResizeObserver(() => {
+    if (!fan.isConnected) { fan._disposeFan(); return; }
+    if (!fan.hidden) positionWheel(wheelPosition);
+  }) : null;
+  fan._disposeFan = () => { resize?.disconnect(); close(); disposers.delete(fan); };
+  disposers.set(fan, fan._disposeFan);
+  resize?.observe(fan);
 }

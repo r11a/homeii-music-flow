@@ -166,6 +166,14 @@ export function getBaseCardConfigForm() {
   };
 }
 export function getMobileEditorTexts() {
+  const mainBarSlotLabels = {};
+  const mainBarSlotHelpers = {};
+  for (let index = 1; index <= 7; index += 1) {
+    mainBarSlotLabels[`mobile_main_bar_item_${index}`] = `${homeiiEditorI18n("ui.main_bar")} ${index}`;
+    mainBarSlotHelpers[`mobile_main_bar_item_${index}`] = HomeiiEditorLocale.detectEditorHebrew()
+      ? "קובע את סדר הכפתורים בסרגל הראשי. בחר רק פריטים שסומנו להצגה."
+      : "Sets the main bar order. Choose only items enabled above.";
+  }
   const quickActionSlotLabels = {};
   const quickActionSlotHelpers = {};
   for (let index = 1; index <= 10; index += 1) {
@@ -273,6 +281,8 @@ export function getMobileEditorTexts() {
       mobile_radio_source_mode: homeiiEditorI18n("ui.radio_source", {}, "Radio source"),
       mobile_radio_browser_country: homeiiEditorI18n("ui.radio_browser_country_2"),
       mobile_main_bar_items: homeiiEditorI18n("ui.main_bar_items_2"),
+      show_empty_quick_shelf: HomeiiEditorLocale.detectEditorHebrew() ? "הצגת מדף המלצות כשלא מתנגן דבר" : "Show recommendations shelf when idle",
+      ...mainBarSlotLabels,
       mobile_quick_actions: homeiiEditorI18n("ui.quick_actions"),
       ...quickActionSlotLabels,
       mobile_library_default_layout: homeiiEditorI18n("ui.default_library_layout", {}, "Default library layout"),
@@ -375,6 +385,10 @@ export function getMobileEditorTexts() {
       mobile_radio_source_mode: homeiiEditorI18n("ui.radio_source_helper", {}, "Choose whether the Radio tab prefers Music Assistant stations, RadioBrowser stations, or both."),
       mobile_radio_browser_country: homeiiEditorI18n("ui.uses_the_same_base_country_list_shown_in_the_in_card_settings_screen"),
       mobile_main_bar_items: homeiiEditorI18n("ui.choose_which_actions_appear_in_the_main_bar"),
+      show_empty_quick_shelf: HomeiiEditorLocale.detectEditorHebrew()
+        ? "מסתיר את מדף ההמלצות במסך הריק וגם מונע את טעינת התוכן שלו."
+        : "Hides the idle recommendations shelf and skips loading its content.",
+      ...mainBarSlotHelpers,
       mobile_quick_actions: homeiiEditorI18n("ui.choose_which_icons_appear_in_the_quick_action_row"),
       ...quickActionSlotHelpers,
       mobile_library_default_layout: homeiiEditorI18n("ui.choose_how_library_pages_open_grid_or_list_can_still_be_changed_manually", {}, "Choose how library pages open. You can still switch Grid/List inside the library."),
@@ -496,6 +510,7 @@ export function getMobileEditorTexts() {
         { value: "fr-FR", label: "Français" },
         { value: "es-ES", label: "Español" },
         { value: "it-IT", label: "Italiano" },
+        { value: "pt-BR", label: "Portugu\u00eas (Brasil)" },
       ],
       mobile_footer_mode: [
         { value: "icon", label: homeiiEditorI18n("ui.icon_only") },
@@ -574,6 +589,16 @@ export function getMobileEditorTexts() {
         { value: "required", label: "Required" },
       ],
       mobile_main_bar_items: [
+        { value: "home", label: homeiiEditorI18n("ui.home") },
+        { value: "search", label: homeiiEditorI18n("ui.search") },
+        { value: "library", label: homeiiEditorI18n("ui.library_2") },
+        { value: "players", label: homeiiEditorI18n("ui.players") },
+        { value: "actions", label: homeiiEditorI18n("ui.actions_2") },
+        { value: "settings", label: homeiiEditorI18n("ui.settings") },
+        { value: "theme", label: homeiiEditorI18n("ui.theme_toggle_2") },
+      ],
+      mobile_main_bar_item_slots: [
+        { value: "", label: homeiiEditorI18n("ui.none") },
         { value: "home", label: homeiiEditorI18n("ui.home") },
         { value: "search", label: homeiiEditorI18n("ui.search") },
         { value: "library", label: homeiiEditorI18n("ui.library_2") },
@@ -848,6 +873,22 @@ export function getMobileCardConfigForm() {
               },
             },
           },
+          {
+            type: "grid",
+            name: "mainbar_order_grid",
+            flatten: true,
+            column_min_width: "180px",
+            schema: Array.from({ length: 7 }, (_, index) => ({
+              name: `mobile_main_bar_item_${index + 1}`,
+              selector: {
+                select: {
+                  mode: "dropdown",
+                  options: t.options.mobile_main_bar_item_slots,
+                },
+              },
+            })),
+          },
+          { name: "show_empty_quick_shelf", selector: { boolean: {} } },
           { name: "mobile_studio_shortcut", selector: { boolean: {} } },
         ],
       },
