@@ -51310,7 +51310,7 @@ function eb() {
   } catch {
   }
 }
-const ia = "6.1.1", sl = "homeii-music-flow-browser-editor-v610", zr = "homeii-music-flow-editor-v610", tb = "__homeii_ambient_light_pair_player_", ib = "__homeii_ambient_light_pair_lights_", zs = Object.freeze({
+const ia = "6.1.1", sl = "homeii-music-flow-browser-editor-v611", zr = "homeii-music-flow-editor-v611", tb = "__homeii_ambient_light_pair_player_", ib = "__homeii_ambient_light_pair_lights_", zs = Object.freeze({
   isHebrewLanguageTag: Tl,
   pickEditorLanguageCandidate: Ll,
   detectEditorHebrew: ep
