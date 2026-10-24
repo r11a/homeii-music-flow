@@ -1,8 +1,8 @@
 # HOMEii Flow — your music, throughout your home
 
-**Stable versions: Music Flow `6.0.2` + Flow Engine `1.0.2`.**
+**Stable versions: Music Flow `6.1.0` + Flow Engine `1.1.0`.**
 
-Status: stable release. The filename is retained for existing links. Follow the [current installation guide](INSTALL_STEP_BY_STEP.md) and [6.0.2 release notes](../RELEASE_NOTES_6.0.2.md). The Engine-first migration from 5.9.3 still applies.
+Status: stable release. The filename is retained for existing links. Follow the [current installation guide](INSTALL_STEP_BY_STEP.md) and [6.1.0 release notes](../RELEASE_NOTES_6.1.0.md). The Engine-first migration from 5.9.3 still applies.
 
 | Project | Role | Repository |
 |---|---|---|
@@ -44,7 +44,7 @@ These are implemented capabilities, not a guarantee of identical behavior across
 
 | Requirement | Release requirement |
 |---|---|
-| Card / Engine pair | Use `6.0.2` with `1.0.2`; earlier development Engine versions are not the recommended stable pair |
+| Card / Engine pair | Use `6.1.0` with `1.1.0`; earlier development Engine versions are not the recommended stable pair |
 | Home Assistant | Engine metadata declares HA `2025.1.0` as its floor; this is not certification of every release since then. Prefer a current supported HA release and report your exact Core version |
 | Music Assistant | Running server with **API schema 63 or newer**, a valid MA API token and the official Music Assistant HA integration loaded |
 | MA versions | Development testing includes MA 2.10/2.11 beta work; do not infer support for every 2.10 build. The schema handshake and capability checks decide compatibility; some early builds do not meet the schema requirement |
@@ -61,11 +61,11 @@ The Engine is a **custom integration**, not an add-on, not a replacement for Mus
 1. **Record what works.** Note HA/MA versions, current card version, selected players and the existing dashboard resource URL. Save dashboard YAML and any browser-specific preferences you want to recreate. Browser storage is device-local and may not be covered by an HA backup.
 2. **Back up before changing either component.** Keep the 5.9.3 JavaScript file and resource URL. If an Engine is already installed, preserve its component directory and take a full HA backup that includes its stored configuration. Do not post backups or API tokens in an issue.
 3. **Confirm native MA first.** Play/pause and inspect the queue of one test speaker in MA. Resolve MA connection/provider problems before testing the new card.
-4. **Install Engine `1.0.2` first**, following the Engine guide below. Restart HA; copying Python files alone does not load the integration.
+4. **Install Engine `1.1.0` first**, following the Engine guide below. Restart HA; copying Python files alone does not load the integration.
 5. In **Settings → Devices & services → Add integration**, add **HOMEii Flow Engine**. Enter the real MA server URL, port and MA API token. Optional external MA URL is a server fallback, not your HA ingress dashboard URL.
-6. If upgrading an existing development Engine, retain its configured entry and use **Configure → General settings** as needed. Do not delete and recreate entries as a routine upgrade step. Version 1.0.2 does not introduce a new storage format.
+6. If upgrading an existing development Engine, retain its configured entry and use **Configure → General settings** as needed. Do not delete and recreate entries as a routine upgrade step. Version 1.1.0 separates additional Engine instances; do not assume schedules are cloned between them. Retain a complete pre-upgrade backup for rollback.
 7. Verify the Engine entry loads without setup errors. If setup fails, **stop here and keep 5.9.3 active**. Check schema compatibility, URL, port and authentication.
-8. Download card **6.0.2**. Keep a copy of the old module and update the **existing** resource; do not load both versions of the same custom element.
+8. Download card **6.1.0**. Keep a copy of the old module and update the **existing** resource; do not load both versions of the same custom element.
 9. Keep the canonical filename and update the resource query string to avoid cached JavaScript, then fully reload each browser/companion app. Close stale dashboard tabs if different versions appear.
 10. Open the card's diagnostics/settings. Confirm the displayed card and Engine versions, MA connection and player/queue data. Start with one speaker at a modest volume, then expand testing.
 
@@ -84,11 +84,11 @@ An existing `entity` can remain as the preferred player. Preserve `card_id` valu
 
 **Card manual installation:** use the built `homeii-music-flow.js`, not the unbundled file in `src`. Put it under `/config/www/community/homeii-music-flow/` (or another deliberately chosen `www` directory) and register the corresponding `/local/...` URL as a JavaScript module. Update the existing resource to avoid duplicate registration.
 
-**HACS:** use the card repository as a Dashboard repository and the Engine repository as an Integration repository. Choose card 6.0.2 and Engine 1.0.2. HACS UI wording varies by version; use tagged releases for reproducible installations.
+**HACS:** use the card repository as a Dashboard repository and the Engine repository as an Integration repository. Choose card 6.1.0 and Engine 1.1.0. HACS UI wording varies by version; use tagged releases for reproducible installations.
 
 ## Update policy
 
-Card 6.0.2 and Engine 1.0.2 are stable **Latest** releases. Users upgrading from 5.9.3 must complete the Engine-first migration before allowing card updates. Existing update automations remain under the user's control. Read both release notes and back up before updating.
+Card 6.1.0 and Engine 1.1.0 are stable **Latest** releases. Users upgrading from 5.9.3 must complete the Engine-first migration before allowing card updates. Existing update automations remain under the user's control. Read both release notes and back up before updating.
 
 ## First listening test
 
@@ -125,7 +125,7 @@ Include: card and Engine version, HA Core and MA version/schema, browser/device,
 
 ## Evidence and release gates
 
-The 6.0.2 design was checked in local responsive previews and on a live HA dashboard, including fan opening and upward selection of Queue. Release validation covers the complete card suite, lint, build and distribution consistency; Engine 1.0.2 passes 87 tests and repository validation. See the [release notes](../RELEASE_NOTES_6.0.2.md) for the exact scope and limits. This does not certify every provider or speaker.
+The 6.1.0 design was checked in local responsive previews and on a live HA dashboard, including fan opening and upward selection of Queue. Release validation covers the complete card suite, lint, build and distribution consistency; Engine 1.1.0 passes 109 tests and repository validation. See the [release notes](../RELEASE_NOTES_6.1.0.md) for the exact scope and limits. This does not certify every provider or speaker.
 
 [Detailed configuration](configuration.md) · [Feature reference](features.md) · [Diagnostics](diagnostics.md) · [Hebrew upgrade guide](BETA_UPGRADE_HE.md)
 
