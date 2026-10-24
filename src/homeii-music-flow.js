@@ -115,7 +115,7 @@ function ensureHaEditorComponents() {
   } catch (_) {}
 }
 
-const HOMEII_CARD_VERSION = "6.1.0";
+const HOMEII_CARD_VERSION = "6.1.1";
 const HOMEII_BROWSER_EDITOR_TAG = "homeii-music-flow-browser-editor-v610";
 const HOMEII_MOBILE_EDITOR_TAG = "homeii-music-flow-editor-v610";
 const AMBIENT_LIGHT_PAIR_PLAYER_PREFIX = "__homeii_ambient_light_pair_player_";
