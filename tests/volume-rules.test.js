@@ -10,6 +10,7 @@ function fixture() {
 it('requires a complete time range and suppresses duplicate saves',async()=>{
  const {body,card}=fixture();await renderVolumeRules(card,body);
  const form=body.querySelector('form');form.elements.start.value='22:00';
+ expect(form.elements.suspend.disabled).toBe(true);
  form.dispatchEvent(new Event('submit',{cancelable:true}));expect(card._homeiiEngineCommand).toHaveBeenCalledTimes(1);
  form.elements.end.value='06:00';form.elements.volume.value='35';
  let finish;card._homeiiEngineCommand.mockImplementation(()=>new Promise(resolve=>finish=resolve));

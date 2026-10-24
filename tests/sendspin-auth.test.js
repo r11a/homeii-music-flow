@@ -24,13 +24,22 @@ function context(bridge = true) {
 }
 
 describe("Sendspin authenticated transport", () => {
+  it("signs the selected Engine instance into the local playback route", async () => {
+    const card = context();
+    card._state.engineInstanceId = "family";
+    const pending = prototype._openAuthenticatedSendspinSocket.call(card, "device");
+    await Promise.resolve();
+    expect(card._callHomeAssistantWs).toHaveBeenCalledWith({ type: "auth/sign_path", path: "/api/homeii_flow/sendspin/device?instance_id=family", expires: 30 });
+    socket.onmessage({ data: '{"type":"auth_ok"}' });
+    await pending;
+  });
   it("uses the signed HA path and waits for explicit auth_ok without sending MA credentials", async () => {
     const card = context();
     const pending = prototype._openAuthenticatedSendspinSocket.call(card, "device");
     await Promise.resolve();
     socket.onopen();
     expect(socket.url).toBe("wss://home.example/api/homeii_flow/sendspin/device?authSig=short-lived");
-    expect(card._callHomeAssistantWs).toHaveBeenCalledWith({ type: "auth/sign_path", path: "/api/homeii_flow/sendspin/device", expires: 30 });
+    expect(card._callHomeAssistantWs).toHaveBeenCalledWith({ type: "auth/sign_path", path: "/api/homeii_flow/sendspin/device?instance_id=", expires: 30 });
     expect(socket.send).not.toHaveBeenCalled();
     let resolved = false;
     pending.then(() => { resolved = true; });

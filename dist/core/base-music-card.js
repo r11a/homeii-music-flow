@@ -1419,20 +1419,27 @@ export function createHomeiiBaseMusicCard({
         ...payload,
       });
       if (!result?.ok) throw new Error(result?.error || `HOMEii Flow Engine could not run ${action}.`);
-      this._schedulePlayerStateRefresh();
+      this._schedulePlayerStateRefresh(0);
       return true;
     }
 
     _schedulePlayerStateRefresh(delay = 180) {
-      if (this._homeiiMaPlayerEventTimer) return;
+      const wait = Math.max(0, Number(delay) || 0);
+      const dueAt = Date.now() + wait;
+      if (this._homeiiMaPlayerEventTimer) {
+        if (Number(this._homeiiMaPlayerRefreshDueAt || 0) <= dueAt) return;
+        clearTimeout(this._homeiiMaPlayerEventTimer);
+      }
+      this._homeiiMaPlayerRefreshDueAt = dueAt;
       this._homeiiMaPlayerEventTimer = setTimeout(() => {
         this._homeiiMaPlayerEventTimer = null;
+        this._homeiiMaPlayerRefreshDueAt = 0;
         this._homeiiMaLastPlayerRefreshAt = Date.now();
         this._refreshEnginePlayers({ force: true }).then(() => {
           this._loadPlayers();
           this._syncNowPlayingUI();
         }).catch(() => {});
-      }, delay);
+      }, wait);
     }
 
     _build() {
@@ -2025,7 +2032,7 @@ export function createHomeiiBaseMusicCard({
       let wsUrl;
       if (engineBridge) {
         const signed = await this._callHomeAssistantWs({
-          type: "auth/sign_path", path: `/api/homeii_flow/sendspin/${encodeURIComponent(playerId)}`, expires: 30,
+          type: "auth/sign_path", path: `/api/homeii_flow/sendspin/${encodeURIComponent(playerId)}?instance_id=${encodeURIComponent(this._state?.engineInstanceId || this._config?.homeii_engine_instance_id || "")}`, expires: 30,
         });
         if (!signed?.path) throw new Error("Home Assistant could not authorize local playback.");
         const url = new URL(signed.path, this._hass?.hassUrl?.("/") || window.location.href);
@@ -3698,6 +3705,7 @@ export function createHomeiiBaseMusicCard({
       let ids = this._playerGroupMemberIds(player);
       if (ids.length <= 1) {
         const owner = allPlayers.find((candidate) => {
+          if (HomeiiPlayersFoundation.isStaticGroupPlayer(candidate)) return false;
           const members = this._playerGroupMemberIds(candidate);
           return members.length > 1 && members.includes(player.entity_id);
         });
@@ -3922,6 +3930,7 @@ export function createHomeiiBaseMusicCard({
 
     _openControlRoom() {
       if (!this._controlRoomEnabled()) return;
+      if (this._isCompactTileMode?.()) this._setCompactExpanded(true);
       this._state.controlRoomOpen = true;
       this._state.controlRoomPanel = "";
       this._controlRoomSelectedPlayerIds();
@@ -5955,6 +5964,7 @@ export function createHomeiiBaseMusicCard({
     }
 
     async _openLyricsModal() {
+      if (this._isCompactTileMode?.()) this._setCompactExpanded(true);
       const backdrop = this.$("lyricsBackdrop");
       if (!backdrop) return;
       this.shadowRoot.querySelector(".card")?.appendChild(backdrop);
@@ -6959,7 +6969,7 @@ export function createHomeiiBaseMusicCard({
         this._lastViewportWidth = viewportWidth;
         this._lastViewportHeight = viewportHeight;
         if (resizeStrategy.keyboardLikeResize && !layoutModeStale) return;
-        const responsiveImmersive = (this._state?.mobilePlayerDesign ?? this._config?.player_design ?? "immersive") === "immersive";
+        const responsiveImmersive = (this._state?.mobilePlayerDesign ?? this._config?.player_design ?? "immersive") !== "classic";
         if ((resizeStrategy.softSync || responsiveImmersive) && !layoutModeStale) {
           this._syncTabletAutoFitUi();
           this._syncSleepTimerChip();
@@ -8564,7 +8574,7 @@ export function createHomeiiBaseMusicCard({
         const snapshot = {};
         for (let offset = 0; offset < limit; offset += 500) {
           const pageLimit = Math.min(500, limit - offset);
-          const page = await this._fetchLibrary(mediaType, orderBy, pageLimit, favoritesOnly, search, { offset, strict: true, snapshot });
+          const page = await this._fetchLibrary(mediaType, orderBy, pageLimit, favoritesOnly, search, { ...options, offset, strict: true, snapshot });
           for (const item of page) {
             const id = item.uri || `${item.provider || ""}:${item.item_id || ""}`;
             if (id !== ":" && seen.has(id)) throw new Error(this._m("Library changed while loading. Try again.", "הספרייה השתנתה בזמן הטעינה. נסה שוב."));
@@ -8589,6 +8599,7 @@ export function createHomeiiBaseMusicCard({
           order_by: orderBy,
           limit,
           favorite: !!favoritesOnly,
+          ...(mediaType === "artist" && options.albumArtistsOnly ? { album_artists_only: true } : {}),
           compact: true,
           ...(this._state.engineCapabilities?.library_pagination ? { offset: options.offset || 0 } : {}),
         });
@@ -8618,7 +8629,7 @@ export function createHomeiiBaseMusicCard({
             .filter(([key, value]) => key.startsWith(cachedPrefix) && key.endsWith(cachedSuffix) && Array.isArray(value?.items))
             .map(([, value]) => value.items)
             .sort((left, right) => right.length - left.length)[0];
-          return Array.isArray(cachedItems) ? cachedItems.slice(0, limit) : [];
+          return !options.albumArtistsOnly && Array.isArray(cachedItems) ? cachedItems.slice(0, limit) : [];
         }
         this._state.musicAssistantIssueMessage = "";
         const raw = engineResult?.data?.response ?? engineResult?.data ?? engineResult;
@@ -10308,7 +10319,7 @@ export function createHomeiiBaseMusicCard({
       return this._callHomeiiEnginePlayerCommand(targetId, command, data);
     }
 
-    async _callMusicAssistantTransferQueue(sourcePlayerEntityId, targetPlayerEntityId) {
+    async _callMusicAssistantTransferQueue(sourcePlayerEntityId, targetPlayerEntityId, options = {}) {
       const sourceId = String(sourcePlayerEntityId || "").trim();
       const targetId = String(targetPlayerEntityId || "").trim();
       if (!sourceId || !targetId || sourceId === targetId) return false;
@@ -10323,6 +10334,7 @@ export function createHomeiiBaseMusicCard({
         source_player: sourceId,
         target_player: targetId,
         auto_play: true,
+        ...(options.copy ? {copy:true} : {}),
       });
       if (!result?.ok) throw new Error(result?.error || "HOMEii Flow Engine could not transfer the queue.");
       return true;
@@ -10891,6 +10903,15 @@ export function createHomeiiBaseMusicCard({
         if (!canUseHomeiiEnginePlayback) {
           throw new Error(this._i18n?.("diagnostics.engine_required_missing") || "HOMEii Flow Engine is required.");
         }
+        if (entityId === this._state.selectedPlayer) {
+          // A snapshot started before this command must not restore the old cover.
+          this._queueSnapshotToken = (this._queueSnapshotToken || 0) + 1;
+          this._queueReadInFlight = null;
+          this._nowPlayingSnapshotInFlight = null;
+          clearTimeout(this._nowPlayingTransitionTimer);
+          this._nowPlayingTransitionTimer = null;
+          this._nowPlayingTransitionCandidate = null;
+        }
         const engineResult = await this._homeiiEnginePlayMedia({
           player: entityId,
           media_id: uri,
@@ -10902,13 +10923,15 @@ export function createHomeiiBaseMusicCard({
         if (!engineResult?.ok) {
           throw new Error(engineResult?.error || "HOMEii Flow Engine did not confirm playback.");
         }
+        if (options.isCurrentRequest && !options.isCurrentRequest()) return false;
         if (!options.silent) {
           const targetPlayer = this._playerByEntityId(entityId);
           this._toastMediaQueued(label, targetPlayer?.attributes?.friendly_name || entityId);
         }
-        if (entityId === this._state.selectedPlayer) this._scheduleQueueRefreshAfterMutation(600);
+        if (entityId === this._state.selectedPlayer) this._scheduleQueueRefreshAfterMutation(250);
         return true;
       } catch (error) {
+        if (options.isCurrentRequest && !options.isCurrentRequest()) return false;
         if (!options.silent) {
           if (this._isMusicAssistantAvailabilityError(error)) this._handleMusicAssistantIssue(error);
           else {
@@ -10942,7 +10965,37 @@ export function createHomeiiBaseMusicCard({
       }
       this._state.forceRadioHero = !!options.forceRadioHero || String(mediaType || "").toLowerCase() === "radio";
       if (options.sourceEl) this._flashInteraction(options.sourceEl);
-      return this._playMediaOnPlayer(this._state.selectedPlayer, uri, mediaType, enqueue, options);
+      const librarySelection = this._state.menuOpen && /^(library_|media_detail|discovery|quick_search)/.test(String(this._state.menuPage || ""));
+      const key = `${this._state.selectedPlayer}|${uri}|${mediaType}|${enqueue}`;
+      if (this._libraryPlaybackRequest?.key === key) return this._libraryPlaybackRequest.promise;
+      const request = { key, promise: null };
+      const trackedSelection = ["play", "replace", "shuffle"].includes(enqueue);
+      if (trackedSelection) {
+        this._libraryPlaybackRequest?.clearFeedback?.();
+        this._libraryPlaybackRequest = request;
+        this._state.mobileArtBrowseOffset = 0;
+        this._scheduleMobileArtBrowseReset?.();
+      }
+      const navigateToPlayer = librarySelection && trackedSelection;
+      const clearPendingFeedback = navigateToPlayer
+        ? showToast.call(this, this._m(`Starting ${options.label || "music"}…`, `מתחיל לנגן ${options.label || "מוזיקה"}…`), "info", { duration: 22000, dedupe: false })
+        : null;
+      request.clearFeedback = clearPendingFeedback;
+      const promise = this._playMediaOnPlayer(this._state.selectedPlayer, uri, mediaType, enqueue, {
+        ...options,
+        // Direct library taps should return when MA accepts the command; a slow
+        // queue-state poll must not hold the selection animation or block navigation.
+        verifyPlayback: options.verifyPlayback ?? !librarySelection,
+        ...(trackedSelection ? { isCurrentRequest: () => this._libraryPlaybackRequest === request } : {}),
+      });
+      request.promise = promise.finally(() => {
+        clearPendingFeedback?.();
+        if (this._libraryPlaybackRequest === request) this._libraryPlaybackRequest = null;
+      });
+      // Playback is dispatched before navigation. Keep the player interactive
+      // while MA prepares its stream; only real queue events change the track.
+      if (navigateToPlayer) this._closeMobileMenu?.();
+      return request.promise;
     }
 
     _supportsMusicAssistantRadioMode(mediaType = "") {
@@ -11700,7 +11753,7 @@ export function createHomeiiBaseMusicCard({
       }
     }
 
-    async _ensureQueueSnapshot(force = false) {
+    async _readQueueSnapshot(force = false) {
       const snapshotToken = ++this._queueSnapshotToken;
       const selectedEntityId = String(this._state.selectedPlayer || "");
       const isCurrentSnapshot = () => (
@@ -12129,7 +12182,7 @@ export function createHomeiiBaseMusicCard({
       this._setPlayerModalHeader("transfer");
       const player = this._getSelectedPlayer();
       if (!player) return;
-      const others = (this._state.players || []).filter((p) => p.entity_id !== player.entity_id);
+      const others = (this._state.players || []).filter((p) => p.entity_id !== player.entity_id && HomeiiPlayersFoundation.isPlayerAvailable(p));
       const body = this.$("playerModalBody");
       if (!body) return;
       if (!others.length) {
@@ -12147,6 +12200,7 @@ export function createHomeiiBaseMusicCard({
               <div class="modal-section-title">${this._i18n("ui.choose_target_player")}</div>
               <div class="modal-section-badge">${others.length}</div>
             </div>
+            ${this._state.engineCapabilities?.queue_copy ? `<label class="settings-check-pill"><input type="checkbox" data-copy-queue><span>${this._esc(this._m("Copy instead · keep source playing", "העתקה · המקור ממשיך לנגן"))}</span></label><p>${this._esc(this._m("Replaces the target queue. The current track starts from the beginning; players are not synchronized.", "מחליף את התור ביעד. השיר הנוכחי מתחיל מההתחלה; הנגנים אינם מסונכרנים."))}</p>` : ""}
             <div class="player-list">
               ${others.map((p) => {
                 const art = this._playerArtworkUrl(p, 120);
@@ -12168,8 +12222,11 @@ export function createHomeiiBaseMusicCard({
           </div>
         </div>`;
       body.querySelectorAll("[data-transfer-player]").forEach((btn) => btn.addEventListener("click", async () => {
-        await this._transferQueueTo(btn.dataset.transferPlayer);
-        this._closePlayerModal();
+        if (btn.disabled) return;
+        body.querySelectorAll("[data-transfer-player]").forEach(button=>button.disabled=true);
+        const ok = await this._transferQueueBetween(player.entity_id, btn.dataset.transferPlayer, {copy:body.querySelector("[data-copy-queue]")?.checked===true});
+        if (ok) this._closePlayerModal();
+        else body.querySelectorAll("[data-transfer-player]").forEach(button=>button.disabled=false);
       }));
       if (!refreshOnly) {
         this.$("playerModal").classList.add("open");
@@ -12181,10 +12238,10 @@ export function createHomeiiBaseMusicCard({
       const sourcePlayer = this._playerByEntityId(sourcePlayerEntityId);
       if (!sourcePlayer || !targetPlayerEntityId || sourcePlayer.entity_id === targetPlayerEntityId) return false;
       try {
-        await this._callMusicAssistantTransferQueue(sourcePlayer.entity_id, targetPlayerEntityId);
+        await this._callMusicAssistantTransferQueue(sourcePlayer.entity_id, targetPlayerEntityId, options);
 
         if (options.selectTarget !== false) this._selectPlayer(targetPlayerEntityId, true);
-        if (!options.silent) this._toast(this._i18n("ui.queue_transferred"));
+        if (!options.silent) this._toast(options.copy ? this._m("Queue copied", "התור הועתק") : this._i18n("ui.queue_transferred"));
         this._scheduleQueueRefreshAfterMutation(700);
         return true;
       } catch (e) {
@@ -12381,21 +12438,21 @@ export function createHomeiiBaseMusicCard({
       const root = rootOverride || this.$("content");
       if (!root) return;
       if (rootOverride) {
-        const hydrate = (el) => {
+        const hydrate = (el, priority = false) => {
           if (!el?.dataset?.img) return;
           const url = el.dataset.img;
           const placeholder = el.dataset.placeholder || "album";
           delete el.dataset.img;
-          this._loadImgInto(url, el, placeholder);
+          this._loadImgInto(url, el, placeholder, { priority });
         };
         const pending = Array.from(root.querySelectorAll("[data-img]"));
         this._menuImgObserver?.disconnect?.();
         this._menuImgObserver = null;
         const priority = [
           ...Array.from(root.querySelectorAll(".active[data-img], .active [data-img], [data-homeii-art-priority='1'][data-img]")),
-          ...pending.slice(0, 6),
+          ...pending.slice(0, 8),
         ].filter((el, index, list) => el?.dataset?.img && list.indexOf(el) === index);
-        priority.forEach(hydrate);
+        priority.forEach((el) => hydrate(el, true));
         const remaining = pending.filter((el) => el?.dataset?.img);
         if (typeof IntersectionObserver !== "undefined" && remaining.length) {
           this._menuImgObserver = new IntersectionObserver((entries) => {
@@ -12433,7 +12490,7 @@ export function createHomeiiBaseMusicCard({
       root.querySelectorAll("[data-img]").forEach((el) => this._imgObserver.observe(el));
     }
 
-    async _loadImgInto(url, el, fallback = "💿") {
+    async _loadImgInto(url, el, fallback = "💿", options = {}) {
       const supportedFallbacks = ["artist", "radio", "podcast", "music_note", "album", "playlist", "tracks", "speaker", "repeat"];
       const fallbackIcon = supportedFallbacks.includes(String(fallback || "")) ? fallback : (fallback === "🎤" ? "artist" : fallback === "📻" ? "radio" : "album");
       const setPlaceholder = () => {
@@ -12446,7 +12503,8 @@ export function createHomeiiBaseMusicCard({
           const img = doc?.createElement?.("img");
           if (!img) throw new Error("Image element unavailable");
           img.alt = "";
-          img.loading = "lazy";
+          img.loading = options.priority ? "eager" : "lazy";
+          if (options.priority) img.fetchPriority = "high";
           img.decoding = "async";
           const fallbackUrls = src === url ? this._artworkFallbackCandidates(url) : [];
           let fallbackIndex = 0;
@@ -12469,7 +12527,7 @@ export function createHomeiiBaseMusicCard({
           el.innerHTML = "";
           el.appendChild(img);
         } catch (_) {
-          el.innerHTML = `<img src="${this._esc(src)}" alt="" loading="lazy" decoding="async">`;
+          el.innerHTML = `<img src="${this._esc(src)}" alt="" loading="${options.priority ? "eager" : "lazy"}" decoding="async">`;
         }
       };
       const isCrossOrigin = (() => {

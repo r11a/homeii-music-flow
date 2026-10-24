@@ -4,6 +4,12 @@ import {orderedFanActions,openFanCatalogue,preferredFanPages,fanActionCategory} 
 const {document,localStorage,Event} = globalThis;
 afterEach(()=>{document.body.replaceChildren();localStorage.clear();});
 const actions=[{id:"a",label:"Alpha",icon:"play"},{id:"b",label:"Beta",icon:"stop"}];
+it("prioritizes the main player essentials without replacing saved choices or other screen defaults",()=>{
+ const items=['queue','lyrics','settings','recommendations','discovery','like','repeat','shuffle'].map(id=>({id}));
+ expect(orderedFanActions(items,{},true,'main').slice(0,5).map(a=>a.id)).toEqual(['shuffle','repeat','like','discovery','recommendations']);
+ expect(orderedFanActions(items,{order:['lyrics','queue'],hidden:['shuffle']},true,'main').slice(0,4).map(a=>a.id)).toEqual(['lyrics','queue','repeat','like']);
+ expect(orderedFanActions(items,{},true,'queue').slice(0,2).map(a=>a.id)).toEqual(['queue','lyrics']);
+});
 it("keeps catalogue focus inside its dialog and restores the background on Escape",()=>{
  const {host,card}=setup();
  const trigger=document.createElement("button");trigger.textContent="Actions";host.append(trigger);trigger.focus();

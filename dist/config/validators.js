@@ -132,6 +132,7 @@ export function validateMobileCardEditorConfig(config) {
   assertBooleanIfDefined(config.mobile_footer_search_enabled, "mobile_footer_search_enabled");
   assertValueInList(config.mobile_footer_mode, "mobile_footer_mode", ["icon", "text", "both"]);
   assertBooleanIfDefined(config.volume_wheel, "volume_wheel");
+  assertValueInList(config.fan_style, "fan_style", ["classic", "ribbon", "petal", "orbit"]);
   assertValueInList(config.fan_theme, "fan_theme", ["adaptive", "dark", "light"]);
   assertBooleanIfDefined(config.action_menu_labels, "action_menu_labels");
   assertValueInList(config.player_design, "player_design", ["classic", "immersive"]);
@@ -165,6 +166,8 @@ export function validateMobileCardEditorConfig(config) {
   assertStringArrayIfDefined(config.mobile_announcement_presets, "mobile_announcement_presets");
   assertNumberIfDefined(config.mobile_announcement_volume, "mobile_announcement_volume");
   assertStringIfDefined(config.announcement_tts_entity, "announcement_tts_entity");
+  assertValueInList(config.announcement_dictation_mode, "announcement_dictation_mode", ["browser", "assist"]);
+  assertStringIfDefined(config.announcement_assist_pipeline, "announcement_assist_pipeline");
   assertStringIfDefined(config.announcement_tts_language, "announcement_tts_language");
   assertBooleanIfDefined(config.mobile_compact_mode, "mobile_compact_mode");
   assertValueInList(config.mobile_compact_widget_mode, "mobile_compact_widget_mode", ["auto", "full", "mini"]);

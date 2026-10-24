@@ -18,7 +18,8 @@ describe("localization", () => {
     expect(translate("pt-BR", "ui.home")).toBe("In\u00edcio");
     expect(translate("zh-CN", "ui.home")).toBe("首页");
     expect(translate("de", "ui.home")).toBe("Startseite");
-    expect(translate("nl", "ui.home")).toBe("Home");
+    expect(translate("nl", "ui.home")).toBe("Start");
+    expect(translate("nl", "ui.now_playing")).toBe("Nu aan het afspelen");
     expect(translate("he", "missing.key", {}, "Fallback")).toBe("Fallback");
   });
 
@@ -40,7 +41,9 @@ describe("localization", () => {
     expect(detectLanguage({ configLanguage: "de-AT" })).toBe("de");
     expect(detectLanguage({ configLanguage: "pt-BR" })).toBe("pt");
     expect(detectLanguage({ configLanguage: "auto", hass: { locale: { language: "pt-BR" } } })).toBe("pt");
-    expect(detectLanguage({ configLanguage: "nl" })).toBe("en");
+    expect(detectLanguage({ configLanguage: "nl" })).toBe("nl");
+    expect(detectLanguage({ configLanguage: "auto", hass: { locale: { language: "nl-NL" } } })).toBe("nl");
+    expect(detectLanguage({ configLanguage: "sv" })).toBe("en");
     expect(detectLanguage({ configLanguage: "auto", hass: { locale: { language: "de-DE" } } })).toBe("de");
     expect(detectLanguage({ configLanguage: "auto", hass: { locale: { language: "he-IL" } } })).toBe("he");
   });
@@ -66,6 +69,10 @@ describe("localization", () => {
     expect(LANGUAGE_OPTIONS).toContainEqual({
       value: "lt",
       label: "Lithuanian / Lietuvių",
+    });
+    expect(LANGUAGE_OPTIONS).toContainEqual({
+      value: "nl",
+      label: "Nederlands",
     });
     expect(LANGUAGE_OPTIONS).toContainEqual({
       value: "pt-BR",
@@ -98,6 +105,11 @@ describe("localization", () => {
   it("preserves every Brazilian Portuguese interpolation placeholder", () => {
     for (const [key,value] of Object.entries(DICTIONARIES.en)) {
       expect((DICTIONARIES.pt[key].match(/\{\w+\}/g) || []).sort(),key).toEqual((value.match(/\{\w+\}/g) || []).sort());
+    }
+  });
+  it("preserves every Dutch interpolation placeholder", () => {
+    for (const [key,value] of Object.entries(DICTIONARIES.en)) {
+      expect((DICTIONARIES.nl[key].match(/\{\w+\}/g) || []).sort(),key).toEqual((value.match(/\{\w+\}/g) || []).sort());
     }
   });
 });

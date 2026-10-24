@@ -5,6 +5,7 @@ const {document,Event}=globalThis;
 it('saves a queue snapshot once and refreshes persisted entries',async()=>{
  const body=document.createElement('div');document.body.append(body);
  const card={_state:{menuPage:'saved_playlists'},_m:a=>a,_esc:String,_getNowPlayingQueueItems:()=>[{uri:'spotify://track/a'}],_getQueueItemUri:item=>item.uri,_mediaControlFailureMessage:String,_homeiiEngineCommand:vi.fn(async(_,args)=>args.action==='list'?[]:{id:'one'})};
+ card._ensureQueueSnapshot=vi.fn(async()=>{});
  await renderSavedPlaylists(card,body);body.querySelector('input').value='My mix';
  const form=body.querySelector('form');form.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));form.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));
  await vi.waitFor(()=>expect(card._homeiiEngineCommand).toHaveBeenCalledTimes(3));
@@ -18,6 +19,7 @@ it('ignores a playlist response when the user leaves the page',async()=>{
 it('does not replace the next screen after an in-flight save completes',async()=>{
  const body=document.createElement('div');document.body.append(body);let finish;
  const card={_state:{menuPage:'saved_playlists'},_m:a=>a,_esc:String,_getNowPlayingQueueItems:()=>[{uri:'library://track/1'}],_getQueueItemUri:item=>item.uri,_mediaControlFailureMessage:String,_homeiiEngineCommand:vi.fn(async()=>[])};
+ card._ensureQueueSnapshot=vi.fn(async()=>{});
  await renderSavedPlaylists(card,body);body.querySelector('input').value='Mix';
  card._homeiiEngineCommand.mockImplementation(()=>new Promise(resolve=>finish=resolve));
  body.querySelector('form').dispatchEvent(new Event('submit',{cancelable:true}));

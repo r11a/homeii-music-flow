@@ -248,6 +248,7 @@ ${liveDiagnosticsStyles}
   }
   .card .queue-playback-options { display:flex; align-items:center; justify-content:center; gap:12px; padding:10px; }
   .card .queue-drag-handle { touch-action:none; cursor:grab; min-width:36px; min-height:48px; padding:0; display:grid; place-items:center; color:var(--homeii-surface-muted); background:transparent; border:0; }
+  .card .queue-row .queue-drag-handle > svg { display:block; width:18px!important; height:18px!important; max-width:18px; max-height:18px; flex:none; margin:0; opacity:.72; }
   .card .queue-dragging { opacity:.55; }
   .card .queue-drop-target { outline:2px solid var(--homeii-surface-text); outline-offset:-2px; border-radius:16px; }
   .card .queue-playback-options .chip-btn { display:inline-flex!important; align-items:center; justify-content:center; min-width:48px; min-height:48px; gap:8px; border:1px solid var(--homeii-surface-border); border-radius:16px; background:transparent; color:var(--homeii-surface-text); }

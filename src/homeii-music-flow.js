@@ -1,3 +1,5 @@
+import { renderListeningScenes } from "./core/media/listening-scenes.js";
+import { dictateWithAssist } from "./core/media/assist-dictation.js";
 import { syncScreenDock } from "./core/media/screen-dock.js";
 import { playerVolumeControlsHtml, openVolumeWheel, closeVolumeWheel } from "./core/media/player-volume.js";
 import { bindQueueDrag } from "./core/media/queue-drag.js";
@@ -8,7 +10,7 @@ import { renderSavedPlaylists } from "./core/media/playlist-actions.js";
 import { mountLiveDiagnostics } from "./core/media/live-diagnostics.js";
 import { renderVolumeRules } from "./core/media/volume-rules.js";
 import { actionIconSvg, actionMenuHtml, mediaActionSheetHtml, handleMediaActionClick } from "./core/media/action-menu.js";
-import { immersivePlayerEnabled, immersivePlayerStage, immersivePlayerDock, bindImmersivePlayer, syncImmersivePlayer, commitImmersiveSwipe, reconcileImmersiveCovers } from "./core/media/immersive-player.js";
+import { immersivePlayerEnabled, immersivePlayerStage, immersivePlayerDock, bindImmersivePlayer, syncImmersivePlayer, commitImmersiveSwipe, reconcileImmersiveCovers, animateCoverSelection } from "./core/media/immersive-player.js";
 import { loadQueueSettings, saveQueueSettings, updateQueueSettingVisibility } from "./core/media/queue-settings.js";
 import { queuePlaybackOptionsHtml, toggleQueueAutoplay, toggleQueueCrossfade, setPlaybackSpeed } from "./core/media/queue-options.js";
 import { loadDiscoverySections, discoveryPlayerFocusHtml, updateDiscoveryMenuBody, discoveryMenuHtml } from "./core/media/discovery.js";
@@ -113,9 +115,9 @@ function ensureHaEditorComponents() {
   } catch (_) {}
 }
 
-const HOMEII_CARD_VERSION = "6.0.2";
-const HOMEII_BROWSER_EDITOR_TAG = "homeii-music-flow-browser-editor-v602";
-const HOMEII_MOBILE_EDITOR_TAG = "homeii-music-flow-editor-v602";
+const HOMEII_CARD_VERSION = "6.1.0";
+const HOMEII_BROWSER_EDITOR_TAG = "homeii-music-flow-browser-editor-v610";
+const HOMEII_MOBILE_EDITOR_TAG = "homeii-music-flow-editor-v610";
 const AMBIENT_LIGHT_PAIR_PLAYER_PREFIX = "__homeii_ambient_light_pair_player_";
 const AMBIENT_LIGHT_PAIR_LIGHTS_PREFIX = "__homeii_ambient_light_pair_lights_";
 
@@ -322,6 +324,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     this._state.mobileMediaLayout = this._defaultMobileMediaLayout();
     this._state.mobileMediaDetailLayout = "grid";
     this._state.mobileLibrarySort = "name_asc";
+    this._state.albumArtistsOnly = false;
     this._state.mediaSearchToken = 0;
     this._state.mobileQueueActionEntry = null;
     this._state.mobileCustomColor = "#f5a623";
@@ -347,6 +350,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     this._state.mobileStartTimerPlaylistsFetchedAt = 0;
     this._state.mobileStartTimerPlaylistsLoading = false;
     this._state.mobileStartTimerVolume = 35;
+    this._state.mobileStartTimerFadeSeconds = 0;
     this._state.mobileStartTimerDays = [0, 1, 2, 3, 4, 5, 6];
     this._state.mobileStartTimerLastRunKey = "";
     this._state.mobileStartTimerRunPending = false;
@@ -606,6 +610,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     try { this._state.mobileCompactMode = JSON.parse(localStorage.getItem(this._lsKey("homeii_music_flow_mobile_compact_mode")) ?? "false"); } catch (_) {}
     try { this._state.mobileCompactWidgetMode = HomeiiMobileSettingsFoundation.normalizeMobileCompactWidgetMode(localStorage.getItem(this._lsKey("homeii_music_flow_mobile_compact_widget_mode")) || "auto"); } catch (_) {}
     try { this._state.mobileCompactEdgeToEdge = JSON.parse(localStorage.getItem(this._lsKey("homeii_music_flow_mobile_compact_edge_to_edge")) ?? "true"); } catch (_) {}
+    try { this._state.mobileEdgeReturnAvailable = JSON.parse(localStorage.getItem(this._lsKey("homeii_music_flow_edge_collapsed")) ?? "false") === true; } catch (_) {}
     try { this._state.mobileEdgeToEdge = JSON.parse(localStorage.getItem(this._lsKey("homeii_music_flow_mobile_edge_to_edge")) ?? "false"); } catch (_) {}
     try { this._state.mobileLayoutMode = HomeiiMobileSettingsFoundation.normalizeMobileLayoutMode(localStorage.getItem(this._lsKey("homeii_music_flow_mobile_layout_mode")) || "auto"); } catch (_) {}
     try { this._state.mobileCoverFlow = JSON.parse(localStorage.getItem(this._lsKey("homeii_music_flow_mobile_cover_flow")) ?? "false"); } catch (_) {}
@@ -623,10 +628,12 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
       if (Array.isArray(rawHistory)) this._state.mobileRecentHistory = rawHistory.slice(0, 10);
     } catch (_) {}
     try { this._state.mobileLibrarySort = localStorage.getItem(this._lsKey("homeii_music_flow_mobile_library_sort")) || "name_asc"; } catch (_) {}
+    try { this._state.albumArtistsOnly = localStorage.getItem(this._lsKey("homeii_music_flow_album_artists_only")) === "true"; } catch (_) {}
     try { this._state.mobileFooterSearchEnabled = JSON.parse(localStorage.getItem(this._lsKey("homeii_music_flow_mobile_footer_search")) ?? "false"); } catch (_) {}
     try { this._state.mobileStudioShortcutEnabled = JSON.parse(localStorage.getItem(this._lsKey("homeii_music_flow_mobile_studio_shortcut")) ?? "true"); } catch (_) {}
     try { this._state.mobileFooterMode = localStorage.getItem(this._lsKey("homeii_music_flow_mobile_footer_mode")) || "icon"; } catch (_) {}
     try { this._state.mobilePlayerDesign = localStorage.getItem(this._lsKey("homeii_music_flow_player_design")) || this._config?.player_design || "immersive"; } catch (_) { this._state.mobilePlayerDesign = this._config?.player_design || "immersive"; }
+    if (this._state.mobilePlayerDesign === "flow_3rd_generation") this._state.mobilePlayerDesign = "immersive";
     try { this._state.mobileHomeShortcutEnabled = JSON.parse(localStorage.getItem(this._lsKey("homeii_music_flow_mobile_home_shortcut")) ?? "false"); } catch (_) {}
     try { this._state.mobileHomeShortcutPath = localStorage.getItem(this._lsKey("homeii_music_flow_mobile_home_shortcut_path")) || "/"; } catch (_) {}
     try { this._state.mobileVolumeMode = localStorage.getItem(this._lsKey("homeii_music_flow_mobile_volume_mode")) || "button"; } catch (_) {}
@@ -768,6 +775,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
       mobile_studio_shortcut: true,
       volume_wheel: true,
       fan_theme: "adaptive",
+      fan_style: "classic",
       show_source_badge: true,
       show_quality_badge: true,
       mobile_home_shortcut: false,
@@ -810,6 +818,9 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
       mobile_announcement_presets: [],
       mobile_announcement_volume: 20,
       announcement_tts_entity: "",
+      announcement_dictation_mode: "browser",
+      announcement_assist_pipeline: "",
+      radio_shortcuts_enabled: true,
       announcement_tts_language: "auto",
       ambient_light_enabled: false,
       ambient_light_entities: [],
@@ -871,6 +882,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
   }
 
   setConfig(config) {
+    config = HomeiiMobileSettingsFoundation.migrateRetiredPlayerDesign(config);
     super.setConfig({
       ...HomeiiMusicFlowBaseCard.getStubConfig(),
       ...config,
@@ -969,7 +981,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
   }
 
   _mobileEdgeToEdgeEnabled() {
-    if (this._isVisualEditorContext()) return false;
+    if (this._isVisualEditorContext() || this._state?.mobileEdgeReturnAvailable === true) return false;
     if (this._mobileLayoutMode() === "edge_to_edge") return true;
     if (!this._usesVisualSettings()) return this._state?.mobileEdgeToEdge === true;
     return this._state?.mobileEdgeToEdge === true || this._config?.mobile_edge_to_edge === true;
@@ -1124,7 +1136,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
         defaultQuickActions: this._defaultMobileQuickActions(),
         defaultAnnouncementPresets: this._defaultAnnouncementPresets(visualCfg.language || this._state.lang),
       }));
-      if (previousEdgeReturnAvailable && this._state.mobileLayoutMode === "edge_to_edge") {
+      if (previousEdgeReturnAvailable) {
         this._state.mobileLayoutMode = "full";
         this._state.mobileEdgeToEdge = false;
         this._state.mobileEdgeReturnAvailable = true;
@@ -1770,7 +1782,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
 
   _normalizeScheduledStartSchedule(schedule = {}, index = 0) {
     const id = String(schedule?.id || "").trim() || `schedule_${index + 1}`;
-    const volume = Math.max(0, Math.min(100, Number(schedule?.volume ?? schedule?.mobileStartTimerVolume ?? 35) || 35));
+    const volume = Math.max(0, Math.min(100, Number(schedule?.volume ?? schedule?.mobileStartTimerVolume ?? 35)));
     const afterRun = ["disable", "off"].includes(String(schedule?.afterRun || schedule?.after_run || "").trim())
       ? "disable"
       : "keep";
@@ -1782,6 +1794,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
       playlist: String(schedule?.playlist || "").trim(),
       playlistName: String(schedule?.playlistName || "").trim(),
       volume,
+      fadeSeconds: Math.max(0, Math.min(600, Number(schedule?.fadeSeconds ?? schedule?.fade_seconds ?? 0) || 0)),
       days: this._normalizeNightModeDays(schedule?.days),
       lastRunKey: String(schedule?.lastRunKey || "").trim(),
       afterRun,
@@ -1807,6 +1820,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
       playlist: mediaId,
       playlistName: schedule?.playlistName || schedule?.playlist_name || schedule?.media_name || schedule?.name || "",
       volume: schedule?.volume ?? 35,
+      fadeSeconds: schedule?.fade_seconds ?? schedule?.fadeSeconds ?? 0,
       days: schedule?.days,
       lastRunKey: schedule?.lastRunKey || schedule?.last_run_key || "",
       afterRun: schedule?.afterRun || schedule?.after_run || "keep",
@@ -1833,7 +1847,8 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
       enqueue: "play",
       time: normalized.time,
       days: this._normalizeNightModeDays(normalized.days),
-      volume: Math.max(0, Math.min(100, Number(normalized.volume || 35) || 35)),
+      volume: Math.max(0, Math.min(100, Number(normalized.volume ?? 35))),
+      ...(this._state.engineCapabilities?.schedule_volume_fade ? {fade_seconds: normalized.fadeSeconds} : {}),
       enabled: normalized.enabled !== false,
       after_run: normalized.afterRun || "keep",
     };
@@ -2055,7 +2070,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
       .map(([, label]) => label)
       .join(" ");
     const time = this._normalizeClockTime(schedule.time || "07:00", "07:00");
-    const volume = Math.max(0, Math.min(100, Number(schedule.volume || 35) || 35));
+    const volume = Math.max(0, Math.min(100, Number(schedule.volume ?? 35)));
     const playlist = this._scheduledStartPlaylistLabel(schedule);
     return `${time} · ${playerName} · ${playlist} · ${volume}% · ${dayLabels}`;
   }
@@ -2084,7 +2099,8 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
       playlistName: String(playlistSelect?.value || "").trim()
       ? String(playlistSelect?.selectedOptions?.[0]?.textContent || "").trim()
       : "",
-      volume: Math.max(0, Math.min(100, Number(volumeInput?.value || 35) || 35)),
+      volume: Math.max(0, Math.min(100, Number(volumeInput?.value ?? 35))),
+      fadeSeconds: Number(this.$("scheduledStartFadeInput")?.value || 0),
       days: this._normalizeNightModeDays(checkedDays),
       lastRunKey: "",
       afterRun: String(afterRunSelect?.value || "keep") === "disable" ? "disable" : "keep",
@@ -2101,6 +2117,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     this._state.mobileStartTimerPlaylist = schedule.playlist;
     this._state.mobileStartTimerPlaylistName = schedule.playlistName;
     this._state.mobileStartTimerVolume = schedule.volume;
+    this._state.mobileStartTimerFadeSeconds = schedule.fadeSeconds || 0;
     this._state.mobileStartTimerDays = schedule.days;
     this._state.mobileStartTimerLastRunKey = schedule.lastRunKey;
     this._state.mobileStartTimerAfterRun = schedule.afterRun || "keep";
@@ -2138,6 +2155,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     this._state.mobileStartTimerPlaylist = schedule.playlist;
     this._state.mobileStartTimerPlaylistName = schedule.playlistName;
     this._state.mobileStartTimerVolume = schedule.volume;
+    this._state.mobileStartTimerFadeSeconds = schedule.fadeSeconds || 0;
     this._state.mobileStartTimerDays = schedule.days;
     this._state.mobileStartTimerLastRunKey = schedule.lastRunKey || "";
     this._state.mobileStartTimerAfterRun = schedule.afterRun || "keep";
@@ -2152,6 +2170,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     this._state.mobileStartTimerPlaylist = "";
     this._state.mobileStartTimerPlaylistName = "";
     this._state.mobileStartTimerVolume = 35;
+    this._state.mobileStartTimerFadeSeconds = 0;
     this._state.mobileStartTimerDays = [0, 1, 2, 3, 4, 5, 6];
     this._state.mobileStartTimerLastRunKey = "";
     this._state.mobileStartTimerAfterRun = "keep";
@@ -2184,7 +2203,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     this._state.mobileStartTimerRunPending = true;
     try {
       const activeSchedule = schedule ? this._normalizeScheduledStartSchedule(schedule) : null;
-      const volume = Math.max(0, Math.min(100, Number(activeSchedule?.volume ?? this._state.mobileStartTimerVolume ?? 35) || 35));
+      const volume = Math.max(0, Math.min(100, Number(activeSchedule?.volume ?? this._state.mobileStartTimerVolume ?? 35)));
       await this._setPlayerVolumeFor(entityId, volume / 100);
       const playlists = await this._loadScheduledStartPlaylists();
       const pick = this._pickScheduledStartPlaylist(playlists, activeSchedule);
@@ -3378,17 +3397,116 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     return context;
   }
 
+  async _ensureQueueSnapshot(force = false, options = {}) {
+    const player = this._state.selectedPlayer;
+    const fullQueueVisible = this._state.queueVisible || (this._state.menuOpen && this._state.menuPage === "queue");
+    if (this.dataset) this.dataset.queueReadMode = options.full || fullQueueVisible ? "full" : "now-playing";
+    if (!options.full && !fullQueueVisible) return this._ensureNowPlayingSnapshot();
+    const verifyFull = () => {
+      const expected = Number(this._state.maQueueState?.items_count ?? this._state.maQueueState?.items);
+      if (options.full && expected > (this._state.queueItems || []).length) {
+        throw new Error(this._m?.("The complete queue is not ready. Retry.", "התור המלא עדיין לא נטען. נסה שוב.") || "The complete queue is not ready. Retry.");
+      }
+    };
+    if (this._queueReadInFlight?.player === player) return this._queueReadInFlight.promise.then(verifyFull);
+    const request = { player, promise: null };
+    request.promise = this._readQueueSnapshot(force).then(verifyFull).finally(() => {
+      if (this._queueReadInFlight === request) this._queueReadInFlight = null;
+    });
+    this._queueReadInFlight = request;
+    return request.promise;
+  }
+
+  async notifyExternalPlayback({ player, phase } = {}) {
+    const permitted = new Set([...(this._config?.players || []), this._config?.pinned_player_entity]);
+    if (!player || !permitted.has(player)) return;
+    if (phase === "pending") {
+      if (this._state.selectedPlayer !== player) this._selectPlayer(player, true);
+      return;
+    }
+    if (phase === "accepted" && this._state.selectedPlayer === player) {
+      this._schedulePlayerStateRefresh(0);
+      await this._ensureNowPlayingSnapshot();
+    }
+  }
+
+  _commitNowPlayingSnapshot(player, queueState) {
+    if (this._state.selectedPlayer !== player || !queueState) return;
+    const previousId = this._getQueueItemStableId(this._state.maQueueState?.current_item);
+    const nextId = this._getQueueItemStableId(queueState.current_item);
+    this._state.maQueueState = queueState;
+    const current = queueState.current_item;
+    const known = (this._state.queueItems || []).some(item => item.queue_item_id === current?.queue_item_id);
+    if (current?.queue_item_id && !known) {
+      const index = Number(queueState.current_index) || 0;
+      this._state.queueItems = [queueState.previous_item, current, queueState.next_item]
+        .map((item, offset) => item ? (this._normalizeQueueItem?.(item, index + offset - 1) || { ...item, sort_index: index + offset - 1 }) : null)
+        .filter(Boolean);
+    }
+    if (previousId && nextId && previousId !== nextId) {
+      this._lastNowPlayingPrevious = { player, id: previousId, at: Date.now() };
+    }
+    this._syncNowPlayingUI?.();
+  }
+
+  async _ensureNowPlayingSnapshot() {
+    const player = this._state.selectedPlayer;
+    if (!player) return;
+    if (this._nowPlayingSnapshotInFlight?.player === player) return this._nowPlayingSnapshotInFlight.promise;
+    const request = { player, promise: null };
+    request.promise = (async () => {
+      try {
+        const result = await this._homeiiEngineGetQueue({ entity_id: player, state_only: true });
+        if (this._state.selectedPlayer !== player || this._nowPlayingSnapshotInFlight !== request) return;
+        if (result?.state_only && result.queue_state) {
+          const queueState = result.queue_state;
+          const currentId = this._getQueueItemStableId(this._state.maQueueState?.current_item);
+          const nextId = this._getQueueItemStableId(queueState.current_item);
+          const candidate = this._nowPlayingTransitionCandidate;
+          if (currentId && !nextId && Number(queueState.items ?? queueState.items_count) > 0) return;
+          if (candidate?.player === player && (candidate.id === nextId || currentId === nextId)) return;
+          if (currentId && nextId && currentId !== nextId && !this._immersiveSwipeApplying && !this._hasPendingMobileQueuePlay()) {
+            const previous = this._lastNowPlayingPrevious;
+            if (previous?.player === player && previous.id === nextId && Date.now() - previous.at < 1500) return;
+            clearTimeout(this._nowPlayingTransitionTimer);
+            const next = { player, id: nextId, state: queueState };
+            this._nowPlayingTransitionCandidate = next;
+            this._nowPlayingTransitionTimer = setTimeout(() => {
+              if (this._nowPlayingTransitionCandidate !== next) return;
+              this._nowPlayingTransitionCandidate = null;
+              this._nowPlayingTransitionTimer = null;
+              this._commitNowPlayingSnapshot(player, next.state);
+            }, 350);
+            return;
+          }
+          clearTimeout(this._nowPlayingTransitionTimer);
+          this._nowPlayingTransitionCandidate = null;
+          this._nowPlayingTransitionTimer = null;
+          this._commitNowPlayingSnapshot(player, queueState);
+        }
+      } finally {
+        if (this._nowPlayingSnapshotInFlight === request) this._nowPlayingSnapshotInFlight = null;
+      }
+    })();
+    this._nowPlayingSnapshotInFlight = request;
+    return request.promise;
+  }
+
   _subscribeHomeiiEngineMusicAssistantEvents() {
     const connection = this._hass?.connection;
-    if (!connection?.subscribeEvents || !this.isConnected) return;
+    if (!connection?.subscribeMessage || !this.isConnected) return;
     if (this._homeiiMaEventConnection === connection && this._homeiiMaEventSubscription) return;
     this._unsubscribeHomeiiEngineMusicAssistantEvents();
     this._homeiiMaEventConnection = connection;
     const generation = (this._homeiiMaEventGeneration || 0) + 1;
     this._homeiiMaEventGeneration = generation;
-    const subscription = connection.subscribeEvents(
+    const subscription = connection.subscribeMessage(
       (event) => this._handleHomeiiEngineMusicAssistantEvent(event?.data || event || {}),
-      "homeii_flow_music_assistant_event",
+      {
+        type: "homeii_flow/subscribe_music_assistant_events",
+        ...(this._homeiiEngineResolvedInstanceId() ? { instance_id: this._homeiiEngineResolvedInstanceId() } : {}),
+        ...(this._state.selectedPlayer ? { selected_player: this._state.selectedPlayer } : {}),
+      },
     );
     this._homeiiMaEventSubscription = Promise.resolve(subscription)
       .then((unsubscribe) => {
@@ -3450,7 +3568,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     const affectsLibrary = !eventName || /media|library|favorite|provider|playlist|album|artist|track|podcast|audiobook|radio|genre/.test(eventName);
     const now = Date.now();
     if (affectsQueue && !this._homeiiMaQueueEventTimer) {
-      const queueDelay = Math.max(180, 1000 - (now - Number(this._homeiiMaLastQueueRefreshAt || 0)));
+      const queueDelay = Math.max(100, 350 - (now - Number(this._homeiiMaLastQueueRefreshAt || 0)));
       this._homeiiMaQueueEventTimer = setTimeout(
         () => {
           this._homeiiMaQueueEventTimer = null;
@@ -3461,7 +3579,8 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
       );
     }
     if (affectsPlayers || affectsQueue) {
-      const playerDelay = Math.max(260, 1200 - (now - Number(this._homeiiMaLastPlayerRefreshAt || 0)));
+      this._ensureNowPlayingSnapshot().catch(() => {});
+      const playerDelay = Math.max(180, 500 - (now - Number(this._homeiiMaLastPlayerRefreshAt || 0)));
       this._schedulePlayerStateRefresh(playerDelay);
     }
     if (affectsLibrary) {
@@ -3493,7 +3612,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
   }
 
   _homeiiEngineGetQueue(payload = {}) {
-    return this._homeiiEngineCommand("queue/get", payload, { timeoutMs: Math.max(12000, this._homeiiEngineTimeoutMs()) });
+    return this._homeiiEngineCommand("queue/get", { compact: true, ...payload }, { timeoutMs: Math.max(12000, this._homeiiEngineTimeoutMs()) });
   }
 
   _homeiiEngineQueueAction(payload = {}) {
@@ -3819,6 +3938,8 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
   }
 
   _persistMobileAppearance() {
+    // Collapse is per-device navigation state, including when visual settings own appearance.
+    try { localStorage.setItem(this._lsKey("homeii_music_flow_edge_collapsed"), JSON.stringify(this._state.mobileEdgeReturnAvailable === true)); } catch (_) {}
     this._writeOperationalMobileStateToLocalStorage();
     this._scheduleSystemMobileStatePersist();
     if (this._usesVisualSettings()) return;
@@ -3843,7 +3964,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     try { localStorage.setItem(this._lsKey("homeii_music_flow_mobile_compact_mode"), JSON.stringify(!!this._state.mobileCompactMode)); } catch (_) {}
     try { localStorage.setItem(this._lsKey("homeii_music_flow_mobile_compact_widget_mode"), this._mobileCompactWidgetMode()); } catch (_) {}
     try { localStorage.setItem(this._lsKey("homeii_music_flow_mobile_compact_edge_to_edge"), JSON.stringify(this._mobileCompactEdgeToEdgeEnabled())); } catch (_) {}
-    try { localStorage.setItem(this._lsKey("homeii_music_flow_mobile_edge_to_edge"), JSON.stringify(this._state.mobileEdgeToEdge === true || this._config?.mobile_edge_to_edge === true)); } catch (_) {}
+    try { localStorage.setItem(this._lsKey("homeii_music_flow_mobile_edge_to_edge"), JSON.stringify(this._mobileEdgeToEdgeEnabled())); } catch (_) {}
     try { localStorage.setItem(this._lsKey("homeii_music_flow_mobile_layout_mode"), this._mobileLayoutMode()); } catch (_) {}
     try { localStorage.setItem(this._lsKey("homeii_music_flow_mobile_cover_flow"), JSON.stringify(this._mobileCoverFlowEnabled())); } catch (_) {}
     try { localStorage.setItem(this._lsKey("homeii_music_flow_mobile_queue_flow"), JSON.stringify(this._mobileQueueFlowEnabled())); } catch (_) {}
@@ -5699,8 +5820,8 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
       el.dataset.homeiiLibraryActionBusy = "1";
       el.setAttribute("aria-busy", "true");
       clearTimeout(el._homeiiLibraryLoadingTimer);
-      const loadingMs = Math.max(0, Number(options.loadingMs || 0) || 0);
-      if (loadingMs && options.hold !== true) {
+      const loadingMs = Math.max(0, Number(options.loadingMs || (options.hold === true ? 650 : 0)) || 0);
+      if (loadingMs) {
         el._homeiiLibraryLoadingTimer = setTimeout(() => this._clearLibraryInteractionFeedback(el), loadingMs);
       }
     }
@@ -7222,6 +7343,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
         ? Number(selectedItem.sort_index)
         : (slide.dataset.sortIndex || "");
       if (!queueItemId && !uri) return;
+      if (immersivePlayerEnabled(this)) animateCoverSelection(this.$("npArt"));
       const played = await this._playQueueItem(queueItemId, uri, mediaType, sortIndex);
       if (!played) return;
       this._state.mobileArtBrowseOffset = 0;
@@ -7256,6 +7378,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
       ? Number(selectedItem.sort_index)
       : (slide.dataset.sortIndex || "");
     if (!queueItemId && !uri) return;
+    if (immersivePlayerEnabled(this)) animateCoverSelection(this.$("npArt"));
     const played = await this._playQueueItem(queueItemId, uri, mediaType, sortIndex);
     if (!played) return;
     this._state.mobileArtBrowseOffset = 0;
@@ -7287,7 +7410,8 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
       ? Number(selectedItem.sort_index)
       : (artHost?.dataset.sortIndex || "");
     if (!queueItemId && !uri) return;
-    this._pressUiButton(artHost);
+    if (!immersivePlayerEnabled(this)) this._pressUiButton(artHost);
+    if (immersivePlayerEnabled(this)) animateCoverSelection(this.$("npArt"));
     const played = await this._playQueueItem(queueItemId, uri, mediaType, sortIndex);
     if (!played) return;
     this._state.mobileArtBrowseOffset = 0;
@@ -8920,8 +9044,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     }
     if (action === "play") {
       try {
-        const ok = await this._playMedia(entry.uri, entry.media_type || "track", "play", { label: entry.name, sourceEl: button, silent: true });
-        if (ok) this._toastSuccess(this._i18n("ui.started_on_selected_player"));
+        const ok = await this._playMedia(entry.uri, entry.media_type || "track", "play", { label: entry.name, sourceEl: button });
         return ok;
       } finally {
         this._clearLibraryInteractionFeedback(feedbackEl);
@@ -9746,8 +9869,10 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     this.$("mobileArtActions")?.removeAttribute("hidden");
     this._setMobileRandomFabVisible(true);
     this._setMobileRandomFabDisabled(false);
-    if (this.$("npTitle")) this.$("npTitle").textContent = currentTitle;
-    this._setNowPlayingSubtitle([currentArtist || player.attributes.media_artist || "", currentAlbum].filter(Boolean).join(" · ") || "—");
+    if (!(immersivePlayerEnabled(this) && (this._immersiveSwipePending || this._state.activeArtworkTouch || this._mobileBrowsePreviewActive(stack)))) {
+      if (this.$("npTitle")) this.$("npTitle").textContent = currentTitle;
+      this._setNowPlayingSubtitle([currentArtist || player.attributes.media_artist || "", currentAlbum].filter(Boolean).join(" · ") || "—");
+    }
     this._rememberRecentPlayback(player, displayQueueItem);
     this._syncRecentHistoryUi();
     this._syncSourceBadgesUi(player, displayQueueItem);
@@ -9981,6 +10106,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
       this._toastSuccess(this._i18n("ui.card_settings_are_managed_from_the_visual_editor"));
       return;
     }
+    if (this._isCompactTileMode() && this._isPhoneActionFullscreenMenuPage(nextPage)) this._setCompactExpanded(true);
     const wasOpen = !!this._state.menuOpen;
     const previousPage = this._state.menuPage || "main";
     if (!wasOpen || previousPage !== nextPage) closeVolumeWheel(this);
@@ -10156,6 +10282,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
       "system_screensaver",
       "night_preferences",
       "saved_playlists",
+      "listening_scenes",
       "volume_rules",
       "settings",
       "discovery",
@@ -11081,7 +11208,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     } : editSchedule;
     const scheduledTime = this._normalizeClockTime(wakeDraftSchedule?.time || "07:00", "07:00");
     const scheduledPlayer = this._scheduledStartPlayerId(wakeDraftSchedule);
-    const scheduledVolume = Math.max(0, Math.min(100, Number(wakeDraftSchedule?.volume ?? 35) || 35));
+    const scheduledVolume = Math.max(0, Math.min(100, Number(wakeDraftSchedule?.volume ?? 35)));
     const scheduledDays = new Set(this._normalizeNightModeDays(wakeDraftSchedule?.days || this._state.mobileStartTimerDays));
     const scheduledAfterRun = String(wakeDraftSchedule?.afterRun || "keep") === "disable" ? "disable" : "keep";
     const nightMode = this._mobileNightMode();
@@ -11172,6 +11299,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
               </select>
             </label>
           </div>
+          <label class="night-time-card" ${this._state.engineCapabilities?.schedule_volume_fade ? "" : "hidden"}><span class="settings-label">${this._esc(this._m("Gentle wake-up", "השכמה הדרגתית"))}</span><select class="media-sort-select settings-select" id="scheduledStartFadeInput" data-schedule-form-control>${[[0,this._m("Off","כבוי")],[30,"30 s"],[60,"1 min"],[120,"2 min"],[300,"5 min"],[600,"10 min"]].map(([value,label])=>`<option value="${value}" ${Number(this._state.mobileStartTimerFadeSeconds || 0)===value ? "selected" : ""}>${this._esc(label)}</option>`).join("")}</select></label>
           <div class="settings-range scheduled-volume-field">
             <div class="settings-label">${this._esc(this._i18n("ui.volume"))}</div>
             <input id="scheduledStartVolumeInput" data-schedule-form-control type="range" min="0" max="100" step="1" value="${this._esc(String(scheduledVolume))}">
@@ -12074,8 +12202,8 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
           </div>
           <div class="settings-label">${this._m("Player design", "עיצוב הנגן")}</div>
           <div class="settings-pills">
-            ${this._settingsPill(this._m("Classic", "קלאסי"), "classic", immersivePlayerEnabled(this) ? "immersive" : "classic", "data-setting-player-design")}
-            ${this._settingsPill("Immersive", "immersive", immersivePlayerEnabled(this) ? "immersive" : "classic", "data-setting-player-design")}
+            ${this._settingsPill(this._m("Classic", "קלאסי"), "classic", this._state.mobilePlayerDesign || "immersive", "data-setting-player-design")}
+            ${this._settingsPill("Immersive", "immersive", this._state.mobilePlayerDesign || "immersive", "data-setting-player-design")}
           </div>
           <div class="settings-label">${this._i18n("ui.footer_style")}</div>
           <div class="settings-pills">
@@ -15322,6 +15450,15 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     if (!mediaType || mediaType === "liked" || mediaType === "search") return [];
     const search = String(query || "").trim();
     const onlyFavorites = favoritesOnly === true;
+    const albumArtistsOnly = mediaType === "artist" && this._state.albumArtistsOnly === true;
+    if (albumArtistsOnly) {
+      const key = `album-artists:${orderBy}:${limit}:${onlyFavorites}:${search.toLowerCase()}`;
+      const cached = this._cache.library.get(key);
+      if (cached && Date.now() - cached.ts < Number(this._config.cache_ttl || 300000)) return cached.items;
+      const items = await this._fetchLibrary(mediaType, orderBy, limit, onlyFavorites, search, { albumArtistsOnly: true });
+      this._cache.library.set(key, { ts: Date.now(), items });
+      return items;
+    }
     if (!search) return this._getLibrary(mediaType, orderBy, limit, onlyFavorites);
     const cacheKey = `tab-search:${mediaType}:${orderBy}:${limit}:${onlyFavorites}:${search.toLowerCase()}`;
     const ttl = Number(this._config.cache_ttl || 300000);
@@ -15439,6 +15576,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
         <div class="library-toolbar-actions library-toolbar-icons">
           <button class="media-layout-btn library-toolbar-search-toggle ${tabSearchOpen ? "active" : ""}" data-library-tab-search-toggle="${this._esc(page)}" title="${this._esc(this._i18n("ui.search"))}" aria-label="${this._esc(this._i18n("ui.search"))}" aria-expanded="${tabSearchOpen ? "true" : "false"}">${this._iconSvg("search")}</button>
           <div class="media-layout-toggle" role="tablist" aria-label="${this._esc(this._i18n("ui.media_layout"))}">
+            ${page === "library_artists" ? `<button class="media-layout-btn library-album-artists-toggle ${this._state.albumArtistsOnly ? "active" : ""}" data-album-artists-only="1" aria-pressed="${this._state.albumArtistsOnly ? "true" : "false"}" title="${this._esc(this._m("Album artists only", "אמני אלבומים בלבד"))}" aria-label="${this._esc(this._m("Album artists only", "אמני אלבומים בלבד"))}">${this._iconSvg("artist")}</button>` : ""}
             ${favoritesPage ? `<button class="media-layout-btn library-favorites-toggle" data-library-liked-open="library_liked" title="${this._esc(favoritesLabel)}" aria-label="${this._esc(favoritesLabel)}">${this._iconSvg("heart_filled")}</button>` : ``}
             ${!isSearch ? `<button class="media-layout-btn" data-media-surprise="1" title="${this._esc(this._i18n("ui.surprise_me"))}">${this._iconSvg("wand")}</button>` : ``}
             ${!isSearch ? `<button class="media-layout-btn library-flow-toggle ${libraryFlowActive ? "active" : ""}" data-library-flow-toggle="${this._esc(page)}" title="${this._esc(this._libraryFlowLabel())}" aria-label="${this._esc(this._libraryFlowLabel())}" aria-pressed="${libraryFlowActive ? "true" : "false"}">${this._iconSvg("queue_flow")}</button>` : ``}
@@ -16062,7 +16200,13 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     }
   }
 
-  _startMobileAnnouncementVoice() {
+  async _startMobileAnnouncementVoice() {
+    if (this._config?.announcement_dictation_mode === "assist") {
+      if (this._voiceRecognition?.stop) { this._voiceRecognition.stop(); return; }
+      try { await dictateWithAssist(this, this.$("mobileAnnouncementText")); }
+      catch (error) { this._toastError(error?.message || this._i18n("ui.voice_input_failed")); }
+      return;
+    }
     const SpeechRecognition = this._speechRecognitionCtor();
     const input = this.$("mobileAnnouncementText");
     if (!SpeechRecognition) {
@@ -16879,7 +17023,8 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
       const orderBy = this._mobileLibraryOrderBy();
       const tabSearchQuery = this._libraryTabSearchQuery(page);
       const favoritesOnly = this._libraryFavoritesOnlyEnabled(page);
-      const limitKey = `${page}:${orderBy}:${favoritesOnly}:${tabSearchQuery.toLowerCase()}`;
+      const artistFilterKey = page === "library_artists" && this._state.albumArtistsOnly ? ":album-artists" : "";
+      const limitKey = `${page}:${orderBy}:${favoritesOnly}:${tabSearchQuery.toLowerCase()}${artistFilterKey}`;
       const limit = this._state.engineCapabilities?.library_pagination
         ? (this._state.libraryVisibleLimits?.[limitKey] || 60)
         : (limitMap[meta.type] || 250);
@@ -16888,10 +17033,13 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
       const cacheKey = tabSearchQuery
         ? `tab-search:${meta.type}:${orderBy}:${limit}:${favoritesOnly}:${tabSearchQuery.toLowerCase()}`
         : `${meta.type}:${orderBy}:${limit}:${favoritesOnly}`;
-      const cachedLibrary = this._cache.library.get(cacheKey);
-      if (!cachedLibrary && body.dataset.libraryLoadingKey !== cacheKey) {
+      const visibleCacheKey = `${cacheKey}${artistFilterKey}`;
+      const cachedLibrary = this._cache.library.get(artistFilterKey
+        ? `album-artists:${orderBy}:${limit}:${favoritesOnly}:${tabSearchQuery.toLowerCase()}`
+        : visibleCacheKey);
+      if (!cachedLibrary && body.dataset.libraryLoadingKey !== visibleCacheKey) {
         body.innerHTML = this._libraryShellHtml(this._loadingStateHtml(this._i18n("ui.loading"), { notice: true }), page);
-        body.dataset.libraryLoadingKey = cacheKey;
+        body.dataset.libraryLoadingKey = visibleCacheKey;
       }
       const radioSourceMode = page === "library_radio" ? this._mobileRadioSourceMode() : "combined";
       const radioAllowsMa = favoritesOnly || radioSourceMode !== "radiobrowser_only";
@@ -16913,7 +17061,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
         }
         libraryError = error?.message || this._m("Could not load Music Assistant radio.", "לא ניתן לטעון רדיו מ-Music Assistant.");
       }
-      if (body.dataset.libraryLoadingKey === cacheKey) delete body.dataset.libraryLoadingKey;
+      if (body.dataset.libraryLoadingKey === visibleCacheKey) delete body.dataset.libraryLoadingKey;
       if (!isCurrentRender()) return;
       const sortedItems = this._sortLibraryItemsLocally(items);
       let libraryThemeItems = sortedItems;
@@ -17187,6 +17335,12 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
       body.innerHTML = this._sleepTimerMenuHtml();
     }
     else if (page === "transfer") body.innerHTML = this._transferMenuHtml();
+    else if (page === "listening_scenes") {
+      this._setMobileMenuHeader(this._m("Listening scenes","סצנות האזנה"), "playlist");
+      await renderListeningScenes(this, body);
+      if (isCurrentRender()) finishMenuRender();
+      return;
+    }
     else if (page === "saved_playlists" || page === "volume_rules") {
       this._setMobileMenuHeader(page === "volume_rules" ? this._m("Volume limits","מגבלות ווליום") : this._m("Engine playlists","רשימות במנוע"), page === "volume_rules" ? "volume" : "playlist");
       if (page === "volume_rules") await renderVolumeRules(this, body);
@@ -18104,7 +18258,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     const footerModeBtn = eventTarget.closest("[data-setting-footer-mode]");
     const playerDesignBtn = eventTarget.closest("[data-setting-player-design]");
     if (playerDesignBtn) {
-      this._state.mobilePlayerDesign = playerDesignBtn.dataset.settingPlayerDesign === "immersive" ? "immersive" : "classic";
+      this._state.mobilePlayerDesign = playerDesignBtn.dataset.settingPlayerDesign === "classic" ? "classic" : "immersive";
       this._persistMobileAppearance();
       this._reopenSettingsMenuPreservingScroll({ rebuild: true, init: true });
       return;
@@ -18171,6 +18325,15 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
       const page = libraryFavoritesToggleBtn.dataset.libraryFavoritesToggle || this._state.menuPage;
       const nextEnabled = !this._libraryFavoritesOnlyEnabled(page);
       if (this._setLibraryFavoritesOnly(page, nextEnabled)) await this._renderMobileMenu();
+      return;
+    }
+    const albumArtistsToggleBtn = eventTarget.closest("[data-album-artists-only]");
+    if (albumArtistsToggleBtn) {
+      e.preventDefault();
+      this._showLibraryInteractionFeedback(albumArtistsToggleBtn);
+      this._state.albumArtistsOnly = !this._state.albumArtistsOnly;
+      try { localStorage.setItem(this._lsKey("homeii_music_flow_album_artists_only"), String(this._state.albumArtistsOnly)); } catch (_) {}
+      await this._renderMobileMenu();
       return;
     }
     const libraryTabSearchSubmitBtn = eventTarget.closest("[data-library-tab-search-submit]");
@@ -18402,8 +18565,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
           sourceEl,
           forceRadioHero: this._state.menuPage === "library_radio",
         });
-        if (played) return this._closeMobileMenu();
-        await this._renderMobileMenu();
+        if (!played && this._state.menuOpen) await this._renderMobileMenu();
       } finally {
         this._clearLibraryInteractionFeedback(feedbackEl);
       }
@@ -18440,8 +18602,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
           sourceEl,
           forceRadioHero: this._state.menuPage === "library_radio",
         });
-        if (played) return this._closeMobileMenu();
-        await this._renderMobileMenu();
+        if (!played && this._state.menuOpen) await this._renderMobileMenu();
       } finally {
         this._clearLibraryInteractionFeedback(feedbackEl);
       }
@@ -18844,6 +19005,10 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
       this._reopenSettingsMenuPreservingScroll({ rebuild: true, init: true });
       return;
     }
+    if (e.target?.id === "scheduledStartFadeInput") {
+      this._state.mobileStartTimerFadeSeconds = Number(e.target.value) || 0;
+      return;
+    }
     if (e.target?.id === "scheduledStartVolumeInput") {
       const pct = Math.max(0, Math.min(100, Number(e.target.value || 0)));
       this._state.mobileStartTimerVolume = pct;
@@ -19037,6 +19202,7 @@ class HomeiiMusicFlowBaseEditor extends HomeiiBaseMusicEditor {
   }
 
   setConfig(config) {
+    config = HomeiiMobileSettingsFoundation.migrateRetiredPlayerDesign(config);
     const nextConfig = {
       ...HomeiiMusicFlowBaseCard.getStubConfig(),
       ...config,

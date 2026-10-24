@@ -9,7 +9,11 @@ export function liveDiagnosticRows(card, context = null, refreshed = false) {
   const connections = context?.raw?.required_connections || context?.raw?.connections || card._state.engineRequiredConnections || {};
   for (const [key,en,he] of [["music_assistant","Music Assistant","Music Assistant"],["queue_provider","Queue service","שירות התור"],["library_provider","Music library","ספריית המוזיקה"],["search_provider","Music search","חיפוש מוזיקה"]]) {
     const value = connections[key] || connections.connections?.[key];
-    add(refreshed && context?.available ? status(value?.ok) : "info",en,he,card._redactDiagnosticText?.(value?.message || "") || "");
+    const checkStatus=refreshed && context?.available ? status(value?.ok) : "info";
+    const nextStep=checkStatus!=="fail" ? "" : key==="music_assistant"
+      ? card._m("Check the Engine connection: direct MA server URL and a valid token. Ingress is not an API URL.","בדוק את חיבור המנוע: כתובת ישירה של שרת MA וטוקן תקף. Ingress אינו כתובת API.")
+      : card._m("Try the same operation in native Music Assistant. If it works there, copy this report with the selected player and card/Engine versions.","נסה את אותה פעולה בממשק Music Assistant. אם שם היא עובדת, העתק את הדוח עם הנגן הנבחר וגרסאות הכרטיס והמנוע.");
+    add(checkStatus,en,he,[card._redactDiagnosticText?.(value?.message || "") || "",nextStep].filter(Boolean).join(" · "));
   }
   const player = card._getSelectedPlayer?.();
   add(player ? isPlayerAvailable(player) ? "ok" : "fail" : "warn", "Selected player", "הנגן הנבחר", player ? card._playerDisplayName?.(player) || "" : card._m("Choose a player","יש לבחור נגן"));

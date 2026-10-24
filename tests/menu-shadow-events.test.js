@@ -9,6 +9,49 @@ const { document, customElements, MouseEvent } = globalThis;
 afterEach(() => document.body.replaceChildren());
 
 describe("menu actions across a real shadow event boundary", () => {
+  it("coalesces repeated library taps without sending playback twice", async () => {
+    const card = document.createElement("homeii-music-flow");
+    card._state.selectedPlayer = "media_player.kitchen";
+    card._state.menuOpen = true;
+    card._state.menuPage = "library_playlists";
+    const wrap = document.createElement("div");
+    card.$ = id => id === "toastWrap" ? wrap : null;
+    card._closeMobileMenu = vi.fn(() => { card._state.menuOpen = false; });
+    let finish;
+    card._playMediaOnPlayer = vi.fn(() => new Promise(resolve => { finish = resolve; }));
+    const first = card._playMedia("library://playlist/1", "playlist");
+    const second = card._playMedia("library://playlist/1", "playlist");
+    expect(card._playMediaOnPlayer).toHaveBeenCalledOnce();
+    expect(card._closeMobileMenu).toHaveBeenCalledOnce();
+    expect(card._state.menuOpen).toBe(false);
+    expect(wrap.querySelector('[role="status"]')).not.toBeNull();
+    finish(true);
+    expect(await first).toBe(true);
+    expect(await second).toBe(true);
+    expect(card._libraryPlaybackRequest).toBe(null);
+    expect(wrap.children).toHaveLength(0);
+  });
+  it("shows only the settled cover when MA emits intermediate queue states", async () => {
+    const prototype = customElements.get("homeii-music-flow").prototype;
+    const states = ["middle", "final"].map((id) => ({
+      state_only: true,
+      queue_state: { current_item: { queue_item_id: id }, items_count: 2 },
+    }));
+    const card = {
+      _state: { selectedPlayer: "media_player.kitchen", maQueueState: { current_item: { queue_item_id: "old" } }, queueItems: [] },
+      _homeiiEngineGetQueue: vi.fn().mockImplementation(async () => states.shift()),
+      _getQueueItemStableId: (item) => item?.queue_item_id || "",
+      _hasPendingMobileQueuePlay: () => false,
+      _syncNowPlayingUI: vi.fn(),
+      _commitNowPlayingSnapshot: prototype._commitNowPlayingSnapshot,
+    };
+    await prototype._ensureNowPlayingSnapshot.call(card);
+    expect(card._state.maQueueState.current_item.queue_item_id).toBe("old");
+    await prototype._ensureNowPlayingSnapshot.call(card);
+    await vi.advanceTimersByTimeAsync(350);
+    expect(card._state.maQueueState.current_item.queue_item_id).toBe("final");
+    expect(card._syncNowPlayingUI).toHaveBeenCalledOnce();
+  });
   it.each([['library_albums', 'mobileLibraryFlowPage', 'library_albums'], ['queue', 'mobileQueueFlowQuickOpen', true]])('returns from the %s wheel without leaving its screen', (page, key, value) => {
     const card = document.createElement('homeii-music-flow');
     card._state.menuPage = page;
@@ -85,5 +128,57 @@ describe("menu actions across a real shadow event boundary", () => {
     await task;
     expect(card._selectPlayer).toHaveBeenCalledWith("media_player.computer", true);
     expect(card._closeMobileMenu).toHaveBeenCalledOnce();
+  });
+  it("does not close a screen opened while a playback request is pending", async () => {
+    const button = document.createElement("button");
+    button.dataset.mediaPlay = "library://playlist/297";
+    button.dataset.mediaType = "playlist";
+    button.dataset.mediaName = "Test playlist";
+    let confirmPlayback;
+    const playback = new Promise((resolve) => { confirmPlayback = resolve; });
+    const sequence = [];
+    const card = {
+      _state: { selectedPlayer: "media_player.kitchen", menuPage: "library_playlists", menuOpen: true },
+      _rememberMobileMenuScroll: vi.fn(),
+      _shouldHoldManualFrontForContentSelection: () => false,
+      _handleSimpleWizardClick: async () => false,
+      _showLibraryInteractionFeedback: () => button,
+      _clearLibraryInteractionFeedback: vi.fn(),
+      _playMedia: vi.fn(() => { sequence.push("play"); return playback; }),
+      _closeMobileMenu: vi.fn(() => { sequence.push("close"); card._state.menuOpen = false; }),
+      _renderMobileMenu: vi.fn(),
+    };
+    const handler = customElements.get("homeii-music-flow").prototype._handleMobileMenuClick;
+    const task = handler.call(card, {
+      target: button,
+      preventDefault: vi.fn(),
+      stopPropagation: vi.fn(),
+    });
+    await Promise.resolve();
+    expect(sequence).toEqual(["play"]);
+    confirmPlayback(true);
+    await task;
+    expect(sequence).toEqual(["play"]);
+    expect(card._renderMobileMenu).not.toHaveBeenCalled();
+  });
+  it("keeps the library open after a failed playback request", async () => {
+    const button = document.createElement("button");
+    button.dataset.mediaUri = "library://playlist/297";
+    button.dataset.mediaType = "playlist";
+    const card = {
+      _state: { selectedPlayer: "media_player.kitchen", menuPage: "library_playlists", menuOpen: true },
+      _rememberMobileMenuScroll: vi.fn(),
+      _shouldHoldManualFrontForContentSelection: () => false,
+      _handleSimpleWizardClick: async () => false,
+      _showLibraryInteractionFeedback: () => button,
+      _clearLibraryInteractionFeedback: vi.fn(),
+      _playMedia: vi.fn().mockResolvedValue(false),
+      _closeMobileMenu: vi.fn(),
+      _renderMobileMenu: vi.fn().mockResolvedValue(),
+    };
+    const handler = customElements.get("homeii-music-flow").prototype._handleMobileMenuClick;
+    await handler.call(card, { target: button, preventDefault: vi.fn(), stopPropagation: vi.fn() });
+    expect(card._closeMobileMenu).not.toHaveBeenCalled();
+    expect(card._renderMobileMenu).toHaveBeenCalledOnce();
   });
 });

@@ -1,6 +1,35 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { immersiveActionPages, immersivePlayerEnabled, immersivePlayerDock, bindImmersivePlayer, syncImmersivePlayer, commitImmersiveSwipe, reconcileImmersiveCovers } from "../src/core/media/immersive-player.js";
+import { immersiveActionPages, immersivePlayerEnabled, immersivePlayerDock, bindImmersivePlayer, syncImmersivePlayer, commitImmersiveSwipe, reconcileImmersiveCovers, animateCoverSelection } from "../src/core/media/immersive-player.js";
+
+it('keeps one cover in place when only its artwork URL changes', () => {
+  const host = document.createElement('div');
+  document.body.append(host);
+  host.innerHTML = '<div class="art-stack-container"><div class="art-stack-slide center" data-queue-item-id="song-1" data-uri="spotify://track/1"><div class="art-stack-card"><img src="old-art.jpg"></div></div></div>';
+  const next = '<div class="art-stack-container"><div class="art-stack-slide center" data-queue-item-id="song-1" data-uri="spotify://track/1"><div class="art-stack-card"><img src="new-art.jpg"></div></div></div>';
+  reconcileImmersiveCovers(host, next, { animate: true });
+  expect(host.querySelector('.art-stack-slide.center img').getAttribute('src')).toBe('new-art.jpg');
+  expect(host.querySelector('.immersive-cover-outgoing')).toBeNull();
+  host.remove();
+});
+
+it('gives selection feedback on the cover alone and respects lite mode', async () => {
+  const host = document.createElement('div');
+  host.innerHTML = '<div class="art-stack-slide center"><div class="art-stack-card"></div></div>';
+  const cover = host.querySelector('.art-stack-card');
+  const cancel = vi.fn();
+  cover.animate = vi.fn(() => ({cancel, finished:Promise.resolve()}));
+  animateCoverSelection(host);
+  animateCoverSelection(host);
+  expect(cancel).toHaveBeenCalledTimes(1);
+  expect(cover.animate.mock.calls[0][0]).toEqual([{scale:'1'}, {scale:'.965', offset:.32}, {scale:'1'}]);
+  expect(host.querySelectorAll('*')).toHaveLength(2);
+  await Promise.resolve();
+  expect(cover._selectionMotion).toBeNull();
+  host.classList.add('performance-lite');
+  animateCoverSelection(host);
+  expect(cover.animate).toHaveBeenCalledTimes(2);
+});
 import { validateMobileCardEditorConfig } from "../src/config/validators.js";
 const { document, KeyboardEvent, MouseEvent, WheelEvent } = globalThis;
 
@@ -80,12 +109,12 @@ it("opens the player/style/play wizard from Music Flow rather than queue covers"
   expect(card._openMobileMenu).toHaveBeenCalledWith('simple_wizard');
   expect(root.querySelector('[data-immersive-action="queue_flow"]')).toBeNull();
 });
-function fixture() {
+function fixture(playerDesign = 'immersive') {
   const host = document.createElement("div"); document.body.append(host);
   const shadowRoot = host.attachShadow({ mode: "open" });
   const player = { state: "playing", attributes: { media_content_type: "track" } };
   const card = {
-    shadowRoot, _config: { player_design: "immersive", action_menu_labels: true },
+    shadowRoot, _config: { player_design: playerDesign, action_menu_labels: true },
     _state: { maQueueState: { items: 3, current_item: { media_item: { media_type: "track" } } }, engineCapabilities: { queue_settings: true } },
     _m: (en) => en, _i18n: (s) => s, _esc: (s) => String(s), _iconSvg: () => "<svg></svg>", _isHebrew: () => false,
     _getSelectedPlayer: () => player, _getCurrentMediaUri: () => "library://track/1", _currentMediaFavoriteState: () => false,
@@ -188,7 +217,9 @@ describe('pull a fan action upward', () => {
 it('crossfades only changed covers and cleans up rapid replacements', async () => {
   const prototype=globalThis.Element.prototype, original=Object.getOwnPropertyDescriptor(prototype,'animate');
   const motions=[];
-  Object.defineProperty(prototype,'animate',{configurable:true,value:function(){
+  Object.defineProperty(prototype,'animate',{configurable:true,value:function(frames){
+    expect(frames.every(frame => !('scale' in frame) && !('filter' in frame))).toBe(true);
+    expect(frames.every(frame => !('opacity' in frame) && 'translate' in frame)).toBe(true);
     let finish; const motion={cancel:vi.fn(),finished:new Promise(resolve=>{finish=resolve;}),finish:()=>finish()};
     motions.push(motion); return motion;
   }});
@@ -355,6 +386,25 @@ describe("optional immersive player", () => {
     expect(card._openMobileMediaActionMenu).toHaveBeenCalledWith(expect.objectContaining({uri:"library://track/1"}));
     expect(card.$("immersiveActionFan").hidden).toBe(true);
   });
+  it('waits for the neighboring image to decode before sliding it into view', async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal('requestAnimationFrame', callback => callback());
+    try {
+      const {card,root}=fixture();
+      const art=document.createElement('div'); art.id='npArt';
+      art.innerHTML='<div class="art-stack-slide next"><img src="next.jpg"></div>'; root.append(art);
+      let decoded;
+      art.querySelector('img').decode=()=>new Promise(resolve=>{decoded=resolve;});
+      card._setArtDragOffset=vi.fn(); card._clearArtDragOffset=vi.fn();
+      const command=vi.fn(); const task=commitImmersiveSwipe(card,'next',command);
+      await vi.advanceTimersByTimeAsync(400);
+      expect(card._setArtDragOffset).not.toHaveBeenCalled();
+      expect(command).not.toHaveBeenCalled();
+      decoded(); await vi.advanceTimersByTimeAsync(310); await task;
+      expect(card._setArtDragOffset).toHaveBeenCalledOnce();
+      expect(command).toHaveBeenCalledOnce();
+    } finally { vi.useRealTimers(); vi.unstubAllGlobals(); }
+  });
   it("shows an optional direct Home button in the bottom dock", () => {
     const {card}=fixture();
     card._mobileMainBarItems=()=>["home","actions","players","library"];
@@ -454,4 +504,32 @@ it("keeps wheel touch gestures inside the card instead of swiping dashboards", (
   expect(listener).not.toHaveBeenCalled();
   expect(event.defaultPrevented).toBe(false);
   document.removeEventListener("touchmove",listener);
+});
+
+
+it('uses the original rotating fan for a retired FLOW design setting', () => {
+ const {card,root,open}=fixture('flow_3rd_generation'); open();
+ const fan=card.$('immersiveActionFan');
+ expect(fan.closest('.immersive-dock')).not.toBeNull();
+ expect(root.querySelector('.flow3-panel')).toBeNull();
+ const wheel = new WheelEvent('wheel',{deltaY:120,cancelable:true,bubbles:true});
+ fan.dispatchEvent(wheel);
+ expect(wheel.defaultPrevented).toBe(true);
+ fan._disposeFan();
+});
+it.each(['classic', 'ribbon', 'petal', 'orbit'])('keeps actions and keyboard navigation available in %s style', (style) => {
+  const {card,root,open}=fixture();
+  card._config.fan_style=style;
+  root.querySelector('.card').classList.add('performance-lite');
+  open();
+  const fan=card.$('immersiveActionFan');
+  expect(fan.dataset.fanStyle).toBe(style === "petal" ? "ribbon" : style);
+  const before=[...fan.querySelectorAll('button[data-immersive-action]')].map(b=>b.dataset.immersiveAction);
+  expect(before.length).toBeGreaterThan(2);
+  fan.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true}));
+  expect([...fan.querySelectorAll('button[data-immersive-action]')].map(b=>b.dataset.immersiveAction)).toEqual(before);
+  expect(fan.querySelectorAll('[aria-hidden="false"]').length).toBeGreaterThan(0);
+  expect(fan.querySelector('.fan-center')).not.toBeNull();
+  card.$('immersiveActionsToggle').click();
+  expect(fan.hidden).toBe(true);
 });

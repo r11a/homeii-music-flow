@@ -1,9 +1,12 @@
 import { preferredFanPages, openFanCatalogue } from "./fan-preferences.js";
+import { radioShortcutsHtml, bindRadioShortcuts } from "./radio-shortcuts.js";
 import { actionIconSvg, actionLabelsEnabled, actionSymbolHtml } from "./action-menu.js";
 import { syncWaveform } from "./waveform.js";
 import { isPlayerAvailable } from "../state/players.js";
 
-export const immersivePlayerEnabled = (card) => (card._state?.mobilePlayerDesign ?? card._config?.player_design ?? "immersive") === "immersive";
+export const fanStyle = (card) => card._config?.fan_style === "petal" ? "ribbon" : ["ribbon", "orbit"].includes(card._config?.fan_style) ? card._config.fan_style : "classic";
+
+export const immersivePlayerEnabled = (card) => (card._state?.mobilePlayerDesign ?? card._config?.player_design ?? "immersive") !== "classic";
 
 export function reconcileImmersiveCovers(host, html, { animate = false } = {}) {
   const template = document.createElement("template");
@@ -14,9 +17,14 @@ export function reconcileImmersiveCovers(host, html, { animate = false } = {}) {
   const oldCard = container.querySelector('.art-stack-slide.center .art-stack-card');
   const oldImage = oldCard?.querySelector('img');
   const nextImage = nextContainer.querySelector('.art-stack-slide.center img');
+  const oldId = container.querySelector('.art-stack-slide.center')?.dataset.queueItemId;
+  const nextId = nextContainer.querySelector('.art-stack-slide.center')?.dataset.queueItemId;
+  const movesBack = nextId && container.querySelector('.art-stack-slide.prev')?.dataset.queueItemId === nextId;
+  const travel = movesBack ? -100 : 100;
   if (!animate || oldImage?.getAttribute('src') !== nextImage?.getAttribute('src')) host._cancelCoverTransition?.();
   const reduced = globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches || host.closest('.performance-lite');
-  const outgoing = animate && !reduced && oldImage?.getAttribute('src') && nextImage?.getAttribute('src')
+  const outgoing = animate && !reduced && (!oldId || !nextId || oldId !== nextId)
+    && oldImage?.getAttribute('src') && nextImage?.getAttribute('src')
     && oldImage.getAttribute('src') !== nextImage.getAttribute('src') ? oldCard.cloneNode(true) : null;
   const key = (slide) => slide.dataset.queueItemId || `${slide.dataset.uri || ""}:${slide.dataset.sortIndex || ""}`;
   const previous = new Map([...container.children].map((slide) => [key(slide), slide]));
@@ -28,14 +36,18 @@ export function reconcileImmersiveCovers(host, html, { animate = false } = {}) {
     previous.delete(key(next));
     existing.className = next.className;
     Object.assign(existing.dataset, next.dataset);
+    const sameDecodedArtwork = oldImage.dataset.homeiiArtReady === '1'
+      && oldImage.dataset.homeiiArtSrc
+      && oldImage.dataset.homeiiArtSrc === newImage.dataset.homeiiArtSrc;
     // Keep the decoded node for identical artwork, but accept refreshed artwork/labels.
     for (const attribute of ["src", "srcset", "sizes", "alt"]) {
+      if (sameDecodedArtwork && attribute !== 'alt') continue;
       const value = newImage.getAttribute(attribute);
       if (oldImage.getAttribute(attribute) === value) continue;
       if (value === null) oldImage.removeAttribute(attribute);
       else oldImage.setAttribute(attribute, value);
     }
-    Object.assign(oldImage.dataset, newImage.dataset);
+    if (!sameDecodedArtwork) Object.assign(oldImage.dataset, newImage.dataset);
     existing.querySelector(".art-stack-card").className = next.querySelector(".art-stack-card").className;
     return existing;
   });
@@ -55,8 +67,9 @@ export function reconcileImmersiveCovers(host, html, { animate = false } = {}) {
   host.classList.add('cover-crossfading');
   const timing = {duration:360, easing:'cubic-bezier(.2,.7,.2,1)'};
   const motions = [
-    incoming.animate([{opacity:.4, scale:'1.025'}, {opacity:1, scale:'1'}], timing),
-    outgoing.animate([{opacity:1, scale:'1', filter:'blur(0px)'}, {opacity:0, scale:'.975', filter:'blur(3px)'}], timing),
+    // Both covers retain their size and brightness throughout the horizontal slide.
+    incoming.animate([{translate:`${travel}% 0`}, {translate:'0% 0'}], timing),
+    outgoing.animate([{translate:'0% 0'}, {translate:`${-travel}% 0`}], timing),
   ];
   const cleanup = () => {
     motions.forEach(motion => motion.cancel()); outgoing.remove();
@@ -66,6 +79,18 @@ export function reconcileImmersiveCovers(host, html, { animate = false } = {}) {
   };
   host._cancelCoverTransition = cleanup;
   Promise.all(motions.map(motion => motion.finished)).then(cleanup, cleanup);
+}
+
+export function animateCoverSelection(host) {
+  const cover = host?.querySelector('.art-stack-slide.center .art-stack-card') || host;
+  if (!cover?.animate || globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches || host.closest('.performance-lite')) return;
+  cover._selectionMotion?.cancel();
+  const motion = cover.animate([
+    {scale:'1'}, {scale:'.965', offset:.32}, {scale:'1'},
+  ], {duration:300, easing:'cubic-bezier(.2,.7,.2,1)'});
+  cover._selectionMotion = motion;
+  const cleanup = () => { if (cover._selectionMotion === motion) cover._selectionMotion = null; };
+  motion.finished.then(cleanup, cleanup);
 }
 
 export function commitImmersiveSwipe(card, direction, applyChange) {
@@ -80,21 +105,38 @@ export function commitImmersiveSwipe(card, direction, applyChange) {
   art.setAttribute("aria-busy", "true");
   art.classList.remove("dragging");
   const width = (art.clientWidth || 280) + 12;
-  card._setArtDragOffset(direction === "next" ? -width : width);
   // Settle the outgoing cover before changing its identity; never slide the new cover out.
   const reduced = card._performanceModeEnabled?.() || globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
-  return new Promise((resolve) => setTimeout(resolve, reduced ? 0 : 300)).then(() => {
+  const neighbor = art.querySelector(`.art-stack-slide.${direction === 'next' ? 'next' : 'prev'} img`);
+  const ready = !neighbor || (neighbor.complete && neighbor.naturalWidth > 0);
+  // Never slide an undecoded image into view. Keep the current cover until ready.
+  const decoded = ready ? Promise.resolve(true) : new Promise(resolve => {
+    const timeout = setTimeout(() => resolve(false), 1200);
+    Promise.resolve().then(() => neighbor.decode()).then(() => {
+      clearTimeout(timeout); resolve(true);
+    }, () => { clearTimeout(timeout); resolve(false); });
+  });
+  return decoded.then(ok => {
+    if (!ok || card.$("npArt") !== art || card._state.selectedPlayer !== playerId || card._state.maQueueState?.queue_id !== queueId) return false;
+    card._setArtDragOffset(direction === "next" ? -width : width);
+    return new Promise(resolve => setTimeout(() => resolve(true), reduced ? 0 : 300));
+  }).then(settled => {
+    if (!settled) return;
     if (card.$("npArt") !== art || card._state.selectedPlayer !== playerId || card._state.maQueueState?.queue_id !== queueId) return;
     art.classList.add("resetting");
     card._immersiveSwipeApplying = true;
     return applyChange?.();
   }).catch((error) => card._toastError(card._mediaControlFailureMessage(error))).finally(() => {
+    card._state.mobileArtJustSwipedAt = Date.now();
     card._immersiveSwipePending = false;
     card._immersiveSwipeApplying = false;
     art.classList.add("resetting");
     card._clearArtDragOffset();
     art.removeAttribute("aria-busy");
     card.$("mobileArtShell")?.classList.remove("dragging");
+    // Commit the reset while transitions are disabled, before restoring them.
+    // Otherwise the browser can interpolate the new center from its old slot.
+    void art.offsetWidth;
     requestAnimationFrame(() => art.classList.remove("resetting"));
   });
 }
@@ -187,7 +229,7 @@ export function immersivePlayerDock(card, edgeHtml = "") {
   const homeButton = showHome
     ? `<button type="button" data-mainbar-action="home" aria-label="${label("Home", "בית")}" title="${label("Home", "בית")}">${actionIconSvg(card, "home")}</button>`
     : "";
-  return `<div class="immersive-dock">
+  return `${radioShortcutsHtml(card)}<div class="immersive-dock">
     <div class="immersive-fan" id="immersiveActionFan" role="group" aria-label="${label("Quick actions", "פעולות מהירות")}" hidden>
       <div class="immersive-fan-actions"></div>
       <div class="immersive-fan-navigation">
@@ -214,6 +256,7 @@ export function playerWheelActions(card) {
 }
 
 export function bindImmersivePlayer(card, options = {}) {
+  if (!options.fan) bindRadioShortcuts(card);
   const toggle = options.toggle || card.$("immersiveActionsToggle");
   const fan = options.fan || card.$("immersiveActionFan");
   if (!toggle || !fan) return;
@@ -309,6 +352,8 @@ export function bindImmersivePlayer(card, options = {}) {
     const buttons = wheelButtons;
     const count = buttons.length;
     const width = fan.clientWidth || 360;
+    const style = fanStyle(card);
+    fan.dataset.fanStyle = style;
     const compact = card._isCompactTileMode?.() === true;
     const narrow = compact || width < 312;
     const size = narrow ? 54 : Math.max(44, Math.min(60, Math.floor((width - 32) / 6.4)));
@@ -323,10 +368,14 @@ export function bindImmersivePlayer(card, options = {}) {
       const angle = distance * Math.PI / (narrow ? 3.5 : 6);
       const limit = narrow ? 1.6 : 2.55;
       const visible = Math.abs(distance) < limit;
-      button.style.setProperty("--fan-x", `${width / 2 + radius * Math.sin(angle)}px`);
-      button.style.setProperty("--fan-y", `${(compact ? 12 : 22) + (compact ? 48 : 98) * (1 - Math.cos(angle))}px`);
-      button.style.setProperty("--fan-depth", String(1 - Math.min(Math.abs(distance), 2.5) * .025));
+      const x = style === "orbit" ? width / 2 + distance * (width - size - 28) / (narrow ? 3.2 : 4.8) : width / 2 + radius * Math.sin(angle);
+      button.style.setProperty("--fan-x", `${x}px`);
+      const rise = style === "ribbon" ? (compact ? 14 : 28) : style === "orbit" ? (compact ? 6 : 12) : (compact ? 48 : 98);
+      const y = style === "ribbon" ? rise * Math.cos(angle) : style === "classic" ? rise * (1 - Math.cos(angle)) : rise * Math.abs(distance);
+      button.style.setProperty("--fan-y", `${(compact ? 12 : style === "classic" ? 22 : 18) + y}px`);
+      button.style.setProperty("--fan-depth", String(1 - Math.min(Math.abs(distance), 2.5) * (style === "orbit" ? .14 : .025)));
       button.style.setProperty('--fan-angle', `${angle}rad`);
+      button.style.zIndex = String(10 - Math.round(Math.abs(distance) * 2));
       button.style.setProperty('--fan-delay', `${Math.max(0, Math.min(4, distance + 2)) * 22}ms`);
       button.style.opacity = visible ? String(Math.min(1, (limit - Math.abs(distance)) * 3)) : "0";
       button.style.visibility = visible ? "visible" : "hidden";
@@ -374,9 +423,9 @@ export function bindImmersivePlayer(card, options = {}) {
   };
   const renderPage = (focus = false) => {
     fan.style.setProperty("--fan-count", String((pages[page] || []).length));
-    fan.querySelector(".immersive-fan-actions").innerHTML = pages.flat().map((item) => `<button type="button" data-immersive-action="${card._esc(item.id)}" ${typeof item.selected === "boolean" ? `aria-pressed="${item.selected}"` : ""} aria-label="${card._esc(item.label)}" title="${card._esc(item.label)}">${actionSymbolHtml(card,item)}${!item.genre && (item.player || item.artwork || actionLabelsEnabled(card)) ? `<span>${card._esc(item.label)}</span>` : ""}</button>`).join("");
+    fan.querySelector(".immersive-fan-actions").innerHTML = `<svg class="fan-ribbon-rail" viewBox="0 0 440 130" preserveAspectRatio="none" aria-hidden="true"><path d="M22 41 Q220 144 418 41"/></svg>` + pages.flat().map((item) => `<button type="button" data-immersive-action="${card._esc(item.id)}" ${typeof item.selected === "boolean" ? `aria-pressed="${item.selected}"` : ""} aria-label="${card._esc(item.label)}" title="${card._esc(item.label)}">${fanStyle(card) === "classic" ? actionSymbolHtml(card,item) : `<span class="fan-lens">${actionSymbolHtml(card,item)}</span>`}${!item.genre && (item.player || item.artwork || actionLabelsEnabled(card)) ? `<span>${card._esc(item.label)}</span>` : ""}</button>`).join("");
     wheelButtons = [...fan.querySelectorAll(".immersive-fan-actions button")];
-    wheelPosition = pages.slice(0, page).flat().length + Math.min(2, Math.floor((pages[page]?.length || 0) / 2));
+    wheelPosition = pages.slice(0, page).flat().length + Math.min(card._isCompactTileMode?.() ? 1 : 2, Math.floor((pages[page]?.length || 0) / 2));
     positionWheel(wheelPosition);
     updateWheelStatus();
     fan.querySelectorAll("[data-fan-step]").forEach((button) => { button.disabled = pages.flat().length < 2; });

@@ -901,8 +901,8 @@ export default function() {
   .card:not(.layout-tablet) .sleep-timer-chip{min-height:30px;padding:0 9px;gap:5px;font-size:calc(11px * var(--v2-font-scale));box-shadow:0 10px 20px rgba(0,0,0,.18);}
   .card:not(.layout-tablet) .sleep-timer-chip .ui-ic{width:13px;height:13px;}
   .card:not(.layout-tablet) .sleep-timer-menu{grid-auto-flow:row;position:absolute;inset-block-start:36px;right:0;left:auto;inset-inline-start:auto;inset-inline-end:0;}
-  .history-toggle-fab.left-edge{inset-inline-start:2px!important;}
-  .history-toggle-fab.right-edge{inset-inline-end:2px!important;}
+  .history-toggle-fab.left-edge{ inset-inline-start:auto!important;inset-inline-end:auto!important;left:2px!important;right:auto!important; }
+  .history-toggle-fab.right-edge{ inset-inline-start:auto!important;inset-inline-end:auto!important;right:2px!important;left:auto!important; }
   .history-drawer.left-edge{left:14px;right:auto;transform:translateX(calc(-100% - 14px));}
   .history-drawer.right-edge{right:14px;left:auto;transform:translateX(calc(100% + 14px));}
   .history-drawer.open{transform:translateX(0);}

@@ -1,3 +1,12 @@
+// Retired local preview settings must not strand an existing dashboard on an unavailable design.
+export function migrateRetiredPlayerDesign(config = {}) {
+  if (config.player_design !== "flow_3rd_generation" && !("flow3_appearance" in config)) return config;
+  const migrated = { ...config };
+  if (migrated.player_design === "flow_3rd_generation") migrated.player_design = "immersive";
+  delete migrated.flow3_appearance;
+  return migrated;
+}
+
 const MOBILE_DYNAMIC_THEME_MODES = ["off", "auto", "strong"];
 const MOBILE_BACKGROUND_MOTION_MODES = ["off", "subtle", "strong", "extreme"];
 const PERFORMANCE_PROFILE_MODES = ["full", "high", "low", "ultra_lite"];

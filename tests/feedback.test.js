@@ -25,6 +25,17 @@ it("acknowledges an issue and removes only that notification", () => {
   expect(card._acknowledgeCardIssue).toHaveBeenCalledWith("connection", "Connection lost");
   expect(card.$("toastWrap").querySelectorAll(".toast")).toHaveLength(1);
 });
+it("keeps feedback for a rapid reselection visible and independently removable", () => {
+  const card=fixture();
+  const first=showToast.call(card,"Starting A…","info",{dedupe:false});
+  first();
+  const second=showToast.call(card,"Starting A…","info",{dedupe:false});
+  expect(card.$("toastWrap").querySelectorAll('[role="status"]')).toHaveLength(1);
+  first();
+  expect(card.$("toastWrap").children).toHaveLength(1);
+  second();
+  expect(card.$("toastWrap").children).toHaveLength(0);
+});
 it("shows group confirmation only after the command succeeds", async () => {
   vi.useFakeTimers(); const card = fixture(); let finish;
   const pending = groupFeedback(card, "connect", () => new Promise(resolve => {finish=resolve;}));

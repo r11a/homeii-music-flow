@@ -9,7 +9,7 @@ export function showToast(message, variant = "info", options = {}) {
       const now = Date.now();
       const key = `${safeVariant}:${text}`;
       const lastShown = this._toastHistory?.get(key) || 0;
-      if (now - lastShown < 2500) return;
+      if (options?.dedupe !== false && now - lastShown < 2500) return;
       if (!this._toastHistory) this._toastHistory = new Map();
       this._toastHistory.set(key, now);
       for (const [toastKey, at] of this._toastHistory.entries()) {
@@ -52,6 +52,7 @@ export function showToast(message, variant = "info", options = {}) {
       }
       wrap.appendChild(el);
       setTimeout(removeToast, Number(options?.duration || 3300));
+      return removeToast;
     }
 
 export async function groupFeedback(card, action, perform, playerIds = []) {

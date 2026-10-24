@@ -53,12 +53,12 @@ export const immersivePlayerStyles = `
 .card.player-design-immersive .art-stack-slide.prev { transform:translateX(calc(-150% - 12px + var(--art-drag-x)))!important; }
 .card.player-design-immersive .art-stack-slide.next { transform:translateX(calc(50% + 12px + var(--art-drag-x)))!important; }
 .card.player-design-immersive .art-stack-slide.center { transform:translateX(calc(-50% + var(--art-drag-x)))!important; }
-.card.player-design-immersive .art-stack-slide { transition:transform .3s cubic-bezier(.2,.75,.25,1)!important; will-change:transform; }
+.card.player-design-immersive .art-stack-slide { padding:0!important; transition:transform .3s cubic-bezier(.2,.75,.25,1)!important; will-change:transform; }
 .card.player-design-immersive #npArt.cover-crossfading .art-stack-slide { transition:none!important; }
 .immersive-cover-outgoing { position:absolute; inset:0; z-index:4; overflow:hidden; border-radius:inherit; pointer-events:none; }
 .immersive-cover-outgoing img { display:block; width:100%; height:100%; object-fit:cover; border-radius:inherit; }
 .card.player-design-immersive #npArt:is(.dragging,.resetting) .art-stack-slide { transition:none!important; }
-.card.player-design-immersive .art-stack-card { width:100%!important; max-height:100%!important; transform:none!important; }
+.card.player-design-immersive .art-stack-card { padding:0!important; width:100%!important; max-height:100%!important; transform:none!important; filter:none!important; opacity:1!important; transition:none!important; border-color:rgba(255,255,255,.16)!important; box-shadow:none!important; }
 .card.player-design-immersive #npArt[aria-busy=true] { cursor:progress; }
 .card.player-design-immersive #mobileMenu .menu-body.sheet-actions { scrollbar-width:none; overscroll-behavior:contain; }
 .card.player-design-immersive #mobileMenu .menu-body.sheet-actions::-webkit-scrollbar { display:none; width:0; height:0; }
@@ -245,8 +245,9 @@ export const immersivePlayerStyles = `
 .card.compact-mode.compact-mode .compact-cover-image { object-fit:cover; padding:0!important; }
 .card.compact-mode.compact-mode .compact-cover-echo,.card.compact-mode.compact-mode .compact-brand-signature,.card.compact-mode.compact-mode .compact-up-next { display:none!important; }
 .card.compact-mode.compact-mode .compact-main { grid-area:copy; min-width:0; padding:0!important; }
-.card.compact-mode.compact-mode .compact-title { font-size:clamp(18px,2.5vw,26px)!important; line-height:1.2!important; }
-.card.compact-mode.compact-mode .compact-sub { font-size:13px!important; line-height:1.4!important; }
+.card.compact-mode.compact-mode .compact-copy { min-width:0; max-width:100%; gap:5px; }
+.card.compact-mode.compact-mode #npTitle { font-size:clamp(17px,2.5cqi,23px)!important; line-height:1.25!important; display:-webkit-box!important; -webkit-line-clamp:2; -webkit-box-orient:vertical; max-height:2.5em; white-space:normal!important; overflow:hidden!important; overflow-wrap:anywhere; text-wrap:pretty; text-overflow:ellipsis; min-width:0; max-width:100%; }
+.card.compact-mode.compact-mode #npSub { font-size:12px!important; line-height:1.4!important; white-space:nowrap!important; overflow:hidden!important; text-overflow:ellipsis; min-width:0; max-width:100%; margin-top:0; }
 .card.compact-mode.compact-mode .compact-controls { grid-area:controls; gap:18px!important; margin:0!important; justify-content:center!important; }
 .card.compact-mode.compact-mode .compact-controls button { width:44px!important; height:44px!important; min-width:44px!important; min-height:44px!important; }
 .card.compact-mode.compact-mode .compact-controls .main-btn { width:52px!important; height:52px!important; }

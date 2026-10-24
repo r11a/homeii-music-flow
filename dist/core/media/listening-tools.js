@@ -1,4 +1,5 @@
 import { actionIconSvg } from "./action-menu.js";
+import { mountRadioPinEditor } from "./radio-shortcuts.js";
 // Small views backed by the existing Engine and player controls.
 export async function refreshArtworkLighting(card, force = false) {
   if (!card._state.engineCapabilities?.artwork_lighting) return null;
@@ -53,6 +54,7 @@ export async function renderListeningTools(card, body, page) {
   }
   if (page === "smart") {
     const entries = [
+      ...(card._state.engineCapabilities?.listening_scenes ? [["listening_scenes","playlist","Scenes","סצנות"]] : []),
       ["announcements","announcement","Announce","כריזה"],
       ["sleep_timer","timer","Timers","טיימרים"],
       ["sleep_timer","schedule_add","Schedules","תזמונים"],
@@ -170,6 +172,7 @@ export async function renderListeningTools(card, body, page) {
       const stations = await card._fetchLibrary("radio", "sort_name", 250, true);
       if (card._state.menuPage !== page || !body.isConnected) return;
       body.innerHTML = card._mediaItemsListHtml(stations, "radio", {librarySkin:true}) || `<div class="state-box">${t("No favorite radio stations yet", "אין עדיין תחנות רדיו מועדפות")}</div>`;
+      if (stations.length) mountRadioPinEditor(card, body, stations);
     } catch (error) {
       if (card._state.menuPage === page && body.isConnected) body.innerHTML = `<div class="state-box" role="alert">${card._esc(card._mediaControlFailureMessage(error))}</div>`;
     }
@@ -181,9 +184,30 @@ export async function renderListeningTools(card, body, page) {
     if (card._state.menuPage !== page || !body.isConnected) return;
     if (!stats || !Number.isFinite(Number(stats.today_minutes))) throw new Error(card._m("Listening statistics are unavailable.", "סטטיסטיקות האזנה אינן זמינות."));
     const number = value => card._esc(Number.isFinite(Number(value)) ? Math.max(0, Number(value)).toLocaleString(undefined, {maximumFractionDigits:1}) : "—");
+    const playerName = player => {
+      const known = card._playerByEntityId?.(player?.entity_id);
+      return (known && card._playerDisplayName?.(known)) || player?.friendly_name || player?.entity_id || "";
+    };
     const top = stats.top_player_today;
-    const leader = top?.friendly_name || top?.entity_id;
-    body.innerHTML = `<section class="listening-stats"><h2>${t("Listening today", "ההאזנה היום")}</h2><p>${card._esc(stats.day || "")}</p><div class="listening-stats-summary"><div><strong>${number(stats.today_minutes)}</strong><span>${t("Minutes", "דקות")}</span></div><div><strong>${number(stats.today_sessions)}</strong><span>${t("Sessions", "הפעלות")}</span></div></div>${leader ? `<div class="listening-stats-leader"><span>${t("Most active player today", "הנגן הפעיל ביותר היום")}</span><strong>${card._esc(leader)}</strong></div>` : ""}${(Array.isArray(stats.players_today) ? stats.players_today : []).map(player => `<div class="listening-stats-row"><span>${card._esc(player.friendly_name || player.entity_id)}</span><strong>${number(player.minutes)} ${t("min", "דק׳")}</strong></div>`).join("")}<p>${t("Totals are measured across players and may include simultaneous playback.", "הסיכום נמדד על פני הנגנים ועשוי לכלול ניגון מקביל.")}</p></section>`;
+    const leader = playerName(top);
+    body.innerHTML = `<section class="listening-stats"><h2>${t("Listening today", "ההאזנה היום")}</h2><p>${card._esc(stats.day || "")}</p><div class="listening-stats-summary"><div><strong>${number(stats.today_minutes)}</strong><span>${t("Minutes", "דקות")}</span></div><div><strong>${number(stats.today_sessions)}</strong><span>${t("Sessions", "הפעלות")}</span></div></div>${leader ? `<div class="listening-stats-leader"><span>${t("Most active player today", "הנגן הפעיל ביותר היום")}</span><strong>${card._esc(leader)}</strong></div>` : ""}${(Array.isArray(stats.players_today) ? stats.players_today : []).map(player => `<div class="listening-stats-row"><span>${card._esc(playerName(player))}</span><strong>${number(player.minutes)} ${t("min", "דק׳")}</strong></div>`).join("")}<p>${t("Totals are measured across players and may include simultaneous playback.", "הסיכום נמדד על פני הנגנים ועשוי לכלול ניגון מקביל.")}</p></section>`;
+    // MA 2.11 statistics enrich the Engine's per-player measurements when available.
+    if (typeof card._homeiiEngineMaCommand === "function") card._homeiiEngineMaCommand("statistics/top_items", { media_type: "track", period: "week", limit: 5, timezone: card._hass?.config?.time_zone || "UTC" })
+      .then(response => {
+        if (card._state.menuPage !== page || !body.isConnected) return;
+        const tracks = response?.data;
+        if (!Array.isArray(tracks) || !tracks.length) return;
+        body.querySelector(".listening-stats")?.insertAdjacentHTML("beforeend", `<div class="listening-stats-leader"><span>${t("Most played this week", "המושמעים ביותר השבוע")}</span></div>${tracks.map((track, index) => `<div class="listening-stats-row"><span>${index + 1}. ${card._esc(track.item?.name || track.name || "")}</span><strong>${number(track.play_count)} ${t("plays", "השמעות")}</strong></div>`).join("")}`);
+      })
+      .catch(() => {});
+    if (typeof card._homeiiEngineMaCommand === "function") card._homeiiEngineMaCommand("statistics/genre_distribution", {period:"week",limit:5,timezone:card._hass?.config?.time_zone || "UTC"})
+      .then(response=>{
+        if (card._state.menuPage!==page || !body.isConnected) return;
+        const genres=Array.isArray(response?.data) ? response.data.filter(item=>item?.name && Number(item.value)>0) : [];
+        if (!genres.length) return;
+        const maximum=Math.max(...genres.map(item=>Number(item.value)));
+        body.querySelector(".listening-stats")?.insertAdjacentHTML("beforeend", `<div class="listening-stats-leader"><span>${t("Your week in genres", "השבוע שלך בסגנונות")}</span></div>${genres.map(item=>`<div class="listening-stats-row"><span>${card._esc(item.name)}</span><meter min="0" max="${maximum}" value="${Number(item.value)}" aria-label="${card._esc(item.name)}"></meter><strong>${number(item.value)}</strong></div>`).join("")}<p>${t("Based on completed plays with known genres in your MA account.", "לפי השמעות שהושלמו עם סגנון מזוהה בחשבון MA שלך.")}</p>`);
+      }).catch(()=>{});
   } catch (error) {
     if (card._state.menuPage === page && body.isConnected) body.innerHTML = `<div class="state-box" role="alert">${card._esc(card._mediaControlFailureMessage(error))}</div>`;
   }

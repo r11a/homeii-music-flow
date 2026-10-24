@@ -44,23 +44,28 @@ const defaultOrder = ["play","pause","queue","lyrics","like","shuffle","repeat",
   "quick_search","library_search","recommendations","history","discovery","music_flow","favorite_radios",
   "library_playlists","library_albums","library_artists","library_tracks","library_radio","library_podcasts","library_liked",
   "smart","announcements","timer","sleep_timer","lighting","playback_stats","studio","home","preferences","queue_settings","settings"];
-export function defaultFanRank(action) {
+const mainDefaultOrder = ["shuffle", "repeat", "like", "discovery", "recommendations"];
+export function defaultFanRank(action, context) {
+  if (context === "main") {
+    const mainIndex = mainDefaultOrder.indexOf(action.id);
+    if (mainIndex >= 0) return mainIndex - mainDefaultOrder.length;
+  }
   if (action.player) return defaultOrder.indexOf("players") + 0.5;
   const index = defaultOrder.indexOf(action.id);
   return index < 0 ? 50 : index;
 }
-export function orderedFanActions(actions, preference = {}, selectedOnly = false) {
+export function orderedFanActions(actions, preference = {}, selectedOnly = false, context) {
   const unique = [...new Map(actions.map(action => [action.id, action])).values()];
   const order = Array.isArray(preference.order) ? preference.order : [];
   const rank = new Map(order.map((id, index) => [id, index]));
   const hidden = new Set(Array.isArray(preference.hidden) ? preference.hidden : []);
   return unique.filter(action => !selectedOnly || !hidden.has(action.id)).sort((a,b) =>
     (rank.get(a.id) ?? order.length) - (rank.get(b.id) ?? order.length) ||
-    (rank.has(a.id) || rank.has(b.id) ? 0 : defaultFanRank(a) - defaultFanRank(b)));
+    (rank.has(a.id) || rank.has(b.id) ? 0 : defaultFanRank(a, context) - defaultFanRank(b, context)));
 }
 export function preferredFanPages(card, context, pages) {
   void loadFanPreferences(card);
-  return [orderedFanActions(pages.flat(), fanPreference(card, context), true)];
+  return [orderedFanActions(pages.flat(), fanPreference(card, context), true, context)];
 }
 
 // One catalogue serves both the complete action screen and the configurable wheel.
@@ -103,7 +108,7 @@ export function openFanCatalogue(card, host, context, getActions, dispatch, onSa
   });
   const render = () => {
     const preference = draft || fanPreference(card, context);
-    const ordered = orderedFanActions(getActions(), preference);
+    const ordered = orderedFanActions(getActions(), preference, false, context);
     const actions = editing ? ordered : Object.keys(categoryLabels).flatMap(category => ordered.filter(action => fanActionCategory(action) === category));
     let lastCategory = null;
     const categoryHeading = action => {
@@ -132,7 +137,7 @@ export function openFanCatalogue(card, host, context, getActions, dispatch, onSa
     panel.classList.toggle("is-editing",editing);
   };
   const move = (from, to) => {
-    const order = orderedFanActions(getActions(), draft).map(a => a.id);
+    const order = orderedFanActions(getActions(), draft, false, context).map(a => a.id);
     const source = order.indexOf(from), target = order.indexOf(to);
     if (source < 0 || target < 0 || source === target) return;
     order.splice(source,1); order.splice(target,0,from); draft.order = [...order,...(draft.order || []).filter(id=>!order.includes(id))]; render();
@@ -160,7 +165,7 @@ export function openFanCatalogue(card, host, context, getActions, dispatch, onSa
     const row = event.target.closest("[data-catalogue-id]"); if (!row) return;
     const id = row.dataset.catalogueId;
     const direction = event.target.closest("[data-catalogue-move]");
-    if (direction) { const order = orderedFanActions(getActions(),draft); move(id,order[order.findIndex(a => a.id === id) + Number(direction.dataset.catalogueMove)]?.id); return; }
+    if (direction) { const order = orderedFanActions(getActions(),draft,false,context); move(id,order[order.findIndex(a => a.id === id) + Number(direction.dataset.catalogueMove)]?.id); return; }
     if (!editing && event.target.closest("[data-catalogue-action]")) {
       if (!getActions().some(a => a.id === id)) { render(); return; }
       close(); try { await dispatch(id); } catch(error) { card._toastError(card._mediaControlFailureMessage(error)); }

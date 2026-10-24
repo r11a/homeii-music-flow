@@ -16,3 +16,11 @@ it('loads on entry without a run button and stops polling after navigation',asyn
  card._state.menuPage='players';await vi.advanceTimersByTimeAsync(16000);
  expect(card._refreshHomeiiEngineContext).toHaveBeenCalledOnce();card._stopLiveDiagnostics();body.remove();vi.useRealTimers();
 });
+
+it('provides a next step for failed connections without presenting unknown checks as failures',()=>{
+ const card={_state:{},_m:a=>a,_redactDiagnosticText:value=>value};
+ const rows=liveDiagnosticRows(card,{available:true,raw:{required_connections:{music_assistant:{ok:false,message:"Token rejected"},library_provider:{ok:false}}}},true);
+ expect(rows.find(row=>row.title==='Music Assistant').detail).toContain('Engine connection');
+ expect(rows.find(row=>row.title==='Music library').detail).toContain('native Music Assistant');
+ expect(rows.find(row=>row.title==='Music search').status).toBe('info');
+});

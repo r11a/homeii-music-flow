@@ -1,3 +1,4 @@
+import { premiumStyles, premiumContentStyles, fanVariantStyles } from "./sheets/premium.js";
 import sheet0 from "./sheets/foundation.js";
 import sheet1 from "./sheets/compact.js";
 import sheet2 from "./sheets/player.js";
@@ -36,5 +37,11 @@ export function buildCardStyles(options) {
     sheet14(options),
     interfaceStyles,
     immersivePlayerStyles,
+    premiumStyles,
+    premiumContentStyles,
+    fanVariantStyles,
   ].join("");
 }
+
+
+

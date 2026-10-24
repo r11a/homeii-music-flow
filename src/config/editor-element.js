@@ -1236,7 +1236,7 @@ return class HomeiiBaseMusicEditor extends HTMLElement {
     const colorLightOptions = this._editorColorLightOptions();
     const immersive = (this._config?.player_design || "immersive") === "immersive";
     const classicOnly = new Set(["mobile_footer_mode", "mobile_cover_flow", "mobile_show_up_next", "mobile_volume_mode"]);
-    const immersiveOnly = new Set(["volume_wheel", "fan_theme"]);
+    const immersiveOnly = new Set(["volume_wheel", "fan_theme", "fan_style"]);
     const cloneItem = (item) => {
       if (immersive && classicOnly.has(item?.name)) return null;
       if (!immersive && immersiveOnly.has(item?.name)) return null;

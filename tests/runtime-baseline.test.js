@@ -374,6 +374,9 @@ describe("runtime baseline", () => {
     card._applyConfiguredMobileSettings();
     expect(card._state.mobileLayoutMode).toBe("full");
     expect(card._state.mobileEdgeReturnAvailable).toBe(true);
+    card._config.mobile_edge_to_edge = true;
+    card._applyConfiguredMobileSettings();
+    expect(card._mobileEdgeToEdgeEnabled()).toBe(false);
 
     card._layoutModeConfig = vi.fn(() => "mobile");
     card._getAllocatedCardHeight = vi.fn(() => 760);
@@ -560,6 +563,11 @@ describe("runtime baseline", () => {
       settings_source: "visual",
     });
 
+    const silentWake = card._normalizeScheduledStartSchedule({id:"silent", player:"media_player.kitchen", volume:0, fadeSeconds:60});
+    expect(silentWake.volume).toBe(0);
+    expect(card._scheduledStartEnginePayload(silentWake)).not.toHaveProperty("fade_seconds");
+    card._state.engineCapabilities = {schedule_volume_fade:true};
+    expect(card._scheduledStartEnginePayload(silentWake)).toMatchObject({volume:0,fade_seconds:60});
     const sleepTimerEndsAt = Date.now() + 30 * 60 * 1000;
     const schedule = card._normalizeScheduledStartSchedule({
       id: "wake_kitchen",
@@ -597,6 +605,19 @@ describe("runtime baseline", () => {
     expect(source).toContain("queue-action-backdrop.clean-all-confirm-backdrop.open .clean-all-confirm-sheet");
     expect(source).toContain("compact-expanded .queue-action-backdrop.clean-all-confirm-backdrop.open .clean-all-confirm-sheet");
     expect(source).not.toContain('class="menu-item danger-confirm-action" id="cleanAllConfirmContinueBtn"');
+  });
+
+  it("migrates retired FLOW 3 configs to Immersive without losing compact settings", async () => {
+    await import("../src/homeii-music-flow.js?runtime-flow3-migration");
+    await Promise.resolve(); await vi.runAllTimersAsync();
+    const Editor = globalThis.customElements.get("homeii-music-flow-editor");
+    const editor = new Editor(); editor.connectedCallback();
+    const original = {type:'custom:homeii-music-flow',player_design:'flow_3rd_generation',flow3_appearance:'dark_amber',mobile_compact_mode:true};
+    editor.setConfig(original);
+    expect(editor._config.player_design).toBe('immersive');
+    expect(editor._config.mobile_compact_mode).toBe(true);
+    expect(editor._config).not.toHaveProperty('flow3_appearance');
+    expect(original.player_design).toBe('flow_3rd_generation');
   });
 
   it("instantiates the visual editor shell and accepts config updates", async () => {
@@ -974,11 +995,13 @@ describe("runtime baseline", () => {
 
     const CardCtor = globalThis.customElements.get("homeii-music-flow");
     const card = new CardCtor();
-    await card._loadImgInto("https://mass.example.com/imageproxy?path=cover", el, "music_note");
+    await card._loadImgInto("https://mass.example.com/imageproxy?path=cover", el, "music_note", { priority: true });
 
     expect(globalThis.fetch).not.toHaveBeenCalled();
     expect(appended).toHaveLength(1);
     expect(appended[0].src).toBe("https://mass.example.com/imageproxy?path=cover");
+    expect(appended[0].loading).toBe("eager");
+    expect(appended[0].fetchPriority).toBe("high");
   });
 
   it("uses a simple anonymous fetch for public cross-origin Music Assistant artwork before bearer auth", async () => {
@@ -3393,6 +3416,24 @@ describe("runtime baseline", () => {
     expect(card._screensaverBlocked()).toBe(true);
   });
 
+  it("expands compact lyrics before resolving the rebuilt modal element", async () => {
+    await import("../src/homeii-music-flow.js?runtime-compact-lyrics-expand");
+    await Promise.resolve();
+    await vi.runAllTimersAsync();
+    const CardCtor = globalThis.customElements.get("homeii-music-flow");
+    const card = new CardCtor();
+    const calls = [];
+    card._isCompactTileMode = () => true;
+    card._setCompactExpanded = expanded => calls.push(['expand', expanded]);
+    card.$ = id => { calls.push(['element', id]); return null; };
+    await card._openLyricsModal();
+    expect(calls).toEqual([['expand', true], ['element', 'lyricsBackdrop']]);
+    calls.length = 0;
+    card._isCompactTileMode = () => false;
+    await card._openLyricsModal();
+    expect(calls).toEqual([['element', 'lyricsBackdrop']]);
+  });
+
   it("blocks the screensaver for a visible player picker but allows a hidden picker", async () => {
     await import("../src/homeii-music-flow.js?runtime-player-picker-screensaver");
     await Promise.resolve();
@@ -4214,6 +4255,7 @@ describe("runtime baseline", () => {
 
   it("does not fabricate an empty queue after a transport failure and clears the warning after recovery", async () => {
     const card = await reliabilityCard();
+    card._state.queueVisible = true;
     card._state.selectedPlayer = "media_player.kitchen";
     card._getSelectedPlayer = () => ({ entity_id: card._state.selectedPlayer });
     card._fetchMusicAssistantQueueSnapshot = vi.fn().mockRejectedValue(new Error("Disconnected"));
@@ -4240,6 +4282,22 @@ describe("runtime baseline", () => {
     expect(card._homeiiEnginePlayMedia).toHaveBeenCalledWith(expect.objectContaining({
       verify_playback: ["play", "shuffle"].includes(enqueue),
     }));
+  });
+
+  it("accepts library playback without waiting for the long verification poll", async () => {
+    const card = await reliabilityCard();
+    card._state.selectedPlayer = "media_player.kitchen";
+    card._state.menuOpen = true;
+    card._state.menuPage = "library_playlists";
+    card._ensureHomeiiEngineReadyForAction = vi.fn().mockResolvedValue(true);
+    card._homeiiEnginePlayMedia = vi.fn().mockResolvedValue({ ok: true });
+    card._scheduleQueueRefreshAfterMutation = vi.fn();
+    const ok = await card._playMedia("library://playlist/297", "playlist", "play", { silent: true });
+    expect(card._homeiiEnginePlayMedia).toHaveBeenCalledWith(expect.objectContaining({
+      media_id: "library://playlist/297",
+      verify_playback: false,
+    }));
+    expect(ok).toBe(true);
   });
 
   it("keeps the built dist runtime bundled and registerable", async () => {

@@ -5,6 +5,8 @@ export async function renderSavedPlaylists(card, body, entry = null) {
   body.innerHTML = `<p role="status">${t("Loading saved playlists…","טוען רשימות שמורות…")}</p>`;
   const lists = await card._homeiiEngineCommand("playlists", {action:"list"});
   if (!current()) return;
+  if (!entry) await card._ensureQueueSnapshot(true, {full:true});
+  if (!current()) return;
   const uris = entry ? [entry.uri] : card._getNowPlayingQueueItems().map(item => card._getQueueItemUri(item)).filter(Boolean);
   body.innerHTML = `<section class="smart-settings"><h2>${t("Engine playlists","רשימות במנוע")}</h2><p>${t("Saved in Home Assistant and available across your devices.","נשמרות ב־Home Assistant וזמינות בכל המכשירים שלך.")}</p><form data-saved-playlist-form><label>${t("Playlist name","שם הרשימה")}<input name="name" maxlength="120" required></label><button type="submit" ${uris.length ? "" : "disabled"}>${t(entry ? "Save this item as a playlist" : "Save current queue",entry ? "שמירת הפריט כרשימה" : "שמירת התור הנוכחי")}</button></form><p role="status"></p><div class="smart-hub-grid">${lists.map((list,index)=>`<button data-saved-playlist="${index}"><span>${card._esc(list.name)}</span><small>${list.uris.length} ${t("items","פריטים")}</small></button>`).join("")}</div></section>`;
   const status = body.querySelector('[role="status"]');

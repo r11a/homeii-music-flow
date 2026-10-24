@@ -311,6 +311,10 @@ export function playerGroupMemberIds(player = null) {
 export function isStaticGroupPlayer(player = null) {
   if (!player) return false;
   const attrs = player.attributes || {};
+  // Authoritative MA type wins over friendly names such as "Party room".
+  const declaredType = String(attrs.mass_player_type || attrs.player_type || attrs.type || "").toLowerCase();
+  if (["group", "stereo_pair", "sync_group"].includes(declaredType) || attrs.is_group === true || attrs.is_group_player === true) return true;
+  if (["player", "protocol"].includes(declaredType)) return false;
   const typeText = [
     player.entity_id,
     attrs.friendly_name,

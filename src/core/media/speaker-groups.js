@@ -1,6 +1,6 @@
 import { groupFeedback } from "./feedback.js";
 // Group membership and commands. The existing card remains the state owner.
-import { isPlayerAvailable } from "../state/players.js";
+import { isPlayerAvailable, isStaticGroupPlayer } from "../state/players.js";
 
 export function _getAvailableGroupPlayers() {
   return (this._state.players || [])
@@ -17,6 +17,7 @@ export function _currentSpeakerGroupMemberIds(entityId = this._state.selectedPla
   let ids = this._playerGroupMemberIds(primary).filter(Boolean);
   if (ids.length <= 1) {
     const owner = players.find((player) => {
+      if (isStaticGroupPlayer(player)) return false;
       const members = this._playerGroupMemberIds(player);
       return members.length > 1 && members.includes(primaryId);
     });
@@ -34,6 +35,7 @@ export function _currentSpeakerGroupOwnerId(entityId = this._state.selectedPlaye
   const primaryMembers = this._playerGroupMemberIds(primary);
   if (primaryMembers.length > 1) return primaryMembers[0] || primaryId;
   const owner = players.find((player) => {
+    if (isStaticGroupPlayer(player)) return false;
     const members = this._playerGroupMemberIds(player);
     return members.length > 1 && members.includes(primaryId);
   });
