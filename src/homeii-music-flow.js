@@ -10,7 +10,7 @@ import { renderSavedPlaylists } from "./core/media/playlist-actions.js";
 import { mountLiveDiagnostics } from "./core/media/live-diagnostics.js";
 import { renderVolumeRules } from "./core/media/volume-rules.js";
 import { actionIconSvg, actionMenuHtml, mediaActionSheetHtml, handleMediaActionClick } from "./core/media/action-menu.js";
-import { immersivePlayerEnabled, immersivePlayerStage, immersivePlayerDock, bindImmersivePlayer, syncImmersivePlayer, commitImmersiveSwipe, reconcileImmersiveCovers, animateCoverSelection } from "./core/media/immersive-player.js";
+import { immersivePlayerEnabled, immersivePlayerStage, immersivePlayerDock, bindImmersivePlayer, syncImmersivePlayer, bindArtworkMouseDrag, commitImmersiveSwipe, reconcileImmersiveCovers, animateCoverSelection } from "./core/media/immersive-player.js";
 import { loadQueueSettings, saveQueueSettings, updateQueueSettingVisibility } from "./core/media/queue-settings.js";
 import { queuePlaybackOptionsHtml, toggleQueueAutoplay, toggleQueueCrossfade, setPlaybackSpeed } from "./core/media/queue-options.js";
 import { loadDiscoverySections, discoveryPlayerFocusHtml, updateDiscoveryMenuBody, discoveryMenuHtml } from "./core/media/discovery.js";
@@ -6997,6 +6997,10 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     this._mobileArtBrowseResetTimer = setTimeout(() => {
       this._mobileArtBrowseResetTimer = null;
       if (!Number(this._state.mobileArtBrowseOffset || 0)) return;
+      if (this._state.activeArtworkTouch || this._immersiveSwipePending) {
+        this._scheduleMobileArtBrowseReset();
+        return;
+      }
       this._state.mobileArtBrowseOffset = 0;
       this._clearArtDragOffset();
       this._refreshMobileArtStack(true);
@@ -7007,6 +7011,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     const root = this.$("npArt");
     if (!root || root.dataset.fallbackBound === "1") return;
     root.dataset.fallbackBound = "1";
+    bindArtworkMouseDrag(this, root);
     root.addEventListener("touchstart", (e) => {
       this._onArtTouchStart(e);
     }, { passive: true });
@@ -7019,6 +7024,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     root.addEventListener("touchcancel", () => {
       this._state.activeArtworkTouch = null;
       this._clearArtDragOffset();
+      this._scheduleMobileArtBrowseReset();
       this.$("mobileArtShell")?.classList.remove("dragging");
     }, { passive: true });
     root.addEventListener("wheel", (e) => {
@@ -7062,10 +7068,20 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     this._cycleActivePlayer(dx < 0 ? 1 : -1);
   }
 
+  async _ensureArtworkBrowseQueue() {
+    const expected = Number(this._state.maQueueState?.items_count ?? this._state.maQueueState?.items);
+    if (expected > (this._state.queueItems || []).length) {
+      await this._ensureQueueSnapshot(true, { full: true });
+    }
+  }
+
   _onArtTouchStart(e) {
     if (this._immersiveSwipePending) return;
     const touch = e.touches?.[0];
     if (!touch) return;
+    this._ensureArtworkBrowseQueue().catch(() => {});
+    clearTimeout(this._mobileArtBrowseResetTimer);
+    this._mobileArtBrowseResetTimer = null;
     this._state.activeArtworkTouch = { x: touch.clientX, y: touch.clientY, t: Date.now(), dx: 0, dy: 0, active: true };
     const artShell = this.$("mobileArtShell");
     const artHost = this.$("npArt");
@@ -7174,7 +7190,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     return true;
   }
 
-  _onArtWheel(e) {
+  async _onArtWheel(e) {
     if (!this._mobileCoverFlowEnabled()) return;
     const deltaY = Number(e?.deltaY || 0);
     const deltaX = Number(e?.deltaX || 0);
@@ -7184,6 +7200,10 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     if (now - Number(this._state.mobileCoverFlowWheelAt || 0) < 130) return;
     this._state.mobileCoverFlowWheelAt = now;
     const step = Math.max(1, Math.min(4, Math.round(Math.abs(deltaY) / 90) || 1));
+    const player = this._state.selectedPlayer;
+    try { await this._ensureArtworkBrowseQueue(); }
+    catch (error) { this._toastError(this._mediaControlFailureMessage(error)); return; }
+    if (player !== this._state.selectedPlayer) return;
     this._commitMobileCoverFlowSwipe(deltaY > 0 ? step : -step);
   }
 
@@ -7215,11 +7235,12 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     }, 105);
   }
 
-  _onArtTouchEnd(e) {
+  async _onArtTouchEnd(e) {
     const start = this._state.activeArtworkTouch;
     this._state.activeArtworkTouch = null;
     const touch = e.changedTouches?.[0];
     if (!start || !touch) return;
+    this._scheduleMobileArtBrowseReset();
     const dx = touch.clientX - start.x;
     const dy = touch.clientY - start.y;
     const dt = Date.now() - start.t;
@@ -7228,6 +7249,10 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     if (artShell) artShell.classList.remove("dragging");
     artHost?.classList.remove("dragging");
     if (this._mobileCoverFlowEnabled() && Math.abs(dy) >= 28 && Math.abs(dy) > Math.abs(dx)) {
+      const player = this._state.selectedPlayer;
+      try { await this._ensureArtworkBrowseQueue(); }
+      catch (error) { this._clearArtDragOffset(); this._toastError(this._mediaControlFailureMessage(error)); return; }
+      if (player !== this._state.selectedPlayer) return;
       const step = Math.max(1, Math.min(4, Math.round(Math.abs(dy) / 82) || 1));
       if (!this._commitMobileCoverFlowSwipe(dy < 0 ? step : -step)) this._clearArtDragOffset();
       return;
@@ -7237,6 +7262,10 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
       return;
     }
     if (this._mobileSwipeMode() === "browse") {
+      const player = this._state.selectedPlayer;
+      try { await this._ensureArtworkBrowseQueue(); }
+      catch (error) { this._clearArtDragOffset(); this._toastError(this._mediaControlFailureMessage(error)); return; }
+      if (player !== this._state.selectedPlayer) return;
       const { queueItems, displayIndex } = this._mobileArtStackContext();
       if (!queueItems.length) return;
       const canMove = dx < 0 ? displayIndex < queueItems.length - 1 : displayIndex > 0;

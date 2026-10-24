@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { immersiveActionPages, immersivePlayerEnabled, immersivePlayerDock, bindImmersivePlayer, syncImmersivePlayer, commitImmersiveSwipe, reconcileImmersiveCovers, animateCoverSelection } from "../src/core/media/immersive-player.js";
+import { immersiveActionPages, immersivePlayerEnabled, immersivePlayerDock, bindImmersivePlayer, syncImmersivePlayer, bindArtworkMouseDrag, commitImmersiveSwipe, reconcileImmersiveCovers, animateCoverSelection } from "../src/core/media/immersive-player.js";
 
 it('keeps one cover in place when only its artwork URL changes', () => {
   const host = document.createElement('div');
@@ -405,6 +405,25 @@ describe("optional immersive player", () => {
       expect(command).toHaveBeenCalledOnce();
     } finally { vi.useRealTimers(); vi.unstubAllGlobals(); }
   });
+  it.each(['reject', 'timeout'])('continues repeated browsing when artwork decode %s', async (failure) => {
+    vi.useFakeTimers();
+    vi.stubGlobal('requestAnimationFrame', callback => callback());
+    try {
+      const {card,root}=fixture();
+      const art=document.createElement('div'); art.id='npArt';
+      art.innerHTML='<div class="art-stack-slide next"><img src="missing.jpg"></div>'; root.append(art);
+      art.querySelector('img').decode=()=>failure==='reject' ? Promise.reject(new Error('image unavailable')) : new Promise(()=>{});
+      card._setArtDragOffset=vi.fn(); card._clearArtDragOffset=vi.fn();
+      const change=vi.fn();
+      for (let i=0;i<3;i++) {
+        const task=commitImmersiveSwipe(card,'next',change);
+        await vi.advanceTimersByTimeAsync(1600); await task;
+        expect(change).toHaveBeenCalledTimes(i+1);
+        expect(card._immersiveSwipePending).toBe(false);
+      }
+      expect(card._setArtDragOffset).not.toHaveBeenCalled();
+    } finally {vi.useRealTimers();vi.unstubAllGlobals();}
+  });
   it("shows an optional direct Home button in the bottom dock", () => {
     const {card}=fixture();
     card._mobileMainBarItems=()=>["home","actions","players","library"];
@@ -532,4 +551,24 @@ it.each(['classic', 'ribbon', 'petal', 'orbit'])('keeps actions and keyboard nav
   expect(fan.querySelector('.fan-center')).not.toBeNull();
   card.$('immersiveActionsToggle').click();
   expect(fan.hidden).toBe(true);
+});
+
+
+it('supports consecutive mouse cover drags without consuming touch or normal clicks', () => {
+  const root=document.createElement('div');
+  const card={_onArtTouchStart:vi.fn(),_onArtTouchMove:vi.fn(),_onArtTouchEnd:vi.fn(),_state:{},_clearArtDragOffset:vi.fn(),$:()=>root};
+  bindArtworkMouseDrag(card,root);
+  const send=(type,x,pointerType='mouse')=>{
+    const e=new MouseEvent(type,{clientX:x,clientY:100,bubbles:true,cancelable:true});
+    Object.defineProperties(e,{pointerId:{value:1},pointerType:{value:pointerType}});
+    root.dispatchEvent(e);
+  };
+  send('pointerdown',150,'touch');send('pointerup',40,'touch');
+  expect(card._onArtTouchStart).not.toHaveBeenCalled();
+  for(let i=0;i<3;i++){send('pointerdown',150);send('pointermove',40);send('pointerup',40);}
+  expect(card._onArtTouchEnd).toHaveBeenCalledTimes(3);
+  send('pointerdown',100);send('pointerup',100);
+  expect(card._onArtTouchEnd).toHaveBeenCalledTimes(3);
+  send('pointerdown',100);send('pointercancel',50);send('pointerup',50);
+  expect(card._onArtTouchEnd).toHaveBeenCalledTimes(3);
 });

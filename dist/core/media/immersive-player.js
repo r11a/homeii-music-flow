@@ -93,6 +93,49 @@ export function animateCoverSelection(host) {
   motion.finished.then(cleanup, cleanup);
 }
 
+export function bindArtworkMouseDrag(card, root) {
+  let pointer = null;
+  let suppressClickUntil = 0;
+  const cancel = () => {
+    pointer = null;
+    card._state.activeArtworkTouch = null;
+    card._clearArtDragOffset();
+    card._scheduleMobileArtBrowseReset?.();
+    root.classList.remove('dragging');
+    card.$('mobileArtShell')?.classList.remove('dragging');
+  };
+  root.addEventListener('dragstart', event => event.preventDefault());
+  root.addEventListener('pointerdown', event => {
+    if (event.pointerType === 'touch' || event.button !== 0 || card._immersiveSwipePending) return;
+    pointer = {id:event.pointerId, x:event.clientX, y:event.clientY, moved:false};
+    card._onArtTouchStart({touches:[event]});
+  });
+  root.addEventListener('pointermove', event => {
+    if (!pointer || pointer.id !== event.pointerId) return;
+    if (!pointer.moved && Math.hypot(event.clientX-pointer.x,event.clientY-pointer.y) < 8) return;
+    if (!pointer.moved) root.setPointerCapture?.(event.pointerId);
+    pointer.moved = true;
+    card._onArtTouchMove({touches:[event],cancelable:event.cancelable,preventDefault:()=>event.preventDefault()});
+  });
+  root.addEventListener('pointerup', event => {
+    if (!pointer || pointer.id !== event.pointerId) return;
+    const moved = pointer.moved;
+    pointer = null;
+    if (moved) {
+      suppressClickUntil = Date.now()+400;
+      card._onArtTouchEnd({changedTouches:[event]});
+    } else cancel();
+    if (root.hasPointerCapture?.(event.pointerId)) root.releasePointerCapture(event.pointerId);
+  });
+  for (const name of ['pointercancel','lostpointercapture']) root.addEventListener(name, event => {
+    if (pointer?.id === event.pointerId) cancel();
+  });
+  root.addEventListener('pointerleave', () => { if (pointer && !pointer.moved) cancel(); });
+  root.addEventListener('click', event => {
+    if (Date.now() < suppressClickUntil) {event.preventDefault();event.stopImmediatePropagation();}
+  }, true);
+}
+
 export function commitImmersiveSwipe(card, direction, applyChange) {
   if (card._immersiveSwipePending) return;
   const art = card.$("npArt");
@@ -117,7 +160,10 @@ export function commitImmersiveSwipe(card, direction, applyChange) {
     }, () => { clearTimeout(timeout); resolve(false); });
   });
   return decoded.then(ok => {
-    if (!ok || card.$("npArt") !== art || card._state.selectedPlayer !== playerId || card._state.maQueueState?.queue_id !== queueId) return false;
+    if (card.$("npArt") !== art || card._state.selectedPlayer !== playerId || card._state.maQueueState?.queue_id !== queueId) return false;
+    // Failed artwork must not block navigation. Render the normal fallback
+    // without sliding an undecoded image into view.
+    if (!ok) return true;
     card._setArtDragOffset(direction === "next" ? -width : width);
     return new Promise(resolve => setTimeout(() => resolve(true), reduced ? 0 : 300));
   }).then(settled => {
