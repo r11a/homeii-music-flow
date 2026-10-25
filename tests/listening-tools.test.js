@@ -26,12 +26,21 @@ describe("listening tools", () => {
     await renderListeningTools(card,body,"playback_stats");
     expect(body.querySelector('[role="alert"]').textContent).toBe("Engine offline");
   });
-  it("requests favorite radios instead of all stations", async () => {
+  it("tries favorites first and explains how to populate an empty radio library", async () => {
     const {body,card} = setup("favorite_radios");
     card._fetchLibrary=vi.fn().mockResolvedValue([]); card._mediaItemsListHtml=()=>"";
     await renderListeningTools(card,body,"favorite_radios");
     expect(card._fetchLibrary).toHaveBeenCalledWith("radio","sort_name",250,true);
-    expect(body.textContent).toContain("No favorite");
+    expect(card._fetchLibrary).toHaveBeenNthCalledWith(2,"radio","sort_name",250,false);
+    expect(body.textContent).toContain("Add stations to your Music Assistant radio library");
+  });
+  it("offers library stations for pinning when no favorites have been marked", async () => {
+    const {body,card}=setup("favorite_radios");
+    card._fetchLibrary=vi.fn().mockResolvedValueOnce([]).mockResolvedValueOnce([{name:'Radio One',uri:'library://radio/1'}]);
+    card._lsKey=key=>`pin-fallback-${key}`;card._mediaItemsListHtml=()=>'';
+    await renderListeningTools(card,body,"favorite_radios");
+    expect(body.querySelector('[data-radio-pin]')).not.toBeNull();
+    expect(body.querySelector('details').open).toBe(true);
   });
   it("reuses the existing group volume controls", async () => {
     const {body,card} = setup("group_volume");

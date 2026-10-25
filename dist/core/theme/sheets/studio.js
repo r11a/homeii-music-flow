@@ -726,12 +726,24 @@ export default function() {
   width:100%!important;
   max-width:100%!important;
   min-width:0!important;
+  box-sizing:border-box;
   overflow-x:hidden!important;
   transform:none!important;
   touch-action:pan-y!important;
   overscroll-behavior-x:none!important;
 }
 .menu-body.library-mode .library-shell{height:100%!important;contain:layout paint;}
+.menu-body.library-mode:not(.library-flow-mode){overflow:hidden!important;}
+.menu-body.library-mode:not(.library-flow-mode) .library-shell{
+  overflow:hidden!important;
+  grid-template-rows:minmax(0,1fr) auto;
+}
+.menu-body.library-mode:not(.library-flow-mode) .library-body{
+  grid-auto-rows:max-content;
+}
+.menu-body.library-mode:not(.library-flow-mode) :is(.media-home-shell,.media-results,.media-items-list){
+  overflow:visible!important;
+}
 .menu-body.library-mode .library-body,
 #mobileMediaSearchResults{
   overflow-y:auto!important;

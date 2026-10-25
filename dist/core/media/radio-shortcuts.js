@@ -18,6 +18,7 @@ export function bindRadioShortcuts(card) {
 }
 export function mountRadioPinEditor(card,body,stations) {
   const section=globalThis.document.createElement('details');section.className='radio-pin-editor';
+  section.open=true;
   const items=stations.filter(item=>item.uri && item.name);
   const selected=pinnedRadios(card);
   section.innerHTML=`<summary>${card._esc(card._m("Pin up to 5 stations on the player","הצמד עד 5 תחנות לנגן"))}</summary><p>${card._esc(card._m("Saved for this card on this device.","נשמר לכרטיס הזה במכשיר הזה."))}</p><div>${items.map((item,index)=>`<label><input type="checkbox" data-radio-pin="${index}" ${selected.some(s=>s.uri===item.uri)?"checked":""}><span>${card._esc(item.name)}</span></label>`).join("")}</div><p role="status"></p>`;

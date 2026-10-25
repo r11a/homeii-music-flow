@@ -10221,7 +10221,9 @@ export function createHomeiiBaseMusicCard({
       if (!q) return this._emptySearchResults();
       const mode = options?.providerOnly ? "provider" : options?.fastOnly ? "fast" : "full";
       const limit = Math.max(5, Math.min(80, Number(options?.limit || 25) || 25));
-      const mediaTypes = ["radio", "podcast", "album", "artist", "track", "playlist", "genre"];
+      const supportedTypes = ["radio", "podcast", "album", "artist", "track", "playlist", "genre"];
+      const requestedTypes = Array.isArray(options.mediaTypes) ? options.mediaTypes.filter(type => supportedTypes.includes(type)) : [];
+      const mediaTypes = requestedTypes.length ? [...new Set(requestedTypes)] : supportedTypes;
       const canUseEngineSearch = this._homeiiEngineEnabled?.()
         && await this._ensureHomeiiEngineReadyForAction()
         && typeof this._homeiiEngineSearch === "function";

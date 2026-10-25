@@ -5,6 +5,18 @@ vi.hoisted(()=>{vi.useFakeTimers();});
 afterEach(()=>vi.clearAllTimers());
 afterAll(()=>vi.useRealTimers());
 const prototype=globalThis.customElements.get('homeii-music-flow').prototype;
+it.each(['library_artists','library_radio'])('keeps the contextual library filter outside hidden toolbar icons on %s', page=>{
+ const card={_state:{menuPage:page},_defaultMobileMediaLayout:()=> 'grid',_libraryTabSearchPageKey:()=>page,
+  _libraryTabSearchQuery:()=>'',_libraryFlowPageActive:()=>false,_libraryFavoritesPageKey:()=>'',
+  _i18n:x=>x,_esc:x=>x,_m:x=>x,_iconSvg:()=>'<svg></svg>',_libraryPlayerFocusHtml:()=>'',
+  _libraryTabSearchBoxHtml:()=>'',_libraryFlowLabel:()=>'',_mobileSortOptions:()=>[]};
+ const root=globalThis.document.createElement('div');root.innerHTML=prototype._mediaLayoutToolbarHtml.call(card);
+ const action=root.querySelector(page==='library_artists'?'[data-album-artists-only]':'[data-menu-nav="favorite_radios"]');
+ expect(action).not.toBeNull();
+ expect(action.closest('.library-toolbar-icons')).toBeNull();
+ expect(action.textContent.trim()).not.toBe('');
+ if(page==='library_artists')expect(action.getAttribute('aria-pressed')).toBe('false');
+});
 const results=name=>({tracks:name ? [{name,uri:`library://track/${name}`}]:[]});
 function fixture(search) {
   const body=globalThis.document.createElement('div');
@@ -23,7 +35,21 @@ describe('search failure and late response handling',()=>{
   it('propagates provider failures from a library tab instead of returning an empty list',async()=>{
     const card={_libraryTabSearchResultGroup:()=> 'albums',_search:vi.fn(async()=>{throw new Error('Provider offline');}),_dedupeLibraryItems:items=>items};
     await expect(prototype._searchLibraryTabProviderItems.call(card,{type:'album'},'music',60)).rejects.toThrow('Provider offline');
-    expect(card._search).toHaveBeenCalledExactlyOnceWith('music',{providerOnly:true,strict:true,limit:60});
+    expect(card._search).toHaveBeenCalledExactlyOnceWith('music',{providerOnly:true,strict:true,limit:10,mediaTypes:['album']});
+  });
+  it('does not launch a duplicate preview request alongside the library and provider search',async()=>{
+    const {card,render}=fixture(async()=>results('Found'));
+    card._searchPreviewResults=vi.fn();
+    const pending=render();await vi.advanceTimersByTimeAsync(650);await pending;
+    expect(card._searchPreviewResults).not.toHaveBeenCalled();
+    expect(card._search.mock.calls.filter(([,options])=>options.fastOnly)).toHaveLength(1);
+    expect(card._search.mock.calls.filter(([,options])=>options.providerOnly)).toHaveLength(1);
+  });
+  it('preserves Hebrew and sends only the requested media type to the Engine',async()=>{
+    const card={_homeiiEngineEnabled:()=>true,_ensureHomeiiEngineReadyForAction:async()=>true,
+      _homeiiEngineSearch:vi.fn(async()=>({groups:{tracks:[]}})),_state:{},_normalizeSearchResponse:value=>value};
+    await prototype._search.call(card,'אביתר בנאי',{providerOnly:true,mediaTypes:['track'],limit:10});
+    expect(card._homeiiEngineSearch).toHaveBeenCalledWith(expect.objectContaining({query:'אביתר בנאי',media_types:['track'],provider_only:true}));
   });
   it('allows a preferred section order without hiding unspecified sections or changing defaults',()=>{
     const card={_config:{},_layoutModeConfig:()=> 'mobile',_i18n:String,_esc:String,_mediaItemsListHtml:(items,type)=>`<p>${type}</p>`};

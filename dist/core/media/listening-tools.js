@@ -169,9 +169,10 @@ export async function renderListeningTools(card, body, page) {
   if (page === "favorite_radios") {
     body.innerHTML = `<div class="state-box" role="status">${t("Loading favorite stations…", "טוען תחנות מועדפות…")}</div>`;
     try {
-      const stations = await card._fetchLibrary("radio", "sort_name", 250, true);
+      let stations = await card._fetchLibrary("radio", "sort_name", 250, true);
+      if (!stations.length) stations = await card._fetchLibrary("radio", "sort_name", 250, false);
       if (card._state.menuPage !== page || !body.isConnected) return;
-      body.innerHTML = card._mediaItemsListHtml(stations, "radio", {librarySkin:true}) || `<div class="state-box">${t("No favorite radio stations yet", "אין עדיין תחנות רדיו מועדפות")}</div>`;
+      body.innerHTML = stations.length ? card._mediaItemsListHtml(stations, "radio", {librarySkin:true}) : `<div class="state-box">${t("Add stations to your Music Assistant radio library, then return here to pin up to five to the player.", "הוסף תחנות לספריית הרדיו ב-Music Assistant, ואז חזור לכאן להצמיד עד חמש תחנות לנגן.")}</div>`;
       if (stations.length) mountRadioPinEditor(card, body, stations);
     } catch (error) {
       if (card._state.menuPage === page && body.isConnected) body.innerHTML = `<div class="state-box" role="alert">${card._esc(card._mediaControlFailureMessage(error))}</div>`;

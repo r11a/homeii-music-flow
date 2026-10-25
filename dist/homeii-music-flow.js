@@ -1,4 +1,4 @@
-/*! HOMEII_CARD_VERSION = "6.1.1"; */
+/*! HOMEII_CARD_VERSION = "6.1.2"; */
 /*! Lucide / Feather icon license
 ISC License
 
@@ -199,8 +199,8 @@ function am(o = null, { players: e = [], includeEntityId: t = !0 } = {}) {
   const a = String(o?.entity_id || "").trim(), l = String(o?.attributes?.friendly_name || "").trim(), p = Al(a), h = l || p || a;
   if (!h) return "";
   if (!t || !a) return h;
-  const v = Array.isArray(e) ? e : [], k = Ia(l), M = !!k && v.filter((H) => Ia(H?.attributes?.friendly_name || "") === k).length > 1, P = l ? pl(l) : !1, F = Ia(h), q = Ia(p || a), O = p && q !== F ? p : a;
-  return (P || M) && O && Ia(O) !== F ? `${h} (${O})` : h;
+  const v = Array.isArray(e) ? e : [], k = Ia(l), M = !!k && v.filter((H) => Ia(H?.attributes?.friendly_name || "") === k).length > 1, Q = l ? pl(l) : !1, F = Ia(h), q = Ia(p || a), Y = p && q !== F ? p : a;
+  return (Q || M) && Y && Ia(Y) !== F ? `${h} (${Y})` : h;
 }
 function Yo(o = "") {
   return String(o || "").toLowerCase().replace(/^media_player\./, "").replace(/^button\./, "").replace(/[_\-.]+/g, " ").split(/\s+/).map((e) => e.trim()).filter((e) => e && e.length > 1);
@@ -263,26 +263,26 @@ function lm(o = [], {
   orderedEntityIds: v = [],
   defaultEntityId: k = "",
   stickyEntityId: M = "",
-  stickyDefault: P = !1,
-  isPlayerActiveFn: F = (O) => O?.state === "playing",
+  stickyDefault: Q = !1,
+  isPlayerActiveFn: F = (Y) => Y?.state === "playing",
   isExternalBrowserPlayerFn: q = Ca
 } = {}) {
-  const O = Array.isArray(o) ? o : [], H = new Map(O.map((E) => [E?.entity_id, E]).filter(([E]) => !!E)), j = new Map(O.map((E, I) => [E?.entity_id, I]).filter(([E]) => !!E)), G = new Map((Array.isArray(v) ? v : []).map((E, I) => [String(E || "").trim(), I]).filter(([E]) => !!E)), V = (E) => !!E?.entity_id && $i(E) && !q(E), Z = (E) => {
+  const Y = Array.isArray(o) ? o : [], H = new Map(Y.map((E) => [E?.entity_id, E]).filter(([E]) => !!E)), G = new Map(Y.map((E, I) => [E?.entity_id, I]).filter(([E]) => !!E)), j = new Map((Array.isArray(v) ? v : []).map((E, I) => [String(E || "").trim(), I]).filter(([E]) => !!E)), V = (E) => !!E?.entity_id && $i(E) && !q(E), Z = (E) => {
     const I = H.get(String(E || "").trim());
     return V(I) ? I : null;
-  }, W = (E) => G.has(E?.entity_id) ? G.get(E.entity_id) : 1e5 + (j.get(E?.entity_id) ?? 1e5), ue = (E = []) => E.filter(V).sort((I, R) => W(I) - W(R))[0] || null, he = Z(a), s = he && (Number(l || 0) > Number(p || 0) || !P && he.state === "playing") ? he : null;
+  }, W = (E) => j.has(E?.entity_id) ? j.get(E.entity_id) : 1e5 + (G.get(E?.entity_id) ?? 1e5), ue = (E = []) => E.filter(V).sort((I, R) => W(I) - W(R))[0] || null, he = Z(a), s = he && (Number(l || 0) > Number(p || 0) || !Q && he.state === "playing") ? he : null;
   if (s) return s.entity_id;
   const A = Z(k);
-  if (P) {
+  if (Q) {
     const E = Z(M);
     if (E) return E.entity_id;
     if (A) return A.entity_id;
   }
   const g = Z(t);
   if (g) return g.entity_id;
-  const y = ue(O.filter((E) => E?.state === "playing"));
+  const y = ue(Y.filter((E) => E?.state === "playing"));
   if (y) return y.entity_id;
-  const S = ue(O.filter((E) => F(E)));
+  const S = ue(Y.filter((E) => F(E)));
   if (S) return S.entity_id;
   if (A) return A.entity_id;
   for (const E of Array.isArray(h) ? h : []) {
@@ -294,7 +294,7 @@ function lm(o = [], {
     if (I) return I.entity_id;
   }
   const B = Z(e);
-  return B ? B.entity_id : (O.find(V) || O[0])?.entity_id || "";
+  return B ? B.entity_id : (Y.find(V) || Y[0])?.entity_id || "";
 }
 function cm(o = "", e = [], t = {}) {
   const a = String(o || "").trim();
@@ -315,8 +315,8 @@ function um({
   }
   const p = Object.values(e || {}).filter((M) => {
     if (!M?.entity_id?.startsWith("button.")) return !1;
-    const P = `${M.entity_id} ${M.attributes?.friendly_name || ""}`.toLowerCase();
-    return P.includes("favorite") || P.includes("אהוב") || P.includes("אהבתי");
+    const Q = `${M.entity_id} ${M.attributes?.friendly_name || ""}`.toLowerCase();
+    return Q.includes("favorite") || Q.includes("אהוב") || Q.includes("אהבתי");
   });
   if (!p.length) return "";
   if (p.length === 1) return p[0]?.entity_id || "";
@@ -324,9 +324,9 @@ function um({
     ...Yo(o?.entity_id || ""),
     ...Yo(o?.attributes?.friendly_name || "")
   ].filter((M) => !ml.has(M)), v = p.map((M) => {
-    const P = `${M.entity_id} ${M.attributes?.friendly_name || ""}`.toLowerCase(), F = h.reduce((O, H) => O + (P.includes(H) ? 1 : 0), 0), q = /(current|song|track|playing|\u05e0\u05d5\u05db\u05d7\u05d9|\u05de\u05ea\u05e0\u05d2\u05df)/.test(P) ? 0.5 : 0;
+    const Q = `${M.entity_id} ${M.attributes?.friendly_name || ""}`.toLowerCase(), F = h.reduce((Y, H) => Y + (Q.includes(H) ? 1 : 0), 0), q = /(current|song|track|playing|\u05e0\u05d5\u05db\u05d7\u05d9|\u05de\u05ea\u05e0\u05d2\u05df)/.test(Q) ? 0.5 : 0;
     return { entity_id: M.entity_id, score: F + q };
-  }).sort((M, P) => P.score - M.score);
+  }).sort((M, Q) => Q.score - M.score);
   if (v[0]?.score > 0) return v[0].entity_id;
   const k = p.find((M) => /(current|song|track|playing|\u05e0\u05d5\u05db\u05d7\u05d9|\u05de\u05ea\u05e0\u05d2\u05df)/.test(`${M.entity_id} ${M.attributes?.friendly_name || ""}`.toLowerCase()));
   return k?.entity_id ? k.entity_id : "";
@@ -431,21 +431,21 @@ async function Jo(o, e) {
     const p = await o._homeiiEngineCommand("scenes", { action: "list" });
     if (!l()) return;
     const h = (o._state.players || []).filter($i), v = o._hass?.user?.is_admin === !0, k = h.map((H) => `<option value="${o._esc(H.entity_id)}">${o._esc(o._playerDisplayName(H))}</option>`).join("");
-    e.innerHTML = `<section class="smart-hub listening-scenes"><p>${a("Your music, rooms, volume and artwork lighting — one action, saved in the Engine.", "המוזיקה, החדרים, הווליום ותאורת העטיפה — בפעולה אחת, שמורה במנוע.")}</p><div class="scene-list">${p.map((H) => `<article class="scene-tile"><div><strong>${o._esc(H.name)}</strong><p>${o._esc(h.some((j) => j.entity_id === H.player) ? o._playerDisplayName(h.find((j) => j.entity_id === H.player)) : H.player)} · ${H.members.length + 1} ${a("players", "נגנים")}${H.volume == null ? "" : ` · ${H.volume}%`}</p><small>${a("Automation ID", "מזהה לאוטומציה")}: <code>${o._esc(H.id)}</code></small></div><div class="scene-actions"><button data-run-scene="${o._esc(H.id)}">${o._iconSvg("play")} ${a("Start", "הפעל")}</button>${v ? `<button data-edit-scene="${o._esc(H.id)}">${a("Edit", "עריכה")}</button><button data-delete-scene="${o._esc(H.id)}">${a("Delete", "מחיקה")}</button>` : ""}</div></article>`).join("") || `<p>${a("No saved scenes yet.", "אין עדיין סצנות שמורות.")}</p>`}</div><p role="status" data-scene-status></p>${v ? `<details class="scene-editor"><summary>${a("Create a scene", "יצירת סצנה")}</summary><form class="smart-settings"><input type="hidden" name="scene_id"><label>${a("Name", "שם")}<input name="scene_name" maxlength="120" required></label><label>${a("Lead player", "נגן מוביל")}<select name="player" required>${k}</select></label><fieldset><legend>${a("Connect these players", "חיבור הנגנים האלה")}</legend>${h.map((H) => `<label><input type="checkbox" name="member" value="${o._esc(H.entity_id)}">${o._esc(o._playerDisplayName(H))}</label>`).join("")}</fieldset><label>${a("Media URI", "כתובת המדיה")}<input name="media" required placeholder="library://playlist/…"></label><button type="button" data-current-media>${a("Use current track", "שימוש בשיר הנוכחי")}</button><label>${a("Starting volume (%) — empty keeps current volume", "ווליום התחלתי (%) — ריק שומר על הווליום הקיים")}<input name="volume" type="number" min="0" max="100"></label><details class="scene-light-options"><summary>${a("Artwork lighting (optional)", "תאורת עטיפה (אופציונלי)")}</summary><fieldset><legend>${a("Color lights", "תאורה צבעונית")}</legend>${Object.values(o._hass?.states || {}).filter((H) => H.entity_id.startsWith("light.") && !["unavailable", "unknown"].includes(H.state) && (H.attributes?.supported_color_modes || []).some((j) => ["hs", "xy", "rgb", "rgbw", "rgbww"].includes(j))).map((H) => `<label><input type="checkbox" name="light" value="${o._esc(H.entity_id)}">${o._esc(H.attributes?.friendly_name || H.entity_id)}</label>`).join("")}</fieldset></details><button type="submit">${a("Save scene", "שמירת סצנה")}</button><p role="status"></p></form></details>` : ""}</section>`;
+    e.innerHTML = `<section class="smart-hub listening-scenes"><p>${a("Your music, rooms, volume and artwork lighting — one action, saved in the Engine.", "המוזיקה, החדרים, הווליום ותאורת העטיפה — בפעולה אחת, שמורה במנוע.")}</p><div class="scene-list">${p.map((H) => `<article class="scene-tile"><div><strong>${o._esc(H.name)}</strong><p>${o._esc(h.some((G) => G.entity_id === H.player) ? o._playerDisplayName(h.find((G) => G.entity_id === H.player)) : H.player)} · ${H.members.length + 1} ${a("players", "נגנים")}${H.volume == null ? "" : ` · ${H.volume}%`}</p><small>${a("Automation ID", "מזהה לאוטומציה")}: <code>${o._esc(H.id)}</code></small></div><div class="scene-actions"><button data-run-scene="${o._esc(H.id)}">${o._iconSvg("play")} ${a("Start", "הפעל")}</button>${v ? `<button data-edit-scene="${o._esc(H.id)}">${a("Edit", "עריכה")}</button><button data-delete-scene="${o._esc(H.id)}">${a("Delete", "מחיקה")}</button>` : ""}</div></article>`).join("") || `<p>${a("No saved scenes yet.", "אין עדיין סצנות שמורות.")}</p>`}</div><p role="status" data-scene-status></p>${v ? `<details class="scene-editor"><summary>${a("Create a scene", "יצירת סצנה")}</summary><form class="smart-settings"><input type="hidden" name="scene_id"><label>${a("Name", "שם")}<input name="scene_name" maxlength="120" required></label><label>${a("Lead player", "נגן מוביל")}<select name="player" required>${k}</select></label><fieldset><legend>${a("Connect these players", "חיבור הנגנים האלה")}</legend>${h.map((H) => `<label><input type="checkbox" name="member" value="${o._esc(H.entity_id)}">${o._esc(o._playerDisplayName(H))}</label>`).join("")}</fieldset><label>${a("Media URI", "כתובת המדיה")}<input name="media" required placeholder="library://playlist/…"></label><button type="button" data-current-media>${a("Use current track", "שימוש בשיר הנוכחי")}</button><label>${a("Starting volume (%) — empty keeps current volume", "ווליום התחלתי (%) — ריק שומר על הווליום הקיים")}<input name="volume" type="number" min="0" max="100"></label><details class="scene-light-options"><summary>${a("Artwork lighting (optional)", "תאורת עטיפה (אופציונלי)")}</summary><fieldset><legend>${a("Color lights", "תאורה צבעונית")}</legend>${Object.values(o._hass?.states || {}).filter((H) => H.entity_id.startsWith("light.") && !["unavailable", "unknown"].includes(H.state) && (H.attributes?.supported_color_modes || []).some((G) => ["hs", "xy", "rgb", "rgbw", "rgbww"].includes(G))).map((H) => `<label><input type="checkbox" name="light" value="${o._esc(H.entity_id)}">${o._esc(H.attributes?.friendly_name || H.entity_id)}</label>`).join("")}</fieldset></details><button type="submit">${a("Save scene", "שמירת סצנה")}</button><p role="status"></p></form></details>` : ""}</section>`;
     const M = e.querySelector("[data-scene-status]");
-    let P = !1;
+    let Q = !1;
     const F = async (H) => {
-      if (!P) {
-        P = !0, e.querySelectorAll("[data-run-scene]").forEach((j) => j.disabled = !0), M.textContent = o._m("Starting scene…", "מפעיל סצנה…");
+      if (!Q) {
+        Q = !0, e.querySelectorAll("[data-run-scene]").forEach((G) => G.disabled = !0), M.textContent = o._m("Starting scene…", "מפעיל סצנה…");
         try {
-          const j = await o._homeiiEngineCommand("scenes", { action: "run", scene_id: H });
+          const G = await o._homeiiEngineCommand("scenes", { action: "run", scene_id: H });
           if (!l()) return;
-          const G = { group: o._m("group", "קבוצה"), volume: o._m("volume", "ווליום"), playback: o._m("playback", "ניגון"), lighting: o._m("lighting", "תאורה") };
-          M.textContent = j.ok ? o._m("Scene commands accepted", "פקודות הסצנה התקבלו") : `${o._m("Stopped at", "נעצר בשלב")}: ${G[j.failed_step] || j.failed_step}. ${o._m("Completed", "הושלם")}: ${(j.completed || []).map((V) => G[V] || V).join(", ") || "—"}`;
-        } catch (j) {
-          l() && (M.textContent = o._mediaControlFailureMessage(j));
+          const j = { group: o._m("group", "קבוצה"), volume: o._m("volume", "ווליום"), playback: o._m("playback", "ניגון"), lighting: o._m("lighting", "תאורה") };
+          M.textContent = G.ok ? o._m("Scene commands accepted", "פקודות הסצנה התקבלו") : `${o._m("Stopped at", "נעצר בשלב")}: ${j[G.failed_step] || G.failed_step}. ${o._m("Completed", "הושלם")}: ${(G.completed || []).map((V) => j[V] || V).join(", ") || "—"}`;
+        } catch (G) {
+          l() && (M.textContent = o._mediaControlFailureMessage(G));
         } finally {
-          P = !1, l() && e.querySelectorAll("[data-run-scene]").forEach((j) => j.disabled = !1);
+          Q = !1, l() && e.querySelectorAll("[data-run-scene]").forEach((G) => G.disabled = !1);
         }
       }
     };
@@ -457,27 +457,27 @@ async function Jo(o, e) {
       H.disabled = !0;
       try {
         await o._homeiiEngineCommand("scenes", { action: "delete", scene_id: H.dataset.deleteScene }), l() && await Jo(o, e);
-      } catch (j) {
-        l() && (M.textContent = o._mediaControlFailureMessage(j), H.disabled = !1);
+      } catch (G) {
+        l() && (M.textContent = o._mediaControlFailureMessage(G), H.disabled = !1);
       }
     });
     const q = e.querySelector("form");
     if (!q) return;
-    const O = q.elements;
-    O.player.value = h.some((H) => H.entity_id === o._state.selectedPlayer) ? o._state.selectedPlayer : h[0]?.entity_id || "", e.querySelectorAll("[data-edit-scene]").forEach((H) => H.onclick = () => {
-      const j = p.find((G) => G.id === H.dataset.editScene);
-      e.querySelector("details").open = !0, O.scene_id.value = j.id, O.scene_name.value = j.name, O.player.value = j.player, O.media.value = j.media_id, O.volume.value = j.volume ?? "", q.querySelectorAll('[name="member"]').forEach((G) => G.checked = j.members.includes(G.value)), q.querySelectorAll('[name="light"]').forEach((G) => G.checked = j.lights.includes(G.value)), O.scene_name.focus();
+    const Y = q.elements;
+    Y.player.value = h.some((H) => H.entity_id === o._state.selectedPlayer) ? o._state.selectedPlayer : h[0]?.entity_id || "", e.querySelectorAll("[data-edit-scene]").forEach((H) => H.onclick = () => {
+      const G = p.find((j) => j.id === H.dataset.editScene);
+      e.querySelector("details").open = !0, Y.scene_id.value = G.id, Y.scene_name.value = G.name, Y.player.value = G.player, Y.media.value = G.media_id, Y.volume.value = G.volume ?? "", q.querySelectorAll('[name="member"]').forEach((j) => j.checked = G.members.includes(j.value)), q.querySelectorAll('[name="light"]').forEach((j) => j.checked = G.lights.includes(j.value)), Y.scene_name.focus();
     }), q.querySelector("[data-current-media]").onclick = () => {
-      O.media.value = o._getCurrentMediaUri?.() || "";
+      Y.media.value = o._getCurrentMediaUri?.() || "";
     }, q.onsubmit = async (H) => {
       H.preventDefault(), H.stopPropagation();
-      const j = q.querySelector('[type="submit"]');
-      if (!j.disabled) {
-        j.disabled = !0;
+      const G = q.querySelector('[type="submit"]');
+      if (!G.disabled) {
+        G.disabled = !0;
         try {
-          await o._homeiiEngineCommand("scenes", { action: "save", ...O.scene_id.value ? { scene_id: O.scene_id.value } : {}, name: O.scene_name.value, player: O.player.value, media_id: O.media.value, volume: O.volume.value === "" ? null : Number(O.volume.value), members: [...q.querySelectorAll('[name="member"]:checked')].map((G) => G.value), lights: [...q.querySelectorAll('[name="light"]:checked')].map((G) => G.value) }), l() && await Jo(o, e);
-        } catch (G) {
-          l() && (q.querySelector('[role="status"]').textContent = o._mediaControlFailureMessage(G), j.disabled = !1);
+          await o._homeiiEngineCommand("scenes", { action: "save", ...Y.scene_id.value ? { scene_id: Y.scene_id.value } : {}, name: Y.scene_name.value, player: Y.player.value, media_id: Y.media.value, volume: Y.volume.value === "" ? null : Number(Y.volume.value), members: [...q.querySelectorAll('[name="member"]:checked')].map((j) => j.value), lights: [...q.querySelectorAll('[name="light"]:checked')].map((j) => j.value) }), l() && await Jo(o, e);
+        } catch (j) {
+          l() && (q.querySelector('[role="status"]').textContent = o._mediaControlFailureMessage(j), G.disabled = !1);
         }
       }
     };
@@ -495,19 +495,19 @@ async function ym(o, e) {
   const t = o._hass?.connection, a = globalThis.AudioContext || globalThis.webkitAudioContext;
   if (!globalThis.navigator?.mediaDevices?.getUserMedia || !a || !t?.subscribeMessage || !t?.socket)
     throw new Error(o._m("Assist dictation requires HTTPS and microphone support.", "הכתבה ב־Assist דורשת HTTPS ותמיכה במיקרופון."));
-  let l, p, h, v, k, M, P, F, q = !1, O = !1, H = !1;
-  const j = () => {
-    if (!O) {
-      O = !0, l?.getTracks().forEach((Z) => Z.stop());
+  let l, p, h, v, k, M, Q, F, q = !1, Y = !1, H = !1;
+  const G = () => {
+    if (!Y) {
+      Y = !0, l?.getTracks().forEach((Z) => Z.stop());
       try {
         v?.disconnect(), h?.disconnect();
       } catch {
       }
       F != null && t.socket.readyState === 1 && t.socket.send(new Uint8Array([F]));
     }
-  }, G = () => {
+  }, j = () => {
     if (!q) {
-      q = !0, j(), clearTimeout(M), clearInterval(P);
+      q = !0, G(), clearTimeout(M), clearInterval(Q);
       try {
         k?.();
       } catch {
@@ -515,17 +515,17 @@ async function ym(o, e) {
       p?.close().catch(() => {
       }), o._voiceRecognition === V && (o._voiceRecognition = null);
     }
-  }, V = { abort: G, stop: j };
+  }, V = { abort: j, stop: G };
   o._voiceRecognition?.abort?.(), o._voiceRecognition = V;
   try {
     if (p = new a(), await p.resume(), l = await globalThis.navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: !0, noiseSuppression: !0 }, video: !1 }), q || !e?.isConnected) {
-      l.getTracks().forEach((W) => W.stop()), G();
+      l.getTracks().forEach((W) => W.stop()), j();
       return;
     }
     if (h = p.createMediaStreamSource(l), v = p.createScriptProcessor(2048, 1, 1), v.onaudioprocess = (W) => {
-      if (!(q || O || F == null)) {
+      if (!(q || Y || F == null)) {
         if (t.socket.readyState !== 1) {
-          G(), o._toastError(o._m("Assist connection was lost.", "החיבור ל־Assist נותק."));
+          j(), o._toastError(o._m("Assist connection was lost.", "החיבור ל־Assist נותק."));
           return;
         }
         t.socket.send(fm(F, W.inputBuffer.getChannelData(0)));
@@ -535,26 +535,26 @@ async function ym(o, e) {
         if (W.type === "run-start") {
           const ue = W.data?.runner_data?.stt_binary_handler_id;
           if (!Number.isInteger(ue) || ue < 0 || ue > 255) {
-            G(), o._toastError(o._m("Assist did not provide an audio input.", "Assist לא סיפק ערוץ להקלטה."));
+            j(), o._toastError(o._m("Assist did not provide an audio input.", "Assist לא סיפק ערוץ להקלטה."));
             return;
           }
-          F = ue, h.connect(v), v.connect(p.destination), o._toast(o._m("Listening through Assist — tap the microphone to finish.", "מקשיב דרך Assist — לחץ שוב על המיקרופון לסיום.")), M = setTimeout(j, 15e3);
+          F = ue, h.connect(v), v.connect(p.destination), o._toast(o._m("Listening through Assist — tap the microphone to finish.", "מקשיב דרך Assist — לחץ שוב על המיקרופון לסיום.")), M = setTimeout(G, 15e3);
         } else if (W.type === "stt-end") {
           const ue = String(W.data?.stt_output?.text || "").trim();
-          ue && e.isConnected && (e.value = ue, o._state.mobileAnnouncementText = ue, H = !0), G(), H || o._toastError(o._i18n("ui.no_speech_was_captured"));
-        } else W.type === "error" ? (G(), o._toastError(o._m("Assist transcription failed. Check your configured speech-to-text pipeline.", "התמלול ב־Assist נכשל. בדוק את מסלול הזיהוי הקולי שהוגדר."))) : W.type === "run-end" && (j(), clearTimeout(M), M = setTimeout(() => {
-          G(), H || o._toastError(o._i18n("ui.no_speech_was_captured"));
+          ue && e.isConnected && (e.value = ue, o._state.mobileAnnouncementText = ue, H = !0), j(), H || o._toastError(o._i18n("ui.no_speech_was_captured"));
+        } else W.type === "error" ? (j(), o._toastError(o._m("Assist transcription failed. Check your configured speech-to-text pipeline.", "התמלול ב־Assist נכשל. בדוק את מסלול הזיהוי הקולי שהוגדר."))) : W.type === "run-end" && (G(), clearTimeout(M), M = setTimeout(() => {
+          j(), H || o._toastError(o._i18n("ui.no_speech_was_captured"));
         }, 100));
     }, { type: "assist_pipeline/run", start_stage: "stt", end_stage: "stt", input: { sample_rate: p.sampleRate }, timeout: 30, ...o._config?.announcement_assist_pipeline ? { pipeline: o._config.announcement_assist_pipeline } : {} }), q) {
       k?.();
       return;
     }
     let Z = 0;
-    P = setInterval(() => {
-      Z += 250, e.isConnected ? Z >= 35e3 && (G(), o._toastError(o._m("Assist transcription timed out.", "זמן ההמתנה לתמלול הסתיים."))) : G();
+    Q = setInterval(() => {
+      Z += 250, e.isConnected ? Z >= 35e3 && (j(), o._toastError(o._m("Assist transcription timed out.", "זמן ההמתנה לתמלול הסתיים."))) : j();
     }, 250);
   } catch (Z) {
-    throw G(), Z;
+    throw j(), Z;
   }
 }
 /** @license Lucide 1.48.0 — ISC / Feather-derived MIT. See Lucide-LICENSE.txt.
@@ -668,41 +668,41 @@ async function kr(o, e, t = null) {
   e.innerHTML = `<section class="smart-settings"><h2>${p("Engine playlists", "רשימות במנוע")}</h2><p>${p("Saved in Home Assistant and available across your devices.", "נשמרות ב־Home Assistant וזמינות בכל המכשירים שלך.")}</p><form data-saved-playlist-form><label>${p("Playlist name", "שם הרשימה")}<input name="name" maxlength="120" required></label><button type="submit" ${v.length ? "" : "disabled"}>${p(t ? "Save this item as a playlist" : "Save current queue", t ? "שמירת הפריט כרשימה" : "שמירת התור הנוכחי")}</button></form><p role="status"></p><div class="smart-hub-grid">${h.map((F, q) => `<button data-saved-playlist="${q}"><span>${o._esc(F.name)}</span><small>${F.uris.length} ${p("items", "פריטים")}</small></button>`).join("")}</div></section>`;
   const k = e.querySelector('[role="status"]');
   let M = !1;
-  const P = async (F) => {
+  const Q = async (F) => {
     if (M || !l()) return;
     M = !0;
-    const q = [...e.querySelectorAll("button")], O = q.map((H) => H.disabled);
+    const q = [...e.querySelectorAll("button")], Y = q.map((H) => H.disabled);
     q.forEach((H) => H.disabled = !0), k.textContent = o._m("Saving…", "שומר…");
     try {
       await F();
     } catch (H) {
       k.textContent = o._mediaControlFailureMessage(H);
     } finally {
-      M = !1, q.forEach((H, j) => H.disabled = O[j]);
+      M = !1, q.forEach((H, G) => H.disabled = Y[G]);
     }
   };
   e.querySelector("form").onsubmit = (F) => {
     F.preventDefault(), F.stopPropagation();
     const q = F.target.elements.name.value.trim();
-    !q || !v.length || P(async () => {
+    !q || !v.length || Q(async () => {
       await o._homeiiEngineCommand("playlists", { action: "save", name: q, uris: v }), l() && await kr(o, e, t);
     });
-  }, e.querySelectorAll("[data-saved-playlist]").forEach((F) => F.onclick = () => P(async () => {
+  }, e.querySelectorAll("[data-saved-playlist]").forEach((F) => F.onclick = () => Q(async () => {
     const q = h[Number(F.dataset.savedPlaylist)];
     t ? (await o._homeiiEngineCommand("playlists", { action: "save", playlist_id: q.id, name: q.name, uris: [...q.uris, t.uri] }), k.textContent = o._m("Added to playlist", "נוסף לרשימה")) : (k.textContent = o._m("Starting playback…", "מתחיל ניגון…"), await o._homeiiEngineCommand("playlists", { action: "play", playlist_id: q.id }), k.textContent = o._m("Playback request accepted", "בקשת הניגון התקבלה"));
   })), t || e.querySelectorAll("[data-saved-playlist]").forEach((F) => {
-    const q = h[Number(F.dataset.savedPlaylist)], O = document.createElement("div");
-    O.className = "saved-playlist-row", F.replaceWith(O), O.append(F);
+    const q = h[Number(F.dataset.savedPlaylist)], Y = document.createElement("div");
+    Y.className = "saved-playlist-row", F.replaceWith(Y), Y.append(F);
     const H = document.createElement("button");
     H.type = "button", H.textContent = o._m("Delete", "מחיקה"), H.setAttribute("aria-label", `${o._m("Delete", "מחיקה")} ${q.name}`), H.onclick = () => {
       if (H.dataset.confirm !== "yes") {
         H.dataset.confirm = "yes", H.textContent = o._m("Confirm delete", "אישור מחיקה");
         return;
       }
-      return P(async () => {
+      return Q(async () => {
         await o._homeiiEngineCommand("playlists", { action: "delete", playlist_id: q.id }), l() && await kr(o, e);
       });
-    }, O.append(H);
+    }, Y.append(H);
   });
 }
 async function vm(o, e) {
@@ -755,16 +755,16 @@ function Pa(o, e, t, a, l, p = "queue-action-item") {
   return `<button type="button" class="${p}" ${e}="${t}" title="${o._esc(l)}" aria-label="${o._esc(l)}">${St(o, a)}${Rr(o) ? `<span>${o._esc(l)}</span>` : ""}</button>`;
 }
 function Dn(o, e, t = !1) {
-  const a = (F) => o._i18n(F), l = o._isEntryLiked(e), p = e.media_type || e.type || "album", h = ["album", "artist", "playlist"].includes(p), v = t ? "data-queue-popup" : "data-media-popup", k = (F, q, O) => Pa(o, v, F, q, O), M = o._imageUrl(e.image || "", 160);
-  let P = "";
+  const a = (F) => o._i18n(F), l = o._isEntryLiked(e), p = e.media_type || e.type || "album", h = ["album", "artist", "playlist"].includes(p), v = t ? "data-queue-popup" : "data-media-popup", k = (F, q, Y) => Pa(o, v, F, q, Y), M = o._imageUrl(e.image || "", 160);
+  let Q = "";
   if (t) {
     const F = Math.max(1, o._getNowPlayingQueueItems().length || o._state.queueItems?.length || Number(o._state.maQueueState?.items || 1)), q = Math.max(1, Math.min(F, o._queueDisplayPositionForEntry(e, Math.round(Number(e.sort_index || 0)) + 1 || 1)));
-    P = `<div class="queue-move-control"><label><span>${o._esc(a("ui.move_to_position"))}</span>${o._queueMoveSelectHtml(F, q, e)}</label></div>`;
+    Q = `<div class="queue-move-control"><label><span>${o._esc(a("ui.move_to_position"))}</span>${o._queueMoveSelectHtml(F, q, e)}</label></div>`;
   }
   return `<div class="media-action-layout ${Rr(o) ? "with-labels" : "icons-only"}" dir="${o._m("ltr", "rtl")}">
     <div class="media-action-heading"><div class="media-action-art">${M ? o._imgHtml(M, "", { fallbackIcon: "music_note" }) : o._iconSvg("music_note")}</div><div class="media-action-copy"><div class="queue-action-player">${o._esc(o._selectedPlayerName())}</div><div class="queue-action-title">${o._esc(e.name || a(t ? "ui.queue_actions" : "ui.media_actions"))}</div></div>${k("close", "close", a("ui.close"))}</div>
     ${t ? "" : `<button class="media-library-back" type="button" data-media-popup="close">${St(o, "back")}<span>${o._esc(o._m("Back to library", "חזרה לספרייה"))}</span></button>`}
-    ${P}
+    ${Q}
     <div class="media-action-grid">${t ? `${k("next", "queue_next", a("ui.play_next"))}${k("remove", "trash", a("ui.remove"))}` : `${k("play", "play", a("ui.play"))}${k("next", "queue_next", a("ui.play_next"))}${k("add", "queue_add", a("ui.add_to_queue"))}${o._supportsMusicAssistantRadioMode(p) ? k("radio_mode", "radio", a("ui.start_radio_mode")) : ""}`}${k("like", l ? "heart_filled" : "heart_outline", o._m(l ? "Remove like" : "Like", l ? "הסר לייק" : "הוסף לייק"))}</div>
     ${t ? "" : `<div class="media-action-grid media-action-tools">${o._state.engineCapabilities?.playlist_editing && ["track", "album", "playlist"].includes(p) ? k("playlist_add", "playlist_add", o._m("Add to playlist", "הוסף לפלייליסט")) : ""}${h ? k("shuffle", "shuffle", o._m("Shuffle play", "ניגון בערבוב")) : ""}${String(e.uri || "").startsWith("library://") ? "" : k("library_add", "library_add", o._m("Save to library", "הוסף לספריית MA"))}${["album", "artist", "playlist", "podcast", "audiobook"].includes(p) ? k("details", "info", o._m("Open details", "פרטי המדיה")) : ""}</div>`}
     ${t ? "" : `<div class="media-action-secondary"><p>${o._esc(o._m("Replace the queue", "החלפת התור הקיים"))}</p><div class="media-action-grid">${k("play_clear", "queue_replace", a("ui.play_now_and_clear_queue"))}${k("next_clear", "queue_next_replace", a("ui.play_next_and_clear_queue"))}</div></div>`}
@@ -782,8 +782,8 @@ async function wm(o, e) {
     const M = o._showLibraryInteractionFeedback?.(t, { loading: !0, hold: !0 });
     try {
       await vm(o, l);
-    } catch (P) {
-      o._state.mobileQueueActionEntry === l && o._openMobileMediaActionMenu(l), o._toastError(o._mediaControlFailureMessage(P));
+    } catch (Q) {
+      o._state.mobileQueueActionEntry === l && o._openMobileMediaActionMenu(l), o._toastError(o._mediaControlFailureMessage(Q));
     } finally {
       o._mobileQueueActionPending = !1, M && o._clearLibraryInteractionFeedback?.(M);
     }
@@ -803,8 +803,8 @@ async function wm(o, e) {
   } catch (M) {
     o._toastError(o._mediaControlFailureMessage(M));
   } finally {
-    o._mobileQueueActionPending = !1, k && o._clearLibraryInteractionFeedback?.(k), t.removeAttribute("aria-busy"), h.forEach((M, P) => {
-      M.disabled = v[P];
+    o._mobileQueueActionPending = !1, k && o._clearLibraryInteractionFeedback?.(k), t.removeAttribute("aria-busy"), h.forEach((M, Q) => {
+      M.disabled = v[Q];
     });
   }
 }
@@ -934,8 +934,8 @@ function Mm(o, e, t, a, l, p = () => {
   v?._closeCatalogue ? v._closeCatalogue() : v?.remove();
   const k = o.shadowRoot?.activeElement || document.activeElement, M = document.createElement("section");
   M.className = "screen-all-actions fan-catalogue", M.setAttribute("role", "dialog"), M.setAttribute("aria-modal", "true"), M.setAttribute("aria-label", o._m("All actions", "כל האפשרויות"));
-  let P = !1, F = null, q = null, O = "", H = "device", j = !1;
-  const G = (A) => o._esc(A), V = (A, g) => G(o._m(A, g)), Z = () => {
+  let Q = !1, F = null, q = null, Y = "", H = "device", G = !1;
+  const j = (A) => o._esc(A), V = (A, g) => j(o._m(A, g)), Z = () => {
     for (const [g, y] of W) g.inert = y;
     M.remove(), h && o._setCompactExpanded(!1), (k?.isConnected && !k.closest?.("[hidden]") ? k : e.querySelector("[data-screen-wheel],#immersiveActionsToggle"))?.focus?.({ preventScroll: !0 });
   }, W = [...e.children].filter((A) => !["STYLE", "SCRIPT"].includes(A.tagName)).map((A) => [A, A.inert]);
@@ -946,21 +946,21 @@ function Mm(o, e, t, a, l, p = () => {
     A.shiftKey && B === y ? (A.preventDefault(), S?.focus()) : !A.shiftKey && B === S && (A.preventDefault(), y?.focus());
   });
   const ue = () => {
-    const A = F || Zo(o, t), g = gr(a(), A, !1, t), y = P ? g : Object.keys(zn).flatMap((R) => g.filter((Y) => Ln(Y) === R));
+    const A = F || Zo(o, t), g = gr(a(), A, !1, t), y = Q ? g : Object.keys(zn).flatMap((R) => g.filter((O) => Ln(O) === R));
     let S = null;
     const B = (R) => {
-      if (P) return "";
-      const Y = Ln(R);
-      return S === Y ? "" : (S = Y, `<h3 class="fan-catalogue-category">${V(...zn[Y])}</h3>`);
-    }, E = M.querySelector("[data-catalogue-action]:focus")?.closest("[data-catalogue-id]")?.dataset.catalogueId, I = `<header><button data-catalogue-back aria-label="${V("Back", "חזרה")}">${St(o, "back")}</button><h2>${V("All actions", "כל האפשרויות")}</h2><button data-catalogue-edit>${P ? V("Save", "אישור") : V("Edit wheel", "עריכת המניפה")}</button></header>${P ? `<p>${V("Choose wheel shortcuts. Drag the handle to reorder, or use the arrow buttons.", "בחר מה יופיע במניפה. גרור את הידית לסידור, או השתמש בכפתורי החצים.")}</p>` : ""}<div class="fan-catalogue-list">${y.map((R) => `${B(R)}<article data-catalogue-id="${G(R.id)}">${P ? `<input type="checkbox" data-catalogue-check aria-label="${G(R.label)}" ${A.hidden?.includes(R.id) ? "" : "checked"}>` : ""}<button data-catalogue-action ${P ? "disabled" : ""}>${Wo(o, R)}<span>${G(R.label)}</span></button>${P ? `<button draggable="true" data-catalogue-drag aria-label="${V("Drag", "גרירה")}: ${G(R.label)}">${St(o, "grip")}</button><button data-catalogue-move="-1" aria-label="${V("Move up", "העבר למעלה")}">${St(o, "up")}</button><button data-catalogue-move="1" aria-label="${V("Move down", "העבר למטה")}">${St(o, "down")}</button>` : ""}</article>`).join("")}</div>`;
-    if (I !== O) {
-      if (M.innerHTML = I, O = I, P && o._state?.engineCapabilities?.wheel_preferences) {
+      if (Q) return "";
+      const O = Ln(R);
+      return S === O ? "" : (S = O, `<h3 class="fan-catalogue-category">${V(...zn[O])}</h3>`);
+    }, E = M.querySelector("[data-catalogue-action]:focus")?.closest("[data-catalogue-id]")?.dataset.catalogueId, I = `<header><button data-catalogue-back aria-label="${V("Back", "חזרה")}">${St(o, "back")}</button><h2>${V("All actions", "כל האפשרויות")}</h2><button data-catalogue-edit>${Q ? V("Save", "אישור") : V("Edit wheel", "עריכת המניפה")}</button></header>${Q ? `<p>${V("Choose wheel shortcuts. Drag the handle to reorder, or use the arrow buttons.", "בחר מה יופיע במניפה. גרור את הידית לסידור, או השתמש בכפתורי החצים.")}</p>` : ""}<div class="fan-catalogue-list">${y.map((R) => `${B(R)}<article data-catalogue-id="${j(R.id)}">${Q ? `<input type="checkbox" data-catalogue-check aria-label="${j(R.label)}" ${A.hidden?.includes(R.id) ? "" : "checked"}>` : ""}<button data-catalogue-action ${Q ? "disabled" : ""}>${Wo(o, R)}<span>${j(R.label)}</span></button>${Q ? `<button draggable="true" data-catalogue-drag aria-label="${V("Drag", "גרירה")}: ${j(R.label)}">${St(o, "grip")}</button><button data-catalogue-move="-1" aria-label="${V("Move up", "העבר למעלה")}">${St(o, "up")}</button><button data-catalogue-move="1" aria-label="${V("Move down", "העבר למטה")}">${St(o, "down")}</button>` : ""}</article>`).join("")}</div>`;
+    if (I !== Y) {
+      if (M.innerHTML = I, Y = I, Q && o._state?.engineCapabilities?.wheel_preferences) {
         const R = document.createElement("label");
         R.className = "fan-preference-scope", R.innerHTML = `${V("Save for", "שמירה עבור")} <select data-catalogue-scope><option value="device">${V("This device", "מכשיר זה")}</option><option value="user">${V("My user on all devices", "המשתמש שלי בכל המכשירים")}</option>${o._hass?.user?.is_admin ? `<option value="global">${V("Everyone (default)", "כולם (ברירת מחדל)")}</option>` : ""}</select>`, M.querySelector("header").after(R), R.querySelector("select").value = H;
       }
-      E && ([...M.querySelectorAll("[data-catalogue-id]")].find((Y) => Y.dataset.catalogueId === E)?.querySelector("[data-catalogue-action]") || M.querySelector("[data-catalogue-back]"))?.focus({ preventScroll: !0 });
+      E && ([...M.querySelectorAll("[data-catalogue-id]")].find((O) => O.dataset.catalogueId === E)?.querySelector("[data-catalogue-action]") || M.querySelector("[data-catalogue-back]"))?.focus({ preventScroll: !0 });
     }
-    M.classList.toggle("is-editing", P);
+    M.classList.toggle("is-editing", Q);
   }, he = (A, g) => {
     const y = gr(a(), F, !1, t).map((E) => E.id), S = y.indexOf(A), B = y.indexOf(g);
     S < 0 || B < 0 || S === B || (y.splice(S, 1), y.splice(B, 0, A), F.order = [...y, ...(F.order || []).filter((E) => !y.includes(E))], ue());
@@ -971,19 +971,19 @@ function Mm(o, e, t, a, l, p = () => {
       return;
     }
     if (A.target.closest("[data-catalogue-edit]")) {
-      if (j) return;
-      if (!P) {
-        F = { ...Zo(o, t) }, F.hidden = [...F.hidden || []], P = !0, ue();
+      if (G) return;
+      if (!Q) {
+        F = { ...Zo(o, t) }, F.hidden = [...F.hidden || []], Q = !0, ue();
         return;
       }
       try {
-        j = !0, M.querySelector("[data-catalogue-edit]").disabled = !0;
+        G = !0, M.querySelector("[data-catalogue-edit]").disabled = !0;
         const B = JSON.parse(localStorage.getItem(Ko(o)) || "{}");
-        H === "device" ? B[t] = F : (o._fanSharedPreferences = await o._homeiiEngineCommand("wheels/set", { scope: H, context: t, preference: F }), delete B[t]), localStorage.setItem(Ko(o), JSON.stringify(B)), P = !1, F = null, p(), ue();
+        H === "device" ? B[t] = F : (o._fanSharedPreferences = await o._homeiiEngineCommand("wheels/set", { scope: H, context: t, preference: F }), delete B[t]), localStorage.setItem(Ko(o), JSON.stringify(B)), Q = !1, F = null, p(), ue();
       } catch {
         o._toastError(o._m("Could not save wheel settings.", "לא ניתן לשמור את הגדרות המניפה."));
       } finally {
-        j = !1;
+        G = !1;
         const B = M.querySelector("[data-catalogue-edit]");
         B && (B.disabled = !1);
       }
@@ -997,7 +997,7 @@ function Mm(o, e, t, a, l, p = () => {
       he(y, B[B.findIndex((E) => E.id === y) + Number(S.dataset.catalogueMove)]?.id);
       return;
     }
-    if (!P && A.target.closest("[data-catalogue-action]")) {
+    if (!Q && A.target.closest("[data-catalogue-action]")) {
       if (!a().some((B) => B.id === y)) {
         ue();
         return;
@@ -1020,9 +1020,9 @@ function Mm(o, e, t, a, l, p = () => {
   }, M.ondragstart = (A) => {
     q = A.target.closest("[data-catalogue-id]")?.dataset.catalogueId, A.dataTransfer?.setData("text/plain", q || "");
   }, M.ondragover = (A) => {
-    P && q && A.preventDefault();
+    Q && q && A.preventDefault();
   }, M.ondrop = (A) => {
-    A.preventDefault(), P && q && he(q, A.target.closest("[data-catalogue-id]")?.dataset.catalogueId), q = null;
+    A.preventDefault(), Q && q && he(q, A.target.closest("[data-catalogue-id]")?.dataset.catalogueId), q = null;
   }, M.ondragend = () => {
     q = null;
   };
@@ -1039,7 +1039,7 @@ function Mm(o, e, t, a, l, p = () => {
   }, M.onpointercancel = () => {
     s = null;
   }, M._refreshAvailableActions = () => {
-    P || ue();
+    Q || ue();
   }, e.append(M), ue(), M.querySelector("[data-catalogue-back]")?.focus({ preventScroll: !0 }), M;
 }
 const hl = (o) => o._lsKey("homeii_radio_shortcuts");
@@ -1070,14 +1070,14 @@ function gl(o) {
 }
 function Cm(o, e, t) {
   const a = globalThis.document.createElement("details");
-  a.className = "radio-pin-editor";
+  a.className = "radio-pin-editor", a.open = !0;
   const l = t.filter((h) => h.uri && h.name), p = Sr(o);
   a.innerHTML = `<summary>${o._esc(o._m("Pin up to 5 stations on the player", "הצמד עד 5 תחנות לנגן"))}</summary><p>${o._esc(o._m("Saved for this card on this device.", "נשמר לכרטיס הזה במכשיר הזה."))}</p><div>${l.map((h, v) => `<label><input type="checkbox" data-radio-pin="${v}" ${p.some((k) => k.uri === h.uri) ? "checked" : ""}><span>${o._esc(h.name)}</span></label>`).join("")}</div><p role="status"></p>`, a.onchange = (h) => {
     const v = h.target.closest("[data-radio-pin]");
     if (!v) return;
     h.stopPropagation();
     const k = l[Number(v.dataset.radioPin)];
-    let M = Sr(o).filter((P) => P.uri !== k.uri);
+    let M = Sr(o).filter((Q) => Q.uri !== k.uri);
     if (v.checked) {
       if (M.length >= 5) {
         v.checked = !1, a.querySelector('[role="status"]').textContent = o._m("Choose up to 5 stations", "אפשר לבחור עד 5 תחנות");
@@ -1087,8 +1087,8 @@ function Cm(o, e, t) {
     }
     try {
       globalThis.localStorage.setItem(hl(o), JSON.stringify(M)), a.querySelector('[role="status"]').textContent = o._m("Saved — shown when you return to the player", "נשמר — יופיע בחזרה לנגן");
-      const P = o.$("immersiveActionsToggle")?.closest(".immersive-dock");
-      P && (P.previousElementSibling?.classList.contains("radio-shortcuts") && P.previousElementSibling.remove(), P.insertAdjacentHTML("beforebegin", _l(o)), gl(o));
+      const Q = o.$("immersiveActionsToggle")?.closest(".immersive-dock");
+      Q && (Q.previousElementSibling?.classList.contains("radio-shortcuts") && Q.previousElementSibling.remove(), Q.insertAdjacentHTML("beforebegin", _l(o)), gl(o));
     } catch {
       v.checked = !v.checked, a.querySelector('[role="status"]').textContent = o._m("Could not save on this device", "לא ניתן לשמור במכשיר הזה");
     }
@@ -1120,10 +1120,10 @@ function br(o = [], {
   sortIndex: a = "",
   fallbackType: l = "track"
 } = {}, p = Hi) {
-  const h = Array.isArray(o) ? o : [], v = Vi(a), k = String(e || "").trim(), M = String(t || "").trim(), P = k ? h.findIndex(
+  const h = Array.isArray(o) ? o : [], v = Vi(a), k = String(e || "").trim(), M = String(t || "").trim(), Q = k ? h.findIndex(
     (q) => za(q) === k || ra(q) === k
   ) : -1;
-  if (P >= 0) return P;
+  if (Q >= 0) return Q;
   const F = M ? h.findIndex(
     (q) => p(
       _a(q),
@@ -1144,13 +1144,13 @@ function Yi(o = "", e = "track") {
   if (!t.includes("://")) return a;
   const [l, p] = t.split("://"), h = String(l || "").trim(), v = String(p || "").replace(/^\/+/, ""), k = v.split("/").filter(Boolean);
   if (!k.length) return { ...a, provider: h };
-  const M = String(k[0] || a.media_type).toLowerCase(), P = k.slice(1).join("/") || v;
+  const M = String(k[0] || a.media_type).toLowerCase(), Q = k.slice(1).join("/") || v;
   return {
     uri: t,
     provider: h,
     media_type: M || a.media_type,
-    item_id: P,
-    media_id: P || t
+    item_id: Q,
+    media_id: Q || t
   };
 }
 function Hi(o = "", e = "", t = "track") {
@@ -1245,8 +1245,8 @@ function Lm(o = [], {
       k,
       F?.media_item?.media_type || F?.media_type || "track"
     )
-  ) : null), P = Number(M?.sort_index);
-  return Number.isFinite(P) ? P : Number.isFinite(p) ? p : null;
+  ) : null), Q = Number(M?.sort_index);
+  return Number.isFinite(Q) ? Q : Number.isFinite(p) ? p : null;
 }
 function zm(o = [], {
   sortIndex: e = "",
@@ -1275,16 +1275,16 @@ function Rm({
   pendingIndexValue: v = "",
   browseOffset: k = 0
 } = {}, M = Hi) {
-  const P = vl(o), F = yl(e), q = String(t?.attributes?.media_content_id || "").trim(), O = a?.media_item?.name || a?.media_title || a?.name || "", H = a?.media_artist || (a?.media_item?.artists || []).map((g) => g?.name).filter(Boolean).join(", ") || "", j = Ni(
-    l ? O || t?.attributes?.media_title || "" : t?.attributes?.media_title || O || ""
-  ), G = Ni(
+  const Q = vl(o), F = yl(e), q = String(t?.attributes?.media_content_id || "").trim(), Y = a?.media_item?.name || a?.media_title || a?.name || "", H = a?.media_artist || (a?.media_item?.artists || []).map((g) => g?.name).filter(Boolean).join(", ") || "", G = Ni(
+    l ? Y || t?.attributes?.media_title || "" : t?.attributes?.media_title || Y || ""
+  ), j = Ni(
     l ? H || t?.attributes?.media_artist || "" : t?.attributes?.media_artist || H || ""
   );
   let V = -1;
-  const Z = (g) => _s(g, j, G);
+  const Z = (g) => _s(g, G, j);
   let W = !1;
   if (l) {
-    const g = br(P, {
+    const g = br(Q, {
       queueItemId: p,
       uri: h,
       sortIndex: v
@@ -1292,16 +1292,16 @@ function Rm({
     g >= 0 && (V = g, W = !0);
   }
   if (a && !W) {
-    const g = ra(a), y = _a(a), S = br(P, {
+    const g = ra(a), y = _a(a), S = br(Q, {
       queueItemId: g,
       uri: y
     }, M);
-    S >= 0 && (l || !j || Z(P[S])) && (V = S);
+    S >= 0 && (l || !G || Z(Q[S])) && (V = S);
   }
-  V < 0 && q && (V = br(P, { uri: q }, M)), V < 0 && !q && j && (V = P.findIndex((g) => Z(g))), V < 0 && Number.isFinite(F) && (V = P.findIndex((g) => Number(g?.sort_index) === F)), V < 0 && Number.isFinite(F) && F >= 0 && F < P.length && (V = F), V < 0 && (V = 0);
-  const ue = P.length ? -V : 0, he = P.length ? P.length - 1 - V : 0, s = Math.max(ue, Math.min(he, Number(k || 0))), A = Math.max(0, Math.min(P.length - 1, V + s));
+  V < 0 && q && (V = br(Q, { uri: q }, M)), V < 0 && !q && G && (V = Q.findIndex((g) => Z(g))), V < 0 && Number.isFinite(F) && (V = Q.findIndex((g) => Number(g?.sort_index) === F)), V < 0 && Number.isFinite(F) && F >= 0 && F < Q.length && (V = F), V < 0 && (V = 0);
+  const ue = Q.length ? -V : 0, he = Q.length ? Q.length - 1 - V : 0, s = Math.max(ue, Math.min(he, Number(k || 0))), A = Math.max(0, Math.min(Q.length - 1, V + s));
   return {
-    queueItems: P,
+    queueItems: Q,
     baseIndex: V,
     displayIndex: A,
     offset: s
@@ -1359,11 +1359,11 @@ function wl(o, e, t) {
   if (!k || Date.now() - k.ts > (k.bins ? 36e5 : k.retryMs || 3e5)) {
     if (v(), !o._waveformPending.has(p) && o._waveformPending.size < 2) {
       let F = !1;
-      const q = o._state?.maQueueState?.current_item?.media_item, O = q?.uri === a ? q.provider_mappings || [] : [], H = [
+      const q = o._state?.maQueueState?.current_item?.media_item, Y = q?.uri === a ? q.provider_mappings || [] : [], H = [
         { item_id: l.item_id, provider_instance_id_or_domain: l.provider },
-        ...O.filter((V) => V.available !== !1 && V.item_id && (V.provider_instance || V.provider_domain)).map((V) => ({ item_id: V.item_id, provider_instance_id_or_domain: V.provider_instance || V.provider_domain }))
-      ], j = H.filter((V, Z) => H.findIndex((W) => W.item_id === V.item_id && W.provider_instance_id_or_domain === V.provider_instance_id_or_domain) === Z).slice(0, 3), G = Promise.resolve().then(async () => {
-        for (const V of j)
+        ...Y.filter((V) => V.available !== !1 && V.item_id && (V.provider_instance || V.provider_domain)).map((V) => ({ item_id: V.item_id, provider_instance_id_or_domain: V.provider_instance || V.provider_domain }))
+      ], G = H.filter((V, Z) => H.findIndex((W) => W.item_id === V.item_id && W.provider_instance_id_or_domain === V.provider_instance_id_or_domain) === Z).slice(0, 3), j = Promise.resolve().then(async () => {
+        for (const V of G)
           try {
             const Z = qm(await o._callEngineMaCommand("audio_analysis/wave_form", V));
             if (Z) return Z;
@@ -1376,7 +1376,7 @@ function wl(o, e, t) {
       }).finally(() => {
         o._waveformPending.delete(p), o.$("progressBar") === e && o._getCurrentMediaUri?.() === a && wl(o, e, parseFloat(o.$("progressFill")?.style.width) || 0);
       });
-      o._waveformPending.set(p, G);
+      o._waveformPending.set(p, j);
     }
     return;
   }
@@ -1384,17 +1384,17 @@ function wl(o, e, t) {
     v();
     return;
   }
-  const M = Math.min(o._performanceModeEnabled?.() ? 150 : 1 / 0, Math.round(e.clientWidth || 300)), P = `${p}:${M}:${k.ts}`;
-  if (e.dataset.waveformRender !== P) {
+  const M = Math.min(o._performanceModeEnabled?.() ? 150 : 1 / 0, Math.round(e.clientWidth || 300)), Q = `${p}:${M}:${k.ts}`;
+  if (e.dataset.waveformRender !== Q) {
     v();
     const F = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     F.setAttribute("class", "immersive-waveform"), F.setAttribute("viewBox", "0 0 720 44"), F.setAttribute("preserveAspectRatio", "none"), F.setAttribute("aria-hidden", "true");
     const q = Nm(k.bins, M);
-    for (const O of ["waveform-base", "waveform-played"]) {
+    for (const Y of ["waveform-base", "waveform-played"]) {
       const H = document.createElementNS(F.namespaceURI, "path");
-      H.setAttribute("class", O), H.setAttribute("d", q), F.append(H);
+      H.setAttribute("class", Y), H.setAttribute("d", q), F.append(H);
     }
-    e.append(F), e.dataset.waveformRender = P;
+    e.append(F), e.dataset.waveformRender = Q;
   }
   e.classList.add("has-waveform"), e.querySelector(".waveform-played").style.clipPath = `inset(0 ${100 - Math.max(0, Math.min(100, t))}% 0 0)`;
 }
@@ -1407,12 +1407,12 @@ function Hm(o, e, { animate: t = !1 } = {}) {
     o._cancelCoverTransition?.(), o.innerHTML = e;
     return;
   }
-  const h = l.querySelector(".art-stack-slide.center .art-stack-card"), v = h?.querySelector("img"), k = p.querySelector(".art-stack-slide.center img"), M = l.querySelector(".art-stack-slide.center")?.dataset.queueItemId, P = p.querySelector(".art-stack-slide.center")?.dataset.queueItemId, q = P && l.querySelector(".art-stack-slide.prev")?.dataset.queueItemId === P ? -100 : 100;
+  const h = l.querySelector(".art-stack-slide.center .art-stack-card"), v = h?.querySelector("img"), k = p.querySelector(".art-stack-slide.center img"), M = l.querySelector(".art-stack-slide.center")?.dataset.queueItemId, Q = p.querySelector(".art-stack-slide.center")?.dataset.queueItemId, q = Q && l.querySelector(".art-stack-slide.prev")?.dataset.queueItemId === Q ? -100 : 100;
   (!t || v?.getAttribute("src") !== k?.getAttribute("src")) && o._cancelCoverTransition?.();
-  const O = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches || o.closest(".performance-lite"), H = t && !O && (!M || !P || M !== P) && v?.getAttribute("src") && k?.getAttribute("src") && v.getAttribute("src") !== k.getAttribute("src") ? h.cloneNode(!0) : null, j = (A) => A.dataset.queueItemId || `${A.dataset.uri || ""}:${A.dataset.sortIndex || ""}`, G = new Map([...l.children].map((A) => [j(A), A])), V = [...p.children].map((A) => {
-    const g = G.get(j(A)), y = g?.querySelector("img"), S = A.querySelector("img");
+  const Y = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches || o.closest(".performance-lite"), H = t && !Y && (!M || !Q || M !== Q) && v?.getAttribute("src") && k?.getAttribute("src") && v.getAttribute("src") !== k.getAttribute("src") ? h.cloneNode(!0) : null, G = (A) => A.dataset.queueItemId || `${A.dataset.uri || ""}:${A.dataset.sortIndex || ""}`, j = new Map([...l.children].map((A) => [G(A), A])), V = [...p.children].map((A) => {
+    const g = j.get(G(A)), y = g?.querySelector("img"), S = A.querySelector("img");
     if (!y || !S || !g.querySelector(".art-stack-card") || !A.querySelector(".art-stack-card") || !A.dataset.uri) return A;
-    G.delete(j(A)), g.className = A.className, Object.assign(g.dataset, A.dataset);
+    j.delete(G(A)), g.className = A.className, Object.assign(g.dataset, A.dataset);
     const B = y.dataset.homeiiArtReady === "1" && y.dataset.homeiiArtSrc && y.dataset.homeiiArtSrc === S.dataset.homeiiArtSrc;
     for (const E of ["src", "srcset", "sizes", "alt"]) {
       if (B && E !== "alt") continue;
@@ -1524,14 +1524,14 @@ function xl(o) {
   h && (h.hidden = l !== "radio" || a > 0);
 }
 function Ym(o) {
-  const e = o._getSelectedPlayer(), t = $i(e), l = (o._state.maQueueState?.current_item?.media_item || {}).media_type || e?.attributes?.media_content_type, p = o._getCurrentMediaUri?.(), h = t && (Number(o._state.maQueueState?.items || 0) > 0 || !!p), v = o._isHotelMode?.(), k = (H, j, G, V) => ({ id: H, icon: j, label: o._m(G, V) }), M = [
+  const e = o._getSelectedPlayer(), t = $i(e), l = (o._state.maQueueState?.current_item?.media_item || {}).media_type || e?.attributes?.media_content_type, p = o._getCurrentMediaUri?.(), h = t && (Number(o._state.maQueueState?.items || 0) > 0 || !!p), v = o._isHotelMode?.(), k = (H, G, j, V) => ({ id: H, icon: G, label: o._m(j, V) }), M = [
     h && k("queue", "queue", "Queue", "תור"),
     t && l === "track" && k("lyrics", "lyrics", "Lyrics", "מילים"),
     t && p && l === "track" && !v && o._supportsMusicAssistantRadioMode?.(l) && k("track_radio", "radio", "Track radio", "רדיו לפי השיר"),
     t && p && !v && k("like", o._currentMediaFavoriteState?.() ? "heart_filled" : "heart_outline", o._currentMediaFavoriteState?.() ? "Unlike" : "Like", o._currentMediaFavoriteState?.() ? "הסר לייק" : "אהבתי"),
     k("players", "speaker_group", "Players", "נגנים"),
     t && !v && k("timer", "timer", "Timer", "טיימר")
-  ].filter(Boolean), P = [
+  ].filter(Boolean), Q = [
     !v && k("recommendations", "compass", "Recommendations", "המלצות"),
     !v && o._state.engineAvailable && k("smart", "studio", "Smart", "חכם"),
     !v && o._state.engineAvailable && k("playback_stats", "stats", "Listening statistics", "סטטיסטיקות האזנה"),
@@ -1547,11 +1547,11 @@ function Ym(o) {
     !v && k("announcements", "announcement", "Announce", "כריזה"),
     !v && o._controlRoomEnabled?.() && o._mobileStudioShortcutEnabled?.() !== !1 && k("studio", "studio", "Studio", "סטודיו"),
     o._mobileHomeShortcutEnabled?.() && k("home", "home", "Home", "בית")
-  ].filter(Boolean), F = e?.attributes?.shuffle === !0, q = e?.attributes?.repeat || "off", O = [...v ? [] : [k("this_device", "this_device", "This device", "מכשיר זה")], ...!v && o._state.engineCapabilities?.ai_radio_dj ? [k("ai_radio", "radio", "AI Radio", "רדיו AI")] : [], ...h ? [
+  ].filter(Boolean), F = e?.attributes?.shuffle === !0, q = e?.attributes?.repeat || "off", Y = [...v ? [] : [k("this_device", "this_device", "This device", "מכשיר זה")], ...!v && o._state.engineCapabilities?.ai_radio_dj ? [k("ai_radio", "radio", "AI Radio", "רדיו AI")] : [], ...h ? [
     { ...k("shuffle", "shuffle", F ? "Shuffle on" : "Shuffle off", F ? "ערבוב פעיל" : "ערבוב כבוי"), selected: F },
     { ...k("repeat", q === "one" ? "repeat_one" : "repeat", q === "one" ? "Repeat track" : q === "all" ? "Repeat queue" : "Repeat off", q === "one" ? "חזרה על שיר" : q === "all" ? "חזרה על התור" : "חזרה כבויה"), selected: q !== "off" }
   ] : [], ...v ? [] : [k("settings", "settings", "Settings", "הגדרות")]];
-  return [M, P, O].filter((H) => H.length);
+  return [M, Q, Y].filter((H) => H.length);
 }
 function kl(o, e = "") {
   const t = (p, h) => o._esc(o._m(p, h)), l = o._mobileMainBarItems?.().includes("home") === !0 ? `<button type="button" data-mainbar-action="home" aria-label="${t("Home", "בית")}" title="${t("Home", "בית")}">${St(o, "home")}</button>` : "";
@@ -1631,15 +1631,15 @@ function gs(o, e = {}) {
       o._seekFromProgress({ currentTarget: v, clientX: Ee.left + Ee.width * Me / fe }, { immediate: !0 });
     }), xl(o);
   }
-  let k = [], M = 0, P = 0, F = 2, q, O = 0, H = 0, j = 0, G = 0, V = null, Z = [], W;
+  let k = [], M = 0, Q = 0, F = 2, q, Y = 0, H = 0, G = 0, j = 0, V = null, Z = [], W;
   const ue = () => globalThis.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches || a.closest(".performance-lite"), he = () => {
-    clearTimeout(G), a.classList.remove("fan-opening");
+    clearTimeout(j), a.classList.remove("fan-opening");
   }, s = () => {
     a.classList.remove("fan-pulling"), a.style.removeProperty("--fan-pull-progress"), Z.forEach((K) => {
       K.classList.remove("fan-pull-item", "fan-pull-ready"), K.style.removeProperty("--fan-pull-y");
     });
   }, A = () => {
-    O && globalThis.cancelAnimationFrame?.(O), clearTimeout(H), O = 0, V = null, a.classList.remove("coasting");
+    Y && globalThis.cancelAnimationFrame?.(Y), clearTimeout(H), Y = 0, V = null, a.classList.remove("coasting");
   }, g = () => {
     const K = k.flat();
     if (!K.length) {
@@ -1673,7 +1673,7 @@ function gs(o, e = {}) {
     const ce = k.flat().length;
     if (!ce) return;
     const ge = F, ye = () => {
-      F = (K % ce + ce) % ce, O = 0, V = null, a.classList.remove("coasting"), y(F), g(), ae && Z[Math.round(F)]?.focus({ preventScroll: !0 }), a._refreshAvailableActions?.();
+      F = (K % ce + ce) % ce, Y = 0, V = null, a.classList.remove("coasting"), y(F), g(), ae && Z[Math.round(F)]?.focus({ preventScroll: !0 }), a._refreshAvailableActions?.();
     };
     if (ue() || !globalThis.requestAnimationFrame || Math.abs(K - ge) < 1e-3) {
       ye();
@@ -1690,9 +1690,9 @@ function gs(o, e = {}) {
         return;
       }
       const Ee = Math.min(1, (Me - fe) / 240);
-      F = ge + (K - ge) * (1 - Math.pow(1 - Ee, 3)), y(F), g(), Ee < 1 ? O = requestAnimationFrame(ke) : ye();
+      F = ge + (K - ge) * (1 - Math.pow(1 - Ee, 3)), y(F), g(), Ee < 1 ? Y = requestAnimationFrame(ke) : ye();
     };
-    O = requestAnimationFrame(ke);
+    Y = requestAnimationFrame(ke);
   }, E = (K = !1) => {
     a.style.setProperty("--fan-count", String((k[M] || []).length)), a.querySelector(".immersive-fan-actions").innerHTML = '<svg class="fan-ribbon-rail" viewBox="0 0 440 130" preserveAspectRatio="none" aria-hidden="true"><path d="M22 41 Q220 144 418 41"/></svg>' + k.flat().map((ae) => `<button type="button" data-immersive-action="${o._esc(ae.id)}" ${typeof ae.selected == "boolean" ? `aria-pressed="${ae.selected}"` : ""} aria-label="${o._esc(ae.label)}" title="${o._esc(ae.label)}">${Nn(o) === "classic" ? Wo(o, ae) : `<span class="fan-lens">${Wo(o, ae)}</span>`}${!ae.genre && (ae.player || ae.artwork || Rr(o)) ? `<span>${o._esc(ae.label)}</span>` : ""}</button>`).join(""), Z = [...a.querySelectorAll(".immersive-fan-actions button")], F = k.slice(0, M).flat().length + Math.min(o._isCompactTileMode?.() ? 1 : 2, Math.floor((k[M]?.length || 0) / 2)), y(F), g(), a.querySelectorAll("[data-fan-step]").forEach((ae) => {
       ae.disabled = k.flat().length < 2;
@@ -1700,11 +1700,11 @@ function gs(o, e = {}) {
   }, I = (K, ae = !1) => {
     he(), B(Math.round(V ?? F) + K, ae);
   }, R = (K = !1, ae = !1, ce) => {
-    A(), clearTimeout(j), q = null, he(), a.classList.remove("rotating"), t.setAttribute("aria-expanded", "false");
+    A(), clearTimeout(G), q = null, he(), a.classList.remove("rotating"), t.setAttribute("aria-expanded", "false");
     const ge = () => {
       a.hidden = !0, a.classList.remove("fan-closing"), a.inert = !1, s(), ce?.();
     };
-    ae && !ue() && !a.hidden ? (a.inert = !0, a.classList.add("fan-closing"), j = setTimeout(ge, 220)) : ge(), K && t.focus({ preventScroll: !0 });
+    ae && !ue() && !a.hidden ? (a.inert = !0, a.classList.add("fan-closing"), G = setTimeout(ge, 220)) : ge(), K && t.focus({ preventScroll: !0 });
   };
   a._closeFan = R, a._refreshAvailableActions = () => {
     if (a.hidden || q || V !== null || a.classList.contains("fan-closing")) return;
@@ -1723,9 +1723,9 @@ function gs(o, e = {}) {
       R(!1, !0);
       return;
     }
-    clearTimeout(j), a.classList.remove("fan-closing"), a.inert = !1, s(), he(), a.parentElement?.querySelectorAll(".immersive-fan").forEach((ae) => {
+    clearTimeout(G), a.classList.remove("fan-closing"), a.inert = !1, s(), he(), a.parentElement?.querySelectorAll(".immersive-fan").forEach((ae) => {
       ae !== a && (ae._closeFan ? ae._closeFan() : ae.hidden = !0);
-    }), a.hidden = !1, t.setAttribute("aria-expanded", "true"), k = h(), M = 0, E(K.detail === 0), ue() || (a.classList.add("fan-opening"), G = setTimeout(he, 430));
+    }), a.hidden = !1, t.setAttribute("aria-expanded", "true"), k = h(), M = 0, E(K.detail === 0), ue() || (a.classList.add("fan-opening"), j = setTimeout(he, 430));
   }), (e.fan ? a.parentElement : o.shadowRoot.querySelector(".card"))?.addEventListener("click", (K) => {
     K.target.closest(".immersive-dock") || R();
   }), a.parentElement?.addEventListener("keydown", (K) => {
@@ -1736,9 +1736,9 @@ function gs(o, e = {}) {
     const ae = (Math.abs(K.deltaX) > Math.abs(K.deltaY) ? K.deltaX : K.deltaY) * (K.deltaMode === 1 ? 16 : 1);
     S(ae / 90), H = setTimeout(() => {
       !a.hidden && a.isConnected && B();
-    }, 90), P = Date.now() + 300;
+    }, 90), Q = Date.now() + 300;
   }, { passive: !1 });
-  const Y = (K = !1) => {
+  const O = (K = !1) => {
     const ae = q;
     q = null, a.classList.remove("rotating"), s();
     const ce = !K && ae?.moved && performance.now() - ae.time < 90 ? ae.velocity : 0, ge = ue() ? 0 : Math.max(-1.25, Math.min(1.25, (ce || 0) * 85));
@@ -1761,7 +1761,7 @@ function gs(o, e = {}) {
         a.setPointerCapture(K.pointerId);
       } catch {
       }
-    if (q.moved = !0, q.mode || (q.mode = q.button && ce < -8 && -ce > Math.abs(ae) * 1.35 ? "pull" : "rotate"), P = Date.now() + 400, q.mode === "pull") {
+    if (q.moved = !0, q.mode || (q.mode = q.button && ce < -8 && -ce > Math.abs(ae) * 1.35 ? "pull" : "rotate"), Q = Date.now() + 400, q.mode === "pull") {
       const fe = q.button;
       q.pull = Math.max(0, Math.min(100, -ce));
       const ke = q.pull >= 56;
@@ -1780,18 +1780,18 @@ function gs(o, e = {}) {
     ge && (q.velocity = 0.6 * q.velocity + 0.4 * ge / Math.max(8, ye - q.time)), S(ge), ge && (q.time = ye), q.lastX = K.clientX;
   };
   a.addEventListener("pointermove", $), a.addEventListener("pointercancel", (K) => {
-    q?.id === K.pointerId && Y(!0);
+    q?.id === K.pointerId && O(!0);
   }), a.addEventListener("lostpointercapture", (K) => {
-    K.target === a && q?.id === K.pointerId && Y(!0);
+    K.target === a && q?.id === K.pointerId && O(!0);
   }), a.addEventListener("pointerup", (K) => {
     if (!q || q.id !== K.pointerId) return;
     $(K);
     const ae = q;
     ae.mode === "pull" && ae.pull >= 56 ? R(!0, !0, () => {
       a.isConnected && ae.player === o._state.selectedPlayer && X(ae.button);
-    }) : Y(ae.mode === "pull");
+    }) : O(ae.mode === "pull");
   }), a.addEventListener("click", async (K) => {
-    if (K.stopPropagation(), Date.now() < P || a.classList.contains("fan-closing")) {
+    if (K.stopPropagation(), Date.now() < Q || a.classList.contains("fan-closing")) {
       K.preventDefault();
       return;
     }
@@ -1900,8 +1900,8 @@ function Ja(o, e) {
     if (h.hasAttribute("data-start-schedule-delete")) return { icon: "trash" };
     if (h.id === "lyricsRetryBtn") return { icon: "refresh" };
     if (h.id === "lyricsSyncBtn") return { icon: "karaoke", selected: h.getAttribute("aria-pressed") === "true" };
-    const P = h.querySelector("svg");
-    if (P) return { svg: P.outerHTML, icon: P.dataset.icon || "" };
+    const Q = h.querySelector("svg");
+    if (Q) return { svg: Q.outerHTML, icon: Q.dataset.icon || "" };
     const F = h.textContent.trim();
     return F && F.length <= 6 ? { value: F } : { icon: e === "announcements" ? "announcement" : e === "sleep_timer" ? "timer" : "settings" };
   }, l = (h, v) => {
@@ -1953,8 +1953,8 @@ function Ja(o, e) {
   ];
   if (["media_actions", "queue_actions", "lyrics"].includes(e)) {
     const h = o.$(e === "lyrics" ? "lyricsBackdrop" : "mobileQueueActionSheet"), v = e === "lyrics" ? ".lyrics-head-actions button" : e === "queue_actions" ? "[data-queue-popup]" : "[data-media-popup]";
-    return [...h?.querySelectorAll(v) || []].filter((M) => !M.disabled && !M.hidden && M.dataset.mediaPopup !== "close" && M.dataset.queuePopup !== "close" && M.id !== "lyricsCloseBtn").map((M, P) => ({
-      id: `control:${e}:${e !== "lyrics" ? o._state.mobileQueueActionEntry?.uri : ""}:${M.dataset.mediaPopup || M.dataset.queuePopup || M.id || P}`,
+    return [...h?.querySelectorAll(v) || []].filter((M) => !M.disabled && !M.hidden && M.dataset.mediaPopup !== "close" && M.dataset.queuePopup !== "close" && M.id !== "lyricsCloseBtn").map((M, Q) => ({
+      id: `control:${e}:${e !== "lyrics" ? o._state.mobileQueueActionEntry?.uri : ""}:${M.dataset.mediaPopup || M.dataset.queuePopup || M.id || Q}`,
       ...a(M),
       value: { lyricsFontMinusBtn: "A−", lyricsFontResetBtn: "A", lyricsFontPlusBtn: "A+", lyricsOffsetMinusBtn: "−s", lyricsOffsetResetBtn: "0s", lyricsOffsetPlusBtn: "+s" }[M.id],
       label: M.getAttribute("aria-label") || M.title || M.textContent.trim(),
@@ -2003,7 +2003,7 @@ function Zi(o, e, t, a) {
   let p = e.querySelector(":scope > .screen-dock");
   if (!p) {
     p = document.createElement("nav"), p.className = "immersive-dock screen-dock", p.setAttribute("aria-label", o._m("Screen navigation", "ניווט במסך"));
-    const F = (q, O) => o._esc(o._m(q, O));
+    const F = (q, Y) => o._esc(o._m(q, Y));
     p.innerHTML = `<button type="button" data-screen-back aria-label="${F("Back", "חזרה")}">${St(o, "back")}</button>
       <div class="immersive-fan" role="group" aria-label="${F("Screen wheel", "גלגל המסך")}" hidden><div class="immersive-fan-actions"></div><div class="immersive-fan-navigation"><button data-fan-step="-1" aria-label="${F("Previous", "הקודם")}">‹</button><span class="immersive-page-status" aria-live="polite"></span><button data-immersive-action="more">${F("All actions", "כל הפעולות")}</button><button data-fan-step="1" aria-label="${F("Next", "הבא")}">›</button></div></div>
       <button type="button" data-screen-wheel aria-expanded="false" aria-label="${F("Screen wheel", "גלגל המסך")}">${St(o, "fan")}</button>
@@ -2023,18 +2023,18 @@ function Zi(o, e, t, a) {
     }, p.querySelector("[data-screen-player]").onclick = () => {
       const q = p.dataset.page;
       if (["players", "players_active"].includes(q)) return;
-      const O = o._state.mobileQueueActionEntry, H = o._state.controlRoomPanel, j = !!p._closeScreen, G = [...o._state.menuStack || []];
+      const Y = o._state.mobileQueueActionEntry, H = o._state.controlRoomPanel, G = !!p._closeScreen, j = [...o._state.menuStack || []];
       p._closeScreen?.(), o._openMobileMenu("players"), o._screenPlayerReturn = async () => {
-        if (!j)
-          return o._state.menuPage = q, o._state.menuStack = G, o._renderMobileMenu();
+        if (!G)
+          return o._state.menuPage = q, o._state.menuStack = j, o._renderMobileMenu();
         if (o._closeMobileMenu(), q === "history") return o._setHistoryDrawerOpen(!0);
         if (q === "lyrics") return o._openLyricsModal();
         if (q === "studio") {
           o._openControlRoom(), H && o._toggleControlRoomPanel(H);
           return;
         }
-        if (q === "queue_actions") return o._openMobileQueueActionMenu(O);
-        if (q === "media_actions") return o._openMobileMediaActionMenu(O);
+        if (q === "queue_actions") return o._openMobileQueueActionMenu(Y);
+        if (q === "media_actions") return o._openMobileMediaActionMenu(Y);
       };
     }, gs(o, {
       fan: p.querySelector(".immersive-fan"),
@@ -2043,8 +2043,8 @@ function Zi(o, e, t, a) {
       context: () => ["players", "players_active"].includes(p.dataset.page) ? "player_picker" : p.dataset.page,
       pages: () => [Ja(o, p.dataset.page)],
       keepOpen: (q) => {
-        const O = Ja(o, p.dataset.page).find((H) => H.id === q)?.control;
-        return !!O && (O.hasAttribute("data-menu-group-player") || p.dataset.page === "lyrics" && O.id !== "lyricsRetryBtn");
+        const Y = Ja(o, p.dataset.page).find((H) => H.id === q)?.control;
+        return !!Y && (Y.hasAttribute("data-menu-group-player") || p.dataset.page === "lyrics" && Y.id !== "lyricsRetryBtn");
       },
       onAction: async (q) => {
         await p._dispatchAction(q);
@@ -2055,9 +2055,9 @@ function Zi(o, e, t, a) {
         return;
       }
       if (q.startsWith("ai-host:")) {
-        const O = Ja(o, "ai_radio").find((j) => j.id === q), H = o.$("mobileMenuBody");
-        if (!O || !H) return;
-        H.querySelector("[data-ai-host]").value = O.hostId, H.querySelector("[data-ai-apply]").click();
+        const Y = Ja(o, "ai_radio").find((G) => G.id === q), H = o.$("mobileMenuBody");
+        if (!Y || !H) return;
+        H.querySelector("[data-ai-host]").value = Y.hostId, H.querySelector("[data-ai-apply]").click();
         return;
       }
       if (q === "studio_back") {
@@ -2069,28 +2069,28 @@ function Zi(o, e, t, a) {
         return;
       }
       if (q === "player_preferences") {
-        const O = o._settingsAccordionOpenSet();
-        O.add("players_library"), o._persistSettingsAccordionOpen(O), p._closeScreen?.(), o._openMobileMenu("settings");
+        const Y = o._settingsAccordionOpenSet();
+        Y.add("players_library"), o._persistSettingsAccordionOpen(Y), p._closeScreen?.(), o._openMobileMenu("settings");
         return;
       }
       if (q.startsWith("genre:")) {
-        const O = q.slice(6);
-        o._discoveryCategoryOptions().some((H) => H.key === O) && await o._selectDiscoveryCategory(O);
+        const Y = q.slice(6);
+        o._discoveryCategoryOptions().some((H) => H.key === Y) && await o._selectDiscoveryCategory(Y);
       } else if (q.startsWith("control:")) {
-        const O = Ja(o, p.dataset.page).find((H) => H.id === q);
-        O?.control?.isConnected && !O.control.disabled && (O.control.click(), p.querySelector(".immersive-fan")._refreshAvailableActions?.());
+        const Y = Ja(o, p.dataset.page).find((H) => H.id === q);
+        Y?.control?.isConnected && !Y.control.disabled && (Y.control.click(), p.querySelector(".immersive-fan")._refreshAvailableActions?.());
       } else if (q.startsWith("queue:")) {
-        const O = Ja(o, "queue").find((H) => H.id === q);
-        if (!O) throw new Error(o._m("Queue changed. Try again.", "התור השתנה. נסה שוב."));
-        await o._playQueueItem(o._getQueueItemKey(O.item), o._getQueueItemUri(O.item), O.item.media_item?.media_type || "track", O.item.sort_index);
+        const Y = Ja(o, "queue").find((H) => H.id === q);
+        if (!Y) throw new Error(o._m("Queue changed. Try again.", "התור השתנה. נסה שוב."));
+        await o._playQueueItem(o._getQueueItemKey(Y.item), o._getQueueItemUri(Y.item), Y.item.media_item?.media_type || "track", Y.item.sort_index);
       } else q.startsWith("timer:") ? (q === "timer:cancel" ? await o._clearSleepTimer(!0) : await o._setSleepTimerMinutes(Number(q.split(":")[1])), await o._renderMobileMenu()) : (p._closeScreen?.(), o._openMobileMenu(q));
     };
   }
   p.dataset.page !== t && (l(), p.querySelector(".immersive-fan").hidden = !0, p.querySelector("[data-screen-wheel]").setAttribute("aria-expanded", "false")), p.dataset.page = t, p._closeScreen = a;
   const h = o._getSelectedPlayer?.(), v = h ? o._playerDisplayName?.(h, o._state.players) || h.attributes?.friendly_name || h.entity_id : o._m("Choose player", "בחירת נגן"), k = p.querySelector("[data-screen-player]");
   k.innerHTML = `${St(o, "speaker")}<span class="screen-player-name" dir="auto">${o._esc(v)}</span>`, k.title = v, k.setAttribute("aria-label", `${o._m("Choose player", "בחירת נגן")}: ${v}`);
-  const M = t === "queue" ? o._m("Queue wheel", "גלגל התור") : t === "sleep_timer" ? o._m("Timer wheel", "גלגל הזמנים") : t.startsWith("library_") || t === "media_detail" ? o._m("Library wheel", "גלגל הספרייה") : o._m("Screen wheel", "גלגל המסך"), P = p.querySelector("[data-screen-wheel]");
-  P.setAttribute("aria-label", M), P.title = M, p.querySelector(".immersive-fan").setAttribute("aria-label", M), p.querySelector(".immersive-fan")._refreshAvailableActions?.(), e.querySelector(":scope > .screen-all-actions")?._refreshAvailableActions?.(), e.classList.add("has-screen-dock"), e.dataset.dockPage = t;
+  const M = t === "queue" ? o._m("Queue wheel", "גלגל התור") : t === "sleep_timer" ? o._m("Timer wheel", "גלגל הזמנים") : t.startsWith("library_") || t === "media_detail" ? o._m("Library wheel", "גלגל הספרייה") : o._m("Screen wheel", "גלגל המסך"), Q = p.querySelector("[data-screen-wheel]");
+  Q.setAttribute("aria-label", M), Q.title = M, p.querySelector(".immersive-fan").setAttribute("aria-label", M), p.querySelector(".immersive-fan")._refreshAvailableActions?.(), e.querySelector(":scope > .screen-all-actions")?._refreshAvailableActions?.(), e.classList.add("has-screen-dock"), e.dataset.dockPage = t;
 }
 function Hn(o, e, { inline: t = !1 } = {}) {
   if (!ps(e)) return `<div class="player-volume-unavailable" role="status">${o._esc(o._m("Independent volume control is unavailable", "שליטה עצמאית בעוצמה אינה זמינה"))}</div>`;
@@ -2122,12 +2122,12 @@ function Un(o, { entityId: e = null, group: t = !1 } = {}) {
   if (t && o._groupAverageVolume(p) === null) return;
   const v = (W) => t ? o._groupAverageVolume(W) : Math.round(La(W) * 100);
   let k = v(p), M = null;
-  const P = (W) => {
+  const Q = (W) => {
     const ue = q.getBoundingClientRect();
     return Math.atan2(W.clientY - ue.top - ue.height / 2, W.clientX - ue.left - ue.width / 2);
   }, F = document.createElement("section");
   F.className = "volume-wheel-popover", F.setAttribute("role", "dialog"), F.setAttribute("aria-label", o._m("Volume", "עוצמה")), F.innerHTML = `<button data-volume-close aria-label="${o._esc(o._m("Close", "סגור"))}">${o._iconSvg("close")}</button><div class="volume-wheel-dial" role="slider" tabindex="0" aria-label="${o._esc(o._m("Volume", "עוצמה"))}" aria-valuemin="0" aria-valuemax="100"><output></output></div><button data-volume-mute aria-label="${o._esc(o._m("Mute", "השתק"))}">${o._iconSvg("volume_mute")}</button>`;
-  const q = F.querySelector("[role=slider]"), O = F.querySelector("[data-volume-mute]"), H = () => {
+  const q = F.querySelector("[role=slider]"), Y = F.querySelector("[data-volume-mute]"), H = () => {
     const W = l();
     if (W?.entity_id !== h) {
       F.remove();
@@ -2138,12 +2138,12 @@ function Un(o, { entityId: e = null, group: t = !1 } = {}) {
       return;
     }
     const ue = t ? o._isGroupMuted(W) : o._isMuted(W);
-    O.innerHTML = o._iconSvg(ue ? "volume_mute" : o._volumeIconName(W)), O.setAttribute("aria-pressed", String(ue)), O.setAttribute("aria-label", o._m(ue ? "Unmute" : "Mute", ue ? "בטל השתקה" : "השתק")), O.classList.toggle("active", ue), M === null && (k = v(W), j()), G();
+    Y.innerHTML = o._iconSvg(ue ? "volume_mute" : o._volumeIconName(W)), Y.setAttribute("aria-pressed", String(ue)), Y.setAttribute("aria-label", o._m(ue ? "Unmute" : "Mute", ue ? "בטל השתקה" : "השתק")), Y.classList.toggle("active", ue), M === null && (k = v(W), G()), j();
   };
   F._refreshVolumeState = H;
-  const j = () => {
+  const G = () => {
     q.setAttribute("aria-valuenow", String(k)), q.querySelector("output").textContent = `${k}%`, q.style.setProperty("--dial-value", `${k}%`);
-  }, G = () => {
+  }, j = () => {
     const W = a.clientHeight;
     if (!W) return;
     const ue = W < 440, he = ue ? Math.max(64, Math.min(160, W - 180)) : 160;
@@ -2155,28 +2155,28 @@ function Un(o, { entityId: e = null, group: t = !1 } = {}) {
       F.remove();
       return;
     }
-    k = Math.max(0, Math.min(100, k + W)), j(), t ? o._setGroupVolumeFor(h, k / 100) : e ? o._setPlayerVolumeFor(h, k / 100) : o._setVolume(k / 100);
+    k = Math.max(0, Math.min(100, k + W)), G(), t ? o._setGroupVolumeFor(h, k / 100) : e ? o._setPlayerVolumeFor(h, k / 100) : o._setVolume(k / 100);
   };
-  F.querySelector("[data-volume-close]").onclick = () => F.remove(), O.onclick = async () => {
+  F.querySelector("[data-volume-close]").onclick = () => F.remove(), Y.onclick = async () => {
     if (l()?.entity_id !== h) {
       F.remove();
       return;
     }
-    O.setAttribute("aria-busy", "true");
+    Y.setAttribute("aria-busy", "true");
     try {
       t ? await o._toggleGroupMuteFor(h) : await o._toggleMuteFor(h);
     } finally {
-      O.removeAttribute("aria-busy"), H();
+      Y.removeAttribute("aria-busy"), H();
     }
   }, q.onwheel = (W) => {
     W.preventDefault(), V(W.deltaY > 0 ? -2 : 2);
   }, q.onkeydown = (W) => {
     ["ArrowUp", "ArrowRight", "ArrowDown", "ArrowLeft"].includes(W.key) && (W.preventDefault(), V(["ArrowUp", "ArrowRight"].includes(W.key) ? 2 : -2));
   }, q.onpointerdown = (W) => {
-    W.preventDefault(), M = P(W), q.setPointerCapture(W.pointerId);
+    W.preventDefault(), M = Q(W), q.setPointerCapture(W.pointerId);
   }, q.onpointermove = (W) => {
     if (M === null) return;
-    const ue = P(W);
+    const ue = Q(W);
     let he = ue - M;
     he > Math.PI && (he -= Math.PI * 2), he < -Math.PI && (he += Math.PI * 2);
     const s = Math.trunc(he * 100 / (Math.PI * 2));
@@ -2187,7 +2187,7 @@ function Un(o, { entityId: e = null, group: t = !1 } = {}) {
     W.key === "Escape" && F.remove();
   };
   const Z = document.createElement("div");
-  Z.className = "volume-wheel-title", Z.textContent = t ? o._m("Group volume", "ווליום קבוצה") : p.attributes?.friendly_name || o._m("Volume", "עוצמה"), F.insertBefore(Z, q), a.append(F), j(), H(), q.focus({ preventScroll: !0 });
+  Z.className = "volume-wheel-title", Z.textContent = t ? o._m("Group volume", "ווליום קבוצה") : p.attributes?.friendly_name || o._m("Volume", "עוצמה"), F.insertBefore(Z, q), a.append(F), G(), H(), q.focus({ preventScroll: !0 });
 }
 function Wm(o, e, t = {}) {
   const a = String(o || "").trim();
@@ -2200,22 +2200,22 @@ function Wm(o, e, t = {}) {
     k && (k.textContent = `${l}%`);
     const M = this.$("btnMute");
     M && (M.classList.toggle("active", p), M.classList.toggle("muted", p), this._setButtonIcon(M, h));
-    const P = this.$("controlVolumeBtn");
-    P && (P.classList.toggle("muted", p), this._setButtonIcon(P, h));
+    const Q = this.$("controlVolumeBtn");
+    Q && (Q.classList.toggle("muted", p), this._setButtonIcon(Q, h));
     const F = this.$("tabletPopupVolSlider");
     F && (String(F.value) !== String(l) && (F.value = String(l)), F.style.setProperty("--vol-pct", `${l}%`));
     const q = this.$("tabletPopupVolPct");
     q && (q.textContent = `${l}%`);
-    const O = this.$("tabletPopupMuteBtn");
-    O && this._setButtonIcon(O, h);
+    const Y = this.$("tabletPopupMuteBtn");
+    Y && this._setButtonIcon(Y, h);
   }
   this.shadowRoot?.querySelectorAll("[data-player-volume]")?.forEach((v) => {
     if (v.dataset.playerVolume !== a) return;
     String(v.value) !== String(l) && (v.value = String(l)), v.style.setProperty("--vol-pct", `${l}%`);
     const k = v.closest(".player-volume-row"), M = k?.querySelector(".player-mini-value");
     M && (M.textContent = `${l}%`);
-    const P = k?.querySelector("[data-player-mute]");
-    P && (P.classList.toggle("active", p), this._setButtonIcon(P, h));
+    const Q = k?.querySelector("[data-player-mute]");
+    Q && (Q.classList.toggle("active", p), this._setButtonIcon(Q, h));
   }), this.shadowRoot?.querySelectorAll("[data-player-mute]")?.forEach((v) => {
     if (v.dataset.playerMute !== a) return;
     v.classList.toggle("active", p);
@@ -2332,7 +2332,7 @@ async function Zm(o, e, t) {
         const k = h.querySelector('[type="submit"]');
         k.disabled = !0;
         try {
-          const M = await o._homeiiEngineCommand("interface/set", { night_mode: h.elements.mode.value, night_start: h.elements.start.value, night_end: h.elements.end.value, night_days: [...h.querySelectorAll('[name="day"]:checked')].map((P) => Number(P.value)) });
+          const M = await o._homeiiEngineCommand("interface/set", { night_mode: h.elements.mode.value, night_start: h.elements.start.value, night_end: h.elements.end.value, night_days: [...h.querySelectorAll('[name="day"]:checked')].map((Q) => Number(Q.value)) });
           Mr(o, M), o._state.engineInterfacePreferences = M, o._persistMobileAppearance(), h.querySelector('[role="status"]').textContent = o._m("Saved in the Engine", "נשמר במנוע");
         } catch (M) {
           h.querySelector('[role="status"]').textContent = o._mediaControlFailureMessage(M);
@@ -2375,8 +2375,8 @@ async function Zm(o, e, t) {
           M.disabled = !0;
           try {
             await o._homeiiEngineCommand("screensaver/set", { enabled: h.elements.enabled.checked, timeout_seconds: Number(h.elements.timeout_seconds.value), mode: h.elements.mode.value, message: h.elements.message.value, clock_mode: h.elements.clock_mode.value, show_artwork: h.elements.show_artwork.checked, auto_lyrics_when_playing: h.elements.auto_lyrics_when_playing.checked }), h.querySelector('[role="status"]').textContent = o._m("Saved in the Engine", "נשמר במנוע");
-          } catch (P) {
-            h.querySelector('[role="status"]').textContent = o._mediaControlFailureMessage(P);
+          } catch (Q) {
+            h.querySelector('[role="status"]').textContent = o._mediaControlFailureMessage(Q);
           } finally {
             M.disabled = !1;
           }
@@ -2416,16 +2416,16 @@ async function Zm(o, e, t) {
     }
     const l = o._ambientLightEnabled() ? "on" : "off", p = o._state.artworkLighting?.rules?.[o._state.selectedPlayer], h = p?.lights || o._ambientLightEntitiesForPlayer();
     if (e.innerHTML = `<section class="settings-group listening-lighting"><h2>${a("Follow the music", "תאורה בעקבות המוזיקה")}</h2><p>${o._state.engineCapabilities?.artwork_lighting ? a("The Engine follows artwork colors even when this card is closed.", "המנוע עוקב אחר צבעי העטיפה גם כשהכרטיס סגור.") : a("Your configured lights follow artwork colors while this card is open.", "התאורה עוקבת אחר צבעי העטיפה כשהכרטיס פתוח.")}</p><p>${h.map((v) => o._esc(o._hass?.states?.[v]?.attributes?.friendly_name || v)).join(" · ")}</p><div class="settings-pills">${o._settingsPill(o._m("Enabled", "פעיל"), "on", l, "data-setting-ambient-light")}${o._settingsPill(o._m("Disabled", "כבוי"), "off", l, "data-setting-ambient-light")}</div></section>`, o._state.engineCapabilities?.artwork_lighting) {
-      const v = o._state.selectedPlayer, k = o._state.artworkLighting?.status?.[v], M = Object.entries(o._hass?.states || {}).filter(([F, q]) => F.startsWith("light.") && (q.attributes?.supported_color_modes || []).some((O) => ["rgb", "rgbw", "rgbww", "hs", "xy"].includes(O))), P = document.createElement("form");
-      P.className = "smart-settings", P.innerHTML = `<h3>${a("Lights assigned to this player", "תאורה המשויכת לנגן")}</h3>${M.map(([F, q]) => `<label><span>${o._esc(q.attributes.friendly_name || F)}</span><input type="checkbox" name="light" value="${o._esc(F)}" ${h.includes(F) ? "checked" : ""}></label>`).join("")}<label>${a("Maximum brightness (%)", "עוצמת תאורה מרבית (%)")}<input name="brightness" type="number" min="1" max="100" value="${Number(p?.brightness) || o._ambientLightBrightness()}" required></label><label>${a("Transition (seconds)", "מעבר בשניות")}<input name="transition" type="number" min="0" max="120" value="${Number(p?.transition ?? o._ambientLightTransition())}" required></label><button type="submit">${a("Save mapping to Engine", "שמירת שיוך במנוע")}</button><p role="status">${k?.updated_at ? `${a("Last update", "עדכון אחרון")}: ${o._esc(k.updated_at)} · ${o._esc(k.media_title || "")} · ${o._esc(k.state)}` : a("No confirmed lighting update yet", "אין עדיין עדכון תאורה מאומת")}</p>`, e.append(P), P.onsubmit = async (F) => {
+      const v = o._state.selectedPlayer, k = o._state.artworkLighting?.status?.[v], M = Object.entries(o._hass?.states || {}).filter(([F, q]) => F.startsWith("light.") && (q.attributes?.supported_color_modes || []).some((Y) => ["rgb", "rgbw", "rgbww", "hs", "xy"].includes(Y))), Q = document.createElement("form");
+      Q.className = "smart-settings", Q.innerHTML = `<h3>${a("Lights assigned to this player", "תאורה המשויכת לנגן")}</h3>${M.map(([F, q]) => `<label><span>${o._esc(q.attributes.friendly_name || F)}</span><input type="checkbox" name="light" value="${o._esc(F)}" ${h.includes(F) ? "checked" : ""}></label>`).join("")}<label>${a("Maximum brightness (%)", "עוצמת תאורה מרבית (%)")}<input name="brightness" type="number" min="1" max="100" value="${Number(p?.brightness) || o._ambientLightBrightness()}" required></label><label>${a("Transition (seconds)", "מעבר בשניות")}<input name="transition" type="number" min="0" max="120" value="${Number(p?.transition ?? o._ambientLightTransition())}" required></label><button type="submit">${a("Save mapping to Engine", "שמירת שיוך במנוע")}</button><p role="status">${k?.updated_at ? `${a("Last update", "עדכון אחרון")}: ${o._esc(k.updated_at)} · ${o._esc(k.media_title || "")} · ${o._esc(k.state)}` : a("No confirmed lighting update yet", "אין עדיין עדכון תאורה מאומת")}</p>`, e.append(Q), Q.onsubmit = async (F) => {
         F.preventDefault(), F.stopPropagation();
-        const q = P.querySelector('[type="submit"]');
+        const q = Q.querySelector('[type="submit"]');
         q.disabled = !0;
         try {
-          const O = [...P.querySelectorAll('[name="light"]:checked')].map((j) => j.value), H = await o._homeiiEngineCommand("lighting/set", { player: v, lights: O, enabled: !!p?.enabled && O.length > 0, brightness: Number(P.elements.brightness.value), transition: Number(P.elements.transition.value), cooldown: p?.cooldown || 8 });
-          o._state.artworkLighting = H, o._lightingReadAt = Date.now(), P.querySelector('[role="status"]').textContent = o._m("Mapping saved in the Engine", "השיוך נשמר במנוע");
-        } catch (O) {
-          P.querySelector('[role="status"]').textContent = o._mediaControlFailureMessage(O);
+          const Y = [...Q.querySelectorAll('[name="light"]:checked')].map((G) => G.value), H = await o._homeiiEngineCommand("lighting/set", { player: v, lights: Y, enabled: !!p?.enabled && Y.length > 0, brightness: Number(Q.elements.brightness.value), transition: Number(Q.elements.transition.value), cooldown: p?.cooldown || 8 });
+          o._state.artworkLighting = H, o._lightingReadAt = Date.now(), Q.querySelector('[role="status"]').textContent = o._m("Mapping saved in the Engine", "השיוך נשמר במנוע");
+        } catch (Y) {
+          Q.querySelector('[role="status"]').textContent = o._mediaControlFailureMessage(Y);
         } finally {
           q.disabled = !1;
         }
@@ -2436,9 +2436,9 @@ async function Zm(o, e, t) {
   if (t === "favorite_radios") {
     e.innerHTML = `<div class="state-box" role="status">${a("Loading favorite stations…", "טוען תחנות מועדפות…")}</div>`;
     try {
-      const l = await o._fetchLibrary("radio", "sort_name", 250, !0);
-      if (o._state.menuPage !== t || !e.isConnected) return;
-      e.innerHTML = o._mediaItemsListHtml(l, "radio", { librarySkin: !0 }) || `<div class="state-box">${a("No favorite radio stations yet", "אין עדיין תחנות רדיו מועדפות")}</div>`, l.length && Cm(o, e, l);
+      let l = await o._fetchLibrary("radio", "sort_name", 250, !0);
+      if (l.length || (l = await o._fetchLibrary("radio", "sort_name", 250, !1)), o._state.menuPage !== t || !e.isConnected) return;
+      e.innerHTML = l.length ? o._mediaItemsListHtml(l, "radio", { librarySkin: !0 }) : `<div class="state-box">${a("Add stations to your Music Assistant radio library, then return here to pin up to five to the player.", "הוסף תחנות לספריית הרדיו ב-Music Assistant, ואז חזור לכאן להצמיד עד חמש תחנות לנגן.")}</div>`, l.length && Cm(o, e, l);
     } catch (l) {
       o._state.menuPage === t && e.isConnected && (e.innerHTML = `<div class="state-box" role="alert">${o._esc(o._mediaControlFailureMessage(l))}</div>`);
     }
@@ -2450,20 +2450,20 @@ async function Zm(o, e, t) {
     if (o._state.menuPage !== t || !e.isConnected) return;
     if (!l || !Number.isFinite(Number(l.today_minutes))) throw new Error(o._m("Listening statistics are unavailable.", "סטטיסטיקות האזנה אינן זמינות."));
     const p = (M) => o._esc(Number.isFinite(Number(M)) ? Math.max(0, Number(M)).toLocaleString(void 0, { maximumFractionDigits: 1 }) : "—"), h = (M) => {
-      const P = o._playerByEntityId?.(M?.entity_id);
-      return P && o._playerDisplayName?.(P) || M?.friendly_name || M?.entity_id || "";
+      const Q = o._playerByEntityId?.(M?.entity_id);
+      return Q && o._playerDisplayName?.(Q) || M?.friendly_name || M?.entity_id || "";
     }, v = l.top_player_today, k = h(v);
     e.innerHTML = `<section class="listening-stats"><h2>${a("Listening today", "ההאזנה היום")}</h2><p>${o._esc(l.day || "")}</p><div class="listening-stats-summary"><div><strong>${p(l.today_minutes)}</strong><span>${a("Minutes", "דקות")}</span></div><div><strong>${p(l.today_sessions)}</strong><span>${a("Sessions", "הפעלות")}</span></div></div>${k ? `<div class="listening-stats-leader"><span>${a("Most active player today", "הנגן הפעיל ביותר היום")}</span><strong>${o._esc(k)}</strong></div>` : ""}${(Array.isArray(l.players_today) ? l.players_today : []).map((M) => `<div class="listening-stats-row"><span>${o._esc(h(M))}</span><strong>${p(M.minutes)} ${a("min", "דק׳")}</strong></div>`).join("")}<p>${a("Totals are measured across players and may include simultaneous playback.", "הסיכום נמדד על פני הנגנים ועשוי לכלול ניגון מקביל.")}</p></section>`, typeof o._homeiiEngineMaCommand == "function" && o._homeiiEngineMaCommand("statistics/top_items", { media_type: "track", period: "week", limit: 5, timezone: o._hass?.config?.time_zone || "UTC" }).then((M) => {
       if (o._state.menuPage !== t || !e.isConnected) return;
-      const P = M?.data;
-      !Array.isArray(P) || !P.length || e.querySelector(".listening-stats")?.insertAdjacentHTML("beforeend", `<div class="listening-stats-leader"><span>${a("Most played this week", "המושמעים ביותר השבוע")}</span></div>${P.map((F, q) => `<div class="listening-stats-row"><span>${q + 1}. ${o._esc(F.item?.name || F.name || "")}</span><strong>${p(F.play_count)} ${a("plays", "השמעות")}</strong></div>`).join("")}`);
+      const Q = M?.data;
+      !Array.isArray(Q) || !Q.length || e.querySelector(".listening-stats")?.insertAdjacentHTML("beforeend", `<div class="listening-stats-leader"><span>${a("Most played this week", "המושמעים ביותר השבוע")}</span></div>${Q.map((F, q) => `<div class="listening-stats-row"><span>${q + 1}. ${o._esc(F.item?.name || F.name || "")}</span><strong>${p(F.play_count)} ${a("plays", "השמעות")}</strong></div>`).join("")}`);
     }).catch(() => {
     }), typeof o._homeiiEngineMaCommand == "function" && o._homeiiEngineMaCommand("statistics/genre_distribution", { period: "week", limit: 5, timezone: o._hass?.config?.time_zone || "UTC" }).then((M) => {
       if (o._state.menuPage !== t || !e.isConnected) return;
-      const P = Array.isArray(M?.data) ? M.data.filter((q) => q?.name && Number(q.value) > 0) : [];
-      if (!P.length) return;
-      const F = Math.max(...P.map((q) => Number(q.value)));
-      e.querySelector(".listening-stats")?.insertAdjacentHTML("beforeend", `<div class="listening-stats-leader"><span>${a("Your week in genres", "השבוע שלך בסגנונות")}</span></div>${P.map((q) => `<div class="listening-stats-row"><span>${o._esc(q.name)}</span><meter min="0" max="${F}" value="${Number(q.value)}" aria-label="${o._esc(q.name)}"></meter><strong>${p(q.value)}</strong></div>`).join("")}<p>${a("Based on completed plays with known genres in your MA account.", "לפי השמעות שהושלמו עם סגנון מזוהה בחשבון MA שלך.")}</p>`);
+      const Q = Array.isArray(M?.data) ? M.data.filter((q) => q?.name && Number(q.value) > 0) : [];
+      if (!Q.length) return;
+      const F = Math.max(...Q.map((q) => Number(q.value)));
+      e.querySelector(".listening-stats")?.insertAdjacentHTML("beforeend", `<div class="listening-stats-leader"><span>${a("Your week in genres", "השבוע שלך בסגנונות")}</span></div>${Q.map((q) => `<div class="listening-stats-row"><span>${o._esc(q.name)}</span><meter min="0" max="${F}" value="${Number(q.value)}" aria-label="${o._esc(q.name)}"></meter><strong>${p(q.value)}</strong></div>`).join("")}<p>${a("Based on completed plays with known genres in your MA account.", "לפי השמעות שהושלמו עם סגנון מזוהה בחשבון MA שלך.")}</p>`);
     }).catch(() => {
     });
   } catch (l) {
@@ -2494,19 +2494,19 @@ async function Xm(o, e) {
     if (o._state.menuPage !== "ai_radio" || o._state.selectedPlayer !== t) return;
     const v = h?.[a] || "", k = Array.isArray(p) ? p.filter((M) => M.id && M.name) : [];
     e.innerHTML = `<div class="announcements-shell ai-radio-shell"><h3>${l("Your queue, with a radio host", "התור שלך, עם שדרן רדיו")}</h3><p>${l("Choose a host configured in Music Assistant. MA generates the spoken segments using its AI and voice settings.", "בחר שדרן שמוגדר ב־Music Assistant. MA יוצר את קטעי ההגשה באמצעות הגדרות ה־AI והקול שלו.")}</p><label class="announcement-target">${l("Host", "שדרן")}<select class="settings-select" data-ai-host><option value="">${l("DJ off", "ללא שדרן")}</option>${k.map((M) => `<option value="${o._esc(M.id)}" ${M.id === v ? "selected" : ""}>${o._esc(M.name)}</option>`).join("")}</select></label>${k.length ? "" : `<p>${l("Configure an AI Radio host in MA first.", "יש להגדיר תחילה שדרן AI Radio ב־MA.")}</p>`}<button class="action-btn" data-ai-apply>${l("Apply to this queue", "החל על התור הזה")}</button><p role="status" data-ai-status></p></div>`, e.querySelector("[data-ai-apply]").addEventListener("click", async (M) => {
-      const P = M.currentTarget;
-      if (P.disabled) return;
+      const Q = M.currentTarget;
+      if (Q.disabled) return;
       const F = e.querySelector("[data-ai-host]").value || null;
       if (o._state.selectedPlayer !== t || o._state.maQueueState?.queue_id !== a) return;
-      P.disabled = !0;
+      Q.disabled = !0;
       const q = e.querySelector("[data-ai-status]");
       try {
         if (await o._callEngineMaCommand("ai_radio/queue_dj/set", { queue_id: a, host_id: F }), ((await o._callEngineMaCommand("ai_radio/queue_dj/status"))?.[a] || null) !== F) throw new Error(o._m("MA has not confirmed the DJ change.", "MA לא אישר את שינוי השדרן."));
         q.textContent = o._m("DJ setting confirmed by MA.", "הגדרת השדרן אושרה על ידי MA.");
-      } catch (O) {
-        q.textContent = o._mediaControlFailureMessage(O);
+      } catch (Y) {
+        q.textContent = o._mediaControlFailureMessage(Y);
       } finally {
-        P.disabled = !1;
+        Q.disabled = !1;
       }
     });
   } catch (p) {
@@ -2514,10 +2514,10 @@ async function Xm(o, e) {
   }
 }
 function $m(o, e, { attrs: t, active: a, available: l, name: p, track: h, art: v, pinHtml: k }) {
-  const M = o._playerStateLabel(e), P = o._getAvailableGroupPlayers?.().some((F) => F.entity_id === e.entity_id) && !o._isHotelMode?.();
+  const M = o._playerStateLabel(e), Q = o._getAvailableGroupPlayers?.().some((F) => F.entity_id === e.entity_id) && !o._isHotelMode?.();
   return `<div data-group-player="${o._esc(e.entity_id)}" class="player-choice-card ${a ? "selected" : ""} ${l ? "" : "unavailable"}">
     <button type="button" class="player-choice-button" ${t} aria-pressed="${a}" ${l ? "" : "disabled"}>
-      <span class="player-choice-symbol" ${P ? 'data-group-drag-art draggable="true"' : ""} title="${o._esc(o._m("Drag onto another player to connect", "גרור לנגן אחר לחיבור"))}">${v ? o._imgHtml(v, "", { fallbackIcon: "speaker" }) : St(o, "speaker")}</span>
+      <span class="player-choice-symbol" ${Q ? 'data-group-drag-art draggable="true"' : ""} title="${o._esc(o._m("Drag onto another player to connect", "גרור לנגן אחר לחיבור"))}">${v ? o._imgHtml(v, "", { fallbackIcon: "speaker" }) : St(o, "speaker")}</span>
       <span class="player-choice-details">
         <span class="player-choice-name" dir="auto">${o._esc(p)}</span>
         <span class="player-choice-state"><i class="${e.state === "playing" ? "playing" : ""}" aria-hidden="true"></i>${o._esc(M)}${a ? ` · ${o._esc(o._m("Selected", "נבחר"))}` : ""}</span>
@@ -2526,7 +2526,7 @@ function $m(o, e, { attrs: t, active: a, available: l, name: p, track: h, art: v
       ${a ? St(o, "check").replace('class="ui-ic"', 'class="ui-ic player-choice-check"') : ""}
     </button>
     ${k}
-    ${P ? `<button class="player-group-drag" data-group-drag draggable="true" aria-label="${o._esc(o._m("Drag onto another player to group", "גרור לנגן אחר ליצירת קבוצה"))}">${St(o, "speaker_group")}</button>` : ""}
+    ${Q ? `<button class="player-group-drag" data-group-drag draggable="true" aria-label="${o._esc(o._m("Drag onto another player to group", "גרור לנגן אחר ליצירת קבוצה"))}">${St(o, "speaker_group")}</button>` : ""}
   </div>`;
 }
 function eA(o, e) {
@@ -2535,39 +2535,39 @@ function eA(o, e) {
   let t = "", a = null, l = null, p = !1, h = null, v = 0, k = null;
   const M = (H) => {
     if (!h) return;
-    const j = e.getBoundingClientRect();
-    h.style.left = `${H.clientX - j.left + e.scrollLeft}px`, h.style.top = `${H.clientY - j.top + e.scrollTop - 42}px`;
-  }, P = (H, j) => {
+    const G = e.getBoundingClientRect();
+    h.style.left = `${H.clientX - G.left + e.scrollLeft}px`, h.style.top = `${H.clientY - G.top + e.scrollTop - 42}px`;
+  }, Q = (H, G) => {
     h?.remove(), h = document.createElement("div"), h.className = "player-group-preview", h.setAttribute("aria-hidden", "true");
-    const G = H.querySelector(".player-choice-symbol,.player-premium-art")?.cloneNode(!0);
-    G && h.append(G);
+    const j = H.querySelector(".player-choice-symbol,.player-premium-art")?.cloneNode(!0);
+    j && h.append(j);
     const V = document.createElement("span");
-    V.textContent = H.querySelector(".player-choice-name,.player-premium-name")?.textContent || "", h.append(V), e.append(h), M(j);
+    V.textContent = H.querySelector(".player-choice-name,.player-premium-name")?.textContent || "", h.append(V), e.append(h), M(G);
   }, F = () => {
     a !== null && e.hasPointerCapture?.(a) && e.releasePointerCapture(a), e.querySelectorAll(".group-drop-target,.group-drag-source").forEach((H) => H.classList.remove("group-drop-target", "group-drag-source")), h?.remove(), h = null, t = "", a = null, l = null, k = null;
   }, q = (H) => {
     l !== H && (l?.classList.remove("group-drop-target"), l = H?.dataset.groupPlayer !== t ? H : null, l?.classList.add("group-drop-target"));
-  }, O = async () => {
-    const H = t, j = l?.dataset.groupPlayer, G = l;
+  }, Y = async () => {
+    const H = t, G = l?.dataset.groupPlayer, j = l;
     F();
     const V = o._getAvailableGroupPlayers().map((W) => W.entity_id);
-    if (p || !j || j === H || !V.includes(H) || !V.includes(j)) return;
+    if (p || !G || G === H || !V.includes(H) || !V.includes(G)) return;
     if (o._currentSpeakerGroupMemberIds(H).length > 1) {
       o._toastError(o._m("Disconnect this player from its group first.", "יש לנתק תחילה את הנגן מהקבוצה שלו."));
       return;
     }
-    p = !0, e.setAttribute("aria-busy", "true"), G?.classList.add("group-connecting");
+    p = !0, e.setAttribute("aria-busy", "true"), j?.classList.add("group-connecting");
     const Z = document.createElement("div");
-    Z.className = "player-group-status", Z.setAttribute("role", "status"), Z.textContent = o._m("Connecting players…", "מחבר נגנים…"), G?.append(Z);
+    Z.className = "player-group-status", Z.setAttribute("role", "status"), Z.textContent = o._m("Connecting players…", "מחבר נגנים…"), j?.append(Z);
     try {
-      const W = [.../* @__PURE__ */ new Set([...o._currentSpeakerGroupMemberIds(j), H])];
-      o._state && (o._state.pendingGroupOwnerRemoval = !1), await o._applySpeakerGroupFor(j, W) && (G?.classList.add("group-connected"), o._toastSuccess(o._m("Players connected", "הנגנים חוברו")), setTimeout(() => G?.classList.remove("group-connected"), 700), setTimeout(() => {
-        ["players", "players_active", "group"].includes(o._state?.menuPage) && (o._selectPlayer?.(o._currentSpeakerGroupOwnerId?.(j) || j, !0), o._openMobileMenu?.("group"));
+      const W = [.../* @__PURE__ */ new Set([...o._currentSpeakerGroupMemberIds(G), H])];
+      o._state && (o._state.pendingGroupOwnerRemoval = !1), await o._applySpeakerGroupFor(G, W) && (j?.classList.add("group-connected"), o._toastSuccess(o._m("Players connected", "הנגנים חוברו")), setTimeout(() => j?.classList.remove("group-connected"), 700), setTimeout(() => {
+        ["players", "players_active", "group"].includes(o._state?.menuPage) && (o._selectPlayer?.(o._currentSpeakerGroupOwnerId?.(G) || G, !0), o._openMobileMenu?.("group"));
       }, 350));
     } catch (W) {
       o._toastError(o._mediaControlFailureMessage(W));
     } finally {
-      p = !1, e.removeAttribute("aria-busy"), Z.remove(), G?.classList.remove("group-connecting");
+      p = !1, e.removeAttribute("aria-busy"), Z.remove(), j?.classList.remove("group-connecting");
     }
   };
   e.addEventListener("dragstart", (H) => {
@@ -2576,31 +2576,31 @@ function eA(o, e) {
       return;
     }
     if (p || !H.target.closest("[data-group-drag],[data-group-drag-art]")) return;
-    const j = H.target.closest("[data-group-player]");
-    t = j.dataset.groupPlayer, H.dataTransfer.setData("text/plain", t), P(j, H), H.dataTransfer.setDragImage?.(h, 110, 32);
-    const G = h;
+    const G = H.target.closest("[data-group-player]");
+    t = G.dataset.groupPlayer, H.dataTransfer.setData("text/plain", t), Q(G, H), H.dataTransfer.setDragImage?.(h, 110, 32);
+    const j = h;
     setTimeout(() => {
-      G && (G.hidden = !0);
+      j && (j.hidden = !0);
     }, 0);
   }), e.addEventListener("dragover", (H) => {
     t && (H.preventDefault(), q(H.target.closest("[data-group-player]")));
   }), e.addEventListener("drop", (H) => {
-    t && (H.preventDefault(), O());
+    t && (H.preventDefault(), Y());
   }), e.addEventListener("dragend", () => {
     v = Date.now() + 400, F();
   }), e.addEventListener("pointerdown", (H) => {
     if (p || a !== null || H.button != null && H.button !== 0 || !H.target.closest("[data-group-drag],[data-group-drag-art]")) return;
-    const j = H.target.closest("[data-group-player]");
-    t = j.dataset.groupPlayer, k = { x: H.clientX, y: H.clientY, row: j }, a = H.pointerId, e.setPointerCapture?.(a), H.preventDefault();
+    const G = H.target.closest("[data-group-player]");
+    t = G.dataset.groupPlayer, k = { x: H.clientX, y: H.clientY, row: G }, a = H.pointerId, e.setPointerCapture?.(a), H.preventDefault();
   }), e.addEventListener("pointermove", (H) => {
     if (a === H.pointerId) {
       if (!h) {
         if (Math.hypot(H.clientX - k.x, H.clientY - k.y) < 6) return;
-        P(k.row, H), k.row.classList.add("group-drag-source");
+        Q(k.row, H), k.row.classList.add("group-drag-source");
       }
-      v = Date.now() + 400, M(H), q([...e.querySelectorAll("[data-group-player]")].find((j) => {
-        const G = j.getBoundingClientRect();
-        return H.clientX >= G.left && H.clientX <= G.right && H.clientY >= G.top && H.clientY <= G.bottom;
+      v = Date.now() + 400, M(H), q([...e.querySelectorAll("[data-group-player]")].find((G) => {
+        const j = G.getBoundingClientRect();
+        return H.clientX >= j.left && H.clientX <= j.right && H.clientY >= j.top && H.clientY <= j.bottom;
       }));
     }
   }), e.addEventListener("pointerup", (H) => {
@@ -2609,29 +2609,29 @@ function eA(o, e) {
         F();
         return;
       }
-      v = Date.now() + 400, H.preventDefault(), O();
+      v = Date.now() + 400, H.preventDefault(), Y();
     }
   }), e.addEventListener("pointercancel", F), e.addEventListener("click", async (H) => {
     if (Date.now() < v) {
       H.preventDefault(), H.stopPropagation();
       return;
     }
-    const j = H.target.closest("[data-group-quick]");
-    if (j) {
+    const G = H.target.closest("[data-group-quick]");
+    if (G) {
       if (H.preventDefault(), H.stopPropagation(), p) return;
-      const G = j.dataset.groupQuick, V = o._state.selectedPlayer, Z = o._currentSpeakerGroupOwnerId(V) || V, W = o._currentSpeakerGroupMemberIds(Z);
-      if (!Z || G === Z) return;
-      if (!W.includes(G) && o._currentSpeakerGroupMemberIds(G).length > 1) {
+      const j = G.dataset.groupQuick, V = o._state.selectedPlayer, Z = o._currentSpeakerGroupOwnerId(V) || V, W = o._currentSpeakerGroupMemberIds(Z);
+      if (!Z || j === Z) return;
+      if (!W.includes(j) && o._currentSpeakerGroupMemberIds(j).length > 1) {
         o._toastError(o._m("Disconnect this player from its group first.", "יש לנתק תחילה את הנגן מהקבוצה שלו."));
         return;
       }
-      p = !0, j.disabled = !0, j.setAttribute("aria-busy", "true");
+      p = !0, G.disabled = !0, G.setAttribute("aria-busy", "true");
       try {
-        o._state.pendingGroupOwnerRemoval = !1, await o._applySpeakerGroupFor(Z, W.includes(G) ? W.filter((ue) => ue !== G) : [...W, G]), ["group", "group_volume"].includes(o._state.menuPage) && o._renderMobileMenu();
+        o._state.pendingGroupOwnerRemoval = !1, await o._applySpeakerGroupFor(Z, W.includes(j) ? W.filter((ue) => ue !== j) : [...W, j]), ["group", "group_volume"].includes(o._state.menuPage) && o._renderMobileMenu();
       } catch (ue) {
         o._toastError(o._mediaControlFailureMessage(ue));
       } finally {
-        p = !1, j.disabled = !1, j.removeAttribute("aria-busy");
+        p = !1, G.disabled = !1, G.removeAttribute("aria-busy");
       }
       return;
     }
@@ -2639,23 +2639,23 @@ function eA(o, e) {
   }, !0);
 }
 function tA(o, e = null, t = !1) {
-  const a = [], l = (H, j, G, V = "") => a.push({ status: H, title: o._m(j, G), detail: V }), p = (H) => H === !0 ? "ok" : H === !1 ? "fail" : "info";
+  const a = [], l = (H, G, j, V = "") => a.push({ status: H, title: o._m(G, j), detail: V }), p = (H) => H === !0 ? "ok" : H === !1 ? "fail" : "info";
   l(p(o._hass?.connection?.connected), "Home Assistant", "Home Assistant"), l(t ? p(e?.available === !0) : "info", "Flow Engine", "מנוע Flow", e?.version || "");
   const h = e?.raw?.required_connections || e?.raw?.connections || o._state.engineRequiredConnections || {};
-  for (const [H, j, G] of [["music_assistant", "Music Assistant", "Music Assistant"], ["queue_provider", "Queue service", "שירות התור"], ["library_provider", "Music library", "ספריית המוזיקה"], ["search_provider", "Music search", "חיפוש מוזיקה"]]) {
+  for (const [H, G, j] of [["music_assistant", "Music Assistant", "Music Assistant"], ["queue_provider", "Queue service", "שירות התור"], ["library_provider", "Music library", "ספריית המוזיקה"], ["search_provider", "Music search", "חיפוש מוזיקה"]]) {
     const V = h[H] || h.connections?.[H], Z = t && e?.available ? p(V?.ok) : "info", W = Z !== "fail" ? "" : H === "music_assistant" ? o._m("Check the Engine connection: direct MA server URL and a valid token. Ingress is not an API URL.", "בדוק את חיבור המנוע: כתובת ישירה של שרת MA וטוקן תקף. Ingress אינו כתובת API.") : o._m("Try the same operation in native Music Assistant. If it works there, copy this report with the selected player and card/Engine versions.", "נסה את אותה פעולה בממשק Music Assistant. אם שם היא עובדת, העתק את הדוח עם הנגן הנבחר וגרסאות הכרטיס והמנוע.");
-    l(Z, j, G, [o._redactDiagnosticText?.(V?.message || "") || "", W].filter(Boolean).join(" · "));
+    l(Z, G, j, [o._redactDiagnosticText?.(V?.message || "") || "", W].filter(Boolean).join(" · "));
   }
   const v = o._getSelectedPlayer?.();
   l(v ? $i(v) ? "ok" : "fail" : "warn", "Selected player", "הנגן הנבחר", v ? o._playerDisplayName?.(v) || "" : o._m("Choose a player", "יש לבחור נגן"));
   const k = o._state.maQueueState;
   l(k?.queue_id ? "ok" : "info", "Queue snapshot", "תמונת מצב התור", k?.queue_id ? `${Number(k.items) || 0} ${o._m("items", "פריטים")}` : o._m("No queue information yet", "טרם התקבל מידע על התור"));
-  const M = [...o.shadowRoot?.querySelectorAll("#npArt img") || []].filter((H) => H.getAttribute("src")), P = M.filter((H) => H.complete && H.naturalWidth > 0).length;
-  l(M.length ? P === M.length ? "ok" : "warn" : "info", "Artwork", "עטיפות", `${P}/${M.length} ${o._m("loaded artwork images", "תמונות עטיפה נטענו")}`);
+  const M = [...o.shadowRoot?.querySelectorAll("#npArt img") || []].filter((H) => H.getAttribute("src")), Q = M.filter((H) => H.complete && H.naturalWidth > 0).length;
+  l(M.length ? Q === M.length ? "ok" : "warn" : "info", "Artwork", "עטיפות", `${Q}/${M.length} ${o._m("loaded artwork images", "תמונות עטיפה נטענו")}`);
   const F = o._getCurrentMediaUri?.(), q = [...(o._waveformCache || /* @__PURE__ */ new Map()).entries()].find(([H]) => F && H.endsWith(`:${F}`))?.[1];
   l(q?.bins ? "ok" : "warn", "Audio waveform", "גל עוצמת השיר", q?.bins ? o._m("MA analysis available", "ניתוח MA זמין") : o._m("MA has not supplied analysis for this item. Seeking remains available when supported.", "MA טרם סיפק ניתוח לפריט הזה. מעבר בזמן זמין כשהנגן תומך בו."));
-  const O = o._performanceMetrics?.lastMenuRenderMs;
-  return l(Number.isFinite(O) ? O > 200 ? "warn" : "ok" : "info", "Interface performance", "ביצועי הממשק", Number.isFinite(O) ? `${O} ms · ${o._performanceProfile?.() || ""}` : ""), l(o._localSendspinConnected ? "ok" : o._isLocalSendspinDesired?.() ? "warn" : "info", "This device", "מכשיר זה", o._localSendspinConnected ? o._m("Connected; this does not verify physical audio output.", "מחובר; אין בכך אימות לשמע בפועל.") : o._m("Local player is not connected", "הנגן המקומי אינו מחובר")), a;
+  const Y = o._performanceMetrics?.lastMenuRenderMs;
+  return l(Number.isFinite(Y) ? Y > 200 ? "warn" : "ok" : "info", "Interface performance", "ביצועי הממשק", Number.isFinite(Y) ? `${Y} ms · ${o._performanceProfile?.() || ""}` : ""), l(o._localSendspinConnected ? "ok" : o._isLocalSendspinDesired?.() ? "warn" : "info", "This device", "מכשיר זה", o._localSendspinConnected ? o._m("Connected; this does not verify physical audio output.", "מחובר; אין בכך אימות לשמע בפועל.") : o._m("Local player is not connected", "הנגן המקומי אינו מחובר")), a;
 }
 function iA(o, e) {
   o._stopLiveDiagnostics?.();
@@ -2663,7 +2663,7 @@ function iA(o, e) {
   const h = () => !t && e.isConnected && o._state.menuPage === "diagnostics", v = () => {
     if (!h()) return;
     const M = tA(o, l, p);
-    o._state.diagnosticsItems = M, e.innerHTML = `<section class="diagnostics-shell"><h2>${o._esc(o._m("System health", "מצב המערכת"))}</h2><p role="status">${o._esc(p ? o._m("Updates automatically while this screen is open.", "מתעדכן אוטומטית כל עוד המסך פתוח.") : o._m("Checking current connection status…", "בודק את מצב החיבורים…"))}</p><button class="settings-pill" data-menu-action="copy_diagnostics">${o._esc(o._m("Copy report", "העתק דוח"))}</button><div class="diagnostics-list">${M.map((P) => o._diagnosticRowHtml(P)).join("")}</div><small>${o._esc(o._m("Green: ready · Yellow: limited · Red: failed · Gray: not verified", "ירוק: תקין · צהוב: מוגבל · אדום: תקלה · אפור: לא אומת"))}</small></section>`;
+    o._state.diagnosticsItems = M, e.innerHTML = `<section class="diagnostics-shell"><h2>${o._esc(o._m("System health", "מצב המערכת"))}</h2><p role="status">${o._esc(p ? o._m("Updates automatically while this screen is open.", "מתעדכן אוטומטית כל עוד המסך פתוח.") : o._m("Checking current connection status…", "בודק את מצב החיבורים…"))}</p><button class="settings-pill" data-menu-action="copy_diagnostics">${o._esc(o._m("Copy report", "העתק דוח"))}</button><div class="diagnostics-list">${M.map((Q) => o._diagnosticRowHtml(Q)).join("")}</div><small>${o._esc(o._m("Green: ready · Yellow: limited · Red: failed · Gray: not verified", "ירוק: תקין · צהוב: מוגבל · אדום: תקלה · אפור: לא אומת"))}</small></section>`;
   }, k = async () => {
     if (h()) {
       if (globalThis.document?.visibilityState !== "hidden") {
@@ -2683,7 +2683,7 @@ function iA(o, e) {
   }, v(), k();
 }
 async function Sl(o, e) {
-  const t = (H, j) => o._esc(o._m(H, j)), a = o._state.menuPage;
+  const t = (H, G) => o._esc(o._m(H, G)), a = o._state.menuPage;
   e.innerHTML = `<p role="status">${t("Loading volume limits…", "טוען מגבלות ווליום…")}</p>`;
   const l = await o._homeiiEngineCommand("volume_rules/get");
   if (!e.isConnected || o._state.menuPage !== a) return;
@@ -2693,36 +2693,36 @@ async function Sl(o, e) {
     return;
   }
   const h = l.volume_rules || [];
-  e.innerHTML = `<form class="smart-settings"><h2>${t("Volume limits", "מגבלות ווליום")}</h2><p>${t("The Engine enforces these limits even when the card is closed.", "המנוע אוכף את המגבלות גם כשהכרטיס סגור.")}</p><label>${t("Player", "נגן")}<select name="player">${p.map((H) => `<option value="${o._esc(H.entity_id)}">${o._esc(o._playerDisplayName(H))}</option>`).join("")}</select></label><label>${t("Maximum volume (%)", "ווליום מרבי (%)")}<input name="volume" type="number" min="0" max="100" required></label><label>${t("Start (optional)", "התחלה (אופציונלי)")}<input name="start" type="time"></label><label>${t("End (optional)", "סיום (אופציונלי)")}<input name="end" type="time"></label><p>${t("Leave both times empty for an all-day limit. No selected days means every day.", "השאר את שתי השעות ריקות למגבלה לאורך כל היום. ללא בחירת ימים — בכל יום.")}</p><div>${o._nightModeDayOptions().map(([H, j]) => `<label>${o._esc(j)}<input type="checkbox" name="day" value="${H}"></label>`).join("")}</div><label>${t("Enabled", "פעיל")}<input name="enabled" type="checkbox"></label><label>${t("Temporarily pause limit", "השהיה זמנית של המגבלה")}<select name="suspend"><option value="">${t("Keep current state", "ללא שינוי")}</option><option value="0">${t("Resume now", "חידוש עכשיו")}</option><option value="30">${t("30 minutes", "30 דקות")}</option><option value="60">${t("1 hour", "שעה")}</option><option value="120">${t("2 hours", "שעתיים")}</option></select></label><p data-suspension></p><button type="submit">${t("Save to Engine", "שמירה במנוע")}</button><button type="button" data-delete-rule>${t("Remove limit", "הסרת מגבלה")}</button><p role="status"></p></form>`;
-  const v = e.querySelector("form"), k = v.elements, M = v.querySelector('[role="status"]'), P = o._state.engineCapabilities?.volume_rule_suspension === !0;
-  k.suspend.disabled = !P, k.suspend.closest("label").hidden = !P, p.some((H) => H.entity_id === o._state.selectedPlayer) && (k.player.value = o._state.selectedPlayer);
+  e.innerHTML = `<form class="smart-settings"><h2>${t("Volume limits", "מגבלות ווליום")}</h2><p>${t("The Engine enforces these limits even when the card is closed.", "המנוע אוכף את המגבלות גם כשהכרטיס סגור.")}</p><label>${t("Player", "נגן")}<select name="player">${p.map((H) => `<option value="${o._esc(H.entity_id)}">${o._esc(o._playerDisplayName(H))}</option>`).join("")}</select></label><label>${t("Maximum volume (%)", "ווליום מרבי (%)")}<input name="volume" type="number" min="0" max="100" required></label><label>${t("Start (optional)", "התחלה (אופציונלי)")}<input name="start" type="time"></label><label>${t("End (optional)", "סיום (אופציונלי)")}<input name="end" type="time"></label><p>${t("Leave both times empty for an all-day limit. No selected days means every day.", "השאר את שתי השעות ריקות למגבלה לאורך כל היום. ללא בחירת ימים — בכל יום.")}</p><div>${o._nightModeDayOptions().map(([H, G]) => `<label>${o._esc(G)}<input type="checkbox" name="day" value="${H}"></label>`).join("")}</div><label>${t("Enabled", "פעיל")}<input name="enabled" type="checkbox"></label><label>${t("Temporarily pause limit", "השהיה זמנית של המגבלה")}<select name="suspend"><option value="">${t("Keep current state", "ללא שינוי")}</option><option value="0">${t("Resume now", "חידוש עכשיו")}</option><option value="30">${t("30 minutes", "30 דקות")}</option><option value="60">${t("1 hour", "שעה")}</option><option value="120">${t("2 hours", "שעתיים")}</option></select></label><p data-suspension></p><button type="submit">${t("Save to Engine", "שמירה במנוע")}</button><button type="button" data-delete-rule>${t("Remove limit", "הסרת מגבלה")}</button><p role="status"></p></form>`;
+  const v = e.querySelector("form"), k = v.elements, M = v.querySelector('[role="status"]'), Q = o._state.engineCapabilities?.volume_rule_suspension === !0;
+  k.suspend.disabled = !Q, k.suspend.closest("label").hidden = !Q, p.some((H) => H.entity_id === o._state.selectedPlayer) && (k.player.value = o._state.selectedPlayer);
   const F = () => {
-    const H = h.find((G) => G.player === k.player.value);
-    k.volume.value = H?.max_volume ?? 100, k.start.value = H?.start_time || "", k.end.value = H?.end_time || "", k.enabled.checked = H?.enabled ?? !0, v.querySelectorAll('[name="day"]').forEach((G) => G.checked = H?.days?.includes(Number(G.value)) || !1), v.querySelector("[data-delete-rule]").disabled = !H, k.suspend.value = "";
-    const j = Date.parse(H?.suspended_until || "");
-    v.querySelector("[data-suspension]").textContent = j > Date.now() ? o._m("Paused until ", "מושהה עד ") + new Date(j).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "";
+    const H = h.find((j) => j.player === k.player.value);
+    k.volume.value = H?.max_volume ?? 100, k.start.value = H?.start_time || "", k.end.value = H?.end_time || "", k.enabled.checked = H?.enabled ?? !0, v.querySelectorAll('[name="day"]').forEach((j) => j.checked = H?.days?.includes(Number(j.value)) || !1), v.querySelector("[data-delete-rule]").disabled = !H, k.suspend.value = "";
+    const G = Date.parse(H?.suspended_until || "");
+    v.querySelector("[data-suspension]").textContent = G > Date.now() ? o._m("Paused until ", "מושהה עד ") + new Date(G).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "";
   };
   F(), k.player.onchange = F;
   let q = !1;
-  const O = async (H = !1) => {
+  const Y = async (H = !1) => {
     if (q || !e.isConnected || o._state.menuPage !== a) return;
     if (!H && !!k.start.value != !!k.end.value) {
       M.textContent = o._m("Set both times or leave both empty.", "בחר שתי שעות או השאר את שתיהן ריקות.");
       return;
     }
-    const j = k.player.value;
-    q = !0, v.querySelectorAll("button").forEach((G) => G.disabled = !0);
+    const G = k.player.value;
+    q = !0, v.querySelectorAll("button").forEach((j) => j.disabled = !0);
     try {
-      H ? await o._homeiiEngineCommand("volume_rules/delete", { player: j }) : await o._homeiiEngineCommand("volume_rules/set", { player: j, max_volume: Number(k.volume.value), start_time: k.start.value, end_time: k.end.value, enabled: k.enabled.checked, ...P && k.suspend.value !== "" ? { suspend_minutes: Number(k.suspend.value) } : {}, days: [...v.querySelectorAll('[name="day"]:checked')].map((G) => Number(G.value)) }), e.isConnected && o._state.menuPage === a && await Sl(o, e);
-    } catch (G) {
-      M.textContent = o._mediaControlFailureMessage(G), v.querySelectorAll("button").forEach((V) => V.disabled = !1);
+      H ? await o._homeiiEngineCommand("volume_rules/delete", { player: G }) : await o._homeiiEngineCommand("volume_rules/set", { player: G, max_volume: Number(k.volume.value), start_time: k.start.value, end_time: k.end.value, enabled: k.enabled.checked, ...Q && k.suspend.value !== "" ? { suspend_minutes: Number(k.suspend.value) } : {}, days: [...v.querySelectorAll('[name="day"]:checked')].map((j) => Number(j.value)) }), e.isConnected && o._state.menuPage === a && await Sl(o, e);
+    } catch (j) {
+      M.textContent = o._mediaControlFailureMessage(j), v.querySelectorAll("button").forEach((V) => V.disabled = !1);
     } finally {
       q = !1;
     }
   };
   v.onsubmit = (H) => {
-    H.preventDefault(), H.stopPropagation(), O();
-  }, v.querySelector("[data-delete-rule]").onclick = () => O(!0);
+    H.preventDefault(), H.stopPropagation(), Y();
+  }, v.querySelector("[data-delete-rule]").onclick = () => Y(!0);
 }
 const aA = [
   ["Autoplay", "המשך ניגון", "radio", ["autoplay_enabled", "autoplay_mode", "autoplay_playlist"]],
@@ -2751,22 +2751,22 @@ function oA(o, e) {
   const { entries: t = {}, playlists: a = [], can_edit: l = !1 } = e, p = (v) => o._esc(String(v ?? "")), h = (v) => {
     const k = t[v];
     if (!k) return "";
-    const M = o._m(...rA[v]), P = `data-queue-setting="${v}" aria-label="${p(M)}" ${k.read_only || v === "autoplay_playlist" && e.playlistsUnavailable ? "disabled" : ""}`;
+    const M = o._m(...rA[v]), Q = `data-queue-setting="${v}" aria-label="${p(M)}" ${k.read_only || v === "autoplay_playlist" && e.playlistsUnavailable ? "disabled" : ""}`;
     let F;
     if (k.type === "boolean")
-      F = `<input type="checkbox" role="switch" ${P} ${k.value ? "checked" : ""}>`;
+      F = `<input type="checkbox" role="switch" ${Q} ${k.value ? "checked" : ""}>`;
     else if (k.options?.length || v === "autoplay_playlist") {
-      const q = v === "autoplay_playlist" ? [{ value: "", title: o._m("Choose a playlist", "בחר פלייליסט") }, ...a.map((O) => ({ value: O.uri, title: O.name }))] : k.options;
-      k.value && !q.some((O) => O.value === k.value) && q.push({ value: k.value, title: o._m("Current playlist", "הפלייליסט הנוכחי") }), F = `<select class="settings-select" ${P}>${q.map((O) => `<option value="${p(O.value)}" ${O.value === (k.value ?? "") ? "selected" : ""} ${O.disabled ? "disabled" : ""}>${p(On[O.value] ? o._m(...On[O.value]) : O.title)}</option>`).join("")}</select>`;
+      const q = v === "autoplay_playlist" ? [{ value: "", title: o._m("Choose a playlist", "בחר פלייליסט") }, ...a.map((Y) => ({ value: Y.uri, title: Y.name }))] : k.options;
+      k.value && !q.some((Y) => Y.value === k.value) && q.push({ value: k.value, title: o._m("Current playlist", "הפלייליסט הנוכחי") }), F = `<select class="settings-select" ${Q}>${q.map((Y) => `<option value="${p(Y.value)}" ${Y.value === (k.value ?? "") ? "selected" : ""} ${Y.disabled ? "disabled" : ""}>${p(On[Y.value] ? o._m(...On[Y.value]) : Y.title)}</option>`).join("")}</select>`;
     } else
-      F = `<input class="settings-text-input" type="number" ${P} min="${k.range?.[0] ?? 1}" max="${k.range?.[1] ?? 15}" step="1" value="${p(k.value)}">`;
+      F = `<input class="settings-text-input" type="number" ${Q} min="${k.range?.[0] ?? 1}" max="${k.range?.[1] ?? 15}" step="1" value="${p(k.value)}">`;
     return `<label class="queue-setting-field ${k.type === "boolean" ? "is-switch" : ""}" data-setting-row="${v}"><span>${p(M)}</span>${F}</label>`;
   };
   return `<form class="queue-settings-form">
     <p class="action-hub-note">${p(o._m("Shared Music Assistant preferences for all players. Per-queue Autoplay and Crossfade buttons remain independent.", "הגדרות Music Assistant משותפות לכל הנגנים. כפתורי המשך הניגון והמעבר החלק בתור מאפשרים שינוי לכל תור בנפרד."))}</p>
     ${l ? "" : `<p role="status">${p(o._m("An administrator can edit these preferences.", "שינוי ההגדרות זמין למנהל המערכת."))}</p>`}
     ${e.playlistsUnavailable ? `<div class="notice open" role="status">${p(o._m("Playlists could not be loaded. Your current playlist is preserved; other preferences can still be edited.", "הפלייליסטים לא נטענו. הפלייליסט הנוכחי נשמר; אפשר לערוך את שאר ההעדפות."))}<button type="button" class="action-btn" data-menu-action="reload_queue_settings">${p(o._m("Reload playlists", "טען פלייליסטים מחדש"))}</button></div>` : ""}
-    <fieldset ${l ? "" : "disabled"}>${aA.map(([v, k, M, P]) => P.some((F) => t[F]) ? `<section class="action-hub-section"><h3>${o._iconSvg(M)}${p(o._m(v, k))}</h3><div class="queue-settings-fields">${P.map(h).join("")}</div></section>` : "").join("")}</fieldset>
+    <fieldset ${l ? "" : "disabled"}>${aA.map(([v, k, M, Q]) => Q.some((F) => t[F]) ? `<section class="action-hub-section"><h3>${o._iconSvg(M)}${p(o._m(v, k))}</h3><div class="queue-settings-fields">${Q.map(h).join("")}</div></section>` : "").join("")}</fieldset>
     <div class="queue-settings-footer"><button type="button" class="action-btn" data-menu-action="save_queue_settings" ${l ? "" : "disabled"}>${o._iconSvg("check")}${p(o._m("Save changes", "שמור שינויים"))}</button><span role="status" data-queue-settings-status></span></div>
   </form>`;
 }
@@ -2895,31 +2895,31 @@ async function pA() {
   const o = this._discoveryCategoryOptions(), e = this._discoveryCategory(), t = this._discoveryPopularGenreProfiles().find((H) => H.key === e.key), a = t?.query || e.key.replaceAll("-", " "), l = this._state.discoveryProviderPath || "all", p = `discovery:results:${e.key}:${l}`, h = this._cache.library.get(p);
   if (h && Date.now() - h.ts < 6e4) return h.items;
   if (this._discoveryLoads || (this._discoveryLoads = /* @__PURE__ */ new Map()), this._discoveryLoads.has(p)) return this._discoveryLoads.get(p);
-  const v = (H) => this._discoveryUniqueItems(Array.isArray(H) ? H : [], "playlist"), k = async (H, j, G) => {
+  const v = (H) => this._discoveryUniqueItems(Array.isArray(H) ? H : [], "playlist"), k = async (H, G, j) => {
     const V = this._cache.library.get(H);
     if (V && Date.now() - V.ts < 6e4) return V.items;
-    const Z = await this._callEngineMaCommand(j, G);
+    const Z = await this._callEngineMaCommand(G, j);
     if (!Array.isArray(Z)) throw new Error("Invalid discovery catalogue response");
     return this._cache.library.set(H, { ts: Date.now(), items: Z }), Z;
   };
-  let M = [], P = !1, F = !1;
+  let M = [], Q = !1, F = !1;
   const q = [
     (async () => {
       M = (await k("discovery:sources", "music/browse", { path: "root" })).filter((ue) => ue.media_type === "folder" && ue.path?.includes("://") && !/^(builtin|radiobrowser|podcastfeed|ambient_sounds)/.test(ue.path));
-      const j = l === "all" ? M : M.filter((ue) => ue.path === l);
-      if (!j.length) return [];
-      const G = new Set([a, e.label, ...t?.aliases || []].map((ue) => this._discoveryGenreKey(ue))), V = await Promise.all(j.map(async (ue) => {
+      const G = l === "all" ? M : M.filter((ue) => ue.path === l);
+      if (!G.length) return [];
+      const j = new Set([a, e.label, ...t?.aliases || []].map((ue) => this._discoveryGenreKey(ue))), V = await Promise.all(G.map(async (ue) => {
         if (!ue.path.startsWith("spotify")) return { search: ue };
         try {
           const s = (await k(`discovery:folders:${ue.path}`, "music/browse", { path: ue.path })).find((S) => S.media_type === "folder" && (S.translation_key === "genres_and_moods" || S.path?.split("://")[1] === "categories"));
           if (!s) return { search: ue };
-          const g = (await k(`discovery:genres:${s.path}`, "music/browse", { path: s.path })).find((S) => S.media_type === "folder" && G.has(this._discoveryGenreKey(S.name || "")));
+          const g = (await k(`discovery:genres:${s.path}`, "music/browse", { path: s.path })).find((S) => S.media_type === "folder" && j.has(this._discoveryGenreKey(S.name || "")));
           return g?.path ? { items: (await k(`discovery:genre-items:${g.path}`, "music/browse", { path: g.path })).filter((S) => S.media_type === "playlist") } : { search: ue };
         } catch {
           return { search: ue };
         }
       })), Z = V.filter((ue) => ue.search).map((ue) => ue.search.path.split("://")[0]);
-      P = Z.length > 0;
+      Q = Z.length > 0;
       let W = [];
       if (Z.length)
         try {
@@ -2932,23 +2932,23 @@ async function pA() {
       return v([...V.flatMap((ue) => ue.items || []), ...W]);
     })(),
     (async () => {
-      const H = await k("discovery:library-genres", "music/genres/library_items", { limit: 1e3 }), j = (W) => this._discoveryGenreKey(W), G = new Set([a, e.label, ...t?.aliases || []].map(j)), V = H.filter((W) => [W.name, ...Array.isArray(W.aliases) ? W.aliases : []].some((ue) => typeof ue == "string" && G.has(j(ue)))).map((W) => Number(W.item_id)).filter(Number.isFinite);
+      const H = await k("discovery:library-genres", "music/genres/library_items", { limit: 1e3 }), G = (W) => this._discoveryGenreKey(W), j = new Set([a, e.label, ...t?.aliases || []].map(G)), V = H.filter((W) => [W.name, ...Array.isArray(W.aliases) ? W.aliases : []].some((ue) => typeof ue == "string" && j.has(G(ue)))).map((W) => Number(W.item_id)).filter(Number.isFinite);
       if (!V.length) return [];
       const Z = await Promise.all(["playlists", "albums", "tracks", "radios"].map((W) => this._callEngineMaCommand(`music/${W}/library_items`, { genre: V, limit: 12 })));
       return v(Z.flat());
     })(),
     this._fetchRadioBrowserStations("", 16, { tag: a })
-  ], O = Promise.allSettled(q).then((H) => {
-    const j = [this._m("From music providers", "מספקי המוזיקה"), this._m("From your MA library", "מספריית MA שלך"), this._m("Radio for this genre", "רדיו לז׳אנר הזה")], G = H.map((Z, W) => ({
-      name: j[W],
+  ], Y = Promise.allSettled(q).then((H) => {
+    const G = [this._m("From music providers", "מספקי המוזיקה"), this._m("From your MA library", "מספריית MA שלך"), this._m("Radio for this genre", "רדיו לז׳אנר הזה")], j = H.map((Z, W) => ({
+      name: G[W],
       type: W === 2 ? "radio" : "playlist",
-      description: W === 0 && F ? this._m("Some providers could not be searched. Available genre collections are shown.", "לא ניתן היה לחפש בחלק מהספקים. מוצגות קטגוריות הז׳אנר הזמינות.") : W === 0 && P ? this._m("Provider genre collections, with playlist search where a genre collection is unavailable.", "קטגוריות ז׳אנר מהספקים, ובמקורות ללא קטגוריה זמינה — חיפוש פלייליסטים.") : "",
+      description: W === 0 && F ? this._m("Some providers could not be searched. Available genre collections are shown.", "לא ניתן היה לחפש בחלק מהספקים. מוצגות קטגוריות הז׳אנר הזמינות.") : W === 0 && Q ? this._m("Provider genre collections, with playlist search where a genre collection is unavailable.", "קטגוריות ז׳אנר מהספקים, ובמקורות ללא קטגוריה זמינה — חיפוש פלייליסטים.") : "",
       items: Z.status === "fulfilled" ? v(Z.value) : [],
       error: Z.status === "rejected" ? this._m("This source could not be loaded. Retry.", "לא ניתן לטעון את המקור הזה. נסה שוב.") : ""
-    })), V = { categories: o, activeCategory: e, providers: M, selectedProvider: l, sections: G };
+    })), V = { categories: o, activeCategory: e, providers: M, selectedProvider: l, sections: j };
     return this._cache.library.set(p, { ts: Date.now(), items: V }), V;
   }).finally(() => this._discoveryLoads.delete(p));
-  return this._discoveryLoads.set(p, O), O;
+  return this._discoveryLoads.set(p, Y), Y;
 }
 function hA() {
   const o = this._getSelectedPlayer(), e = o?.attributes?.friendly_name || this._i18n("ui.choose_player"), t = o?.state === "playing", a = this._playerGroupCount(o), l = this._playerArtworkUrl(o, 120), p = t ? o?.attributes?.media_title || this._i18n("ui.playing") : this._i18n("ui.ready");
@@ -13364,7 +13364,7 @@ function Ql(o, e, t = {}, a = e) {
   function M(ne) {
     return Math.max(0, ne.length - 1);
   }
-  function P(ne, K) {
+  function Q(ne, K) {
     return K === M(ne);
   }
   function F(ne, K = 0) {
@@ -13373,16 +13373,16 @@ function Ql(o, e, t = {}, a = e) {
   function q(ne) {
     return Object.keys(ne);
   }
-  function O(ne, K) {
+  function Y(ne, K) {
     return [ne, K].reduce(((ae, ce) => (q(ce).forEach(((ge) => {
       const ye = ae[ge], fe = ce[ge], ke = a(ye) && a(fe);
-      ae[ge] = ke ? O(ye, fe) : fe;
+      ae[ge] = ke ? Y(ye, fe) : fe;
     })), ae)), {});
   }
   function H(ne, K) {
     return K.MouseEvent !== void 0 && ne instanceof K.MouseEvent;
   }
-  function j() {
+  function G() {
     let ne = [];
     const K = { add: function(ae, ce, ge, ye = { passive: !0 }) {
       let fe;
@@ -13397,8 +13397,8 @@ function Ql(o, e, t = {}, a = e) {
     } };
     return K;
   }
-  function G(ne, K, ae, ce) {
-    const ge = j(), ye = 1e3 / 60;
+  function j(ne, K, ae, ce) {
+    const ge = G(), ye = 1e3 / 60;
     let fe = null, ke = 0, Me = 0;
     function Ee(Ye) {
       if (!Me) return;
@@ -13457,7 +13457,7 @@ function Ql(o, e, t = {}, a = e) {
     return Ee;
   }
   function W(ne, K, ae, ce, ge, ye, fe, ke, Me, Ee, Qe, Ye, Ue, Ze, tt, lt, De, Je, Ve) {
-    const { cross: it, direction: ot } = ne, et = ["INPUT", "SELECT", "TEXTAREA"], mt = { passive: !1 }, Pt = j(), vt = j(), ci = V(50, 225).constrain(Ze.measure(20)), Rt = { mouse: 300, touch: 400 }, ei = { mouse: 500, touch: 600 }, ti = tt ? 43 : 25;
+    const { cross: it, direction: ot } = ne, et = ["INPUT", "SELECT", "TEXTAREA"], mt = { passive: !1 }, Pt = G(), vt = G(), ci = V(50, 225).constrain(Ze.measure(20)), Rt = { mouse: 300, touch: 400 }, ei = { mouse: 500, touch: 600 }, ti = tt ? 43 : 25;
     let ui = !1, Zt = 0, ht = 0, Et = !1, gt = !1, Ct = !1, pt = !1;
     function Nt(Tt) {
       if (!H(Tt, ce) && Tt.touches.length >= 2) return Xt(Tt);
@@ -13721,7 +13721,7 @@ function Ql(o, e, t = {}, a = e) {
       return Ee && (fe = Qe), Ee || (ke = Qe), Qe;
     } };
   }
-  function Y(ne, K, ae, ce, ge, ye, fe, ke, Me) {
+  function O(ne, K, ae, ce, ge, ye, fe, ke, Me) {
     const { startEdge: Ee, endEdge: Qe, direction: Ye } = ne, Ue = o(ae);
     return { groupSlides: function(Ze) {
       return Ue ? (function(tt, lt) {
@@ -13775,16 +13775,16 @@ function Ql(o, e, t = {}, a = e) {
         const Ht = we.getComputedStyle(k(L));
         return parseFloat(Ht.getPropertyValue(`margin-${D}`));
       })(), Ke = xe.map(qe), Xe = xe.map(((Ht, xt, ii) => {
-        const si = !xt, sa = P(ii, xt);
+        const si = !xt, sa = Q(ii, xt);
         return si ? Ke[xt] + T : sa ? Ke[xt] + x : ii[xt + 1][dt] - Ht[dt];
       })).map(l);
       return { slideSizes: Ke, slideSizesWithGaps: Xe, startGap: T, endGap: x };
-    })(Rt, vt, ci, ae, ht, ge), Nt = Y(Rt, ei, De, Ye, vt, ci, Ct, pt, 2), { snaps: Xt, snapsAligned: Ti } = (function(rt, $e, xe, L, i) {
+    })(Rt, vt, ci, ae, ht, ge), Nt = O(Rt, ei, De, Ye, vt, ci, Ct, pt, 2), { snaps: Xt, snapsAligned: Ti } = (function(rt, $e, xe, L, i) {
       const { startEdge: we, endEdge: qe } = rt, { groupSlides: dt } = i, D = dt(L).map(((x) => k(x)[qe] - x[0][we])).map(l).map($e.measure), ve = L.map(((x) => xe[we] - x[we])).map(((x) => -l(x))), T = dt(ve).map(((x) => x[0])).map(((x, Ke) => x + D[Ke]));
       return { snaps: ve, snapsAligned: T };
     })(Rt, ui, vt, ci, Nt), Tt = -k(Xt) + k(gt), { snapsContained: Be, scrollContainLimit: Ie } = (function(rt, $e, xe, L, i) {
       const we = V(-$e + rt, 0), qe = xe.map(((ve, T) => {
-        const { min: x, max: Ke } = we, Xe = we.constrain(ve), Ht = !T, xt = P(xe, T);
+        const { min: x, max: Ke } = we, Xe = we.constrain(ve), Ht = !T, xt = Q(xe, T);
         return Ht ? Ke : xt || D(x, Xe) ? x : D(Ke, Xe) ? Ke : Xe;
       })).map(((ve) => parseFloat(ve.toFixed(3)))), dt = (function() {
         const ve = qe[0], T = k(qe);
@@ -13802,7 +13802,7 @@ function Ql(o, e, t = {}, a = e) {
     })(ei, Tt, Ti, Ve, 2), He = Zt ? Be : Ti, { limit: st } = (function(rt, $e, xe) {
       const L = $e[0];
       return { limit: V(xe ? L - rt : k($e), L) };
-    })(Tt, He, Ye), _t = Z(M(He), Qe, Ye), Re = _t.clone(), ut = v(ae), Bt = G(ce, ge, (() => (({ dragHandler: rt, scrollBody: $e, scrollBounds: xe, options: { loop: L } }) => {
+    })(Tt, He, Ye), _t = Z(M(He), Qe, Ye), Re = _t.clone(), ut = v(ae), Bt = j(ce, ge, (() => (({ dragHandler: rt, scrollBody: $e, scrollBounds: xe, options: { loop: L } }) => {
       L || xe.constrain(rt.pointerDown()), $e.seek();
     })(wt)), ((rt) => (({ scrollBody: $e, translate: xe, location: L, offsetLocation: i, previousLocation: we, scrollLooper: qe, slideLooper: dt, dragHandler: D, animation: ve, eventHandler: T, scrollBounds: x, options: { loop: Ke } }, Xe) => {
       const Ht = $e.settled(), xt = !x.shouldConstrain(), ii = Ke ? Ht : Ht && xt, si = ii && !D.pointerDown();
@@ -13851,12 +13851,12 @@ function Ql(o, e, t = {}, a = e) {
       return { get: function(L) {
         return xe ? (L - $e) / -xe : 0;
       } };
-    })(st), Qi = j(), Wt = R(K, ae, fe, lt), { slideRegistry: Ft } = (function(rt, $e, xe, L, i, we) {
+    })(st), Qi = G(), Wt = R(K, ae, fe, lt), { slideRegistry: Ft } = (function(rt, $e, xe, L, i, we) {
       const { groupSlides: qe } = i, { min: dt, max: D } = L;
       return { slideRegistry: (function() {
         const ve = qe(we), T = !rt || $e === "keepSnaps";
         return xe.length === 1 ? [we] : T ? ve : ve.slice(dt, D).map(((x, Ke, Xe) => {
-          const Ht = !Ke, xt = P(Xe, Ke);
+          const Ht = !Ke, xt = Q(Xe, Ke);
           return Ht ? F(k(Xe[0]) + 1) : xt ? F(M(we) - k(Xe)[0] + 1, k(Xe)[0]) : x;
         }));
       })() };
@@ -13866,7 +13866,7 @@ function Ql(o, e, t = {}, a = e) {
   const X = { align: "center", axis: "x", container: null, slides: null, containScroll: "trimSnaps", direction: "ltr", slidesToScroll: 1, inViewThreshold: 0, breakpoints: {}, dragFree: !1, dragThreshold: 10, loop: !1, skipSnaps: !1, duration: 25, startIndex: 0, active: !0, watchDrag: !0, watchResize: !0, watchSlides: !0, watchFocus: !0 };
   function me(ne) {
     function K(ce, ge) {
-      return O(ce, ge || {});
+      return Y(ce, ge || {});
     }
     return { mergeOptions: K, optionsAtMedia: function(ce) {
       const ge = ce.breakpoints || {}, ye = q(ge).filter(((fe) => ne.matchMedia(fe).matches)).map(((fe) => ge[fe])).reduce(((fe, ke) => K(fe, ke)), {});
@@ -13883,7 +13883,7 @@ function Ql(o, e, t = {}, a = e) {
       }, destroy: function() {
         Et = Et.filter(((gt) => gt.destroy()));
       } };
-    })(ye), ke = j(), Me = /* @__PURE__ */ (function() {
+    })(ye), ke = G(), Me = /* @__PURE__ */ (function() {
       let ht, Et = {};
       function gt(pt) {
         return Et[pt] || [];
@@ -28214,12 +28214,24 @@ function jA() {
   width:100%!important;
   max-width:100%!important;
   min-width:0!important;
+  box-sizing:border-box;
   overflow-x:hidden!important;
   transform:none!important;
   touch-action:pan-y!important;
   overscroll-behavior-x:none!important;
 }
 .menu-body.library-mode .library-shell{height:100%!important;contain:layout paint;}
+.menu-body.library-mode:not(.library-flow-mode){overflow:hidden!important;}
+.menu-body.library-mode:not(.library-flow-mode) .library-shell{
+  overflow:hidden!important;
+  grid-template-rows:minmax(0,1fr) auto;
+}
+.menu-body.library-mode:not(.library-flow-mode) .library-body{
+  grid-auto-rows:max-content;
+}
+.menu-body.library-mode:not(.library-flow-mode) :is(.media-home-shell,.media-results,.media-items-list){
+  overflow:visible!important;
+}
 .menu-body.library-mode .library-body,
 #mobileMediaSearchResults{
   overflow-y:auto!important;
@@ -32449,6 +32461,33 @@ function WA() {
   font-size:12px;
   font-weight:850;
 }
+#mobileMenu .library-context-controls{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin:0 0 14px;
+}
+#mobileMenu .library-context-toggle{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  min-height:40px;
+  max-width:100%;
+  padding:8px 14px;
+  border-radius:999px;
+  border:1px solid var(--homeii-surface-border,rgba(255,255,255,.16));
+  background:var(--homeii-surface,rgba(255,255,255,.075));
+  color:var(--homeii-surface-text,inherit);
+  font:inherit;
+  font-size:13px;
+  cursor:pointer;
+}
+#mobileMenu .library-context-toggle .ui-ic{width:19px;height:19px;flex:none;}
+#mobileMenu .library-context-toggle.active{
+  border-color:var(--ma-accent,#92b7c5);
+  background:color-mix(in srgb,var(--ma-accent,#92b7c5) 20%,var(--homeii-surface,transparent));
+}
+#mobileMenu .library-context-toggle:focus-visible{outline:2px solid var(--ma-accent,#92b7c5);outline-offset:3px;}
 #mobileMenu .library-toolbar-minimal .media-layout-toggle{
   background:transparent!important;
   border:0!important;
@@ -35455,10 +35494,10 @@ function dp(o = {}) {
     HomeiiMobileSettingsFoundation: v,
     homeiiEditorI18n: k,
     homeiiEditorLabelFor: M,
-    homeiiEditorHelperFor: P,
+    homeiiEditorHelperFor: Q,
     HOMEII_CARD_VERSION: F,
     AMBIENT_LIGHT_PAIR_PLAYER_PREFIX: q,
-    AMBIENT_LIGHT_PAIR_LIGHTS_PREFIX: O
+    AMBIENT_LIGHT_PAIR_LIGHTS_PREFIX: Y
   } = o;
   return class extends HTMLElement {
     constructor() {
@@ -35467,22 +35506,22 @@ function dp(o = {}) {
     connectedCallback() {
       this.style.display = "block", t(), this._ensureEditorShell(), this._render();
     }
-    set hass(j) {
-      const G = String(this._hass?.locale?.language || this._hass?.language || ""), V = this._editorPinnedPlayerOptionsKey();
-      this._hass = j, this._ensureEditorShell();
+    set hass(G) {
+      const j = String(this._hass?.locale?.language || this._hass?.language || ""), V = this._editorPinnedPlayerOptionsKey();
+      this._hass = G, this._ensureEditorShell();
       const Z = String(this._hass?.locale?.language || this._hass?.language || ""), W = this._editorPinnedPlayerOptionsKey();
-      if (G !== Z || V !== W || !this._editorRoot || !this._editorForm) {
+      if (j !== Z || V !== W || !this._editorRoot || !this._editorForm) {
         this._render();
         return;
       }
       this._syncEditorLiveContext();
     }
-    setConfig(j) {
-      const G = {
+    setConfig(G) {
+      const j = {
         ...this._getCardCtor().getStubConfig(),
-        ...j
+        ...G
       }, V = this._getConfigValidator?.();
-      typeof V == "function" && V(G), this._config = G, this._ensureEditorShell(), this._render();
+      typeof V == "function" && V(j), this._config = j, this._ensureEditorShell(), this._render();
     }
     _getCardCtor() {
       return e;
@@ -35493,8 +35532,8 @@ function dp(o = {}) {
         hass: this._hass
       }));
     }
-    _esc(j) {
-      return String(j ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+    _esc(G) {
+      return String(G ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
     }
     _getConfigValidator() {
       return p.validateBaseCardEditorConfig;
@@ -35508,8 +35547,8 @@ function dp(o = {}) {
     }
     _currentUiPath() {
       try {
-        const j = window.location?.pathname || "/", G = window.location?.search || "", V = window.location?.hash || "";
-        return `${j}${G}${V}` || "/";
+        const G = window.location?.pathname || "/", j = window.location?.search || "", V = window.location?.hash || "";
+        return `${G}${j}${V}` || "/";
       } catch {
         return "/";
       }
@@ -35522,52 +35561,52 @@ function dp(o = {}) {
     }
     _syncEditorSponsorLabels() {
       if (!this._editorSponsorLink) return;
-      const j = this._editorSponsorTitle();
-      this._editorSponsorLink.setAttribute("title", j), this._editorSponsorLink.setAttribute("aria-label", j);
+      const G = this._editorSponsorTitle();
+      this._editorSponsorLink.setAttribute("title", G), this._editorSponsorLink.setAttribute("aria-label", G);
     }
-    _editorSanitizeDiagnosticUrl(j = "") {
-      const G = String(j || "").trim();
-      if (!G) return "";
-      if (/(https?|wss?):\/\/<[^>]+>/i.test(G))
-        return G.replace(/(token|access_token|auth)=([^&\s]+)/gi, "$1=<redacted>");
+    _editorSanitizeDiagnosticUrl(G = "") {
+      const j = String(G || "").trim();
+      if (!j) return "";
+      if (/(https?|wss?):\/\/<[^>]+>/i.test(j))
+        return j.replace(/(token|access_token|auth)=([^&\s]+)/gi, "$1=<redacted>");
       try {
-        const V = new URL(G, typeof window < "u" ? window.location.href : "http://homeii.local"), Z = V.port ? `:${V.port}` : "";
+        const V = new URL(j, typeof window < "u" ? window.location.href : "http://homeii.local"), Z = V.port ? `:${V.port}` : "";
         return `${V.protocol}//${this._editorDiagnosticHostPrivacyLabel(V.hostname)}${Z}${this._editorDiagnosticPathPrivacyLabel(V.pathname)}`;
       } catch {
-        return G.replace(/(https?|wss?):\/\/[^\s]+/gi, (Z) => this._editorSanitizeDiagnosticUrl(Z)).replace(/(token|access_token|auth)=([^&\s]+)/gi, "$1=<redacted>");
+        return j.replace(/(https?|wss?):\/\/[^\s]+/gi, (Z) => this._editorSanitizeDiagnosticUrl(Z)).replace(/(token|access_token|auth)=([^&\s]+)/gi, "$1=<redacted>");
       }
     }
-    _editorDiagnosticHostPrivacyLabel(j = "") {
-      const G = String(j || "").trim().toLowerCase().replace(/^\[|\]$/g, "");
-      if (!G) return "<host-redacted>";
-      if (G === "localhost") return "<localhost>";
-      if (G.endsWith(".ui.nabu.casa")) return "<redacted-nabu-casa>";
+    _editorDiagnosticHostPrivacyLabel(G = "") {
+      const j = String(G || "").trim().toLowerCase().replace(/^\[|\]$/g, "");
+      if (!j) return "<host-redacted>";
+      if (j === "localhost") return "<localhost>";
+      if (j.endsWith(".ui.nabu.casa")) return "<redacted-nabu-casa>";
       const V = typeof window < "u" ? String(window.location?.hostname || "").toLowerCase() : "";
-      return V && G === V ? "<home-assistant-host>" : this._editorIsPrivateNetworkHost(G) ? "<private-host>" : "<external-host>";
+      return V && j === V ? "<home-assistant-host>" : this._editorIsPrivateNetworkHost(j) ? "<private-host>" : "<external-host>";
     }
-    _editorDiagnosticPathPrivacyLabel(j = "") {
-      const G = String(j || "").trim();
-      if (!G || G === "/") return "";
-      const V = G.toLowerCase();
+    _editorDiagnosticPathPrivacyLabel(G = "") {
+      const j = String(G || "").trim();
+      if (!j || j === "/") return "";
+      const V = j.toLowerCase();
       return V.includes("_music_assistant") ? "/<ha-ingress-music-assistant>" : V === "/sendspin" ? "/sendspin" : V.endsWith("/sendspin") ? "/<path-redacted>/sendspin" : V.includes("/api/media_player_proxy/") ? "/api/media_player_proxy/<entity>" : V.includes("/imageproxy") ? "/imageproxy" : V === "/api" ? "/api" : V.endsWith("/api") ? "/<path-redacted>/api" : "/<path-redacted>";
     }
-    _editorDiagnosticUrlDescription(j = "") {
-      const G = String(j || "").trim();
-      if (!G) return "(empty)";
+    _editorDiagnosticUrlDescription(G = "") {
+      const j = String(G || "").trim();
+      if (!j) return "(empty)";
       try {
-        const V = new URL(G, typeof window < "u" ? window.location.href : "http://homeii.local"), Z = V.protocol.replace(/:$/, "") || "unknown", ue = this._editorDiagnosticHostPrivacyLabel(V.hostname).replace(/[<>]/g, "").replace("redacted-", ""), he = this._editorDiagnosticPathPrivacyLabel(V.pathname) || "/";
+        const V = new URL(j, typeof window < "u" ? window.location.href : "http://homeii.local"), Z = V.protocol.replace(/:$/, "") || "unknown", ue = this._editorDiagnosticHostPrivacyLabel(V.hostname).replace(/[<>]/g, "").replace("redacted-", ""), he = this._editorDiagnosticPathPrivacyLabel(V.pathname) || "/";
         return `protocol=${Z}, host_type=${ue}, port=${V.port || "default"}, path=${he}`;
       } catch {
         return "invalid or unparseable URL";
       }
     }
-    _editorRedactDiagnosticText(j = "") {
-      let G = String(j || "").replace(/Bearer\s+[A-Za-z0-9._-]+/g, "Bearer <redacted>");
+    _editorRedactDiagnosticText(G = "") {
+      let j = String(G || "").replace(/Bearer\s+[A-Za-z0-9._-]+/g, "Bearer <redacted>");
       return [
         this._editorCurrentOrigin()
       ].filter(Boolean).forEach((V) => {
-        G = G.split(String(V)).join(this._editorSanitizeDiagnosticUrl(V));
-      }), G.replace(/(https?|wss?):\/\/[^\s]+/gi, (V) => this._editorSanitizeDiagnosticUrl(V));
+        j = j.split(String(V)).join(this._editorSanitizeDiagnosticUrl(V));
+      }), j.replace(/(https?|wss?):\/\/[^\s]+/gi, (V) => this._editorSanitizeDiagnosticUrl(V));
     }
     _editorCurrentOrigin() {
       try {
@@ -35577,7 +35616,7 @@ function dp(o = {}) {
       }
     }
     _editorBrowserSummary() {
-      const j = typeof navigator < "u" ? navigator : typeof window < "u" ? window.navigator : {}, G = String(j?.userAgent || ""), Z = [
+      const G = typeof navigator < "u" ? navigator : typeof window < "u" ? window.navigator : {}, j = String(G?.userAgent || ""), Z = [
         ["Edge", /Edg\/([\d.]+)/i],
         ["Chrome iOS", /CriOS\/([\d.]+)/i],
         ["Firefox iOS", /FxiOS\/([\d.]+)/i],
@@ -35586,36 +35625,36 @@ function dp(o = {}) {
         ["Chrome", /Chrome\/([\d.]+)/i],
         ["Safari", /Version\/([\d.]+).*Safari/i]
       ].map(([he, s]) => {
-        const A = G.match(s);
+        const A = j.match(s);
         return A ? `${he} ${A[1]}` : "";
-      }).find(Boolean) || (G ? "Unknown browser" : "Browser unavailable"), W = [];
-      /Home Assistant|HomeAssistant|io\.homeassistant|HA Companion/i.test(G) && W.push("HA Companion"), /\bwv\b|Android.*Version\/[\d.]+.*Chrome/i.test(G) && W.push("Android WebView"), /iPhone|iPad|iPod/i.test(G) && /Safari/i.test(G) && !/CriOS|FxiOS|EdgiOS/i.test(G) && W.push("iOS WebKit");
-      const ue = String(j?.platform || j?.userAgentData?.platform || "").trim();
+      }).find(Boolean) || (j ? "Unknown browser" : "Browser unavailable"), W = [];
+      /Home Assistant|HomeAssistant|io\.homeassistant|HA Companion/i.test(j) && W.push("HA Companion"), /\bwv\b|Android.*Version\/[\d.]+.*Chrome/i.test(j) && W.push("Android WebView"), /iPhone|iPad|iPod/i.test(j) && /Safari/i.test(j) && !/CriOS|FxiOS|EdgiOS/i.test(j) && W.push("iOS WebKit");
+      const ue = String(G?.platform || G?.userAgentData?.platform || "").trim();
       return [Z, ue, ...W].filter(Boolean).join(" / ");
     }
     _editorViewportSummary() {
-      const j = typeof window < "u" ? window : {}, G = typeof navigator < "u" ? navigator : j.navigator, V = Number(j.innerWidth || this.getBoundingClientRect?.().width || this.offsetWidth || 0), Z = Number(j.innerHeight || this.getBoundingClientRect?.().height || this.offsetHeight || 0), W = Number(j.devicePixelRatio || 1), ue = Number(G?.maxTouchPoints || 0), he = String(G?.language || this._hass?.locale?.language || this._hass?.language || "").trim();
+      const G = typeof window < "u" ? window : {}, j = typeof navigator < "u" ? navigator : G.navigator, V = Number(G.innerWidth || this.getBoundingClientRect?.().width || this.offsetWidth || 0), Z = Number(G.innerHeight || this.getBoundingClientRect?.().height || this.offsetHeight || 0), W = Number(G.devicePixelRatio || 1), ue = Number(j?.maxTouchPoints || 0), he = String(j?.language || this._hass?.locale?.language || this._hass?.language || "").trim();
       return `${Math.round(V)}x${Math.round(Z)}, DPR ${Number.isFinite(W) ? W.toFixed(2).replace(/\.00$/, "") : "?"}, touch ${ue}${he ? `, lang ${he}` : ""}`;
     }
-    _editorIsPrivateNetworkHost(j = "") {
-      const G = String(j || "").trim().toLowerCase().replace(/^\[|\]$/g, "");
-      if (!G) return !1;
-      if (G === "localhost" || G.endsWith(".local") || G.endsWith(".lan") || G === "::1" || G.startsWith("fe80:") || G.startsWith("fc") || G.startsWith("fd") || /^127\./.test(G) || /^10\./.test(G) || /^192\.168\./.test(G) || /^169\.254\./.test(G)) return !0;
-      const V = G.match(/^172\.(\d{1,2})\./);
+    _editorIsPrivateNetworkHost(G = "") {
+      const j = String(G || "").trim().toLowerCase().replace(/^\[|\]$/g, "");
+      if (!j) return !1;
+      if (j === "localhost" || j.endsWith(".local") || j.endsWith(".lan") || j === "::1" || j.startsWith("fe80:") || j.startsWith("fc") || j.startsWith("fd") || /^127\./.test(j) || /^10\./.test(j) || /^192\.168\./.test(j) || /^169\.254\./.test(j)) return !0;
+      const V = j.match(/^172\.(\d{1,2})\./);
       return !!(V && Number(V[1]) >= 16 && Number(V[1]) <= 31);
     }
-    _editorDiagnosticItem(j, G, V = "", Z = "") {
+    _editorDiagnosticItem(G, j, V = "", Z = "") {
       return {
-        status: ["ok", "fail", "warn", "info"].includes(String(j || "").toLowerCase()) ? String(j).toLowerCase() : "info",
-        title: String(G || "").trim(),
+        status: ["ok", "fail", "warn", "info"].includes(String(G || "").toLowerCase()) ? String(G).toLowerCase() : "info",
+        title: String(j || "").trim(),
         detail: String(V || "").trim(),
         value: String(Z || "").trim()
       };
     }
-    _editorWithTimeout(j, G = 8e3, V = "Request timed out") {
+    _editorWithTimeout(G, j = 8e3, V = "Request timed out") {
       return new Promise((Z, W) => {
-        const ue = setTimeout(() => W(new Error(V)), Math.max(1e3, Number(G) || 8e3));
-        Promise.resolve(j).then((he) => {
+        const ue = setTimeout(() => W(new Error(V)), Math.max(1e3, Number(j) || 8e3));
+        Promise.resolve(G).then((he) => {
           clearTimeout(ue), Z(he);
         }).catch((he) => {
           clearTimeout(ue), W(he);
@@ -35628,10 +35667,10 @@ function dp(o = {}) {
     _editorHomeiiEngineTimeoutMs() {
       return Gl(this._config?.homeii_engine_timeout_ms, 3500);
     }
-    _editorHomeiiEngineMessage(j = "get_context", G = {}) {
+    _editorHomeiiEngineMessage(G = "get_context", j = {}) {
       const V = {
-        ...G && typeof G == "object" && !Array.isArray(G) ? G : { payload: G },
-        type: jl(j),
+        ...j && typeof j == "object" && !Array.isArray(j) ? j : { payload: j },
+        type: jl(G),
         card_id: String(this._config?.card_id || "").trim(),
         instance_id: Za(this._config?.homeii_engine_instance_id),
         profile_id: Za(this._config?.homeii_engine_profile_id)
@@ -35640,19 +35679,19 @@ function dp(o = {}) {
         V[Z] === "" && delete V[Z];
       }), V;
     }
-    async _editorCallHomeiiEngine(j = "get_context", G = {}) {
+    async _editorCallHomeiiEngine(G = "get_context", j = {}) {
       if (!ts(this._editorHomeiiEngineMode())) return null;
-      const V = this._editorHomeiiEngineMessage(j, G);
+      const V = this._editorHomeiiEngineMessage(G, j);
       if (typeof this._hass?.callWS == "function")
         return this._editorWithTimeout(this._hass.callWS(V), this._editorHomeiiEngineTimeoutMs(), "HOMEii Flow Engine timed out.");
       if (typeof this._hass?.connection?.sendMessagePromise == "function")
         return this._editorWithTimeout(this._hass.connection.sendMessagePromise(V), this._editorHomeiiEngineTimeoutMs(), "HOMEii Flow Engine timed out.");
       throw new Error("Home Assistant WebSocket API is unavailable in the visual editor.");
     }
-    async _editorDiagnosticEngineRow(j) {
-      const G = this._editorHomeiiEngineMode();
-      if (!ts(G)) {
-        j("fail", "HOMEii Flow Engine", "HOMEii Flow 6 requires the HOMEii Flow Engine integration. There is no frontend-only compatibility path.", G);
+    async _editorDiagnosticEngineRow(G) {
+      const j = this._editorHomeiiEngineMode();
+      if (!ts(j)) {
+        G("fail", "HOMEii Flow Engine", "HOMEii Flow 6 requires the HOMEii Flow Engine integration. There is no frontend-only compatibility path.", j);
         return;
       }
       try {
@@ -35662,22 +35701,22 @@ function dp(o = {}) {
         });
         if (!V) throw new Error("HOMEii Flow Engine returned an empty response.");
         const Z = Yl(V);
-        j("ok", "HOMEii Flow Engine", `Connected to HOMEii Flow Engine ${Z.version || "unknown version"}. Capabilities: ${Jl(Z.capabilities)}.`, G);
+        G("ok", "HOMEii Flow Engine", `Connected to HOMEii Flow Engine ${Z.version || "unknown version"}. Capabilities: ${Jl(Z.capabilities)}.`, j);
         const [W, ue] = await Promise.allSettled([
           this._editorCallHomeiiEngine("players/get", { source: "visual_editor" }),
           this._editorCallHomeiiEngine("stats/get", { source: "visual_editor" })
         ]), he = Number(W.value?.music_assistant_count ?? ue.value?.music_assistant_players ?? 0);
         if (W.status === "fulfilled" || ue.status === "fulfilled") {
           const s = Number(ue.value?.players_playing ?? 0), A = Number(ue.value?.players_grouped ?? 0);
-          j(he ? "ok" : "warn", "Engine player state", `${he} Music Assistant player(s), ${s} playing, ${A} grouped.`);
+          G(he ? "ok" : "warn", "Engine player state", `${he} Music Assistant player(s), ${s} playing, ${A} grouped.`);
         }
       } catch (V) {
         const Z = "Engine mode is Required, but the Home Assistant integration did not answer. HOMEii Flow 6 will not run until the integration is installed, loaded, and refreshed.", W = V?.message ? ` Last error: ${V.message}` : "";
-        j("fail", "HOMEii Flow Engine", `${Z}${W}`, G);
+        G("fail", "HOMEii Flow Engine", `${Z}${W}`, j);
       }
     }
-    _editorDiagnosticsReportText(j = []) {
-      const G = [
+    _editorDiagnosticsReportText(G = []) {
+      const j = [
         "HOMEii Music Flow Editor Diagnostics",
         "Diagnostics: v7",
         `Version: ${F}`,
@@ -35695,57 +35734,57 @@ function dp(o = {}) {
         `homeii_engine_profile_id configured: ${this._config?.homeii_engine_profile_id ? "yes" : "no"}`,
         "",
         "Checks:",
-        ...j.map((V) => `- [${String(V.status || "info").toUpperCase()}] ${V.title}${V.value ? `: ${V.value}` : ""}${V.detail ? ` - ${V.detail}` : ""}`)
+        ...G.map((V) => `- [${String(V.status || "info").toUpperCase()}] ${V.title}${V.value ? `: ${V.value}` : ""}${V.detail ? ` - ${V.detail}` : ""}`)
       ];
-      return this._editorRedactDiagnosticText(G.join(`
+      return this._editorRedactDiagnosticText(j.join(`
 `));
     }
-    _editorDiagnosticsSummary(j = this._editorDiagnosticsItems || []) {
-      const G = Array.isArray(j) ? j : [], V = G.filter((W) => W.status === "fail").length, Z = G.filter((W) => W.status === "warn").length;
-      return G.length ? V ? `${V} check${V === 1 ? "" : "s"} need attention.` : Z ? `${Z} check${Z === 1 ? "" : "s"} need review.` : "All visible setup checks passed." : "Run diagnostics to check the current browser, Home Assistant integration, and HOMEii Flow Engine readiness.";
+    _editorDiagnosticsSummary(G = this._editorDiagnosticsItems || []) {
+      const j = Array.isArray(G) ? G : [], V = j.filter((W) => W.status === "fail").length, Z = j.filter((W) => W.status === "warn").length;
+      return j.length ? V ? `${V} check${V === 1 ? "" : "s"} need attention.` : Z ? `${Z} check${Z === 1 ? "" : "s"} need review.` : "All visible setup checks passed." : "Run diagnostics to check the current browser, Home Assistant integration, and HOMEii Flow Engine readiness.";
     }
-    _editorDiagnosticStatusLabel(j = "info") {
-      const G = String(j || "info").toLowerCase();
-      return G === "ok" ? "V" : G === "fail" ? "X" : G === "warn" ? "!" : "i";
+    _editorDiagnosticStatusLabel(G = "info") {
+      const j = String(G || "info").toLowerCase();
+      return j === "ok" ? "V" : j === "fail" ? "X" : j === "warn" ? "!" : "i";
     }
-    _editorDiagnosticRowHtml(j = {}) {
-      const G = ["ok", "fail", "warn", "info"].includes(String(j.status || "").toLowerCase()) ? String(j.status || "info").toLowerCase() : "info";
+    _editorDiagnosticRowHtml(G = {}) {
+      const j = ["ok", "fail", "warn", "info"].includes(String(G.status || "").toLowerCase()) ? String(G.status || "info").toLowerCase() : "info";
       return `
-      <div class="editor-diagnostic-row status-${this._esc(G)}">
-        <div class="editor-diagnostic-status" aria-label="${this._esc(G)}">${this._esc(this._editorDiagnosticStatusLabel(G))}</div>
+      <div class="editor-diagnostic-row status-${this._esc(j)}">
+        <div class="editor-diagnostic-status" aria-label="${this._esc(j)}">${this._esc(this._editorDiagnosticStatusLabel(j))}</div>
         <div class="editor-diagnostic-copy">
-          <div class="editor-diagnostic-title">${this._esc(j.title || "")}</div>
-          ${j.value ? `<div class="editor-diagnostic-value">${this._esc(j.value)}</div>` : ""}
-          ${j.detail ? `<div class="editor-diagnostic-detail">${this._esc(j.detail)}</div>` : ""}
+          <div class="editor-diagnostic-title">${this._esc(G.title || "")}</div>
+          ${G.value ? `<div class="editor-diagnostic-value">${this._esc(G.value)}</div>` : ""}
+          ${G.detail ? `<div class="editor-diagnostic-detail">${this._esc(G.detail)}</div>` : ""}
         </div>
       </div>`;
     }
     _renderEditorDiagnosticsResults() {
       if (!this._editorDiagnosticsPanel || !this._editorDiagnosticsSummaryNode || !this._editorDiagnosticsList) return;
-      const j = Array.isArray(this._editorDiagnosticsItems) ? this._editorDiagnosticsItems : [];
-      this._editorDiagnosticsPanel.hidden = !j.length, this._editorDiagnosticsSummaryNode.textContent = this._editorDiagnosticsSummary(j), this._editorDiagnosticsList.innerHTML = j.map((G) => this._editorDiagnosticRowHtml(G)).join("");
+      const G = Array.isArray(this._editorDiagnosticsItems) ? this._editorDiagnosticsItems : [];
+      this._editorDiagnosticsPanel.hidden = !G.length, this._editorDiagnosticsSummaryNode.textContent = this._editorDiagnosticsSummary(G), this._editorDiagnosticsList.innerHTML = G.map((j) => this._editorDiagnosticRowHtml(j)).join("");
     }
     async _runEditorDiagnostics() {
-      const j = [], G = (g, y, S = "", B = "") => j.push(this._editorDiagnosticItem(g, y, S, B)), V = Object.keys(this._hass?.services?.music_assistant || {}), Z = this._hass?.states || {}, W = this._hass?.entities || {}, ue = Object.values(Z).filter((g) => h.isMusicAssistantPlayer(g, W?.[g.entity_id])), he = Object.values(Z).filter((g) => g?.entity_id?.startsWith?.("media_player.")), s = v.normalizePinnedPlayerEntityList(this._config?.pinned_player_entities), A = v.normalizePinnedPlayerEntityList(this._config?.excluded_player_entities);
-      if (G("ok", "Editor version", "Visual editor runtime is loaded.", F), G("ok", "Diagnostics version", "Diagnostic v7 is active.", "v7"), G("info", "Browser", this._editorBrowserSummary()), G("info", "Viewport", this._editorViewportSummary()), G("info", "Diagnostic privacy", "External/private hostnames are redacted in visible and copied diagnostic output."), G(this._hass ? "ok" : "fail", "Home Assistant frontend", this._hass ? "Editor has a Home Assistant frontend object." : "Editor does not have a Home Assistant frontend object."), G(V.length ? "ok" : "fail", "Music Assistant services", V.length ? `${V.length} service(s) are exposed by Home Assistant.` : "No music_assistant services are exposed by Home Assistant."), G(V.length ? "ok" : "warn", "Engine backend mode", V.length ? "HOMEii Flow 6 uses HOMEii Flow Engine as the required backend. Browser-direct Music Assistant access is not used for core card routing." : "Home Assistant does not expose music_assistant services for HOMEii Flow Engine."), await this._editorDiagnosticEngineRow(G), G(V.length ? "ok" : "fail", "Integration signal", `services ${V.length ? "yes" : "no"}, authenticated transport HOMEii Flow Engine`), G(ue.length ? "ok" : V.length && he.length ? "warn" : "fail", "Music Assistant players", ue.length ? `${ue.length} strict MA player(s), ${he.length} generic HA media_player(s).` : `${he.length} generic HA media_player(s), but no strict Music Assistant player markers were detected.`), G("info", "Player filters", `${s.length} pinned, ${A.length} excluded.`), this._hass?.connection?.sendMessagePromise)
+      const G = [], j = (g, y, S = "", B = "") => G.push(this._editorDiagnosticItem(g, y, S, B)), V = Object.keys(this._hass?.services?.music_assistant || {}), Z = this._hass?.states || {}, W = this._hass?.entities || {}, ue = Object.values(Z).filter((g) => h.isMusicAssistantPlayer(g, W?.[g.entity_id])), he = Object.values(Z).filter((g) => g?.entity_id?.startsWith?.("media_player.")), s = v.normalizePinnedPlayerEntityList(this._config?.pinned_player_entities), A = v.normalizePinnedPlayerEntityList(this._config?.excluded_player_entities);
+      if (j("ok", "Editor version", "Visual editor runtime is loaded.", F), j("ok", "Diagnostics version", "Diagnostic v7 is active.", "v7"), j("info", "Browser", this._editorBrowserSummary()), j("info", "Viewport", this._editorViewportSummary()), j("info", "Diagnostic privacy", "External/private hostnames are redacted in visible and copied diagnostic output."), j(this._hass ? "ok" : "fail", "Home Assistant frontend", this._hass ? "Editor has a Home Assistant frontend object." : "Editor does not have a Home Assistant frontend object."), j(V.length ? "ok" : "fail", "Music Assistant services", V.length ? `${V.length} service(s) are exposed by Home Assistant.` : "No music_assistant services are exposed by Home Assistant."), j(V.length ? "ok" : "warn", "Engine backend mode", V.length ? "HOMEii Flow 6 uses HOMEii Flow Engine as the required backend. Browser-direct Music Assistant access is not used for core card routing." : "Home Assistant does not expose music_assistant services for HOMEii Flow Engine."), await this._editorDiagnosticEngineRow(j), j(V.length ? "ok" : "fail", "Integration signal", `services ${V.length ? "yes" : "no"}, authenticated transport HOMEii Flow Engine`), j(ue.length ? "ok" : V.length && he.length ? "warn" : "fail", "Music Assistant players", ue.length ? `${ue.length} strict MA player(s), ${he.length} generic HA media_player(s).` : `${he.length} generic HA media_player(s), but no strict Music Assistant player markers were detected.`), j("info", "Player filters", `${s.length} pinned, ${A.length} excluded.`), this._hass?.connection?.sendMessagePromise)
         try {
           const g = await this._editorWithTimeout(this._hass.connection.sendMessagePromise({
             type: "config_entries/get",
             domain: "music_assistant"
           }), 8e3, "Music Assistant config lookup timed out."), y = Array.isArray(g) ? g : [], S = y.find((B) => B?.state === "loaded") || y.find((B) => B?.state === "setup_retry") || y.find((B) => B?.state === "not_loaded") || y[0];
-          G(S?.state === "loaded" ? "ok" : S ? "warn" : "fail", "Music Assistant config entry", S ? "Home Assistant returned a Music Assistant config entry." : "No Music Assistant config entry was returned.", S?.state || "none");
+          j(S?.state === "loaded" ? "ok" : S ? "warn" : "fail", "Music Assistant config entry", S ? "Home Assistant returned a Music Assistant config entry." : "No Music Assistant config entry was returned.", S?.state || "none");
         } catch (g) {
-          G("warn", "Music Assistant config entry", g?.message || "Could not read Home Assistant config entries.");
+          j("warn", "Music Assistant config entry", g?.message || "Could not read Home Assistant config entries.");
         }
       else
-        G("warn", "Music Assistant config entry", "Home Assistant connection API is not available in this editor context.");
-      return G("ok", "Music Assistant transport", "URL selection, authentication, event streaming, caching, and artwork proxying are owned by HOMEii Flow Engine. No MA token or server URL is stored in the card."), this._editorDiagnosticsItems = j, this._editorDiagnosticsReport = this._editorDiagnosticsReportText(j), this._renderEditorDiagnosticsResults(), this._editorDiagnosticsReport;
+        j("warn", "Music Assistant config entry", "Home Assistant connection API is not available in this editor context.");
+      return j("ok", "Music Assistant transport", "URL selection, authentication, event streaming, caching, and artwork proxying are owned by HOMEii Flow Engine. No MA token or server URL is stored in the card."), this._editorDiagnosticsItems = G, this._editorDiagnosticsReport = this._editorDiagnosticsReportText(G), this._renderEditorDiagnosticsResults(), this._editorDiagnosticsReport;
     }
     async _copyEditorDiagnosticsReport() {
       if (this._editorDiagnosticsRunning) return;
       this._editorDiagnosticsRunning = !0;
-      const j = this._editorDiagnosticsBtn, G = j?.textContent || "Diagnostics";
-      j && (j.disabled = !0, j.textContent = "Running...");
+      const G = this._editorDiagnosticsBtn, j = G?.textContent || "Diagnostics";
+      G && (G.disabled = !0, G.textContent = "Running...");
       try {
         const V = await this._runEditorDiagnostics();
         let Z = !1, W = "";
@@ -35762,19 +35801,19 @@ function dp(o = {}) {
         (W || !Z) && (this._editorDiagnosticsItems = [
           ...Array.isArray(this._editorDiagnosticsItems) ? this._editorDiagnosticsItems : [],
           this._editorDiagnosticItem("warn", "Copy diagnostics", W || "Automatic copy was not available. The report is still visible here.")
-        ], this._editorDiagnosticsReport = this._editorDiagnosticsReportText(this._editorDiagnosticsItems), this._renderEditorDiagnosticsResults()), j && (j.textContent = Z ? "Copied" : "Ready");
+        ], this._editorDiagnosticsReport = this._editorDiagnosticsReportText(this._editorDiagnosticsItems), this._renderEditorDiagnosticsResults()), G && (G.textContent = Z ? "Copied" : "Ready");
       } catch (V) {
-        this._editorDiagnosticsReport = V?.message || "Editor diagnostics failed.", this._editorDiagnosticsItems = [this._editorDiagnosticItem("fail", "Editor diagnostics", this._editorDiagnosticsReport)], this._renderEditorDiagnosticsResults(), j && (j.textContent = "Failed");
+        this._editorDiagnosticsReport = V?.message || "Editor diagnostics failed.", this._editorDiagnosticsItems = [this._editorDiagnosticItem("fail", "Editor diagnostics", this._editorDiagnosticsReport)], this._renderEditorDiagnosticsResults(), G && (G.textContent = "Failed");
       } finally {
-        this._editorDiagnosticsRunning = !1, j && (j.disabled = !1, setTimeout(() => {
-          !this._editorDiagnosticsRunning && this._editorDiagnosticsBtn && (this._editorDiagnosticsBtn.textContent = G);
+        this._editorDiagnosticsRunning = !1, G && (G.disabled = !1, setTimeout(() => {
+          !this._editorDiagnosticsRunning && this._editorDiagnosticsBtn && (this._editorDiagnosticsBtn.textContent = j);
         }, 1600));
       }
     }
     _ensureEditorShell() {
       if (this._editorRoot) return;
-      const j = this.attachShadow({ mode: "open" });
-      if (j.innerHTML = `
+      const G = this.attachShadow({ mode: "open" });
+      if (G.innerHTML = `
       <style>
         ${vs}
         :host {
@@ -36028,7 +36067,7 @@ function dp(o = {}) {
         <div class="editor-section-nav"><label for="editorSection"></label><select id="editorSection"></select></div>
         <ha-form id="editorForm"></ha-form>
       </div>
-    `, this._editorRoot = j, this._editorForm = j.querySelector("#editorForm"), this._editorUsePathBtn = j.querySelector("#editorUseCurrentPath"), this._editorPathHint = j.querySelector("#editorPathHint"), this._editorSponsorLink = j.querySelector(".editor-sponsor"), this._editorDiagnosticsBtn = j.querySelector(".editor-diagnostics"), this._editorDiagnosticsCloseBtn = j.querySelector("#editorDiagnosticsClose"), this._editorDiagnosticsPanel = j.querySelector("#editorDiagnosticsPanel"), this._editorDiagnosticsSummaryNode = j.querySelector("#editorDiagnosticsSummary"), this._editorDiagnosticsList = j.querySelector("#editorDiagnosticsList"), this._syncEditorSponsorLabels(), this._refreshEditorShellClasses(), !this._editorBound) {
+    `, this._editorRoot = G, this._editorForm = G.querySelector("#editorForm"), this._editorUsePathBtn = G.querySelector("#editorUseCurrentPath"), this._editorPathHint = G.querySelector("#editorPathHint"), this._editorSponsorLink = G.querySelector(".editor-sponsor"), this._editorDiagnosticsBtn = G.querySelector(".editor-diagnostics"), this._editorDiagnosticsCloseBtn = G.querySelector("#editorDiagnosticsClose"), this._editorDiagnosticsPanel = G.querySelector("#editorDiagnosticsPanel"), this._editorDiagnosticsSummaryNode = G.querySelector("#editorDiagnosticsSummary"), this._editorDiagnosticsList = G.querySelector("#editorDiagnosticsList"), this._syncEditorSponsorLabels(), this._refreshEditorShellClasses(), !this._editorBound) {
         this._editorBound = !0, this._editorSponsorLink?.addEventListener("click", (V) => {
           let Z = !0;
           try {
@@ -36047,10 +36086,10 @@ function dp(o = {}) {
             ...this._config,
             mobile_home_shortcut_path: V
           }, this._render(), this._dispatchConfig();
-        }), j.querySelector("#editorSection")?.addEventListener("change", (V) => {
+        }), G.querySelector("#editorSection")?.addEventListener("change", (V) => {
           this._editorSection = V.target.value, this._editorLastSchemaKey = "", this._render();
         });
-        const G = (V) => {
+        const j = (V) => {
           const Z = V.detail?.value;
           if (!Z || typeof Z != "object") return;
           const W = this._normalizeEditorFormValue(Z), ue = this._editorLastSchemaKey;
@@ -36062,39 +36101,39 @@ function dp(o = {}) {
           const he = JSON.stringify(this._withDynamicEditorSchema(this._currentBaseEditorSchema()));
           ue !== he && queueMicrotask(() => this._render());
         };
-        this._editorForm?.addEventListener("value-changed", G), j.querySelector("#editorBasics")?.addEventListener("value-changed", G);
+        this._editorForm?.addEventListener("value-changed", j), G.querySelector("#editorBasics")?.addEventListener("value-changed", j);
       }
     }
     _isTabletStabilityMode() {
       try {
-        const j = String(window.navigator?.userAgent || ""), G = Math.max(
+        const G = String(window.navigator?.userAgent || ""), j = Math.max(
           Number(window.innerWidth || 0),
           Number(this.getBoundingClientRect?.().width || 0),
           Number(this.offsetWidth || 0)
         ), V = Number(window.navigator?.maxTouchPoints || 0);
-        return /Android/i.test(j) && G >= 980 && V > 0;
+        return /Android/i.test(G) && j >= 980 && V > 0;
       } catch {
         return !1;
       }
     }
     _refreshEditorShellClasses() {
-      const j = this._editorRoot?.querySelector(".editor-shell");
-      j && j.classList.toggle("tablet-stable", this._isTabletStabilityMode());
+      const G = this._editorRoot?.querySelector(".editor-shell");
+      G && G.classList.toggle("tablet-stable", this._isTabletStabilityMode());
     }
     _syncEditorLiveContext() {
       this._ensureEditorShell(), this.style.direction = this._isHebrew() ? "rtl" : "ltr", this._refreshEditorShellClasses(), this._syncEditorSponsorLabels(), this._editorUsePathBtn && (this._editorUsePathBtn.textContent = k("ui.use_current_view_for_home_button")), this._editorPathHint && (this._editorPathHint.textContent = `${k("ui.current_path")}: ${this._currentUiPath()}`), this._editorForm && (this._editorForm.hass = this._hass);
     }
-    _editorPlayerOptionLabel(j = null, G = []) {
-      const V = String(j?.entity_id || "").trim(), Z = h.playerDisplayName(j, { players: G }) || V;
+    _editorPlayerOptionLabel(G = null, j = []) {
+      const V = String(G?.entity_id || "").trim(), Z = h.playerDisplayName(G, { players: j }) || V;
       return !Z || !V || Z === V || String(Z).includes(V) ? Z || V : `${Z} (${V})`;
     }
     _editorPinnedPlayerOptions() {
-      const j = this._hass?.states || {}, G = this._hass?.entities || {}, V = Object.values(j).filter((A) => A?.entity_id?.startsWith("media_player.")), Z = /* @__PURE__ */ new Set([
+      const G = this._hass?.states || {}, j = this._hass?.entities || {}, V = Object.values(G).filter((A) => A?.entity_id?.startsWith("media_player.")), Z = /* @__PURE__ */ new Set([
         ...v.normalizePinnedPlayerEntityList(this._config?.pinned_player_entities),
         ...v.normalizePinnedPlayerEntityList(this._config?.excluded_player_entities),
         ...v.normalizePlayerOrderEntities(this._config || {})
       ]), W = V.filter((A) => {
-        const g = G?.[A.entity_id] || {}, y = [
+        const g = j?.[A.entity_id] || {}, y = [
           g.platform,
           g.integration,
           g.device_class
@@ -36118,52 +36157,52 @@ function dp(o = {}) {
       });
     }
     _editorPlayerOrderOptions() {
-      const j = new Set(v.normalizePinnedPlayerEntityList(this._config?.excluded_player_entities));
-      return this._editorPinnedPlayerOptions().filter((G) => !j.has(G.value));
+      const G = new Set(v.normalizePinnedPlayerEntityList(this._config?.excluded_player_entities));
+      return this._editorPinnedPlayerOptions().filter((j) => !G.has(j.value));
     }
-    _playerOrderEntitySelector({ entities: j = [] } = {}) {
-      const G = {
+    _playerOrderEntitySelector({ entities: G = [] } = {}) {
+      const j = {
         entity: {
           multiple: !1,
           filter: [{ integration: "music_assistant", domain: "media_player" }]
         }
       };
-      return j.length && (G.entity.include_entities = j.map((V) => V.value)), G;
+      return G.length && (j.entity.include_entities = G.map((V) => V.value)), j;
     }
     _editorColorLightOptions() {
-      const j = this._hass?.states || {};
-      return Object.values(j).filter((G) => G?.entity_id?.startsWith("light.")).filter((G) => v.isColorCapableLightEntity(G)).map((G) => ({
-        value: G.entity_id,
-        label: G.attributes?.friendly_name || G.entity_id
-      })).sort((G, V) => String(G.label).localeCompare(String(V.label), void 0, { sensitivity: "base" }));
+      const G = this._hass?.states || {};
+      return Object.values(G).filter((j) => j?.entity_id?.startsWith("light.")).filter((j) => v.isColorCapableLightEntity(j)).map((j) => ({
+        value: j.entity_id,
+        label: j.attributes?.friendly_name || j.entity_id
+      })).sort((j, V) => String(j.label).localeCompare(String(V.label), void 0, { sensitivity: "base" }));
     }
-    _ambientLightPairPlayerKey(j) {
-      return `${q}${j}`;
+    _ambientLightPairPlayerKey(G) {
+      return `${q}${G}`;
     }
-    _ambientLightPairLightsKey(j) {
-      return `${O}${j}`;
+    _ambientLightPairLightsKey(G) {
+      return `${Y}${G}`;
     }
-    _ambientLightPairDisplayKey(j = "player", G = 0) {
-      const V = Math.max(0, Number(G) || 0), Z = j === "lights" ? this._ambientLightPairLightsKey(V) : this._ambientLightPairPlayerKey(V), W = this._editorDynamicLabel({ name: Z });
+    _ambientLightPairDisplayKey(G = "player", j = 0) {
+      const V = Math.max(0, Number(j) || 0), Z = G === "lights" ? this._ambientLightPairLightsKey(V) : this._ambientLightPairPlayerKey(V), W = this._editorDynamicLabel({ name: Z });
       if (W) return W;
       const ue = V + 1;
-      return j === "lights" ? `Color lights ${ue}` : `Music Assistant player ${ue}`;
+      return G === "lights" ? `Color lights ${ue}` : `Music Assistant player ${ue}`;
     }
-    _ambientLightPairFieldInfo(j = "") {
-      const G = [], V = (W) => {
+    _ambientLightPairFieldInfo(G = "") {
+      const j = [], V = (W) => {
         if (W != null) {
           if (Array.isArray(W)) {
-            W.forEach(V), G.push(W.join("."));
+            W.forEach(V), j.push(W.join("."));
             return;
           }
           if (typeof W == "object") {
             V(W.name), V(W.key), V(W.path), V(W.schema?.name);
             return;
           }
-          G.push(String(W));
+          j.push(String(W));
         }
       };
-      V(j);
+      V(G);
       const Z = (W, ue, he) => {
         const s = String(W || "").indexOf(ue);
         if (s < 0) return null;
@@ -36172,11 +36211,11 @@ function dp(o = {}) {
         const g = Number(A[0]);
         return Number.isInteger(g) ? { type: he, index: g } : null;
       };
-      for (const W of G) {
+      for (const W of j) {
         if (/^player_order_entity_\d+$/.test(String(W))) continue;
         const ue = Z(W, q, "player");
         if (ue) return ue;
-        const he = Z(W, O, "lights");
+        const he = Z(W, Y, "lights");
         if (he) return he;
         const s = String(W || "").trim(), A = s.match(/(\d+)\s*$/);
         if (A) {
@@ -36190,80 +36229,80 @@ function dp(o = {}) {
       }
       return null;
     }
-    _editorSchemaItem(j = {}) {
-      return typeof j == "string" ? { name: j } : Array.isArray(j) ? { name: j[j.length - 1] || j.join(".") } : j && typeof j == "object" ? j : {};
+    _editorSchemaItem(G = {}) {
+      return typeof G == "string" ? { name: G } : Array.isArray(G) ? { name: G[G.length - 1] || G.join(".") } : G && typeof G == "object" ? G : {};
     }
-    _ambientLightPlayerMapConfigFromGroups(j = []) {
-      return j.map((G) => v.formatAmbientLightPlayerMapEntry(G.player, G.lights)).filter(Boolean);
+    _ambientLightPlayerMapConfigFromGroups(G = []) {
+      return G.map((j) => v.formatAmbientLightPlayerMapEntry(j.player, j.lights)).filter(Boolean);
     }
-    _ambientLightPairSelectorData(j = this._config) {
-      const G = {}, V = v.parseAmbientLightPlayerMap(j?.ambient_light_player_map);
+    _ambientLightPairSelectorData(G = this._config) {
+      const j = {}, V = v.parseAmbientLightPlayerMap(G?.ambient_light_player_map);
       V.forEach((W, ue) => {
-        G[this._ambientLightPairDisplayKey("player", ue)] = W.player, G[this._ambientLightPairDisplayKey("lights", ue)] = W.lights;
+        j[this._ambientLightPairDisplayKey("player", ue)] = W.player, j[this._ambientLightPairDisplayKey("lights", ue)] = W.lights;
       });
       const Z = V.length;
-      return G[this._ambientLightPairDisplayKey("player", Z)] = this._editorAmbientLightDraft?.player || "", G[this._ambientLightPairDisplayKey("lights", Z)] = this._editorAmbientLightDraft?.lights || [], G;
+      return j[this._ambientLightPairDisplayKey("player", Z)] = this._editorAmbientLightDraft?.player || "", j[this._ambientLightPairDisplayKey("lights", Z)] = this._editorAmbientLightDraft?.lights || [], j;
     }
-    _editorFormData(j = this._config) {
+    _editorFormData(G = this._config) {
       return {
-        ...j,
-        ...this._ambientLightPairSelectorData(j)
+        ...G,
+        ...this._ambientLightPairSelectorData(G)
       };
     }
-    _normalizeEditorFormValue(j = {}) {
-      const G = { ...j };
-      this._normalizeEditorQuickActionsValue(G), this._normalizeEditorPlayerOrderValue(G);
+    _normalizeEditorFormValue(G = {}) {
+      const j = { ...G };
+      this._normalizeEditorQuickActionsValue(j), this._normalizeEditorPlayerOrderValue(j);
       const V = /* @__PURE__ */ new Set();
-      if (Object.keys(G).forEach((he) => {
+      if (Object.keys(j).forEach((he) => {
         const s = this._ambientLightPairFieldInfo(he);
         s && V.add(s.index);
-      }), !V.size) return G;
+      }), !V.size) return j;
       const Z = v.parseAmbientLightPlayerMap(this._config?.ambient_light_player_map).length, W = [];
       let ue = { player: "", lights: [] };
       return Array.from(V).sort((he, s) => he - s).forEach((he) => {
-        const s = this._ambientLightPairPlayerKey(he), A = this._ambientLightPairLightsKey(he), g = this._ambientLightPairDisplayKey("player", he), y = this._ambientLightPairDisplayKey("lights", he), S = String((G[g] ?? G[s]) || "").trim(), B = v.normalizeEntityList(G[y] ?? G[A]);
-        delete G[g], delete G[y], delete G[s], delete G[A], S && B.length ? W.push({ player: S, lights: B }) : he >= Z && (S || B.length) && (ue = { player: S, lights: B });
-      }), this._editorAmbientLightDraft = ue, G.ambient_light_player_map = this._ambientLightPlayerMapConfigFromGroups(W), G;
+        const s = this._ambientLightPairPlayerKey(he), A = this._ambientLightPairLightsKey(he), g = this._ambientLightPairDisplayKey("player", he), y = this._ambientLightPairDisplayKey("lights", he), S = String((j[g] ?? j[s]) || "").trim(), B = v.normalizeEntityList(j[y] ?? j[A]);
+        delete j[g], delete j[y], delete j[s], delete j[A], S && B.length ? W.push({ player: S, lights: B }) : he >= Z && (S || B.length) && (ue = { player: S, lights: B });
+      }), this._editorAmbientLightDraft = ue, j.ambient_light_player_map = this._ambientLightPlayerMapConfigFromGroups(W), j;
     }
-    _normalizeEditorQuickActionsValue(j = {}) {
-      if (!Object.prototype.hasOwnProperty.call(j, "mobile_quick_actions")) return j;
-      const G = v.normalizeMobileQuickActions(j.mobile_quick_actions, []);
-      j.mobile_quick_actions = G;
-      const V = new Set(G);
+    _normalizeEditorQuickActionsValue(G = {}) {
+      if (!Object.prototype.hasOwnProperty.call(G, "mobile_quick_actions")) return G;
+      const j = v.normalizeMobileQuickActions(G.mobile_quick_actions, []);
+      G.mobile_quick_actions = j;
+      const V = new Set(j);
       for (let Z = 1; Z <= 10; Z += 1) {
         const W = `mobile_quick_action_${Z}`;
-        if (!Object.prototype.hasOwnProperty.call(j, W)) continue;
-        const ue = String(j[W] || "").trim();
-        ue && !V.has(ue) && (j[W] = "");
+        if (!Object.prototype.hasOwnProperty.call(G, W)) continue;
+        const ue = String(G[W] || "").trim();
+        ue && !V.has(ue) && (G[W] = "");
       }
-      return j;
+      return G;
     }
-    _normalizeEditorPlayerOrderValue(j = {}) {
-      if (!Object.keys(j).some((W) => /^player_order_entity_\d+$/.test(W))) return j;
+    _normalizeEditorPlayerOrderValue(G = {}) {
+      if (!Object.keys(G).some((W) => /^player_order_entity_\d+$/.test(W))) return G;
       const V = this._playerOrderSchema()?.schema?.length || 0, Z = [];
-      return Object.keys(j).forEach((W) => {
+      return Object.keys(G).forEach((W) => {
         const ue = /^player_order_entity_(\d+)$/.exec(W);
         if (!ue) return;
         const he = Number(ue[1]) || 0;
         if (!V || he > V) {
-          delete j[W];
+          delete G[W];
           return;
         }
-        const s = String(j[W] || "").trim();
+        const s = String(G[W] || "").trim();
         s && !Z.includes(s) && Z.push(s);
-      }), j.player_order_entities = Z, j;
+      }), G.player_order_entities = Z, G;
     }
-    _ambientLightEntitySelector({ multiple: j = !1, entities: G = [], fallbackFilter: V = [] } = {}) {
+    _ambientLightEntitySelector({ multiple: G = !1, entities: j = [], fallbackFilter: V = [] } = {}) {
       const Z = {
         entity: {
-          multiple: j,
+          multiple: G,
           filter: V
         }
       };
-      return Z.entity.include_entities = G.map((W) => W.value), Z;
+      return Z.entity.include_entities = j.map((W) => W.value), Z;
     }
     _playerOrderSchema() {
-      const j = this._editorPlayerOrderOptions(), G = v.normalizePlayerOrderEntities(this._config || {}), V = Math.max(j.length, Math.min(G.length, j.length || G.length));
+      const G = this._editorPlayerOrderOptions(), j = v.normalizePlayerOrderEntities(this._config || {}), V = Math.max(G.length, Math.min(j.length, G.length || j.length));
       return V ? {
         type: "grid",
         name: "player_order_grid",
@@ -36271,13 +36310,13 @@ function dp(o = {}) {
         column_min_width: "220px",
         schema: Array.from({ length: V }, (Z, W) => ({
           name: `player_order_entity_${W + 1}`,
-          selector: this._playerOrderEntitySelector({ entities: j })
+          selector: this._playerOrderEntitySelector({ entities: G })
         }))
       } : null;
     }
     _ambientLightPlayerPairSchema() {
-      const j = v.parseAmbientLightPlayerMap(this._config?.ambient_light_player_map), G = Math.max(1, j.length + 1), V = this._editorPinnedPlayerOptions(), Z = this._editorColorLightOptions(), W = [];
-      for (let ue = 0; ue < G; ue += 1) {
+      const G = v.parseAmbientLightPlayerMap(this._config?.ambient_light_player_map), j = Math.max(1, G.length + 1), V = this._editorPinnedPlayerOptions(), Z = this._editorColorLightOptions(), W = [];
+      for (let ue = 0; ue < j; ue += 1) {
         const he = this._ambientLightPairDisplayKey("player", ue), s = this._ambientLightPairDisplayKey("lights", ue);
         W.push({
           name: he,
@@ -36307,30 +36346,30 @@ function dp(o = {}) {
         schema: W
       };
     }
-    _editorDynamicLabel(j = {}) {
-      const G = this._ambientLightPairFieldInfo(j);
-      if (!G) {
-        const Z = this._editorSchemaItem(j)?.name || "", W = /^player_order_entity_(\d+)$/.exec(String(Z || ""));
+    _editorDynamicLabel(G = {}) {
+      const j = this._ambientLightPairFieldInfo(G);
+      if (!j) {
+        const Z = this._editorSchemaItem(G)?.name || "", W = /^player_order_entity_(\d+)$/.exec(String(Z || ""));
         return W ? `${k("ui.player_order")} ${W[1]}` : "";
       }
-      const V = G.type === "player" ? "ui.player_light_pair_player" : "ui.player_light_pair_lights";
-      return k(V, { number: G.index + 1 });
+      const V = j.type === "player" ? "ui.player_light_pair_player" : "ui.player_light_pair_lights";
+      return k(V, { number: j.index + 1 });
     }
-    _editorDynamicHelper(j = {}) {
-      const G = this._ambientLightPairFieldInfo(j);
-      if (!G) {
-        const Z = this._editorSchemaItem(j)?.name || "";
+    _editorDynamicHelper(G = {}) {
+      const j = this._ambientLightPairFieldInfo(G);
+      if (!j) {
+        const Z = this._editorSchemaItem(G)?.name || "";
         return /^player_order_entity_\d+$/.test(String(Z || "")) ? k("ui.set_custom_player_order") : "";
       }
-      const V = G.type === "player" ? "ui.player_light_pair_player_helper" : "ui.player_light_pair_lights_helper";
+      const V = j.type === "player" ? "ui.player_light_pair_player_helper" : "ui.player_light_pair_lights_helper";
       return k(V);
     }
     _currentBaseEditorSchema() {
-      const j = this._getCardCtor().getConfigForm?.() || {};
-      return Array.isArray(j) ? j : Array.isArray(j.schema) ? j.schema : [];
+      const G = this._getCardCtor().getConfigForm?.() || {};
+      return Array.isArray(G) ? G : Array.isArray(G.schema) ? G.schema : [];
     }
-    _withDynamicEditorSchema(j = []) {
-      const G = this._editorPinnedPlayerOptions(), V = this._editorColorLightOptions(), Z = (this._config?.player_design || "immersive") === "immersive", W = /* @__PURE__ */ new Set(["mobile_footer_mode", "mobile_cover_flow", "mobile_show_up_next", "mobile_volume_mode"]), ue = /* @__PURE__ */ new Set(["volume_wheel", "fan_theme", "fan_style"]), he = (S) => {
+    _withDynamicEditorSchema(G = []) {
+      const j = this._editorPinnedPlayerOptions(), V = this._editorColorLightOptions(), Z = (this._config?.player_design || "immersive") === "immersive", W = /* @__PURE__ */ new Set(["mobile_footer_mode", "mobile_cover_flow", "mobile_show_up_next", "mobile_volume_mode"]), ue = /* @__PURE__ */ new Set(["volume_wheel", "fan_theme", "fan_style"]), he = (S) => {
         if (Z && W.has(S?.name) || !Z && ue.has(S?.name)) return null;
         if (!S || typeof S != "object") return S;
         if (S.name === "ambient_light_player_map") return this._ambientLightPlayerPairSchema();
@@ -36342,10 +36381,10 @@ function dp(o = {}) {
           select: {
             multiple: !0,
             mode: "dropdown",
-            options: G
+            options: j
           }
         }), S.name === "pinned_player_master") {
-          const E = new Set(v.normalizePinnedPlayerEntityList(this._config?.pinned_player_entities)), I = E.size ? G.filter((R) => E.has(R.value)) : G;
+          const E = new Set(v.normalizePinnedPlayerEntityList(this._config?.pinned_player_entities)), I = E.size ? j.filter((R) => E.has(R.value)) : j;
           B.selector = { select: { multiple: !1, mode: "dropdown", options: I } };
         }
         return S.name === "ambient_light_entities" && (B.selector = this._ambientLightEntitySelector({
@@ -36353,7 +36392,7 @@ function dp(o = {}) {
           entities: V,
           fallbackFilter: [{ domain: "light" }]
         })), B;
-      }, s = (Array.isArray(j) ? j : []).map(he).filter(Boolean), A = s.find((S) => S.name === "connection_section");
+      }, s = (Array.isArray(G) ? G : []).map(he).filter(Boolean), A = s.find((S) => S.name === "connection_section");
       A && (A.title = this._isHebrew() ? "מנוע והגדרות מתקדמות" : "Engine & advanced");
       const g = s.find((S) => S.name === "general_section"), y = g?.schema?.find((S) => S.name === "general_grid");
       if (y) {
@@ -36366,27 +36405,27 @@ function dp(o = {}) {
     }
     _render() {
       this._ensureEditorShell();
-      const j = this._getCardCtor(), G = {
-        ...j.getStubConfig(),
+      const G = this._getCardCtor(), j = {
+        ...G.getStubConfig(),
         ...this._config
-      }, V = j.getConfigForm?.() || {}, Z = this._currentBaseEditorSchema(), W = this._withDynamicEditorSchema(Z), ue = this._editorFormData(G), he = V.labels || {}, s = V.helpers || {}, A = typeof V.computeLabel == "function" ? V.computeLabel : (y) => he?.[y?.name], g = typeof V.computeHelper == "function" ? V.computeHelper : (y) => s?.[y?.name];
+      }, V = G.getConfigForm?.() || {}, Z = this._currentBaseEditorSchema(), W = this._withDynamicEditorSchema(Z), ue = this._editorFormData(j), he = V.labels || {}, s = V.helpers || {}, A = typeof V.computeLabel == "function" ? V.computeLabel : (y) => he?.[y?.name], g = typeof V.computeHelper == "function" ? V.computeHelper : (y) => s?.[y?.name];
       if (this._syncEditorLiveContext(), this._editorForm) {
         const y = (X) => {
           const me = this._editorSchemaItem(X);
           return this._editorDynamicLabel(X) || A(me) || M(me, he);
         }, S = (X) => {
           const me = this._editorSchemaItem(X);
-          return this._editorDynamicHelper(X) || g(me) || P(me, s);
+          return this._editorDynamicHelper(X) || g(me) || Q(me, s);
         };
         this._editorForm.computeLabel = y, this._editorForm.computeHelper = S;
         const B = JSON.stringify(W), E = W.filter((X) => X.type === "expandable"), I = E.find((X) => X.name === this._editorSection) || E[0];
         this._editorSection = I?.name || "";
-        const R = this._editorRoot.querySelector("#editorSection"), Y = this._editorRoot.querySelector("#editorBasics");
+        const R = this._editorRoot.querySelector("#editorSection"), O = this._editorRoot.querySelector("#editorBasics");
         if (R) {
           const X = E.map((me) => `<option value="${this._esc(me.name)}">${this._esc(me.title || y(me))}</option>`).join("");
           R.innerHTML !== X && (R.innerHTML = X), R.value = this._editorSection, this._editorRoot.querySelector(".editor-section-nav label").textContent = this._isHebrew() ? "מה תרצה להתאים?" : "What would you like to adjust?";
         }
-        Y && (Y.hass = this._hass, Y.computeLabel = y, Y.computeHelper = S, this._editorLastSchemaKey !== B && (Y.schema = W.filter((X) => X.type !== "expandable")), Y.data = ue), this._editorLastSchemaKey !== B && (this._editorForm.schema = I?.schema || [], this._editorLastSchemaKey = B);
+        O && (O.hass = this._hass, O.computeLabel = y, O.computeHelper = S, this._editorLastSchemaKey !== B && (O.schema = W.filter((X) => X.type !== "expandable")), O.data = ue), this._editorLastSchemaKey !== B && (this._editorForm.schema = I?.schema || [], this._editorLastSchemaKey = B);
         const $ = JSON.stringify(ue);
         this._editorLastConfigKey !== $ && (this._editorForm.data = ue, this._editorLastConfigKey = $);
       }
@@ -38717,21 +38756,21 @@ function Jn(o, e = "info", t = {}) {
     h - W > 12e3 && this._toastHistory.delete(Z);
   const M = Array.from(a.querySelectorAll(".toast"));
   for (; M.length >= 3; ) M.shift()?.remove();
-  const P = t?.position === "center", F = t?.position === "top";
-  a.classList.toggle("studio-toast", !!this._state.controlRoomOpen && !P), P && a.classList.add("center-toast"), F && a.classList.add("top-toast");
+  const Q = t?.position === "center", F = t?.position === "top";
+  a.classList.toggle("studio-toast", !!this._state.controlRoomOpen && !Q), Q && a.classList.add("center-toast"), F && a.classList.add("top-toast");
   const q = document.createElement("div");
-  q.className = `toast ${p}${P ? " centered" : ""}${F ? " top" : ""}`, q.setAttribute("role", p === "error" ? "alert" : "status"), q.setAttribute("aria-atomic", "true");
-  const O = p === "success" ? "✓" : p === "error" ? "×" : "i";
-  q.innerHTML = `<span class="toast-icon" aria-hidden="true">${O}</span><span class="toast-text">${this._esc(l)}</span>`;
-  const H = String(t?.issueAckKey || "").trim(), j = String(t?.issueAckText || l).trim();
-  let G = !1;
+  q.className = `toast ${p}${Q ? " centered" : ""}${F ? " top" : ""}`, q.setAttribute("role", p === "error" ? "alert" : "status"), q.setAttribute("aria-atomic", "true");
+  const Y = p === "success" ? "✓" : p === "error" ? "×" : "i";
+  q.innerHTML = `<span class="toast-icon" aria-hidden="true">${Y}</span><span class="toast-text">${this._esc(l)}</span>`;
+  const H = String(t?.issueAckKey || "").trim(), G = String(t?.issueAckText || l).trim();
+  let j = !1;
   const V = () => {
-    G || (G = !0, q.remove(), P && !a.querySelector(".toast.centered") && a.classList.remove("center-toast"), F && !a.querySelector(".toast.top") && a.classList.remove("top-toast"));
+    j || (j = !0, q.remove(), Q && !a.querySelector(".toast.centered") && a.classList.remove("center-toast"), F && !a.querySelector(".toast.top") && a.classList.remove("top-toast"));
   };
   if (H) {
     const Z = document.createElement("button");
     Z.type = "button", Z.className = "toast-ack", Z.textContent = this._i18n("ui.confirm", {}, "OK") || "OK", Z.addEventListener("click", (W) => {
-      W?.stopPropagation?.(), this._acknowledgeCardIssue(H, j), V();
+      W?.stopPropagation?.(), this._acknowledgeCardIssue(H, G), V();
     }), q.appendChild(Z);
   }
   return a.appendChild(q), setTimeout(V, Number(t?.duration || 3300)), V;
@@ -38748,15 +38787,15 @@ async function Vl(o, e, t, a = []) {
   if (v.length === 2) {
     h.replaceChildren();
     for (const M of v) {
-      const P = document.createElement("i"), F = o._playerArtworkUrl?.(M, 120);
-      F ? P.innerHTML = o._imgHtml(F, "", { loading: "eager", fallbackIcon: "speaker" }) : P.innerHTML = o._iconSvg?.("speaker") || "", P.title = M.attributes?.friendly_name || M.entity_id, h.append(P);
+      const Q = document.createElement("i"), F = o._playerArtworkUrl?.(M, 120);
+      F ? Q.innerHTML = o._imgHtml(F, "", { loading: "eager", fallbackIcon: "speaker" }) : Q.innerHTML = o._iconSvg?.("speaker") || "", Q.title = M.attributes?.friendly_name || M.entity_id, h.append(Q);
     }
     p.classList.add("has-player-art");
   }
   const k = document.createElement("span");
   if (k.textContent = e === "disconnect" ? o._m("Disconnecting…", "מנתק…") : o._m("Updating group…", "מעדכן קבוצה…"), p.append(h, k), l.append(p), v.length === 2) {
     const M = document.createElement("small");
-    M.className = "group-pair-names", M.textContent = v.map((P) => o._playerDisplayName?.(P) || P.attributes?.friendly_name || P.entity_id).join(" · "), p.append(M);
+    M.className = "group-pair-names", M.textContent = v.map((Q) => o._playerDisplayName?.(Q) || Q.attributes?.friendly_name || Q.entity_id).join(" · "), p.append(M);
   }
   try {
     const M = await t();
@@ -38830,12 +38869,12 @@ function Sp(o, e = []) {
   return [...new Set((Array.isArray(e) ? e : []).map((a) => String(a || "").trim()).filter((a) => a && a !== t))];
 }
 function Mp(o = this._state.selectedPlayer, e = this._state.pendingGroupSelections || []) {
-  const t = String(o || "").trim(), a = this._currentSpeakerGroupOwnerId(t) || t, l = this._currentSpeakerGroupMemberIds(t), p = l.filter((F) => F && F !== a), h = this._normalizeGroupMemberSelection(a, e), v = new Set(p), k = new Set(h), M = [...new Set((Array.isArray(e) ? e : []).map((F) => String(F || "").trim()).filter(Boolean))], P = !!(a && l.length > 1 && this._state.pendingGroupOwnerRemoval && !M.includes(a));
+  const t = String(o || "").trim(), a = this._currentSpeakerGroupOwnerId(t) || t, l = this._currentSpeakerGroupMemberIds(t), p = l.filter((F) => F && F !== a), h = this._normalizeGroupMemberSelection(a, e), v = new Set(p), k = new Set(h), M = [...new Set((Array.isArray(e) ? e : []).map((F) => String(F || "").trim()).filter(Boolean))], Q = !!(a && l.length > 1 && this._state.pendingGroupOwnerRemoval && !M.includes(a));
   return {
     owner: a,
     currentAll: l,
     desiredAll: M,
-    ownerRemoved: P,
+    ownerRemoved: Q,
     current: p,
     desired: h,
     added: h.filter((F) => !v.has(F)),
@@ -38853,19 +38892,19 @@ async function Bp(o, e = [], t = {}) {
   if (!this._hass?.states || typeof this._loadPlayers != "function")
     return { ok: !0, skipped: !0, members: e };
   const a = String(o || "").trim(), l = [...new Set((Array.isArray(e) ? e : []).map((F) => String(F || "").trim()).filter(Boolean))], p = Math.max(700, Number(t.timeoutMs || 8e3) || 8e3), h = Math.max(150, Number(t.intervalMs || 350) || 350), v = Date.now() + p, k = l.length > 1 ? 5500 : 0;
-  let M = null, P = [];
+  let M = null, Q = [];
   do {
     let F = !1;
     try {
       this._homeiiEngineRequired?.() && await this._refreshEnginePlayers({ force: !0, requireFresh: !0 }), await this._loadPlayers(), F = !0;
     } catch {
     }
-    if (P = this._currentSpeakerGroupMemberIds(a), F && (l.length <= 1 ? P.length <= 1 : this._sameSpeakerGroupMembers(P, l))) {
-      if (M ?? (M = Date.now()), Date.now() - M >= k) return { ok: !0, skipped: !1, members: P };
+    if (Q = this._currentSpeakerGroupMemberIds(a), F && (l.length <= 1 ? Q.length <= 1 : this._sameSpeakerGroupMembers(Q, l))) {
+      if (M ?? (M = Date.now()), Date.now() - M >= k) return { ok: !0, skipped: !1, members: Q };
     } else M = null;
-    await new Promise((O) => setTimeout(O, h));
+    await new Promise((Y) => setTimeout(Y, h));
   } while (Date.now() < v);
-  return { ok: !1, skipped: !1, members: P };
+  return { ok: !1, skipped: !1, members: Q };
 }
 function Ep(o = {}) {
   const e = this._getSelectedPlayer();
@@ -38879,8 +38918,8 @@ function Ip() {
   if (!e) return;
   const t = this._getSelectedPlayer(), a = this.$("groupModalSubtitle"), l = this.$("groupCountBadge"), p = this._currentSpeakerGroupOwnerId(t?.entity_id), h = this._groupSelectionDelta(t?.entity_id, this._state.pendingGroupSelections || []), v = new Set(h.currentAll || []), k = new Set(h.desiredAll || []);
   a && (a.textContent = this._playerDisplayName(t) || this._i18n("ui.choose_player")), l && (l.textContent = String(o.length)), e.innerHTML = o.length ? o.map((M) => {
-    const P = k.has(M.entity_id), F = v.has(M.entity_id), q = M.entity_id === p;
-    return `<label class="group-item ${P ? "checked" : ""} ${F ? "connected" : ""} ${q ? "group-owner" : ""}"><span class="group-meta"><span class="group-name">${this._esc(this._playerDisplayName(M, o))}<span class="group-item-toggle ${P ? "checked" : ""}" aria-hidden="true">${this._iconSvg(P ? "check" : "plus")}</span></span><span class="group-sub">${q ? this._esc(this._m("Master", "מוביל")) : ""}</span></span><input type="checkbox" data-group-player="${this._esc(M.entity_id)}" data-group-owner="${q ? "true" : "false"}" ${P ? "checked" : ""}></label>`;
+    const Q = k.has(M.entity_id), F = v.has(M.entity_id), q = M.entity_id === p;
+    return `<label class="group-item ${Q ? "checked" : ""} ${F ? "connected" : ""} ${q ? "group-owner" : ""}"><span class="group-meta"><span class="group-name">${this._esc(this._playerDisplayName(M, o))}<span class="group-item-toggle ${Q ? "checked" : ""}" aria-hidden="true">${this._iconSvg(Q ? "check" : "plus")}</span></span><span class="group-sub">${q ? this._esc(this._m("Master", "מוביל")) : ""}</span></span><input type="checkbox" data-group-player="${this._esc(M.entity_id)}" data-group-owner="${q ? "true" : "false"}" ${Q ? "checked" : ""}></label>`;
   }).join("") : `<div class="state-box" style="min-height:80px;padding:8px 0;">${this._esc(this._i18n("ui.no_extra_ma_players"))}</div>`, this._syncGroupModalApplyButton(), this.$("groupModal").classList.add("open");
 }
 function Pp() {
@@ -38911,8 +38950,8 @@ async function Lp(o, e = []) {
   if (!t) return !1;
   const { owner: a, current: l, desired: p, added: h, removed: v } = this._groupSelectionDelta(t, e), k = a || t;
   if (!p.length && !l.length) return !1;
-  const M = !!(a && a !== t && v.includes(a)), P = !!(a && this._state.pendingGroupOwnerRemoval);
-  if (M || P)
+  const M = !!(a && a !== t && v.includes(a)), Q = !!(a && this._state.pendingGroupOwnerRemoval);
+  if (M || Q)
     return await this._clearSpeakerGroupFor(a), this._state.pendingGroupSelections = [], this._state.pendingGroupOwnerRemoval = !1, this._state.pendingGroupSelectionsDirty = !1, !0;
   if (!h.length && !v.length) return !1;
   if (typeof this._homeiiEngineApplyGroup == "function" && this._homeiiEngineEnabled?.() && (this._state?.engineAvailable || this._homeiiEngineRequired?.()))
@@ -38923,19 +38962,19 @@ async function Lp(o, e = []) {
         members: p,
         remove_members: v
       });
-      const G = [.../* @__PURE__ */ new Set([k, ...p])];
-      if (!(await this._waitForSpeakerGroupConfirmation(k, G)).ok)
+      const j = [.../* @__PURE__ */ new Set([k, ...p])];
+      if (!(await this._waitForSpeakerGroupConfirmation(k, j)).ok)
         throw new Error(this._m("Group command was sent, but Music Assistant did not confirm the new group state.", "פקודת הקבוצה נשלחה, אבל Music Assistant לא אישר שהקבוצה התעדכנה."));
-      return this._state.pendingGroupSelections = G, this._state.pendingGroupOwnerRemoval = !1, this._state.pendingGroupSelectionsDirty = !1, setTimeout(() => {
+      return this._state.pendingGroupSelections = j, this._state.pendingGroupOwnerRemoval = !1, this._state.pendingGroupSelectionsDirty = !1, setTimeout(() => {
         this._loadPlayers(), this._refreshGroupingState(), this._state.menuOpen && this._renderMobileMenu(), this._state.controlRoomOpen && this._syncControlRoomUi({ force: !0 });
       }, 650), !0;
-    } catch (G) {
-      if (this._debugLog?.("warn", "[HOMEii Flow] HOMEii Flow Engine group fallback failed", G), this._homeiiEngineRequired?.()) throw G;
+    } catch (j) {
+      if (this._debugLog?.("warn", "[HOMEii Flow] HOMEii Flow Engine group fallback failed", j), this._homeiiEngineRequired?.()) throw j;
     }
-  const q = v.length ? await Promise.allSettled(v.map((G) => this._callHaMediaPlayerService(G, "unjoin"))) : [];
+  const q = v.length ? await Promise.allSettled(v.map((j) => this._callHaMediaPlayerService(j, "unjoin"))) : [];
   h.length && p.length && await this._callHaMediaPlayerService(k, "join", { group_members: p });
-  const O = q.find((G) => G.status === "rejected");
-  if (O && !h.length) throw O.reason || new Error(this._i18n("ui.player_groups_could_not_be_disconnected"));
+  const Y = q.find((j) => j.status === "rejected");
+  if (Y && !h.length) throw Y.reason || new Error(this._i18n("ui.player_groups_could_not_be_disconnected"));
   const H = [.../* @__PURE__ */ new Set([k, ...p])];
   if (!(await this._waitForSpeakerGroupConfirmation(k, H)).ok)
     throw new Error(this._m("Group command was sent, but Music Assistant did not confirm the new group state.", "פקודת הקבוצה נשלחה, אבל Music Assistant לא אישר שהקבוצה התעדכנה."));
@@ -38968,11 +39007,11 @@ function Rp(o) {
   this._state.players = t.map((p) => {
     if (!p?.entity_id) return p;
     const h = p.attributes || {}, v = Array.isArray(h.group_members) ? h.group_members.filter(Boolean) : [];
-    if (!(l.has(p.entity_id) || v.some((P) => l.has(P))) && !v.length) return p;
+    if (!(l.has(p.entity_id) || v.some((Q) => l.has(Q))) && !v.length) return p;
     const M = { ...h };
     if (v.length) {
-      const P = v.filter((F) => F && !l.has(F));
-      P.length > 1 ? M.group_members = P : delete M.group_members;
+      const Q = v.filter((F) => F && !l.has(F));
+      Q.length > 1 ? M.group_members = Q : delete M.group_members;
     }
     return l.has(p.entity_id) && (delete M.group_members, delete M.group_childs, delete M.group_children, delete M.group_leader, delete M.group_parent, delete M.group_master), { ...p, attributes: M };
   }), this._state.pendingGroupSelections = [], this._state.pendingGroupOwnerRemoval = !1, this._state.pendingGroupSelectionsDirty = !1, this._refreshGroupingState(), this._syncNowPlayingUI(), this._state.view === "now_playing" && this._renderNowPlayingPage(), this._state.menuOpen && this._state.menuPage === "group" && this._renderMobileMenu().catch(() => {
@@ -38994,20 +39033,20 @@ async function qp(o) {
       });
       return;
     }
-    const M = await Promise.allSettled(k.map((F) => this._callHaMediaPlayerService(F, "unjoin"))), P = k.filter((F, q) => M[q].status === "rejected");
-    if (P.length) throw new Error(`${this._m("Could not disconnect", "לא ניתן לנתק")}: ${P.map((F) => this._playerByEntityId(F)?.attributes?.friendly_name || F).join(", ")}`);
+    const M = await Promise.allSettled(k.map((F) => this._callHaMediaPlayerService(F, "unjoin"))), Q = k.filter((F, q) => M[q].status === "rejected");
+    if (Q.length) throw new Error(`${this._m("Could not disconnect", "לא ניתן לנתק")}: ${Q.map((F) => this._playerByEntityId(F)?.attributes?.friendly_name || F).join(", ")}`);
   };
   if (typeof this._isStaticGroupPlayer == "function" && this._isStaticGroupPlayer(a)) {
     const k = this._playerGroupMemberIds(a).filter((M) => M && M !== a.entity_id).filter((M) => {
-      const P = (this._state.players || []).find((F) => F.entity_id === M) || this._hass?.states?.[M];
-      return P && !this._isStaticGroupPlayer(P);
+      const Q = (this._state.players || []).find((F) => F.entity_id === M) || this._hass?.states?.[M];
+      return Q && !this._isStaticGroupPlayer(Q);
     });
     return k.length && await l(k), this._clearLocalGroupState(a.entity_id), setTimeout(() => {
       this._loadPlayers(), this._refreshGroupingState(), this._state.menuOpen && this._renderMobileMenu(), this._state.view === "now_playing" && this._renderNowPlayingPage();
     }, 500), !0;
   }
   const p = this._currentSpeakerGroupMemberIds(t), h = p.length > 1 ? p.filter((k) => {
-    const M = (this._state.players || []).find((P) => P.entity_id === k) || this._hass?.states?.[k];
+    const M = (this._state.players || []).find((Q) => Q.entity_id === k) || this._hass?.states?.[k];
     return M && !(typeof this._isStaticGroupPlayer == "function" && this._isStaticGroupPlayer(M));
   }) : [a.entity_id];
   if (await l(h), !(await this._waitForSpeakerGroupConfirmation(t, [t], { timeoutMs: 2600 })).ok)
@@ -39030,8 +39069,8 @@ function Hp(o, e) {
     o._state?.maQueueState?.current_item?.queue_item_id,
     o._getCurrentMediaUri?.()
   ]), h = () => e.getAttribute("aria-disabled") !== "true" && o._getCurrentDuration() > 0, v = (M) => {
-    const P = e.getBoundingClientRect();
-    P.width && (o._progressSeekPreview = Math.round(o._getCurrentDuration() * Math.max(0, Math.min(1, (M.clientX - P.left) / P.width))), o._applyProgressUi(o._progressSeekPreview, o._getCurrentDuration()));
+    const Q = e.getBoundingClientRect();
+    Q.width && (o._progressSeekPreview = Math.round(o._getCurrentDuration() * Math.max(0, Math.min(1, (M.clientX - Q.left) / Q.width))), o._applyProgressUi(o._progressSeekPreview, o._getCurrentDuration()));
   };
   e.addEventListener("pointerdown", (M) => {
     if (!(t !== null || !h() || M.isPrimary === !1 || M.button > 0)) {
@@ -39045,9 +39084,9 @@ function Hp(o, e) {
   }), e.addEventListener("pointermove", (M) => {
     t === null || M.pointerId !== t || (M.preventDefault(), v(M));
   });
-  const k = (M, P) => {
+  const k = (M, Q) => {
     if (t === null || M.pointerId !== t) return;
-    const F = !P && h() && a === p();
+    const F = !Q && h() && a === p();
     t = null, o._progressSeekDragging = !1, delete o._progressSeekPreview, l = Date.now() + 400;
     try {
       e.releasePointerCapture?.(M.pointerId);
@@ -39098,15 +39137,15 @@ class Wl {
     for (let v = 0; v < t.channels; v++) {
       const k = h[v];
       for (let M = 0; M < p; M++) {
-        const P = (M * t.channels + v) * a;
+        const Q = (M * t.channels + v) * a;
         let F = 0;
         if (t.bit_depth === 16)
-          F = l.getInt16(P, !0) / 32768;
+          F = l.getInt16(Q, !0) / 32768;
         else if (t.bit_depth === 24) {
-          const q = l.getUint8(P), O = l.getUint8(P + 1);
-          let j = l.getUint8(P + 2) << 16 | O << 8 | q;
-          j & 8388608 && (j |= 4278190080), F = j / 8388608;
-        } else t.bit_depth === 32 && (F = l.getInt32(P, !0) / 2147483648);
+          const q = l.getUint8(Q), Y = l.getUint8(Q + 1);
+          let G = l.getUint8(Q + 2) << 16 | Y << 8 | q;
+          G & 8388608 && (G |= 4278190080), F = G / 8388608;
+        } else t.bit_depth === 32 && (F = l.getInt32(Q, !0) / 2147483648);
         k[M] = F;
       }
     }
@@ -39217,27 +39256,27 @@ class Wl {
       let M;
       if (k === "f32-planar") {
         M = new Float32Array(v * h);
-        for (let P = 0; P < h; P++) {
+        for (let Q = 0; Q < h; Q++) {
           const F = new Float32Array(v);
-          e.copyTo(F, { planeIndex: P });
+          e.copyTo(F, { planeIndex: Q });
           for (let q = 0; q < v; q++)
-            M[q * h + P] = F[q];
+            M[q * h + Q] = F[q];
         }
       } else if (k === "f32")
         M = new Float32Array(v * h), e.copyTo(M, { planeIndex: 0 });
       else if (k === "s16-planar") {
         M = new Float32Array(v * h);
-        for (let P = 0; P < h; P++) {
+        for (let Q = 0; Q < h; Q++) {
           const F = new Int16Array(v);
-          e.copyTo(F, { planeIndex: P });
+          e.copyTo(F, { planeIndex: Q });
           for (let q = 0; q < v; q++)
-            M[q * h + P] = F[q] / 32768;
+            M[q * h + Q] = F[q] / 32768;
         }
       } else if (k === "s16") {
-        const P = new Int16Array(v * h);
-        e.copyTo(P, { planeIndex: 0 }), M = new Float32Array(v * h);
+        const Q = new Int16Array(v * h);
+        e.copyTo(Q, { planeIndex: 0 }), M = new Float32Array(v * h);
         for (let F = 0; F < v * h; F++)
-          M[F] = P[F] / 32768;
+          M[F] = Q[F] / 32768;
       } else {
         console.warn(`[NativeOpus] Unsupported AudioData format: ${k}`), e.close();
         return;
@@ -39341,8 +39380,8 @@ class Wl {
       const p = l[0], h = p.length / t.channels, v = [];
       for (let k = 0; k < t.channels; k++) {
         const M = new Float32Array(h);
-        for (let P = 0; P < h; P++)
-          M[P] = p[P * t.channels + k];
+        for (let Q = 0; Q < h; Q++)
+          M[Q] = p[Q * t.channels + k];
         v.push(M);
       }
       return { samples: v, sampleRate: t.sample_rate };
@@ -39795,8 +39834,8 @@ class Zp {
       const M = this.ws.onclose;
       this.ws.onopen = () => {
         console.log("Sendspin: Adopted WebSocket connected"), k();
-      }, this.ws.onclose = (P) => {
-        M && M.call(this.ws, P), v(new Error("Sendspin: Adopted WebSocket closed before opening"));
+      }, this.ws.onclose = (Q) => {
+        M && M.call(this.ws, Q), v(new Error("Sendspin: Adopted WebSocket closed before opening"));
       };
     });
   }
@@ -39918,13 +39957,13 @@ class Kl {
       return;
     }
     const v = this._offset + this._drift * l, k = l * l, M = l * this._drift_process_variance;
-    let P = this._drift_covariance + M, q = this._offset_drift_covariance + this._drift_covariance * l + 0;
-    const O = l * this._offset_process_variance;
-    let H = this._offset_covariance + 2 * this._offset_drift_covariance * l + this._drift_covariance * k + O;
-    const j = e - v, G = t * Xp;
-    this._count < 100 ? this._count += 1 : Math.abs(j) > G && (P *= this._forget_variance_factor, q *= this._forget_variance_factor, H *= this._forget_variance_factor);
+    let Q = this._drift_covariance + M, q = this._offset_drift_covariance + this._drift_covariance * l + 0;
+    const Y = l * this._offset_process_variance;
+    let H = this._offset_covariance + 2 * this._offset_drift_covariance * l + this._drift_covariance * k + Y;
+    const G = e - v, j = t * Xp;
+    this._count < 100 ? this._count += 1 : Math.abs(G) > j && (Q *= this._forget_variance_factor, q *= this._forget_variance_factor, H *= this._forget_variance_factor);
     const V = 1 / (H + h), Z = H * V, W = q * V;
-    this._offset = v + Z * j, this._drift += W * j, this._drift_covariance = P - W * q, this._offset_drift_covariance = q - W * H, this._offset_covariance = H - Z * H;
+    this._offset = v + Z * G, this._drift += W * G, this._drift_covariance = Q - W * q, this._offset_drift_covariance = q - W * H, this._offset_covariance = H - Z * H;
     const ue = this._drift * this._drift;
     this._use_drift = ue > this._drift_significance_threshold_squared * this._drift_covariance, this._current_time_element = {
       last_update: this._last_update,
@@ -40281,9 +40320,9 @@ class dh {
       };
       if (v > eh)
         return this.rejectSample(`stale timestamp (${v.toFixed(1)}ms old)`, !0), null;
-      const P = k - e;
-      if (Math.abs(P) > ih)
-        return this.rejectSample(`timestamp/raw divergence ${Math.abs(P * 1e3).toFixed(1)}ms`, !0), null;
+      const Q = k - e;
+      if (Math.abs(Q) > ih)
+        return this.rejectSample(`timestamp/raw divergence ${Math.abs(Q * 1e3).toFixed(1)}ms`, !0), null;
       const F = this.lastSample;
       if (F) {
         const q = l.performanceTime - F.performanceTimeMs;
@@ -40291,15 +40330,15 @@ class dh {
           return this.rejectSample(`performanceTime moved backward (${q.toFixed(1)}ms)`, !0), null;
         if (k < F.predictedAudioTimeSec - rh)
           return this.rejectSample(`predicted audio time moved backward ${((F.predictedAudioTimeSec - k) * 1e3).toFixed(1)}ms`, !0), null;
-        const O = F.predictedAudioTimeSec - F.rawAudioTimeSec;
-        if (Math.abs(P - O) > ah)
-          return this.rejectSample(`timestamp/raw divergence drift ${Math.abs((P - O) * 1e3).toFixed(1)}ms`), null;
+        const Y = F.predictedAudioTimeSec - F.rawAudioTimeSec;
+        if (Math.abs(Q - Y) > ah)
+          return this.rejectSample(`timestamp/raw divergence drift ${Math.abs((Q - Y) * 1e3).toFixed(1)}ms`), null;
         if (q >= th) {
-          const H = q / 1e3, j = (l.contextTime - F.contextTimeSec) / H, G = (k - F.predictedAudioTimeSec) / H;
-          if (j < Kn || j > Zn)
-            return this.rejectSample(`context slope ${j.toFixed(3)} out of range`), null;
+          const H = q / 1e3, G = (l.contextTime - F.contextTimeSec) / H, j = (k - F.predictedAudioTimeSec) / H;
           if (G < Kn || G > Zn)
-            return this.rejectSample(`predicted slope ${G.toFixed(3)} out of range`), null;
+            return this.rejectSample(`context slope ${G.toFixed(3)} out of range`), null;
+          if (j < Kn || j > Zn)
+            return this.rejectSample(`predicted slope ${j.toFixed(3)} out of range`), null;
         }
       }
       return this.lastSample = M, this.badSamples = 0, this.goodSinceMs === null && (this.goodSinceMs = p), this.goodSamples += 1, this.activeSource !== "timestamp" && this.goodSamples >= sh && this.goodSinceMs !== null && p - this.goodSinceMs >= nh && (this.setActive("timestamp"), this._lastRejectReason = null), k;
@@ -40622,14 +40661,14 @@ class $l {
         for (let v = 0; v < a; v++) {
           const k = e.getChannelData(v), M = h.getChannelData(v);
           M[0] = k[0];
-          const P = (k[0] + k[1]) / 2;
-          M[1] = P, M.set(k.subarray(1), 2);
+          const Q = (k[0] + k[1]) / 2;
+          M[1] = Q, M.set(k.subarray(1), 2);
           for (let F = 0; F < Ma; F++) {
             const q = 2 + F;
             if (q >= M.length)
               break;
-            const O = as[F];
-            M[q] = M[q] * (1 - O) + P * O;
+            const Y = as[F];
+            M[q] = M[q] * (1 - Y) + Q * Y;
           }
         }
         return h;
@@ -40638,14 +40677,14 @@ class $l {
         for (let v = 0; v < a; v++) {
           const k = e.getChannelData(v), M = h.getChannelData(v);
           M.set(k.subarray(0, l - 2));
-          const P = (k[l - 2] + k[l - 1]) / 2;
-          M[l - 2] = P;
+          const Q = (k[l - 2] + k[l - 1]) / 2;
+          M[l - 2] = Q;
           for (let F = 0; F < Ma; F++) {
             const q = l - 3 - F;
             if (q < 0)
               break;
-            const O = as[F];
-            M[q] = M[q] * (1 - O) + P * O;
+            const Y = as[F];
+            M[q] = M[q] * (1 - Y) + Q * Y;
           }
         }
         return h;
@@ -40779,7 +40818,7 @@ class $l {
     if (this.cancelScheduledRefill(), !this.audioContext || !this.gainNode || this.audioContext.state !== "running")
       return;
     const e = this.stateManager.streamGeneration;
-    if (this.audioBufferQueue = this.audioBufferQueue.filter((M) => M.generation === e), this.audioBufferQueue.sort((M, P) => M.serverTime - P.serverTime), !this.timeFilter.is_synchronized)
+    if (this.audioBufferQueue = this.audioBufferQueue.filter((M) => M.generation === e), this.audioBufferQueue.sort((M, Q) => M.serverTime - Q.serverTime), !this.timeFilter.is_synchronized)
       return;
     const { audioContextTimeSec: t, audioContextRawTimeSec: a, nowMs: l, nowUs: p } = this.clockSource.getTimingSnapshot(this.audioContext);
     this.pruneExpiredScheduledSources(a);
@@ -40795,50 +40834,50 @@ class $l {
       const M = this.getScheduledAheadSec(a);
       if (this.nextPlaybackTime > 0 && M >= k)
         break;
-      const P = this.audioBufferQueue.shift();
-      let F, q, O;
-      const H = this.computeTargetPlaybackTime(P.serverTime, t, p, h), j = this.clockSource.active === "timestamp";
+      const Q = this.audioBufferQueue.shift();
+      let F, q, Y;
+      const H = this.computeTargetPlaybackTime(Q.serverTime, t, p, h), G = this.clockSource.active === "timestamp";
       if (this.nextPlaybackTime === 0 || this.lastScheduledServerTime === 0) {
-        this.recorrectionMonitor.armStartupGrace(l, j), F = H, q = F - v;
+        this.recorrectionMonitor.armStartupGrace(l, G), F = H, q = F - v;
         const he = this.recorrectionMonitor.minScheduleTimeSec;
-        he !== null && (q = Math.max(q, he), F = q + v), this.recorrectionMonitor.clearMinScheduleTime(), O = 1, P.buffer = this.copyBuffer(P.buffer);
+        he !== null && (q = Math.max(q, he), F = q + v), this.recorrectionMonitor.clearMinScheduleTime(), Y = 1, Q.buffer = this.copyBuffer(Q.buffer);
       } else {
-        const s = (P.serverTime - this.lastScheduledServerTime) / 1e6;
+        const s = (Q.serverTime - this.lastScheduledServerTime) / 1e6;
         if (Math.abs(s) < 0.1) {
-          const g = (this.nextPlaybackTime - H) * 1e3, y = this.applySyncErrorEma(g), S = this.correctionThresholds[this._correctionMode], B = this.recorrectionMonitor.canUseHardResync(l, j);
+          const g = (this.nextPlaybackTime - H) * 1e3, y = this.applySyncErrorEma(g), S = this.correctionThresholds[this._correctionMode], B = this.recorrectionMonitor.canUseHardResync(l, G);
           if (Math.abs(y) > S.resyncAboveMs && B)
-            this.recorrectionMonitor.noteHardResync(l), this.resyncCount++, this._intervalResyncCount++, this.resetSyncErrorEma(), this.cutScheduledSources(H - v), F = H, q = F - v, O = 1, this.currentCorrectionMethod = "resync", this.lastSamplesAdjusted = 0, P.buffer = this.copyBuffer(P.buffer);
+            this.recorrectionMonitor.noteHardResync(l), this.resyncCount++, this._intervalResyncCount++, this.resetSyncErrorEma(), this.cutScheduledSources(H - v), F = H, q = F - v, Y = 1, this.currentCorrectionMethod = "resync", this.lastSamplesAdjusted = 0, Q.buffer = this.copyBuffer(Q.buffer);
           else if (Math.abs(y) > S.resyncAboveMs)
-            F = this.nextPlaybackTime, q = this.nextScheduleTime, O = Number.isFinite(S.rate2AboveMs) ? y > 0 ? 1.02 : 0.98 : 1, this.currentCorrectionMethod = O === 1 ? "none" : "rate", this.lastSamplesAdjusted = 0, P.buffer = this.copyBuffer(P.buffer);
+            F = this.nextPlaybackTime, q = this.nextScheduleTime, Y = Number.isFinite(S.rate2AboveMs) ? y > 0 ? 1.02 : 0.98 : 1, this.currentCorrectionMethod = Y === 1 ? "none" : "rate", this.lastSamplesAdjusted = 0, Q.buffer = this.copyBuffer(Q.buffer);
           else if (Math.abs(y) < S.deadbandBelowMs)
-            F = this.nextPlaybackTime, q = this.nextScheduleTime, O = 1, this.currentCorrectionMethod = "none", this.lastSamplesAdjusted = 0, P.buffer = this.copyBuffer(P.buffer);
+            F = this.nextPlaybackTime, q = this.nextScheduleTime, Y = 1, this.currentCorrectionMethod = "none", this.lastSamplesAdjusted = 0, Q.buffer = this.copyBuffer(Q.buffer);
           else if (Math.abs(y) <= S.samplesBelowMs) {
-            F = this.nextPlaybackTime, q = this.nextScheduleTime, O = 1;
+            F = this.nextPlaybackTime, q = this.nextScheduleTime, Y = 1;
             const E = y > 0 ? -1 : 1;
-            P.buffer = this.adjustBufferSamples(P.buffer, E), this.currentCorrectionMethod = "samples", this.lastSamplesAdjusted = E;
+            Q.buffer = this.adjustBufferSamples(Q.buffer, E), this.currentCorrectionMethod = "samples", this.lastSamplesAdjusted = E;
           } else {
             F = this.nextPlaybackTime, q = this.nextScheduleTime;
             const E = Math.abs(y);
-            y > 0 ? O = E >= S.rate2AboveMs ? 1.02 : E >= S.rate1AboveMs ? 1.01 : 1 : O = E >= S.rate2AboveMs ? 0.98 : E >= S.rate1AboveMs ? 0.99 : 1, this.currentCorrectionMethod = O === 1 ? "none" : "rate", this.lastSamplesAdjusted = 0, P.buffer = this.copyBuffer(P.buffer);
+            y > 0 ? Y = E >= S.rate2AboveMs ? 1.02 : E >= S.rate1AboveMs ? 1.01 : 1 : Y = E >= S.rate2AboveMs ? 0.98 : E >= S.rate1AboveMs ? 0.99 : 1, this.currentCorrectionMethod = Y === 1 ? "none" : "rate", this.lastSamplesAdjusted = 0, Q.buffer = this.copyBuffer(Q.buffer);
           }
         } else
-          this.recorrectionMonitor.canUseHardResync(l, j) && (this.recorrectionMonitor.noteHardResync(l), this.resyncCount++, this._intervalResyncCount++, this.cutScheduledSources(H - v)), F = H, q = F - v, O = 1, this.currentCorrectionMethod = "resync", this.lastSamplesAdjusted = 0, P.buffer = this.copyBuffer(P.buffer);
+          this.recorrectionMonitor.canUseHardResync(l, G) && (this.recorrectionMonitor.noteHardResync(l), this.resyncCount++, this._intervalResyncCount++, this.cutScheduledSources(H - v)), F = H, q = F - v, Y = 1, this.currentCorrectionMethod = "resync", this.lastSamplesAdjusted = 0, Q.buffer = this.copyBuffer(Q.buffer);
       }
-      if (this.currentPlaybackRate = O, F < a) {
+      if (this.currentPlaybackRate = Y, F < a) {
         this.nextPlaybackTime = 0, this.nextScheduleTime = 0, this.lastScheduledServerTime = 0;
         continue;
       }
-      const G = Math.max(q, a), V = G + (F - q), Z = this.audioContext.createBufferSource();
-      Z.buffer = P.buffer, Z.playbackRate.value = O, Z.connect(this.gainNode), Z.start(G);
-      const W = P.buffer.duration / O;
-      this.nextPlaybackTime = V + W, this.nextScheduleTime = G + W, this.lastScheduledServerTime = P.serverTime + P.buffer.duration * 1e6;
+      const j = Math.max(q, a), V = j + (F - q), Z = this.audioContext.createBufferSource();
+      Z.buffer = Q.buffer, Z.playbackRate.value = Y, Z.connect(this.gainNode), Z.start(j);
+      const W = Q.buffer.duration / Y;
+      this.nextPlaybackTime = V + W, this.nextScheduleTime = j + W, this.lastScheduledServerTime = Q.serverTime + Q.buffer.duration * 1e6;
       const ue = {
         source: Z,
-        startTime: G,
-        endTime: G + W,
-        buffer: P.buffer,
-        serverTime: P.serverTime,
-        generation: P.generation
+        startTime: j,
+        endTime: j + W,
+        buffer: Q.buffer,
+        serverTime: Q.serverTime,
+        generation: Q.generation
       };
       this.scheduledSources.push(ue), Z.onended = () => {
         const he = this.scheduledSources.indexOf(ue);
@@ -41088,13 +41127,13 @@ function Uh({
   HomeiiMediaPresentationFoundation: v,
   HomeiiMediaHistoryFoundation: k,
   HomeiiNowPlayingFoundation: M,
-  HomeiiFavoritesFoundation: P,
+  HomeiiFavoritesFoundation: Q,
   HomeiiPlayersFoundation: F,
   HomeiiRevisionedSnapshotsFoundation: q,
-  getBaseCardConfigForm: O,
+  getBaseCardConfigForm: Y,
   getRadioBrowserCountrySelectorOptions: H,
-  homeiiRadioBrowserCountryLabel: j,
-  homeiiCountryFlagEmoji: G,
+  homeiiRadioBrowserCountryLabel: G,
+  homeiiCountryFlagEmoji: j,
   homeiiDetectLanguage: V,
   homeiiIsRtlLanguage: Z,
   homeiiTranslate: W,
@@ -41196,7 +41235,7 @@ function Uh({
         viewportHeight: S,
         hostTop: E,
         parentHeights: I
-      }) === !0, Y = !R && E > 0 && E <= 160 ? E : 0, $ = R ? 0 : S >= 900 ? 28 : S >= 700 ? 20 : 12, X = S > 0 ? Math.max(0, S - Y - Math.max(0, -E) - $) : 0, me = X > 240 ? X : S, _e = I.filter((K) => !me || K <= me + 4), ne = _e.length ? Math.max(..._e) : 0;
+      }) === !0, O = !R && E > 0 && E <= 160 ? E : 0, $ = R ? 0 : S >= 900 ? 28 : S >= 700 ? 20 : 12, X = S > 0 ? Math.max(0, S - O - Math.max(0, -E) - $) : 0, me = X > 240 ? X : S, _e = I.filter((K) => !me || K <= me + 4), ne = _e.length ? Math.max(..._e) : 0;
       if (me > 0) {
         if (y > 0)
           return Math.round(Math.max(Math.min(280, me), Math.min(y, me)));
@@ -41230,10 +41269,10 @@ function Uh({
       typeof requestAnimationFrame == "function" ? this._layoutRecoveryFrame = requestAnimationFrame(() => A(0)) : this._layoutRecoveryTimer = setTimeout(() => A(0), 0);
     }
     _recoverLayoutAfterHostChange(s = "layout", A = 0) {
-      const g = typeof window < "u" ? Number(window.innerWidth || 0) : 0, y = this._getViewportHeight(760), S = !!(this._state?.mobileCompactExpanded && this._mobileCompactModeEnabled?.()), B = S && this._mobileCompactEdgeToEdgeEnabled?.() && this._compactEdgeToEdgeAllowed?.(), E = S && !B, I = g > 0 && g < 760 ? 156 : 112, R = E ? Math.max(320, Math.min(720, Number(g || 0) - 32)) : this._getCardWidth(g), Y = B ? y : E ? Math.max(340, Math.min(860, Number(y || 0) - I || y)) : this._getAllocatedCardHeight(y);
-      if (R <= 0 || Y <= 0) return;
-      const $ = this._layoutModeConfig({ width: R, compactPopup: S }), X = this._layoutProfileConfig($, { width: R, height: Y, compactPopup: S }), me = this.shadowRoot?.querySelector?.(".card"), _e = this._renderedLayoutMode || (me?.classList?.contains("layout-tablet") ? "tablet" : me?.classList?.contains("layout-mobile") ? "mobile" : ""), ne = [`layout-${$}`, ...Array.isArray(X?.classes) ? X.classes : []], K = !!me && ne.some((Ee) => !me.classList.contains(Ee)), ae = Math.abs(R - Number(this._lastCardWidth || 0)), ce = Math.abs(Y - Number(this._lastCardHeight || 0)), ge = !!_e && _e !== $, ye = !!this._state?.screensaverOpen || !!this.shadowRoot?.querySelector?.("#screensaverBackdrop.open"), fe = A === 0 || ge || K || ae > 80 || ce > 80 || ye;
-      if (this._lastCardWidth = Math.round(R), this._lastCardHeight = Math.round(Y), this._lastViewportWidth = g, this._lastViewportHeight = y, this._renderedLayoutMode = $, !fe) return;
+      const g = typeof window < "u" ? Number(window.innerWidth || 0) : 0, y = this._getViewportHeight(760), S = !!(this._state?.mobileCompactExpanded && this._mobileCompactModeEnabled?.()), B = S && this._mobileCompactEdgeToEdgeEnabled?.() && this._compactEdgeToEdgeAllowed?.(), E = S && !B, I = g > 0 && g < 760 ? 156 : 112, R = E ? Math.max(320, Math.min(720, Number(g || 0) - 32)) : this._getCardWidth(g), O = B ? y : E ? Math.max(340, Math.min(860, Number(y || 0) - I || y)) : this._getAllocatedCardHeight(y);
+      if (R <= 0 || O <= 0) return;
+      const $ = this._layoutModeConfig({ width: R, compactPopup: S }), X = this._layoutProfileConfig($, { width: R, height: O, compactPopup: S }), me = this.shadowRoot?.querySelector?.(".card"), _e = this._renderedLayoutMode || (me?.classList?.contains("layout-tablet") ? "tablet" : me?.classList?.contains("layout-mobile") ? "mobile" : ""), ne = [`layout-${$}`, ...Array.isArray(X?.classes) ? X.classes : []], K = !!me && ne.some((Ee) => !me.classList.contains(Ee)), ae = Math.abs(R - Number(this._lastCardWidth || 0)), ce = Math.abs(O - Number(this._lastCardHeight || 0)), ge = !!_e && _e !== $, ye = !!this._state?.screensaverOpen || !!this.shadowRoot?.querySelector?.("#screensaverBackdrop.open"), fe = A === 0 || ge || K || ae > 80 || ce > 80 || ye;
+      if (this._lastCardWidth = Math.round(R), this._lastCardHeight = Math.round(O), this._lastViewportWidth = g, this._lastViewportHeight = y, this._renderedLayoutMode = $, !fe) return;
       this._closeTransientEditorLayoutState();
       const ke = this._state?.menuOpen ? this._state.menuPage || "settings" : "", Me = !!this._state?.controlRoomOpen;
       if (typeof this._rebuildMobileUi == "function") {
@@ -41302,14 +41341,14 @@ function Uh({
       return Math.max(4, Math.ceil(g / 50));
     }
     getGridOptions() {
-      const s = this._configuredCardHeightFallback(this._getViewportHeight(760) || 760), A = this._preferFullMobileGridRows?.() === !0, g = !A && this._isCompactTileMode(), y = this._getCardWidth(this._lastCardWidth || (typeof window < "u" ? Number(window.innerWidth || 0) : 0) || 390), S = g && this._compactMiniWidgetMode({ width: y }), B = Number(this._fullMobileInlineTargetHeight?.() || 0), E = g ? this._compactTileReservedHeight() : A && B > 0 ? Math.max(B, this._getAllocatedCardHeight(s) || s) : this._getAllocatedCardHeight(s) || s, I = 5, R = A ? Math.max(6, this._sectionGridRowsForHeight(B || 760)) : 0, Y = {
+      const s = this._configuredCardHeightFallback(this._getViewportHeight(760) || 760), A = this._preferFullMobileGridRows?.() === !0, g = !A && this._isCompactTileMode(), y = this._getCardWidth(this._lastCardWidth || (typeof window < "u" ? Number(window.innerWidth || 0) : 0) || 390), S = g && this._compactMiniWidgetMode({ width: y }), B = Number(this._fullMobileInlineTargetHeight?.() || 0), E = g ? this._compactTileReservedHeight() : A && B > 0 ? Math.max(B, this._getAllocatedCardHeight(s) || s) : this._getAllocatedCardHeight(s) || s, I = 5, R = A ? Math.max(6, this._sectionGridRowsForHeight(B || 760)) : 0, O = {
         columns: g ? S ? 6 : 8 : 12,
         rows: Math.max(S ? I : 6, R, this._sectionGridRowsForHeight(E)),
         min_columns: g && S ? 3 : 4,
         min_rows: S ? I : A ? R : 4,
         max_columns: 12
       };
-      return S && (Y.max_rows = I), Y;
+      return S && (O.max_rows = I), O;
     }
     _sectionGridRowsForHeight(s) {
       const A = Math.max(56, Number(s) || 56);
@@ -41343,7 +41382,7 @@ function Uh({
       };
     }
     static getConfigForm() {
-      return O();
+      return Y();
     }
     static assertConfig(s) {
       if (!s || typeof s != "object" || Array.isArray(s))
@@ -41674,14 +41713,14 @@ function Uh({
       for (const B of y) {
         const E = !!(this._maToken && this._isDirectMaImageProxyUrl(B));
         for (let I = 0; I < (E ? 2 : 1); I += 1) {
-          const R = I === 1, Y = { Accept: "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8" };
-          R && (Y.Authorization = `Bearer ${this._maToken}`);
+          const R = I === 1, O = { Accept: "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8" };
+          R && (O.Authorization = `Bearer ${this._maToken}`);
           const $ = typeof AbortController < "u" ? new AbortController() : null, X = $ ? setTimeout(() => $.abort(), Number(A.timeoutMs || 6500)) : null;
           try {
             const me = await fetch(B, {
               cache: A.cache || "force-cache",
               credentials: A.crossOrigin === !0 || R ? "omit" : "same-origin",
-              headers: Y,
+              headers: O,
               signal: $?.signal
             });
             if (!me.ok) {
@@ -41778,7 +41817,7 @@ function Uh({
         B?.image,
         B?.album?.image_url,
         B?.album?.image
-      ], Y = !A || typeof this._queueItemMatchesPlayer != "function" || this._queueItemMatchesPlayer(A, s), $ = y?.preferPlayerArtwork === !1, X = y?.preferPlayerArtwork === !0 || !$ && !Y && I.some(Boolean);
+      ], O = !A || typeof this._queueItemMatchesPlayer != "function" || this._queueItemMatchesPlayer(A, s), $ = y?.preferPlayerArtwork === !1, X = y?.preferPlayerArtwork === !0 || !$ && !O && I.some(Boolean);
       return this._bestArtworkUrl(X ? [...I, ...R] : [...R, ...I], { size: g, cacheKey: E });
     }
     _artPlaceholderHtml(s = "album") {
@@ -41941,9 +41980,9 @@ function Uh({
     }
     _build() {
       this._imgObserver && (this._imgObserver.disconnect(), this._imgObserver = null, this._imgObserverRoot = null), this._cache.library.clear(), this._clearImageBlobCache();
-      const s = this._isHebrew(), A = this._effectiveTheme(), g = A, y = Math.max(420, this._configuredCardHeightFallback(760)), S = this._getViewportHeight(y), B = this._getAllocatedCardHeight(y), E = this._layoutProfileConfig("browser", { height: B }), I = this._layoutProfileClassNames(E), R = this._layoutProfileStyleVars(E), Y = Math.max(360, Math.min(B || y, S - 24)), $ = Math.max(0.72, Math.min(1.02, Y / 820)), X = Math.max(0.3, Math.min(0.98, Number(this._config.main_opacity ?? 0.66))), me = Math.max(0.4, Math.min(0.98, Number(this._config.popup_opacity ?? 0.92))), _e = Math.max(0.34, Math.min(0.9, X * 0.92)), ne = Math.max(0.4, Math.min(0.95, X * 0.98)), K = Math.max(0.42, Math.min(0.97, X + 0.02)), ae = Math.max(0.46, Math.min(0.96, X)), ce = Math.max(0.56, Math.min(0.98, X + 0.06)), ge = A === "dark" ? Math.max(0.32, Math.min(0.7, me * 0.62)) : Math.max(0.18, Math.min(0.42, me * 0.28));
+      const s = this._isHebrew(), A = this._effectiveTheme(), g = A, y = Math.max(420, this._configuredCardHeightFallback(760)), S = this._getViewportHeight(y), B = this._getAllocatedCardHeight(y), E = this._layoutProfileConfig("browser", { height: B }), I = this._layoutProfileClassNames(E), R = this._layoutProfileStyleVars(E), O = Math.max(360, Math.min(B || y, S - 24)), $ = Math.max(0.72, Math.min(1.02, O / 820)), X = Math.max(0.3, Math.min(0.98, Number(this._config.main_opacity ?? 0.66))), me = Math.max(0.4, Math.min(0.98, Number(this._config.popup_opacity ?? 0.92))), _e = Math.max(0.34, Math.min(0.9, X * 0.92)), ne = Math.max(0.4, Math.min(0.95, X * 0.98)), K = Math.max(0.42, Math.min(0.97, X + 0.02)), ae = Math.max(0.46, Math.min(0.96, X)), ce = Math.max(0.56, Math.min(0.98, X + 0.06)), ge = A === "dark" ? Math.max(0.32, Math.min(0.7, me * 0.62)) : Math.max(0.18, Math.min(0.42, me * 0.28));
       this.shadowRoot.innerHTML = `
-        <style>${gp({ allocatedHeight: B, effectiveHeight: Y, uiScale: $, mainOpacity: X, popupOpacity: me, darkBgAlpha: _e, darkSidebarAlpha: ne, darkPanelAlpha: K, lightBgAlpha: ae, lightPanelAlpha: ce, modalOverlayAlpha: ge })}
+        <style>${gp({ allocatedHeight: B, effectiveHeight: O, uiScale: $, mainOpacity: X, popupOpacity: me, darkBgAlpha: _e, darkSidebarAlpha: ne, darkPanelAlpha: K, lightBgAlpha: ae, lightPanelAlpha: ce, modalOverlayAlpha: ge })}
   ${vs}
   </style>
 
@@ -42325,11 +42364,11 @@ function Uh({
         g = this._localSendspinWsUrl();
       return new Promise((y, S) => {
         let B = !1, E = null, I = null;
-        const R = window.__homeiiSendspinInterceptorV1?.original || window.WebSocket, Y = () => {
+        const R = window.__homeiiSendspinInterceptorV1?.original || window.WebSocket, O = () => {
           I && clearTimeout(I), E && (E.onopen = null, E.onmessage = null, E.onerror = null, E.onclose = null);
         }, $ = (X) => {
           if (!B) {
-            B = !0, Y();
+            B = !0, O();
             try {
               E?.close?.();
             } catch {
@@ -42366,7 +42405,7 @@ function Uh({
               }
             else
               return;
-            B = !0, Y(), y(E);
+            B = !0, O(), y(E);
           }
         }, E.onerror = () => $(new Error(this._localText("Could not open the Sendspin WebSocket.", "לא הצלחתי לפתוח חיבור WebSocket ל-Sendspin."))), E.onclose = () => $(new Error(this._localText("Sendspin closed the connection before the player was ready.", "Sendspin סגר את החיבור לפני שהנגן היה מוכן.")));
       });
@@ -42374,8 +42413,8 @@ function Uh({
     _createLocalSendspinBridge(s) {
       const A = { open: /* @__PURE__ */ new Set(), message: /* @__PURE__ */ new Set(), error: /* @__PURE__ */ new Set(), close: /* @__PURE__ */ new Set() }, g = { open: null, message: null, error: null, close: null }, y = (E, I) => {
         const R = g[E];
-        typeof R == "function" && R.call(B, I), A[E]?.forEach((Y) => {
-          typeof Y == "function" ? Y.call(B, I) : Y && typeof Y.handleEvent == "function" && Y.handleEvent(I);
+        typeof R == "function" && R.call(B, I), A[E]?.forEach((O) => {
+          typeof O == "function" ? O.call(B, I) : O && typeof O.handleEvent == "function" && O.handleEvent(I);
         });
       }, S = (E) => {
         E && B._isOpen && setTimeout(() => E.call(B, new Event("open")), 0);
@@ -42540,7 +42579,7 @@ function Uh({
         this._resetLocalSendspinMediaSession();
         return;
       }
-      const y = A?.media_item || {}, S = y?.name || A?.name || s.attributes?.media_title || this._i18n("ui.nothing_playing"), B = Array.isArray(y?.artists) ? y.artists.map((Y) => Y?.name).filter(Boolean).join(", ") : A?.media_artist || s.attributes?.media_artist || "", E = y?.album?.name || A?.album || s.attributes?.media_album_name || "", I = this._currentArtworkUrl(s, A, 512) || "";
+      const y = A?.media_item || {}, S = y?.name || A?.name || s.attributes?.media_title || this._i18n("ui.nothing_playing"), B = Array.isArray(y?.artists) ? y.artists.map((O) => O?.name).filter(Boolean).join(", ") : A?.media_artist || s.attributes?.media_artist || "", E = y?.album?.name || A?.album || s.attributes?.media_album_name || "", I = this._currentArtworkUrl(s, A, 512) || "";
       try {
         typeof window.MediaMetadata == "function" && (g.metadata = new window.MediaMetadata({
           title: S,
@@ -42559,9 +42598,9 @@ function Uh({
         g.playbackState = s.state === "playing" ? "playing" : s.state === "paused" ? "paused" : "none";
       } catch {
       }
-      const R = (Y, $) => {
+      const R = (O, $) => {
         try {
-          g.setActionHandler(Y, $);
+          g.setActionHandler(O, $);
         } catch {
         }
       };
@@ -42696,10 +42735,10 @@ function Uh({
           R = Number(localStorage.getItem(this._localSendspinSyncDelayStorageKey()) || 0) || 0;
         } catch {
         }
-        const Y = `homeii_local_sendspin_volume_${y}`;
+        const O = `homeii_local_sendspin_volume_${y}`;
         let $ = null;
         try {
-          const X = localStorage.getItem(Y);
+          const X = localStorage.getItem(O);
           X !== null && Number.isFinite(Number(X)) && ($ = Math.max(0, Math.min(100, Number(X))));
         } catch {
         }
@@ -42715,7 +42754,7 @@ function Uh({
             if (this._localSendspinState = X, this._localSendspinConnected && !this._localSendspinSuppressClose && Number.isFinite(X?.volume) && X.volume !== $) {
               $ = X.volume;
               try {
-                localStorage.setItem(Y, String($));
+                localStorage.setItem(O, String($));
               } catch {
               }
             }
@@ -42762,7 +42801,7 @@ function Uh({
         A.player_id,
         A.player_id_short,
         A.id
-      ].filter(Boolean).map((Y) => String(Y || "").trim().toLowerCase()), E = [
+      ].filter(Boolean).map((O) => String(O || "").trim().toLowerCase()), E = [
         A.friendly_name,
         A.name,
         A.display_name,
@@ -42771,7 +42810,7 @@ function Uh({
         g.display_name,
         g.friendly_name
       ].filter(Boolean).join(" ").toLowerCase(), I = E.includes("homeii sendspin") || E.includes("homeii") && E.includes("sendspin"), R = E.includes("homeii flow") || E.includes("homeii") && E.includes("flow");
-      return B.some((Y) => Y === S || Y.endsWith(`_${S}`) || Y.endsWith(`.${S}`)) && (I || R);
+      return B.some((O) => O === S || O.endsWith(`_${S}`) || O.endsWith(`.${S}`)) && (I || R);
     }
     _isAvailableThisDevicePlayer(s = null) {
       if (!s || this._isLocalSendspinPlayer(s) && (this._adoptLocalSendspinGlobalSession(), !this._isLocalSendspinDesired() && !this._localSendspinConnected && !this._localSendspinConnecting))
@@ -42824,7 +42863,7 @@ function Uh({
       if (!A || typeof A != "object") return null;
       const g = String(A.player_id || A.id || A.playerId || "").trim();
       if (!g) return null;
-      const y = A.current_media || A.media || {}, S = A.device_info || {}, B = Number(A.volume_level ?? A.group_volume), E = Number.isFinite(B) ? B > 1 ? B / 100 : B : 0, I = v.playbackPositionPair(A), R = I.updatedAt > 0 ? new Date(I.updatedAt).toISOString() : void 0, Y = String(A.active_queue || A.queue_id || y.source_id || g).trim(), $ = A.name || A.display_name || A.friendly_name || y.title || g, X = {
+      const y = A.current_media || A.media || {}, S = A.device_info || {}, B = Number(A.volume_level ?? A.group_volume), E = Number.isFinite(B) ? B > 1 ? B / 100 : B : 0, I = v.playbackPositionPair(A), R = I.updatedAt > 0 ? new Date(I.updatedAt).toISOString() : void 0, O = String(A.active_queue || A.queue_id || y.source_id || g).trim(), $ = A.name || A.display_name || A.friendly_name || y.title || g, X = {
         ...A.extra_attributes || {},
         friendly_name: $,
         app_id: "music_assistant",
@@ -42833,8 +42872,8 @@ function Uh({
         provider_name: A.provider || "",
         mass_player_id: g,
         player_id: g,
-        active_queue: Y,
-        queue_id: Y,
+        active_queue: O,
+        queue_id: O,
         mass_player_type: A.type || "",
         player_type: A.type || "",
         model: S.model || "",
@@ -43015,12 +43054,12 @@ function Uh({
             </div>
             <div class="player-list">
               ${E.map((I) => {
-        const R = I.entity_id === this._state.selectedPlayer, Y = I.state === "playing" ? "playing" : I.state === "paused" ? "paused" : "idle", $ = this._playerDisplayName(I, A), X = I.attributes?.media_title || "", me = this._bestArtworkUrl([I.attributes?.entity_picture_local, I.attributes?.entity_picture], {
+        const R = I.entity_id === this._state.selectedPlayer, O = I.state === "playing" ? "playing" : I.state === "paused" ? "paused" : "idle", $ = this._playerDisplayName(I, A), X = I.attributes?.media_title || "", me = this._bestArtworkUrl([I.attributes?.entity_picture_local, I.attributes?.entity_picture], {
           size: 120,
           cacheKey: this._currentArtworkCacheKey(I)
         });
         return `
-                  <button class="player-card ${Y} ${R ? "active" : ""}" data-modal-player="${this._esc(I.entity_id)}">
+                  <button class="player-card ${O} ${R ? "active" : ""}" data-modal-player="${this._esc(I.entity_id)}">
                     <span class="player-card-dot"></span>
                     <span class="player-card-art">${me ? this._imgHtml(me, "", { fallbackIcon: "speaker" }) : this._artPlaceholderHtml("speaker")}</span>
                     <span class="player-card-meta">
@@ -43207,16 +43246,16 @@ function Uh({
       }
     }
     _historyRecommendationItems(s = 10) {
-      const A = this._state.maQueueState?.current_index ?? -1, g = /* @__PURE__ */ new Set(), y = (I = [], R = []) => ((Array.isArray(I) ? I : []).forEach((Y) => {
-        const $ = String(Y?.uri || "").trim();
-        !$ || g.has($) || R.length >= s || (g.add($), R.push(Y));
+      const A = this._state.maQueueState?.current_index ?? -1, g = /* @__PURE__ */ new Set(), y = (I = [], R = []) => ((Array.isArray(I) ? I : []).forEach((O) => {
+        const $ = String(O?.uri || "").trim();
+        !$ || g.has($) || R.length >= s || (g.add($), R.push(O));
       }), R), S = this._getNowPlayingQueueItems().filter((I) => (I?.sort_index ?? -1) !== A).map((I) => {
         const R = I.media_item || {};
         return {
           uri: String(R.uri || "").trim(),
           media_type: R.media_type || I.media_type || "track",
           title: R.name || I.name || this._i18n("ui.recommended_track"),
-          artist: R.artists?.map((Y) => Y.name).join(", ") || R.album?.name || "",
+          artist: R.artists?.map((O) => O.name).join(", ") || R.album?.name || "",
           album: R.album?.name || "",
           image: this._queueItemImageUrl(I, 120) || this._artUrl(R) || ""
         };
@@ -43252,14 +43291,14 @@ function Uh({
       g?.removeAttribute("hidden"), y?.removeAttribute("hidden");
       const S = this._state.mobileHistoryDrawerTab === "recommendations" ? "recommendations" : "recent";
       this.shadowRoot?.querySelectorAll("[data-history-tab]")?.forEach((R) => {
-        const Y = R.dataset.historyTab === S;
-        R.classList.toggle("active", Y), R.setAttribute("aria-selected", Y ? "true" : "false");
+        const O = R.dataset.historyTab === S;
+        R.classList.toggle("active", O), R.setAttribute("aria-selected", O ? "true" : "false");
       }), S === "recommendations" && this._loadHistoryRecommendationPlaylists().catch(() => {
       });
       const B = S === "recommendations" ? this._historyRecommendationItems() : this._visibleRecentHistoryItems();
       if (!B.length) {
-        const R = S === "recommendations" ? this._i18n("ui.recommendations_will_appear_once_homeii_flow_sees_your_queue_or_recent_l") : this._i18n("ui.play_a_few_tracks_and_they_will_appear_here"), Y = `<div class="history-empty">${this._esc(R)}</div>`;
-        (s || this._state.mobileHistoryRenderedHtml !== Y) && (A.innerHTML = Y, this._state.mobileHistoryRenderedHtml = Y), this._state.mobileHistoryDrawerOpen && Zi(this, g, "history", () => this._setHistoryDrawerOpen(!1));
+        const R = S === "recommendations" ? this._i18n("ui.recommendations_will_appear_once_homeii_flow_sees_your_queue_or_recent_l") : this._i18n("ui.play_a_few_tracks_and_they_will_appear_here"), O = `<div class="history-empty">${this._esc(R)}</div>`;
+        (s || this._state.mobileHistoryRenderedHtml !== O) && (A.innerHTML = O, this._state.mobileHistoryRenderedHtml = O), this._state.mobileHistoryDrawerOpen && Zi(this, g, "history", () => this._setHistoryDrawerOpen(!1));
         return;
       }
       const E = `
@@ -43269,8 +43308,8 @@ function Uh({
             <span>${this._esc(this._i18n("ui.play_all"))}</span>
           </button>
         </div>
-        ${B.map((R, Y) => `
-          <button class="history-chip" data-history-index="${this._esc(String(Y))}" data-history-key="${this._esc(`${S}:${R.uri}`)}" title="${this._esc(R.title || "")}">
+        ${B.map((R, O) => `
+          <button class="history-chip" data-history-index="${this._esc(String(O))}" data-history-key="${this._esc(`${S}:${R.uri}`)}" title="${this._esc(R.title || "")}">
             <span class="history-chip-art">${R.image ? this._imgHtml(R.image, "", { fallbackIcon: "album" }) : this._iconSvg("album")}</span>
             <span class="history-chip-copy">
               <span class="history-chip-title">${this._esc(R.title || this._i18n("ui.recent_track"))}</span>
@@ -43279,8 +43318,8 @@ function Uh({
           </button>
         `).join("")}
       `, I = s || this._state.mobileHistoryRenderedHtml !== E;
-      I && (A.innerHTML = E, this._state.mobileHistoryRenderedHtml = E), I && A.querySelectorAll("[data-history-index]").forEach((R) => R.addEventListener("click", async (Y) => {
-        const $ = Y.currentTarget, X = Number($.dataset.historyIndex), _e = ((this._state.mobileHistoryDrawerTab === "recommendations" ? "recommendations" : "recent") === "recommendations" ? this._historyRecommendationItems() : this._visibleRecentHistoryItems())[X];
+      I && (A.innerHTML = E, this._state.mobileHistoryRenderedHtml = E), I && A.querySelectorAll("[data-history-index]").forEach((R) => R.addEventListener("click", async (O) => {
+        const $ = O.currentTarget, X = Number($.dataset.historyIndex), _e = ((this._state.mobileHistoryDrawerTab === "recommendations" ? "recommendations" : "recent") === "recommendations" ? this._historyRecommendationItems() : this._visibleRecentHistoryItems())[X];
         _e?.uri && (this._pressUiButton($), await this._playMedia(_e.uri, _e.media_type || "track", "play", {
           label: _e.title || "",
           sourceEl: $
@@ -43452,14 +43491,14 @@ function Uh({
         if (!S.count) return;
         const B = [...S.ids].sort(), E = B.join("|");
         if (!E || g.has(E)) return;
-        const I = B.map(($) => this._controlRoomPlayerName($)).filter(Boolean), R = B[0] || y.entity_id, Y = this._playerByEntityId(R) || y;
+        const I = B.map(($) => this._controlRoomPlayerName($)).filter(Boolean), R = B[0] || y.entity_id, O = this._playerByEntityId(R) || y;
         g.set(E, {
           ids: B,
           count: B.length,
           label: I.join(" · "),
-          art: this._bestArtworkUrl([Y?.attributes?.entity_picture_local, Y?.attributes?.entity_picture], {
+          art: this._bestArtworkUrl([O?.attributes?.entity_picture_local, O?.attributes?.entity_picture], {
             size: 120,
-            cacheKey: this._currentArtworkCacheKey(Y)
+            cacheKey: this._currentArtworkCacheKey(O)
           })
         });
       }), [...g.values()];
@@ -43752,15 +43791,15 @@ function Uh({
       }), this._state.controlRoomQueueSnapshots = g, this._state.controlRoomQueueLoading = !1, this._syncControlRoomUi({ force: !0 });
     }
     _controlRoomQueuePreviewHtml(s = "") {
-      const A = this._playerByEntityId(s), g = this._controlRoomQueueCache(s), y = h.sortQueueItems(g?.items || []), S = Number(g?.state?.current_index), B = Number.isFinite(S) && y.find((Y) => Number(Y?.sort_index) === S) || y[0], E = this._controlRoomQueueCount(A, g), I = (B ? [B, ...y.filter((Y) => Y !== B)] : y).slice(0, 4), R = A?.attributes?.friendly_name || s || this._i18n("ui.player_2");
+      const A = this._playerByEntityId(s), g = this._controlRoomQueueCache(s), y = h.sortQueueItems(g?.items || []), S = Number(g?.state?.current_index), B = Number.isFinite(S) && y.find((O) => Number(O?.sort_index) === S) || y[0], E = this._controlRoomQueueCount(A, g), I = (B ? [B, ...y.filter((O) => O !== B)] : y).slice(0, 4), R = A?.attributes?.friendly_name || s || this._i18n("ui.player_2");
       return `
         <div class="control-room-queue-preview" data-control-room-scroll="queue-${this._esc(s)}">
           <div class="control-room-queue-preview-head">
             <span class="control-room-queue-player">${this._esc(R)}</span>
             <span class="control-room-queue-count">${this._esc(E ? `${E}` : this._i18n("ui.no_queue"))}</span>
           </div>
-          ${I.length ? I.map((Y, $) => {
-        const X = Y.media_item || {}, me = this._queueItemImageUrl(Y, 96) || this._artUrl(X) || "", _e = X.name || Y.name || Y.media_title || this._i18n("ui.queue_item"), ne = Y.media_artist || (X.artists || []).map((K) => K?.name).filter(Boolean).join(", ") || X.album?.name || "";
+          ${I.length ? I.map((O, $) => {
+        const X = O.media_item || {}, me = this._queueItemImageUrl(O, 96) || this._artUrl(X) || "", _e = X.name || O.name || O.media_title || this._i18n("ui.queue_item"), ne = O.media_artist || (X.artists || []).map((K) => K?.name).filter(Boolean).join(", ") || X.album?.name || "";
         return `
               <div class="control-room-queue-row ${$ === 0 ? "current" : ""}">
                 <span class="control-room-queue-art">${me ? this._imgHtml(me, "", { fallbackIcon: "album" }) : this._iconSvg("album")}</span>
@@ -43794,7 +43833,7 @@ function Uh({
         const I = await this._nativeMixEntriesForPreset(s, y, 12), R = await this._fetchLibrary("track", "random", 24, !1);
         return this._controlRoomUniqueEntries([
           ...I,
-          ...R.map((Y) => this._controlRoomNormalizeMediaEntry(Y, "track")).filter((Y) => Y.uri)
+          ...R.map((O) => this._controlRoomNormalizeMediaEntry(O, "track")).filter((O) => O.uri)
         ]).slice(0, 24);
       }
       const S = await this._nativeMixEntriesForPreset(s, y, 12);
@@ -43942,7 +43981,7 @@ function Uh({
         if (B.length === 1)
           await this._sendMobileAnnouncement();
         else {
-          const Y = new Map(this._announcementEligiblePlayers().map((X) => [X.entity_id, X])), $ = this._prepareAnnouncementVolumes(B.map((X) => Y.get(X)).filter(Boolean));
+          const O = new Map(this._announcementEligiblePlayers().map((X) => [X.entity_id, X])), $ = this._prepareAnnouncementVolumes(B.map((X) => O.get(X)).filter(Boolean));
           for (const X of B)
             this._state.mobileAnnouncementTarget = X, await this._sendMobileAnnouncement();
           this._scheduleAnnouncementVolumeRestore($, this._announcementRestoreDelayMs(y));
@@ -43957,8 +43996,8 @@ function Uh({
     }
     _normalizeControlRoomScene(s = {}, A = 0) {
       const g = String(s?.id || `custom:${Date.now()}_${A}`).trim(), y = g.startsWith("custom:") ? g : `custom:${g}`, S = Array.isArray(s?.playerIds) ? s.playerIds.map((R) => String(R || "").trim()).filter(Boolean) : [], B = Array.isArray(s?.visibleIds) ? s.visibleIds.map((R) => String(R || "").trim()).filter(Boolean) : [], E = {};
-      s?.volumes && typeof s.volumes == "object" && Object.entries(s.volumes).forEach(([R, Y]) => {
-        const $ = Math.max(0, Math.min(1, Number(Y)));
+      s?.volumes && typeof s.volumes == "object" && Object.entries(s.volumes).forEach(([R, O]) => {
+        const $ = Math.max(0, Math.min(1, Number(O)));
         R && Number.isFinite($) && (E[String(R)] = $);
       });
       const I = s?.media && typeof s.media == "object" ? {
@@ -43999,9 +44038,9 @@ function Uh({
       const A = this._controlRoomSelectedPlayerIds(), g = this._controlRoomPrimaryPlayerId(), y = A.length ? A : [g].filter(Boolean);
       if (!y.length) return null;
       const B = this._playerByEntityId(g || y[0])?.attributes || {}, E = {};
-      y.forEach((Y) => {
-        const $ = this._playerByEntityId(Y), X = Number($?.attributes?.volume_level);
-        Number.isFinite(X) && (E[Y] = Math.max(0, Math.min(1, X)));
+      y.forEach((O) => {
+        const $ = this._playerByEntityId(O), X = Number($?.attributes?.volume_level);
+        Number.isFinite(X) && (E[O] = Math.max(0, Math.min(1, X)));
       });
       const I = String(B.media_content_id || B.media_uri || B.uri || "").trim(), R = String(B.media_content_type || B.media_type || "track").trim() || "track";
       return this._normalizeControlRoomScene({
@@ -44033,17 +44072,17 @@ function Uh({
     async _applySavedControlRoomScene(s = null, A = null) {
       const g = s ? this._normalizeControlRoomScene(s) : null;
       if (!g) return !1;
-      const y = this._controlRoomAllPlayers(), S = new Set(y.map((Y) => Y.entity_id)), B = g.playerIds.filter((Y) => S.has(Y));
+      const y = this._controlRoomAllPlayers(), S = new Set(y.map((O) => O.entity_id)), B = g.playerIds.filter((O) => S.has(O));
       if (!B.length)
         return this._toastError(this._i18n("ui.scene_players_are_not_available")), !1;
-      const E = B.includes(g.primaryId) ? g.primaryId : B[0], I = [E, ...B.filter((Y) => Y !== E)], R = [.../* @__PURE__ */ new Set([
+      const E = B.includes(g.primaryId) ? g.primaryId : B[0], I = [E, ...B.filter((O) => O !== E)], R = [.../* @__PURE__ */ new Set([
         ...this._controlRoomVisiblePlayerIds(),
         ...I,
-        ...g.visibleIds.filter((Y) => S.has(Y))
+        ...g.visibleIds.filter((O) => S.has(O))
       ])];
-      return this._state.controlRoomVisiblePlayers = R, this._state.controlRoomSelectedPlayers = I, this._syncControlRoomTransferDefaults(), A && this._pressUiButton(A), I.length > 1 && g.group && await this._applySpeakerGroupFor(E, I.slice(1)), await Promise.allSettled(I.map((Y) => {
-        const $ = g.volumes?.[Y];
-        return Number.isFinite($) ? this._setPlayerVolumeFor(Y, $) : Promise.resolve();
+      return this._state.controlRoomVisiblePlayers = R, this._state.controlRoomSelectedPlayers = I, this._syncControlRoomTransferDefaults(), A && this._pressUiButton(A), I.length > 1 && g.group && await this._applySpeakerGroupFor(E, I.slice(1)), await Promise.allSettled(I.map((O) => {
+        const $ = g.volumes?.[O];
+        return Number.isFinite($) ? this._setPlayerVolumeFor(O, $) : Promise.resolve();
       })), g.media?.uri && await this._playMediaOnPlayer(E, g.media.uri, g.media.media_type || "track", "play", {
         label: g.media.name || g.name,
         silent: !0
@@ -44053,7 +44092,7 @@ function Uh({
       A && this._pressUiButton(A);
       const g = String(s || "home");
       if (g.startsWith("custom:")) {
-        const R = this._controlRoomCustomScenes().find((Y) => Y.id === g);
+        const R = this._controlRoomCustomScenes().find((O) => O.id === g);
         return R ? this._applySavedControlRoomScene(R, A) : (this._toastError(this._i18n("ui.studio_scene_was_not_found")), !1);
       }
       const y = this._controlRoomSelectedPlayerIds(), S = y[0] || this._controlRoomPrimaryPlayerId();
@@ -44152,7 +44191,7 @@ function Uh({
       });
     }
     _controlRoomPlayerTileHtml(s) {
-      const A = this._controlRoomSelectedPlayerIds(), g = this._controlRoomPrimaryPlayerId(), y = A.includes(s.entity_id), S = g === s.entity_id, B = s.state === "playing", E = this._playerArtworkUrl(s, 320), I = s.attributes?.friendly_name || s.entity_id, R = s.attributes?.media_title || this._i18n("ui.idle_2"), Y = Math.round((s.attributes?.volume_level || 0) * 100), $ = this._controlRoomGroupInfo(s), X = $.count, me = this._playerStateLabel(s), _e = this._controlRoomQueueCache(s.entity_id), ne = this._controlRoomQueueCount(s, _e), K = this._controlRoomProtocolLabel(s), ae = this._isMuted(s), ce = E ? `style="--control-room-tile-art:url('${this._esc(E)}')"` : "";
+      const A = this._controlRoomSelectedPlayerIds(), g = this._controlRoomPrimaryPlayerId(), y = A.includes(s.entity_id), S = g === s.entity_id, B = s.state === "playing", E = this._playerArtworkUrl(s, 320), I = s.attributes?.friendly_name || s.entity_id, R = s.attributes?.media_title || this._i18n("ui.idle_2"), O = Math.round((s.attributes?.volume_level || 0) * 100), $ = this._controlRoomGroupInfo(s), X = $.count, me = this._playerStateLabel(s), _e = this._controlRoomQueueCache(s.entity_id), ne = this._controlRoomQueueCount(s, _e), K = this._controlRoomProtocolLabel(s), ae = this._isMuted(s), ce = E ? `style="--control-room-tile-art:url('${this._esc(E)}')"` : "";
       return `
         <article class="control-room-tile ${E ? "has-art" : "no-art"} ${y ? "selected" : ""} ${S ? "primary" : ""} ${B ? "is-playing" : ""} ${X ? "grouped" : ""}" data-room-tile="${this._esc(s.entity_id)}" ${ce}>
           <div class="control-room-tile-bg"></div>
@@ -44181,8 +44220,8 @@ function Uh({
             <button type="button" class="${ae ? "active" : ""}" data-room-mute="${this._esc(s.entity_id)}" title="${this._esc(this._i18n("ui.mute"))}">${this._iconSvg(ae ? "volume_mute" : this._volumeIconName(s))}</button>
           </div>
           <label class="control-room-volume-row">
-            <input class="control-room-volume" data-room-volume="${this._esc(s.entity_id)}" type="range" min="0" max="100" value="${Y}" style="--vol-pct:${Y}%">
-            <span class="control-room-volume-value" data-room-volume-value="${this._esc(s.entity_id)}">${this._esc(String(Y))}%</span>
+            <input class="control-room-volume" data-room-volume="${this._esc(s.entity_id)}" type="range" min="0" max="100" value="${O}" style="--vol-pct:${O}%">
+            <span class="control-room-volume-value" data-room-volume-value="${this._esc(s.entity_id)}">${this._esc(String(O))}%</span>
           </label>
         </article>
       `;
@@ -44250,7 +44289,7 @@ function Uh({
           </div>
         `;
       if (A === "actions") {
-        const S = this._controlRoomActionTargetIds().length, B = this._controlRoomFocusTarget(), E = B.art || "", I = this._controlRoomPrimaryPlayer(), R = I?.state === "playing", Y = I ? this._isMuted(I) : !1;
+        const S = this._controlRoomActionTargetIds().length, B = this._controlRoomFocusTarget(), E = B.art || "", I = this._controlRoomPrimaryPlayer(), R = I?.state === "playing", O = I ? this._isMuted(I) : !1;
         return `
           <div class="control-room-tray open wide control-room-hub-panel">
             <div class="control-room-tray-head">
@@ -44269,7 +44308,7 @@ function Uh({
               <div class="control-room-media-controls">
                 <button class="control-room-media-control primary" data-room-selection-action="playpause" ${S ? "" : "disabled"}>${this._iconSvg(R ? "pause" : "play")}<span>${this._esc(R ? this._i18n("ui.pause") : this._i18n("ui.play"))}</span></button>
                 <button class="control-room-media-control" data-room-selection-action="next" ${S ? "" : "disabled"}>${this._iconSvg("next")}<span>${this._esc(this._i18n("ui.next"))}</span></button>
-                <button class="control-room-media-control ${Y ? "active" : ""}" data-room-selection-action="mute" ${S ? "" : "disabled"}>${this._iconSvg(Y ? "volume_mute" : I ? this._volumeIconName(I) : "speaker")}<span>${this._esc(this._i18n("ui.mute"))}</span></button>
+                <button class="control-room-media-control ${O ? "active" : ""}" data-room-selection-action="mute" ${S ? "" : "disabled"}>${this._iconSvg(O ? "volume_mute" : I ? this._volumeIconName(I) : "speaker")}<span>${this._esc(this._i18n("ui.mute"))}</span></button>
                 <button class="control-room-media-control danger" data-room-selection-action="clear" ${S ? "" : "disabled"}>${this._iconSvg("trash")}<span>${this._esc(this._i18n("ui.clear_queue"))}</span></button>
               </div>
             </div>
@@ -44288,7 +44327,7 @@ function Uh({
         `;
       }
       if (A === "transfer") {
-        const y = this._state.controlRoomTransferSource || "", S = this._state.controlRoomTransferTarget || "", B = this._playerByEntityId(y), E = this._playerByEntityId(S), I = B?.attributes?.friendly_name || y || this._i18n("ui.choose_source"), R = E?.attributes?.friendly_name || S || this._i18n("ui.choose_target"), Y = s.filter((X) => X.entity_id !== y), $ = (X, me, _e) => `
+        const y = this._state.controlRoomTransferSource || "", S = this._state.controlRoomTransferTarget || "", B = this._playerByEntityId(y), E = this._playerByEntityId(S), I = B?.attributes?.friendly_name || y || this._i18n("ui.choose_source"), R = E?.attributes?.friendly_name || S || this._i18n("ui.choose_target"), O = s.filter((X) => X.entity_id !== y), $ = (X, me, _e) => `
           <div class="control-room-transfer-list" data-control-room-scroll="transfer-${this._esc(X)}">
             ${me.length ? me.map((ne) => {
           const K = this._playerArtworkUrl(ne, 120), ae = ne.entity_id === _e;
@@ -44327,7 +44366,7 @@ function Uh({
                     <span>${this._esc(this._i18n("ui.to"))}</span>
                     <strong>${this._esc(R)}</strong>
                   </div>
-                  ${$("target", Y, S)}
+                  ${$("target", O, S)}
                   <div class="control-room-transfer-label">${this._esc(this._i18n("ui.target_queue"))}</div>
                   ${S ? this._controlRoomQueuePreviewHtml(S) : `<div class="control-room-empty subtle">${this._esc(this._i18n("ui.choose_a_target_player"))}</div>`}
                 </section>
@@ -44513,7 +44552,7 @@ function Uh({
       };
     }
     _controlRoomGridStyle(s = 0) {
-      const A = Math.max(1, Number(s) || 0), { width: g, height: y } = this._controlRoomViewportSize(), S = g <= 1280, B = g <= 980, E = y <= 640, I = B ? 10 : S ? 12 : 16, R = B ? 78 : S ? 86 : 96, Y = g >= 1560 ? 6 : g >= 1060 || g >= 720 ? 5 : 3, $ = E ? 82 : B ? 92 : S ? 104 : 116, X = E ? 54 : B ? 64 : 74, me = $ + X + (E ? 10 : 18), _e = Math.max(220, g - (B ? 20 : S ? 34 : 56)), ne = Math.max(180, y - me), K = Math.max(1, Math.floor((_e + I) / (R + I))), ae = Math.max(1, Math.min(A, Math.max(Y, K)));
+      const A = Math.max(1, Number(s) || 0), { width: g, height: y } = this._controlRoomViewportSize(), S = g <= 1280, B = g <= 980, E = y <= 640, I = B ? 10 : S ? 12 : 16, R = B ? 78 : S ? 86 : 96, O = g >= 1560 ? 6 : g >= 1060 || g >= 720 ? 5 : 3, $ = E ? 82 : B ? 92 : S ? 104 : 116, X = E ? 54 : B ? 64 : 74, me = $ + X + (E ? 10 : 18), _e = Math.max(220, g - (B ? 20 : S ? 34 : 56)), ne = Math.max(180, y - me), K = Math.max(1, Math.floor((_e + I) / (R + I))), ae = Math.max(1, Math.min(A, Math.max(O, K)));
       let ce = { cols: 1, tileWidth: Math.min(_e, ne * 16 / 9), rows: A, score: 0 };
       for (let ke = 1; ke <= ae; ke += 1) {
         const Me = Math.ceil(A / ke), Ee = (_e - I * (ke - 1)) / ke, Qe = (ne - I * (Me - 1)) / Me * 16 / 9, Ye = Math.max(R, Math.min(Ee, Qe)), Ue = Ye * Ye * ke - Me * 22 + ke * 6;
@@ -44583,7 +44622,7 @@ function Uh({
     }
     _controlRoomHtml() {
       if (!this._controlRoomEnabled()) return "";
-      const s = this._controlRoomPlayers(), A = this._controlRoomPrimaryPlayer(), g = this._playerArtworkUrl(A, 320), y = this._controlRoomGridStyle(s.length), S = `style="${g ? `--control-room-scene-art:url('${this._esc(g)}');` : ""}${y}"`, B = this._controlRoomFocusTarget(), E = B.art || g, I = this._controlRoomActionTargetIds(), R = A?.state === "playing", Y = A ? this._isMuted(A) : !1, $ = !!this._state.controlRoomPanel, X = ["music", "mix", "library", "recent", "favorites", "scenes"].includes(this._state.controlRoomPanel), me = ["actions", "selection", "visible", "announce", "pro"].includes(this._state.controlRoomPanel);
+      const s = this._controlRoomPlayers(), A = this._controlRoomPrimaryPlayer(), g = this._playerArtworkUrl(A, 320), y = this._controlRoomGridStyle(s.length), S = `style="${g ? `--control-room-scene-art:url('${this._esc(g)}');` : ""}${y}"`, B = this._controlRoomFocusTarget(), E = B.art || g, I = this._controlRoomActionTargetIds(), R = A?.state === "playing", O = A ? this._isMuted(A) : !1, $ = !!this._state.controlRoomPanel, X = ["music", "mix", "library", "recent", "favorites", "scenes"].includes(this._state.controlRoomPanel), me = ["actions", "selection", "visible", "announce", "pro"].includes(this._state.controlRoomPanel);
       return `
         <div class="control-room-scene ${g ? "has-art" : ""} ${$ ? "panel-open" : ""}" ${S}>
           <div class="control-room-scene-bg"></div>
@@ -44615,7 +44654,7 @@ function Uh({
                     ${this._iconSvg("next")}
                     <span class="control-room-dock-label">${this._esc(this._i18n("ui.next"))}</span>
                   </button>
-                  <button class="control-room-dock-btn ${Y ? "active" : ""}" data-room-selection-action="player_mute" title="${this._esc(this._i18n("ui.mute"))}">
+                  <button class="control-room-dock-btn ${O ? "active" : ""}" data-room-selection-action="player_mute" title="${this._esc(this._i18n("ui.mute"))}">
                     ${this._iconSvg(A ? this._volumeIconName(A) : "speaker")}
                     <span class="control-room-dock-label">${this._esc(this._i18n("ui.mute"))}</span>
                   </button>
@@ -44681,9 +44720,9 @@ function Uh({
         const ot = ce.querySelector(".control-room-volume");
         ot && this.shadowRoot.activeElement !== ot && String(ot.value) !== String(Qe) && (ot.value = String(Qe), ot.style.setProperty("--vol-pct", `${Qe}%`)), E(ce.querySelector("[data-room-volume-value]"), `${Qe}%`);
       });
-      const Y = this._playerArtworkUrl(B, 320), $ = s.querySelector(".control-room-scene");
-      $ && ($.classList.toggle("has-art", !!Y), Y ? $.style.setProperty("--control-room-scene-art", R(Y)) : $.style.removeProperty("--control-room-scene-art"));
-      const X = this._controlRoomFocusTarget(), me = X.art || Y;
+      const O = this._playerArtworkUrl(B, 320), $ = s.querySelector(".control-room-scene");
+      $ && ($.classList.toggle("has-art", !!O), O ? $.style.setProperty("--control-room-scene-art", R(O)) : $.style.removeProperty("--control-room-scene-art"));
+      const X = this._controlRoomFocusTarget(), me = X.art || O;
       I(s.querySelector(".control-room-now-art"), me ? this._imgHtml(me, "", { fallbackIcon: "speaker" }) : this._iconSvg("speaker")), E(s.querySelector(".control-room-now-kicker"), X.kicker), E(s.querySelector(".control-room-now-name"), X.name), E(s.querySelector(".control-room-now-track"), X.track);
       const _e = s.querySelector('[data-room-selection-action="player_playpause"]');
       if (_e) {
@@ -44823,14 +44862,14 @@ function Uh({
         if (R) throw R;
         return { text: "", rawText: "", lrc: [], source: "disabled" };
       }
-      const Y = new URLSearchParams();
-      Y.set("track_name", A.title), A.artist && Y.set("artist_name", A.artist), A.album && Y.set("album_name", A.album), A.duration && Y.set("duration", String(Math.round(A.duration)));
+      const O = new URLSearchParams();
+      O.set("track_name", A.title), A.artist && O.set("artist_name", A.artist), A.album && O.set("album_name", A.album), A.duration && O.set("duration", String(Math.round(A.duration)));
       const $ = async (_e) => {
         const ne = await fetch(_e, { headers: { Accept: "application/json" } });
         if (!ne.ok) return "";
         const K = await ne.json();
         return Array.isArray(K) ? K.map((ae) => this._coerceLyricsRawText(ae)).find(Boolean) || "" : this._coerceLyricsRawText(K);
-      }, X = await $(`https://lrclib.net/api/get?${Y.toString()}`) || await $(`https://lrclib.net/api/search?${Y.toString()}`), me = {
+      }, X = await $(`https://lrclib.net/api/get?${O.toString()}`) || await $(`https://lrclib.net/api/search?${O.toString()}`), me = {
         text: X ? this._stripLyricsTimestamps(X) : "",
         rawText: X || "",
         lrc: this._parseLrcLyrics(X),
@@ -44937,7 +44976,7 @@ function Uh({
       });
       const B = g.querySelector(`.lyrics-line[data-lyrics-index="${y}"]`), E = g.closest(".lyrics-body");
       if (B && E) {
-        const I = E.getBoundingClientRect(), R = B.getBoundingClientRect(), Y = E.scrollTop + R.top - I.top - E.clientHeight / 2 + R.height / 2, $ = Math.max(0, E.scrollHeight - E.clientHeight), X = Math.max(0, Math.min($, Y));
+        const I = E.getBoundingClientRect(), R = B.getBoundingClientRect(), O = E.scrollTop + R.top - I.top - E.clientHeight / 2 + R.height / 2, $ = Math.max(0, E.scrollHeight - E.clientHeight), X = Math.max(0, Math.min($, O));
         try {
           E.scrollTo({ top: X, behavior: s ? "auto" : "smooth" });
         } catch {
@@ -45122,7 +45161,7 @@ function Uh({
       return A || this._state.nowPlayingUri || g || "";
     }
     _currentMediaLikeMeta() {
-      return P.buildCurrentMediaLikeMeta({
+      return Q.buildCurrentMediaLikeMeta({
         player: this._getSelectedPlayer(),
         queueItem: this._state.maQueueState?.current_item || {},
         resolvedUri: this._getCurrentMediaUri(),
@@ -45224,7 +45263,7 @@ function Uh({
     }
     _currentMediaFavoriteState() {
       const s = this._cache.library.get("liked:ma");
-      return P.resolveCurrentMediaFavoriteState({
+      return Q.resolveCurrentMediaFavoriteState({
         currentUri: this._getCurrentMediaUri(),
         override: this._state.currentMediaFavoriteOverride || null,
         queueItem: this._state.maQueueState?.current_item || {},
@@ -45254,7 +45293,7 @@ function Uh({
         (I) => I.startsWith("button.") && /(favorite|אהב|אהבתי)/i.test(I)
       ).find((I) => {
         const R = I.toLowerCase();
-        return S.some((Y) => Y && R.includes(Y));
+        return S.some((O) => O && R.includes(O));
       });
       return E || (this._hass.states[A] ? A : "");
     }
@@ -45298,7 +45337,7 @@ function Uh({
     async _toggleMaLikeEntry(s = {}, A = null) {
       const g = this._entryTargetsCurrentMedia(s), y = g ? this._currentMediaFavoriteState() : this._isEntryLiked(s);
       if (g) {
-        const R = this._getSelectedPlayer(), Y = String(R?.entity_id || this._state.selectedPlayer || "").trim(), $ = this._favoriteButtonEntityForPlayer(R), X = String(s?.uri || this._getCurrentMediaUri() || "").trim(), me = s.media_type || s.type || this._parseMediaReference(X, s.media_type || s.type || "track").media_type || "track", _e = !y;
+        const R = this._getSelectedPlayer(), O = String(R?.entity_id || this._state.selectedPlayer || "").trim(), $ = this._favoriteButtonEntityForPlayer(R), X = String(s?.uri || this._getCurrentMediaUri() || "").trim(), me = s.media_type || s.type || this._parseMediaReference(X, s.media_type || s.type || "track").media_type || "track", _e = !y;
         this._setCurrentMediaFavoriteOverride(_e, s), this._applyMaFavoriteOptimisticState(s, _e), A && this._flashInteraction(A), s.favorite = _e, s.media_item && (s.media_item.favorite = _e);
         try {
           let ne = !1;
@@ -45320,7 +45359,7 @@ function Uh({
                 ne = await this._toggleLikeViaMassQueue();
               } catch {
               }
-            if (!ne && $ && !this._homeiiEngineRequired?.() && (ne = await this._pressFavoriteButtonEntity($)), !ne && Y && !this._isDirectMaPlayer(Y) && !this._homeiiEngineRequired?.() && (ne = await this._pressFavoriteButtonEntity(Y)), !ne) throw new Error("Music Assistant favorite action was not available");
+            if (!ne && $ && !this._homeiiEngineRequired?.() && (ne = await this._pressFavoriteButtonEntity($)), !ne && O && !this._isDirectMaPlayer(O) && !this._homeiiEngineRequired?.() && (ne = await this._pressFavoriteButtonEntity(O)), !ne) throw new Error("Music Assistant favorite action was not available");
             this._toast(this._i18n("ui.added_to_music_assistant_liked"));
           }
           return this._scheduleFavoriteReconcile?.(700), !0;
@@ -45367,13 +45406,13 @@ function Uh({
         }))?.ok ? (this._favoriteMutationConfirmedAt = Date.now(), !0) : !1;
       }
       if (!A) {
-        const R = (this._entryTargetsCurrentMedia(s) ? String(this._getSelectedPlayer()?.attributes?.media_content_id || "").trim() : "") || y, Y = this._parseMediaReference(R, g);
+        const R = (this._entryTargetsCurrentMedia(s) ? String(this._getSelectedPlayer()?.attributes?.media_content_id || "").trim() : "") || y, O = this._parseMediaReference(R, g);
         let $ = null;
         const X = [
           { item: R },
-          { item: Y.item_id || R },
-          { item: { uri: R, media_type: Y.media_type || g, item_id: Y.item_id || "", provider: Y.provider || "" } },
-          { uri: R, media_type: Y.media_type || g, item_id: Y.item_id || "", provider: Y.provider || "" }
+          { item: O.item_id || R },
+          { item: { uri: R, media_type: O.media_type || g, item_id: O.item_id || "", provider: O.provider || "" } },
+          { uri: R, media_type: O.media_type || g, item_id: O.item_id || "", provider: O.provider || "" }
         ];
         for (const me of X)
           try {
@@ -45427,7 +45466,7 @@ function Uh({
       for (const R of I)
         if (this._hasService("music_assistant", R.service))
           try {
-            return await this._callService(R.service, Object.fromEntries(Object.entries(R.data).filter(([, Y]) => Y !== "" && Y !== void 0 && Y !== null))), !0;
+            return await this._callService(R.service, Object.fromEntries(Object.entries(R.data).filter(([, O]) => O !== "" && O !== void 0 && O !== null))), !0;
           } catch {
           }
       return !1;
@@ -45444,7 +45483,7 @@ function Uh({
       return this._findMaLikedEntryMatch(s, g);
     }
     _applyMaFavoriteOptimisticState(s = {}, A = !1) {
-      const g = P.buildOptimisticFavoriteEntry(s, A), y = this._cache.library.get("liked:ma"), S = P.applyOptimisticFavoriteCache(
+      const g = Q.buildOptimisticFavoriteEntry(s, A), y = this._cache.library.get("liked:ma"), S = Q.applyOptimisticFavoriteCache(
         Array.isArray(y?.items) ? y.items : [],
         g,
         A,
@@ -45465,7 +45504,7 @@ function Uh({
         } catch {
           y = [];
         }
-      const S = this._entryTargetsCurrentMedia(s), B = S ? this._currentMediaLikeMeta() : null, E = P.resolveCachedFavoriteRemoveArgs({
+      const S = this._entryTargetsCurrentMedia(s), B = S ? this._currentMediaLikeMeta() : null, E = Q.resolveCachedFavoriteRemoveArgs({
         entry: s,
         mediaType: A,
         likedItems: y,
@@ -45475,7 +45514,7 @@ function Uh({
         parseMediaReferenceFn: (I, R) => this._parseMediaReference(I, R),
         favoriteRemoveArgsFromItemFn: (I, R) => this._favoriteRemoveArgsFromItem(I, R),
         findFavoriteEntryMatchFn: (I, R) => this._findMaLikedEntryMatch(I, R),
-        matchFavoriteLibraryItemFn: (I, R, Y) => this._matchFavoriteLibraryItem(I, R, Y)
+        matchFavoriteLibraryItemFn: (I, R, O) => this._matchFavoriteLibraryItem(I, R, O)
       });
       if (E) return E;
       try {
@@ -45486,12 +45525,12 @@ function Uh({
       return null;
     }
     _findMaLikedEntryMatch(s = {}, A = []) {
-      return P.findFavoriteEntryMatch(s, A, {
+      return Q.findFavoriteEntryMatch(s, A, {
         parseMediaReferenceFn: (g, y) => this._parseMediaReference(g, y)
       });
     }
     _matchFavoriteLibraryItem(s = {}, A = [], g = "") {
-      return P.matchFavoriteLibraryItem(
+      return Q.matchFavoriteLibraryItem(
         s,
         A,
         g || s?.media_type || s?.type || "track",
@@ -45503,7 +45542,7 @@ function Uh({
       );
     }
     _favoriteRemoveArgsFromItem(s = {}, A = "track") {
-      return P.favoriteRemoveArgsFromItem(
+      return Q.favoriteRemoveArgsFromItem(
         s,
         A,
         (g, y) => this._parseMediaReference(g, y)
@@ -45516,7 +45555,7 @@ function Uh({
       if (g && (s?.radio_browser || s?.radio_browser_id || ["local", "browser", "radio_browser", "external_radio"].includes(A)) && this._loadLikedUris().has(g))
         return !0;
       const y = this._cache.library.get("liked:ma");
-      return P.isEntryLiked(
+      return Q.isEntryLiked(
         s,
         {
           useMaLikedMode: this._useMaLikedMode(),
@@ -45565,17 +45604,17 @@ function Uh({
       })), I.addEventListener("change", async (ne) => {
         await this._handleQueueMoveAutoChange(ne) && this._dismissCtx();
       }), y.appendChild(I), this._ctxMenu = I, this._ctxMenuOpenedAt = Date.now();
-      const R = y.getBoundingClientRect(), Y = g.anchorRect || null, $ = Number.isFinite(s) && s > 0 ? s : null, X = Number.isFinite(A) && A > 0 ? A : null;
-      let me = ($ ?? Y?.left ?? R.left + 20) - R.left, _e = (X ?? Y?.bottom ?? R.top + 20) - R.top;
+      const R = y.getBoundingClientRect(), O = g.anchorRect || null, $ = Number.isFinite(s) && s > 0 ? s : null, X = Number.isFinite(A) && A > 0 ? A : null;
+      let me = ($ ?? O?.left ?? R.left + 20) - R.left, _e = (X ?? O?.bottom ?? R.top + 20) - R.top;
       I.style.left = `${me}px`, I.style.top = `${_e}px`, requestAnimationFrame(() => {
         const ne = I.getBoundingClientRect(), K = y.getBoundingClientRect();
-        ne.right > K.right && (me = Math.max(12, me - (ne.right - K.right) - 12)), ne.bottom > K.bottom && (_e = Math.max(12, _e - ne.height - (Y?.height || 0) - 8)), I.style.left = `${Math.max(12, Math.min(me, K.width - ne.width - 12))}px`, I.style.top = `${Math.max(12, Math.min(_e, K.height - ne.height - 12))}px`;
+        ne.right > K.right && (me = Math.max(12, me - (ne.right - K.right) - 12)), ne.bottom > K.bottom && (_e = Math.max(12, _e - ne.height - (O?.height || 0) - 8)), I.style.left = `${Math.max(12, Math.min(me, K.width - ne.width - 12))}px`, I.style.top = `${Math.max(12, Math.min(_e, K.height - ne.height - 12))}px`;
       });
     }
     _renderImmersiveNowPlaying() {
       const s = this.$("immersiveNowPlaying"), A = this._getSelectedPlayer();
       if (!s || !A) return;
-      const g = A.attributes.media_title || this._i18n("ui.no_active_media"), y = A.attributes.media_artist || this._i18n("ui.unknown"), S = A.attributes.media_album_name || "", B = A.attributes.friendly_name || A.entity_id, E = this._currentArtworkUrl(A, this._state.maQueueState?.current_item || null, 180), I = this._getCurrentDuration(), R = this._getCurrentPosition(), Y = I ? Math.min(100, R / I * 100) : 0, $ = Math.round((A.attributes.volume_level || 0) * 100), X = !!A.attributes.shuffle, me = A.attributes.repeat || "off", _e = this._isHebrew();
+      const g = A.attributes.media_title || this._i18n("ui.no_active_media"), y = A.attributes.media_artist || this._i18n("ui.unknown"), S = A.attributes.media_album_name || "", B = A.attributes.friendly_name || A.entity_id, E = this._currentArtworkUrl(A, this._state.maQueueState?.current_item || null, 180), I = this._getCurrentDuration(), R = this._getCurrentPosition(), O = I ? Math.min(100, R / I * 100) : 0, $ = Math.round((A.attributes.volume_level || 0) * 100), X = !!A.attributes.shuffle, me = A.attributes.repeat || "off", _e = this._isHebrew();
       s.innerHTML = `
         <div class="immersive-shell ${_e ? "rtl" : ""}">
           <div class="immersive-bg" ${E ? `style="background-image:url('${this._esc(E)}')"` : ""}></div>
@@ -45597,7 +45636,7 @@ function Uh({
             </div>
             <div class="immersive-panel">
               <div class="immersive-time-row"><span id="immersiveCurTime">${this._esc(this._fmtDur(R))}</span><span id="immersiveTotalTime">${this._esc(this._fmtDur(I))}</span></div>
-              <div class="immersive-progress" id="immersiveProgressBar"><div class="immersive-progress-fill" id="immersiveProgressFill" style="width:${Y}%"></div></div>
+              <div class="immersive-progress" id="immersiveProgressBar"><div class="immersive-progress-fill" id="immersiveProgressFill" style="width:${O}%"></div></div>
               <div class="immersive-controls">
                 <button class="immersive-btn ${X ? "active" : ""}" id="immersiveShuffleBtn">${this._iconSvg("shuffle")}</button>
                 <button class="immersive-btn" id="immersivePrevBtn">${this._iconSvg("previous")}</button>
@@ -45629,8 +45668,8 @@ function Uh({
       if (!this._state.immersiveNowPlayingOpen) return;
       const s = this._getSelectedPlayer(), A = this.$("immersiveNowPlaying");
       if (!s || !A?.classList.contains("open")) return;
-      const g = this._getCurrentDuration(), y = this._getCurrentPosition(), S = g ? Math.min(100, y / g * 100) : 0, B = Math.round((s.attributes.volume_level || 0) * 100), E = this._currentArtworkUrl(s, this._state.maQueueState?.current_item || null, 180), I = s.attributes.repeat || "off", R = s.attributes.media_title || this._i18n("ui.no_active_media"), Y = s.attributes.media_artist || this._i18n("ui.unknown"), $ = s.attributes.media_album_name || "", X = s.attributes.friendly_name || s.entity_id;
-      A.querySelector(".immersive-title")?.replaceChildren(document.createTextNode(R)), A.querySelector(".immersive-subtitle")?.replaceChildren(document.createTextNode([Y, $].filter(Boolean).join(" · "))), A.querySelector("#immersivePlayerName")?.replaceChildren(document.createTextNode(`${this._i18n("ui.playing_on")}: ${X}`));
+      const g = this._getCurrentDuration(), y = this._getCurrentPosition(), S = g ? Math.min(100, y / g * 100) : 0, B = Math.round((s.attributes.volume_level || 0) * 100), E = this._currentArtworkUrl(s, this._state.maQueueState?.current_item || null, 180), I = s.attributes.repeat || "off", R = s.attributes.media_title || this._i18n("ui.no_active_media"), O = s.attributes.media_artist || this._i18n("ui.unknown"), $ = s.attributes.media_album_name || "", X = s.attributes.friendly_name || s.entity_id;
+      A.querySelector(".immersive-title")?.replaceChildren(document.createTextNode(R)), A.querySelector(".immersive-subtitle")?.replaceChildren(document.createTextNode([O, $].filter(Boolean).join(" · "))), A.querySelector("#immersivePlayerName")?.replaceChildren(document.createTextNode(`${this._i18n("ui.playing_on")}: ${X}`));
       const me = A.querySelector("#immersivePlayBtn");
       this._setButtonIcon(me, this._playPauseIconName(s));
       const _e = A.querySelector("#immersiveShuffleBtn");
@@ -45657,7 +45696,7 @@ function Uh({
     _handleWindowResize() {
       clearTimeout(this._resizeTimer), this._resizeTimer = setTimeout(() => {
         if (!this.isConnected || !this._built || Date.now() < Number(this._layoutResizeHoldUntil || 0)) return;
-        const s = this._state.immersiveNowPlayingOpen, A = typeof window < "u" ? Number(window.innerWidth || 0) : 0, g = typeof window < "u" ? Number(window.innerHeight || 0) : 0, y = this._getCardWidth(A), S = this._getAllocatedCardHeight(g), B = this._lastCardWidth || this._lastViewportWidth || 0, E = this._lastCardHeight || this._lastViewportHeight || 0, I = this._layoutModeConfig({ width: y }), R = this.shadowRoot?.querySelector(".card") || null, Y = this._renderedLayoutMode || (R?.classList.contains("layout-tablet") ? "tablet" : R?.classList.contains("layout-mobile") ? "mobile" : ""), $ = !!(Y && I && Y !== I), X = this.shadowRoot?.activeElement || document.activeElement, me = X?.tagName?.toLowerCase?.() || "", _e = X && (me === "input" || me === "textarea" || X?.isContentEditable), ne = this._tabletStabilityModeEnabled(), K = p.resolveResizeStrategy({
+        const s = this._state.immersiveNowPlayingOpen, A = typeof window < "u" ? Number(window.innerWidth || 0) : 0, g = typeof window < "u" ? Number(window.innerHeight || 0) : 0, y = this._getCardWidth(A), S = this._getAllocatedCardHeight(g), B = this._lastCardWidth || this._lastViewportWidth || 0, E = this._lastCardHeight || this._lastViewportHeight || 0, I = this._layoutModeConfig({ width: y }), R = this.shadowRoot?.querySelector(".card") || null, O = this._renderedLayoutMode || (R?.classList.contains("layout-tablet") ? "tablet" : R?.classList.contains("layout-mobile") ? "mobile" : ""), $ = !!(O && I && O !== I), X = this.shadowRoot?.activeElement || document.activeElement, me = X?.tagName?.toLowerCase?.() || "", _e = X && (me === "input" || me === "textarea" || X?.isContentEditable), ne = this._tabletStabilityModeEnabled(), K = p.resolveResizeStrategy({
           previousWidth: B,
           currentWidth: y,
           previousHeight: E,
@@ -45747,10 +45786,10 @@ function Uh({
           this._fetchLibrary("album", "random", 18, !1)
         ]);
         if (!this._isValidRender(s)) return;
-        const [g, y, S, B] = A.map((Y) => Y.value ?? []);
+        const [g, y, S, B] = A.map((O) => O.value ?? []);
         let E = "";
         g.length && (E += this._sectionHtml(this._i18n("ui.favorite_radio"), g, "radio", !0)), y.length && (E += this._sectionHtml(this._i18n("ui.recently_played"), y, "album", !0)), S.length && (E += this._sectionHtml(this._i18n("ui.recently_added"), S, "album", !0)), B.length && (E += this._sectionHtml(this._i18n("ui.discover"), B, "album", !0));
-        const I = A.find((Y) => Y.status === "rejected" && this._isMusicAssistantAvailabilityError(Y.reason)), R = this._state.musicAssistantIssueMessage || (I ? this._handleMusicAssistantIssue(I.reason) : "");
+        const I = A.find((O) => O.status === "rejected" && this._isMusicAssistantAvailabilityError(O.reason)), R = this._state.musicAssistantIssueMessage || (I ? this._handleMusicAssistantIssue(I.reason) : "");
         this.$("content").classList.remove("now-playing-mode"), this.$("content").innerHTML = E || `<div class="state-box">${this._esc(R || this._i18n("ui.no_content_found"))}</div>`, this._hydrateImages(), this._highlightNowPlaying();
       } catch (A) {
         if (!this._isValidRender(s)) return;
@@ -45824,8 +45863,8 @@ function Uh({
         const g = await this._search(s);
         if (!this._isValidRender(A)) return;
         const { radio: y = [], podcasts: S = [], albums: B = [], artists: E = [], tracks: I = [], playlists: R = [] } = g;
-        let Y = `<div class="section"><div class="section-header"><div class="section-title">${this._esc(this._i18n("ui.search"))}: ${this._esc(s)}</div></div></div>`;
-        y.length && (Y += this._sectionHtml(this._i18n("ui.radio"), y, "radio", !1)), S.length && (Y += this._sectionHtml(this._i18n("ui.podcasts"), S, "podcast", !1)), B.length && (Y += this._sectionHtml(this._i18n("ui.albums"), B, "album", !1)), E.length && (Y += this._sectionHtml(this._i18n("ui.artists"), E, "artist", !1)), I.length && (Y += `<div class="section"><div class="section-header"><div class="section-title">${this._esc(this._i18n("ui.tracks"))}</div><div class="section-badge">${I.length}</div><div class="section-actions">${this._sectionActionButtons(I)}</div></div><div class="track-list">${I.map(($, X) => this._trackRowHtml($, X + 1)).join("")}</div></div>`), R.length && (Y += this._sectionHtml(this._i18n("ui.playlists"), R, "playlist", !1)), !y.length && !S.length && !B.length && !E.length && !I.length && !R.length && (Y = `<div class="state-box">${this._esc(this._i18n("ui.no_results"))}: "${this._esc(s)}"</div>`), this.$("content").classList.remove("now-playing-mode"), this.$("content").innerHTML = Y, this._hydrateImages(), this._highlightNowPlaying();
+        let O = `<div class="section"><div class="section-header"><div class="section-title">${this._esc(this._i18n("ui.search"))}: ${this._esc(s)}</div></div></div>`;
+        y.length && (O += this._sectionHtml(this._i18n("ui.radio"), y, "radio", !1)), S.length && (O += this._sectionHtml(this._i18n("ui.podcasts"), S, "podcast", !1)), B.length && (O += this._sectionHtml(this._i18n("ui.albums"), B, "album", !1)), E.length && (O += this._sectionHtml(this._i18n("ui.artists"), E, "artist", !1)), I.length && (O += `<div class="section"><div class="section-header"><div class="section-title">${this._esc(this._i18n("ui.tracks"))}</div><div class="section-badge">${I.length}</div><div class="section-actions">${this._sectionActionButtons(I)}</div></div><div class="track-list">${I.map(($, X) => this._trackRowHtml($, X + 1)).join("")}</div></div>`), R.length && (O += this._sectionHtml(this._i18n("ui.playlists"), R, "playlist", !1)), !y.length && !S.length && !B.length && !E.length && !I.length && !R.length && (O = `<div class="state-box">${this._esc(this._i18n("ui.no_results"))}: "${this._esc(s)}"</div>`), this.$("content").classList.remove("now-playing-mode"), this.$("content").innerHTML = O, this._hydrateImages(), this._highlightNowPlaying();
       } catch (g) {
         if (!this._isValidRender(A)) return;
         this._renderError(g, () => this._renderGlobalSearch(s));
@@ -45838,7 +45877,7 @@ function Uh({
         if (await this._ensureQueueSnapshot(), this._refreshGroupingState(), !this._isValidRender(s)) return;
         const A = this._getSelectedPlayer();
         if (!A) return this._renderEmpty(this._i18n("ui.no_active_media"));
-        const g = A.attributes.media_title || this._i18n("ui.no_active_media"), y = A.attributes.media_artist || this._i18n("ui.unknown"), S = A.attributes.media_album_name || "", B = A.state || "idle", E = this._state.maQueueState?.current_item || null, I = this._currentArtworkUrl(A, E, 520), R = this._getCurrentDuration(), Y = this._getCurrentPosition(), $ = R ? Math.min(100, Y / R * 100) : 0, X = Math.round((A.attributes.volume_level || 0) * 100), me = !!A.attributes.shuffle, _e = A.attributes.repeat || "off", ne = this._getNowPlayingQueueItems(), K = this._state.nowPlayingQuery || "";
+        const g = A.attributes.media_title || this._i18n("ui.no_active_media"), y = A.attributes.media_artist || this._i18n("ui.unknown"), S = A.attributes.media_album_name || "", B = A.state || "idle", E = this._state.maQueueState?.current_item || null, I = this._currentArtworkUrl(A, E, 520), R = this._getCurrentDuration(), O = this._getCurrentPosition(), $ = R ? Math.min(100, O / R * 100) : 0, X = Math.round((A.attributes.volume_level || 0) * 100), me = !!A.attributes.shuffle, _e = A.attributes.repeat || "off", ne = this._getNowPlayingQueueItems(), K = this._state.nowPlayingQuery || "";
         this.$("content").classList.add("now-playing-mode"), this.$("content").innerHTML = `
           <div class="now-layout">
             <div class="now-left">
@@ -45851,7 +45890,7 @@ function Uh({
               </div>
 
               <div class="now-card now-controls-card">
-                <div class="now-time-row"><span id="bigCurTime">${this._esc(this._fmtDur(Y))}</span><span id="bigTotalTime">${this._esc(this._fmtDur(R))}</span></div>
+                <div class="now-time-row"><span id="bigCurTime">${this._esc(this._fmtDur(O))}</span><span id="bigTotalTime">${this._esc(this._fmtDur(R))}</span></div>
                 <div class="now-progress" id="bigProgressBar"><div class="now-progress-fill" id="bigProgressFill" style="width:${$}%"></div></div>
                 <div class="now-controls-main">
                   <button class="big-round-btn ${me ? "active" : ""}" id="bigShuffleBtn">${this._iconSvg("shuffle")}</button>
@@ -45911,13 +45950,13 @@ function Uh({
       const { radio: g = [], podcasts: y = [], albums: S = [], artists: B = [], tracks: E = [], playlists: I = [] } = A || {};
       if (!(g.length + y.length + S.length + B.length + E.length + I.length))
         return `<div class="now-side-scroll"><div class="state-box">${this._esc(this._i18n("ui.no_results"))}: "${this._esc(s)}"</div></div>`;
-      let Y = `
+      let O = `
         <div class="now-side-scroll">
           <div class="side-search-summary">
             <div class="side-search-summary-text">${this._esc(this._i18n("ui.queue_results"))}: "${this._esc(s)}"</div>
             <button class="chip-btn" id="backToQueueBtn">${this._esc(this._i18n("ui.back_to_queue"))}</button>
           </div>`;
-      return g.length && (Y += this._sectionHtml(this._i18n("ui.radio"), g, "radio", !1)), y.length && (Y += this._sectionHtml(this._i18n("ui.podcasts"), y, "podcast", !1)), S.length && (Y += this._sectionHtml(this._i18n("ui.albums"), S, "album", !1)), B.length && (Y += this._sectionHtml(this._i18n("ui.artists"), B, "artist", !1)), E.length && (Y += `<div class="section"><div class="section-header"><div class="section-title">${this._esc(this._i18n("ui.tracks"))}</div><div class="section-badge">${E.length}</div></div><div class="track-list">${E.map(($, X) => this._trackRowHtml($, X + 1)).join("")}</div></div>`), I.length && (Y += this._sectionHtml(this._i18n("ui.playlists"), I, "playlist", !1)), Y += "</div>", Y;
+      return g.length && (O += this._sectionHtml(this._i18n("ui.radio"), g, "radio", !1)), y.length && (O += this._sectionHtml(this._i18n("ui.podcasts"), y, "podcast", !1)), S.length && (O += this._sectionHtml(this._i18n("ui.albums"), S, "album", !1)), B.length && (O += this._sectionHtml(this._i18n("ui.artists"), B, "artist", !1)), E.length && (O += `<div class="section"><div class="section-header"><div class="section-title">${this._esc(this._i18n("ui.tracks"))}</div><div class="section-badge">${E.length}</div></div><div class="track-list">${E.map(($, X) => this._trackRowHtml($, X + 1)).join("")}</div></div>`), I.length && (O += this._sectionHtml(this._i18n("ui.playlists"), I, "playlist", !1)), O += "</div>", O;
     }
     async _updateNowPlayingSidePanel() {
       if (this._state.view !== "now_playing") return;
@@ -45935,7 +45974,7 @@ function Uh({
       try {
         const E = await this._search(S);
         if (B !== this._state.sidePanelToken || !s.isConnected) return;
-        const I = Object.values(E || {}).reduce((R, Y) => R + (Array.isArray(Y) ? Y.length : 0), 0);
+        const I = Object.values(E || {}).reduce((R, O) => R + (Array.isArray(O) ? O.length : 0), 0);
         g.textContent = String(I), s.innerHTML = this._nowPlayingSearchResultsHtml(S, E), this.$("backToQueueBtn")?.addEventListener("click", () => {
           const R = this.$("nowQueueSearchInput");
           R && (R.value = ""), this._state.nowPlayingQuery = "", this._updateNowPlayingSidePanel();
@@ -46033,14 +46072,14 @@ function Uh({
       if (!g.length) return -1;
       const y = this._queueVisibleItemsForMove(g), S = Math.max(0, Math.min(y.length - 1, Math.round(Number(A)) - 1 || 0)), B = y[S] || null;
       if (!B) return -1;
-      const E = this._getQueueItemKey(B), I = this._getQueueItemStableId(B), R = this._getQueueItemUri(B), Y = h.normalizeFiniteNumber(B?.sort_index), $ = g.findIndex(
-        (X) => X === B || E && this._getQueueItemKey(X) === E || I && this._getQueueItemStableId(X) === I || R && this._mediaRefsEquivalent(this._getQueueItemUri(X), R, X?.media_item?.media_type || X?.media_type || "track") || Number.isFinite(Y) && Number(X?.sort_index) === Y
+      const E = this._getQueueItemKey(B), I = this._getQueueItemStableId(B), R = this._getQueueItemUri(B), O = h.normalizeFiniteNumber(B?.sort_index), $ = g.findIndex(
+        (X) => X === B || E && this._getQueueItemKey(X) === E || I && this._getQueueItemStableId(X) === I || R && this._mediaRefsEquivalent(this._getQueueItemUri(X), R, X?.media_item?.media_type || X?.media_type || "track") || Number.isFinite(O) && Number(X?.sort_index) === O
       );
       return $ < 0 ? -1 : Math.max(this._queueFirstMovableIndex(g), $);
     }
     _queueDisplayPositionForEntry(s = {}, A = 1) {
       const g = this._getNowPlayingQueueItems(), y = this._getQueueItemKey(s) || String(s?.queue_item_id || s?.queueItemId || s?.key || "").trim(), S = this._getQueueItemStableId(s), B = this._getQueueItemUri(s) || String(s?.uri || s?.media_item?.uri || "").trim(), E = h.normalizeFiniteNumber(s?.sort_index), I = g.findIndex(
-        (Y) => y && this._getQueueItemKey(Y) === y || S && this._getQueueItemStableId(Y) === S || B && this._mediaRefsEquivalent(this._getQueueItemUri(Y), B, Y?.media_item?.media_type || Y?.media_type || "track") || Number.isFinite(E) && Number(Y?.sort_index) === E
+        (O) => y && this._getQueueItemKey(O) === y || S && this._getQueueItemStableId(O) === S || B && this._mediaRefsEquivalent(this._getQueueItemUri(O), B, O?.media_item?.media_type || O?.media_type || "track") || Number.isFinite(E) && Number(O?.sort_index) === E
       );
       if (I >= 0) return I + 1;
       const R = Math.round(Number(A || s?.position));
@@ -46089,8 +46128,8 @@ function Uh({
         }
         const I = this._queueItemPrimaryTitle(s) || this._i18n("ui.up_next_2"), R = this._queueItemImageUrl(s, 72);
         if (y.hidden = !1, y.dataset.queueItemId = this._getQueueItemKey(s), y.dataset.uri = this._getQueueItemUri(s), y.dataset.type = s?.media_item?.media_type || s?.media_type || "track", y.dataset.sortIndex = Number.isFinite(Number(s?.sort_index)) ? String(s.sort_index) : "", y.title = this._i18n("ui.up_next_title", { title: I }), S) {
-          const Y = R || "";
-          S.dataset.artSrc !== Y && (S.dataset.artSrc = Y, S.innerHTML = R ? this._imgHtml(R, "", { loading: "eager", fetchpriority: "high" }) : `<span class="up-next-art-fallback">${this._iconSvg("tracks")}</span>`);
+          const O = R || "";
+          S.dataset.artSrc !== O && (S.dataset.artSrc = O, S.innerHTML = R ? this._imgHtml(R, "", { loading: "eager", fetchpriority: "high" }) : `<span class="up-next-art-fallback">${this._iconSvg("tracks")}</span>`);
         }
         B && (B.textContent = this._i18n("ui.up_next_2")), E && (E.textContent = I);
       });
@@ -46213,7 +46252,7 @@ function Uh({
         ["shuffle", "shuffle", "ui.shuffle_play"],
         ["next", "queue_next", "ui.play_next"],
         ["add", "queue_add", "ui.add_to_queue"]
-      ].map(([Y, $, X]) => Pa(this, "data-enqueue", Y, $, this._i18n(X), "ctx-item")).join(""), B.querySelectorAll(".ctx-item").forEach((Y) => Y.addEventListener("click", async ($) => {
+      ].map(([O, $, X]) => Pa(this, "data-enqueue", O, $, this._i18n(X), "ctx-item")).join(""), B.querySelectorAll(".ctx-item").forEach((O) => O.addEventListener("click", async ($) => {
         if ($.stopPropagation(), B.dataset.pending) return;
         B.dataset.pending = "true";
         const X = [...B.querySelectorAll("button")];
@@ -46221,7 +46260,7 @@ function Uh({
           me.disabled = !0;
         });
         try {
-          await this._playMedia(g, y, Y.dataset.enqueue) !== !1 && this._dismissCtx();
+          await this._playMedia(g, y, O.dataset.enqueue) !== !1 && this._dismissCtx();
         } finally {
           delete B.dataset.pending, X.forEach((me) => {
             me.disabled = !1;
@@ -46231,8 +46270,8 @@ function Uh({
       const E = S.getBoundingClientRect();
       let I = s - E.left, R = A - E.top;
       B.style.left = `${I}px`, B.style.top = `${R}px`, requestAnimationFrame(() => {
-        const Y = B.getBoundingClientRect(), $ = S.getBoundingClientRect();
-        Y.right > $.right && (I -= Y.width), Y.bottom > $.bottom && (R -= Y.height), B.style.left = `${Math.max(8, I)}px`, B.style.top = `${Math.max(8, R)}px`;
+        const O = B.getBoundingClientRect(), $ = S.getBoundingClientRect();
+        O.right > $.right && (I -= O.width), O.bottom > $.bottom && (R -= O.height), B.style.left = `${Math.max(8, I)}px`, B.style.top = `${Math.max(8, R)}px`;
       });
     }
     _dismissCtx() {
@@ -46343,7 +46382,7 @@ function Uh({
     }
     _applyQueueSnapshot(s, A = [], g = !1) {
       if (!s) return;
-      const y = { ...s }, S = M.pendingQueuePlayState(this._state, Date.now()), { hasPendingPlay: B, pendingKey: E, pendingUri: I, pendingIndex: R } = S, Y = g || !this._state.queueItems.length || this._isQueueUiVisible(), $ = this._queueItemsWithSequentialSortIndexes(Array.isArray(A) ? A : []);
+      const y = { ...s }, S = M.pendingQueuePlayState(this._state, Date.now()), { hasPendingPlay: B, pendingKey: E, pendingUri: I, pendingIndex: R } = S, O = g || !this._state.queueItems.length || this._isQueueUiVisible(), $ = this._queueItemsWithSequentialSortIndexes(Array.isArray(A) ? A : []);
       let X = !1;
       if ($.length) {
         const ge = Number(y.current_index), ye = this._getQueueItemKey(y.current_item), fe = this._getQueueItemUri(y.current_item), ke = $.find(
@@ -46378,7 +46417,7 @@ function Uh({
         this._state.queueItems = [];
         return;
       }
-      if ($.length && this._writeQueueSnapshotCache(this._getSelectedPlayer(), y, $), !Y || !$.length || X) return;
+      if ($.length && this._writeQueueSnapshotCache(this._getSelectedPlayer(), y, $), !O || !$.length || X) return;
       const me = Array.isArray(this._state.queueItems) ? this._state.queueItems : [], _e = Number(this._state.queueMutationPendingUntil || 0), ne = String(this._state.queueMutationExpectedSignature || "");
       if (_e > Date.now() && ne) {
         if (this._queueOrderSignature($) !== ne) return;
@@ -46463,7 +46502,7 @@ function Uh({
         if (!I || R === null || !this._hasMusicAssistantCommandBridge())
           throw new Error(this._i18n("ui.queue_item_id_is_not_ready_yet_refresh_the_queue_and_try_again"));
         if (E && Number.isFinite(B)) {
-          const Y = Date.now() + 8500;
+          const O = Date.now() + 8500;
           this._markMobileQueuePlayPending(E, B), this._state.maQueueState = {
             ...this._state.maQueueState || {},
             current_index: B,
@@ -46471,7 +46510,7 @@ function Uh({
             next_item: (this._state.queueItems || []).find(($) => Number($?.sort_index) === B + 1) || null,
             elapsed_time: 0,
             elapsed_time_last_updated: (/* @__PURE__ */ new Date()).toISOString()
-          }, this._state.mobileArtBrowseOffset = 0, typeof this._preloadPendingMobileQueueItemArtwork == "function" && this._preloadPendingMobileQueueItemArtwork(E), S?.entity_id ? this._setPlayerPlaybackOptimistic(S.entity_id, { state: "playing", until: Y }) : this._syncNowPlayingUI();
+          }, this._state.mobileArtBrowseOffset = 0, typeof this._preloadPendingMobileQueueItemArtwork == "function" && this._preloadPendingMobileQueueItemArtwork(E), S?.entity_id ? this._setPlayerPlaybackOptimistic(S.entity_id, { state: "playing", until: O }) : this._syncNowPlayingUI();
         }
         return this._debugLog("info", "[Homeii Queue] play item", {
           queueId: I,
@@ -46541,7 +46580,7 @@ function Uh({
     }
     _normalizeQueueItem(s, A = 0) {
       if (!s || typeof s != "object") return null;
-      const g = s.media_item || s.media || s.item || s, y = String(s.media_artist || s.artist || "").trim(), S = Array.isArray(g?.artists) ? g.artists : Array.isArray(s.artists) ? s.artists : y ? y.split(",").map((ce) => ({ name: String(ce).trim() })).filter((ce) => ce.name) : [], B = String(s.media_album_name || s.album_name || "").trim(), E = g?.album || s.album || (B ? { name: B } : null), I = s.media_image || s.media_image_url || s.image_url || s.image || s.thumbnail || s.thumb || s.local_image_url || s.local_image || s.local_image_encoded || "", R = this._artUrl(s, { size: 420 }) || this._artUrl(g, { size: 420 }) || this._artUrl(E, { size: 420 }) || this._imageUrl(I, 420) || "", Y = Number(s.sort_index), $ = Number(s.position), X = g?.uri || s.uri || s.media_content_id || s.media_id || "", me = String(s.queue_item_id || s.queueItemId || s.queue_item?.queue_item_id || s.queueItem?.queue_item_id || "").trim(), _e = String(s.item_id || s.id || "").trim(), ne = h.parseMediaReference(X, g?.media_type || s.media_type || "track"), K = !!(_e && (_e === X || _e === ne.item_id || X.endsWith(`/${_e}`) || X.endsWith(`:${_e}`))), ae = me || (_e && !K ? _e : "");
+      const g = s.media_item || s.media || s.item || s, y = String(s.media_artist || s.artist || "").trim(), S = Array.isArray(g?.artists) ? g.artists : Array.isArray(s.artists) ? s.artists : y ? y.split(",").map((ce) => ({ name: String(ce).trim() })).filter((ce) => ce.name) : [], B = String(s.media_album_name || s.album_name || "").trim(), E = g?.album || s.album || (B ? { name: B } : null), I = s.media_image || s.media_image_url || s.image_url || s.image || s.thumbnail || s.thumb || s.local_image_url || s.local_image || s.local_image_encoded || "", R = this._artUrl(s, { size: 420 }) || this._artUrl(g, { size: 420 }) || this._artUrl(E, { size: 420 }) || this._imageUrl(I, 420) || "", O = Number(s.sort_index), $ = Number(s.position), X = g?.uri || s.uri || s.media_content_id || s.media_id || "", me = String(s.queue_item_id || s.queueItemId || s.queue_item?.queue_item_id || s.queueItem?.queue_item_id || "").trim(), _e = String(s.item_id || s.id || "").trim(), ne = h.parseMediaReference(X, g?.media_type || s.media_type || "track"), K = !!(_e && (_e === X || _e === ne.item_id || X.endsWith(`/${_e}`) || X.endsWith(`:${_e}`))), ae = me || (_e && !K ? _e : "");
       return {
         ...s,
         media_item: {
@@ -46553,7 +46592,7 @@ function Uh({
         },
         image: R || s.image || I || g?.image || E?.image || null,
         image_url: R || s.image_url || I || g?.image_url || g?.image || E?.image_url || E?.image || null,
-        sort_index: Number.isFinite(Y) ? Y : Number.isFinite($) ? $ : A,
+        sort_index: Number.isFinite(O) ? O : Number.isFinite($) ? $ : A,
         queue_item_id: ae || _e || X || String(A),
         queue_item_id_trusted: !!ae,
         queue_service_id: ae
@@ -46598,9 +46637,9 @@ function Uh({
         K && (y = K);
       }
       if (!y || typeof y != "object") return null;
-      const S = y.queue_state || y.queue || y, B = Array.isArray(y.previous_items) ? y.previous_items : Array.isArray(S?.previous_items) ? S.previous_items : [], E = y.current_item || S?.current_item || null, I = y.next_item || S?.next_item || null, Y = [...Array.isArray(y.next_items) ? y.next_items : Array.isArray(S?.next_items) ? S.next_items : [], ...I ? [I] : []];
+      const S = y.queue_state || y.queue || y, B = Array.isArray(y.previous_items) ? y.previous_items : Array.isArray(S?.previous_items) ? S.previous_items : [], E = y.current_item || S?.current_item || null, I = y.next_item || S?.next_item || null, O = [...Array.isArray(y.next_items) ? y.next_items : Array.isArray(S?.next_items) ? S.next_items : [], ...I ? [I] : []];
       let $ = [];
-      Array.isArray(y.items) ? $ = y.items : Array.isArray(S?.items) ? $ = S.items : Array.isArray(y.queue_items) ? $ = y.queue_items : $ = [...B, ...E ? [E] : [], ...Y];
+      Array.isArray(y.items) ? $ = y.items : Array.isArray(S?.items) ? $ = S.items : Array.isArray(y.queue_items) ? $ = y.queue_items : $ = [...B, ...E ? [E] : [], ...O];
       const X = Number.isFinite(S?.current_index) ? S.current_index : Number.isFinite(y.current_index) ? y.current_index : B.length, me = Math.max(0, X - B.length), _e = $.map((K, ae) => this._normalizeQueueItem(K, me + ae)).filter(Boolean).map((K, ae) => ({
         ...K,
         sort_index: Number.isFinite(K.sort_index) ? K.sort_index : me + ae
@@ -46683,13 +46722,13 @@ function Uh({
     }
     async _fetchLibrary(s, A = "sort_name", g = 500, y = !1, S = "", B = {}) {
       if (g > 500 && this._state.engineCapabilities?.library_pagination) {
-        const R = [], Y = /* @__PURE__ */ new Set(), $ = {};
+        const R = [], O = /* @__PURE__ */ new Set(), $ = {};
         for (let X = 0; X < g; X += 500) {
           const me = Math.min(500, g - X), _e = await this._fetchLibrary(s, A, me, y, S, { ...B, offset: X, strict: !0, snapshot: $ });
           for (const ne of _e) {
             const K = ne.uri || `${ne.provider || ""}:${ne.item_id || ""}`;
-            if (K !== ":" && Y.has(K)) throw new Error(this._m("Library changed while loading. Try again.", "הספרייה השתנתה בזמן הטעינה. נסה שוב."));
-            Y.add(K), R.push(ne);
+            if (K !== ":" && O.has(K)) throw new Error(this._m("Library changed while loading. Try again.", "הספרייה השתנתה בזמן הטעינה. נסה שוב."));
+            O.add(K), R.push(ne);
           }
           if (_e.length < me) break;
         }
@@ -46708,7 +46747,7 @@ function Uh({
           ...s === "artist" && B.albumArtistsOnly ? { album_artists_only: !0 } : {},
           compact: !0,
           ...this._state.engineCapabilities?.library_pagination ? { offset: B.offset || 0 } : {}
-        }), Y = `${s}:${A}:${y ? "favorites" : "all"}:${S || ""}:${B.offset || 0}:${g}`;
+        }), O = `${s}:${A}:${y ? "favorites" : "all"}:${S || ""}:${B.offset || 0}:${g}`;
         if (B.snapshot) {
           const me = q.engineSnapshotMeta(R);
           if (me) {
@@ -46721,11 +46760,11 @@ function Uh({
           this._engineSnapshotRevisions,
           "library",
           R,
-          Y
+          O
         )) {
           if (B.strict) throw new Error(this._m("Library changed while loading. Try again.", "הספרייה השתנתה בזמן הטעינה. נסה שוב."));
           this._debugLog?.("debug", "[HOMEii Flow] Ignored stale Engine library snapshot", {
-            libraryIdentity: Y,
+            libraryIdentity: O,
             snapshot: q.engineSnapshotMeta(R)
           });
           const me = `${s}:${A}:`, _e = `:${y}`, ne = [...this._cache.library.entries()].filter(([K, ae]) => K.startsWith(me) && K.endsWith(_e) && Array.isArray(ae?.items)).map(([, K]) => K.items).sort((K, ae) => ae.length - K.length)[0];
@@ -46742,7 +46781,7 @@ function Uh({
       return s ? Array.isArray(s) ? s : Array.isArray(s?.items) ? s.items : Array.isArray(s?.recommendations) ? s.recommendations : Array.isArray(s?.folders) ? s.folders : [] : [];
     }
     _normalizeRecommendationEntry(s = {}, A = "track", g = null) {
-      const y = this._normalizeSearchItem(s?.media_item || s, A), S = String(y?.media_type || A || "track").toLowerCase(), B = Array.isArray(y?.artists) ? y.artists.map((Y) => Y?.name).filter(Boolean).join(", ") : "", E = String(y?.uri || s?.uri || s?.media_item?.uri || "").trim();
+      const y = this._normalizeSearchItem(s?.media_item || s, A), S = String(y?.media_type || A || "track").toLowerCase(), B = Array.isArray(y?.artists) ? y.artists.map((O) => O?.name).filter(Boolean).join(", ") : "", E = String(y?.uri || s?.uri || s?.media_item?.uri || "").trim();
       if (!E) return null;
       const I = String(g?.name || g?.title || g?.item_id || "").trim(), R = String(y?.provider_label || s?.provider_label || g?.provider || y?.provider || "").trim();
       return {
@@ -46761,7 +46800,7 @@ function Uh({
     }
     _flattenNativeRecommendations(s = {}, A = 48) {
       const g = s?.response ?? s?.result ?? s, y = this._recommendationFolderItems(g), S = [], B = /* @__PURE__ */ new Set(), E = (I, R = null) => {
-        const Y = String(I?.media_type || I?.type || I?.media_item?.media_type || "track").toLowerCase(), $ = this._normalizeRecommendationEntry(I, Y, R), X = String($?.uri || $?.name || "").trim().toLowerCase();
+        const O = String(I?.media_type || I?.type || I?.media_item?.media_type || "track").toLowerCase(), $ = this._normalizeRecommendationEntry(I, O, R), X = String($?.uri || $?.name || "").trim().toLowerCase();
         !X || B.has(X) || (B.add(X), S.push($));
       };
       return y.some((I) => Array.isArray(I?.items)) ? y.forEach((I) => this._recommendationFolderItems(I).forEach((R) => E(R, I))) : y.forEach((I) => E(I, null)), S.slice(0, Math.max(1, Math.min(100, Number(A) || 48)));
@@ -46877,11 +46916,11 @@ function Uh({
         }
         return (!Array.isArray($) || !$.length) && I.length && this._state.engineStatus === "degraded" ? I : ((Array.isArray($) && $.length || !this._state.musicAssistantIssueMessage) && this._cache.library.set(S, { ts: Date.now(), items: $ }), $);
       };
-      let Y = this._libraryLoadPromises.get(S);
-      return Y || (Y = R().finally(() => {
-        this._libraryLoadPromises.get(S) === Y && this._libraryLoadPromises.delete(S);
-      }), this._libraryLoadPromises.set(S, Y)), I.length ? (Y.catch(() => {
-      }), I) : Y;
+      let O = this._libraryLoadPromises.get(S);
+      return O || (O = R().finally(() => {
+        this._libraryLoadPromises.get(S) === O && this._libraryLoadPromises.delete(S);
+      }), this._libraryLoadPromises.set(S, O)), I.length ? (O.catch(() => {
+      }), I) : O;
     }
     _mediaTypeCanOpenDetails(s = "") {
       return ["album", "artist", "playlist", "podcast"].includes(String(s || "").toLowerCase());
@@ -46952,15 +46991,15 @@ function Uh({
       return this._libraryMediaDetailCommandArgsList(s, A)[0] || null;
     }
     _libraryMediaDetailCommandArgsList(s = {}, A = "album") {
-      const g = String(A || s?.media_type || s?.type || "album").toLowerCase(), y = s?.media_item || {}, S = this._searchItemProviderMapping(s), B = String(s?.uri || y?.uri || "").trim(), E = this._parseMediaReference(B, g), I = [].concat(Array.isArray(s?.provider_mappings) ? s.provider_mappings : []).concat(Array.isArray(y?.provider_mappings) ? y.provider_mappings : []).concat(S && typeof S == "object" ? [S] : []), R = [], Y = ($, X) => {
+      const g = String(A || s?.media_type || s?.type || "album").toLowerCase(), y = s?.media_item || {}, S = this._searchItemProviderMapping(s), B = String(s?.uri || y?.uri || "").trim(), E = this._parseMediaReference(B, g), I = [].concat(Array.isArray(s?.provider_mappings) ? s.provider_mappings : []).concat(Array.isArray(y?.provider_mappings) ? y.provider_mappings : []).concat(S && typeof S == "object" ? [S] : []), R = [], O = ($, X) => {
         const me = String($ || "").trim(), _e = String(X || "").trim();
         if (!me || !_e) return;
         const ne = `${_e}::${me}`.toLowerCase();
         R.some((K) => K.key === ne) || R.push({ key: ne, item_id: me, provider: _e });
       };
-      return Y(E?.item_id, E?.provider), Y(s?.item_id || s?.id || y?.item_id || y?.id, s?.provider_instance || y?.provider_instance || s?.provider_domain || y?.provider_domain || s?.provider || y?.provider), Y(S?.item_id || S?.provider_item_id, S?.provider_instance || S?.provider_domain || S?.provider || S?.provider_id), I.forEach(($) => {
+      return O(E?.item_id, E?.provider), O(s?.item_id || s?.id || y?.item_id || y?.id, s?.provider_instance || y?.provider_instance || s?.provider_domain || y?.provider_domain || s?.provider || y?.provider), O(S?.item_id || S?.provider_item_id, S?.provider_instance || S?.provider_domain || S?.provider || S?.provider_id), I.forEach(($) => {
         const X = $?.item_id || $?.provider_item_id || $?.media_item?.item_id || "", me = this._parseMediaReference($?.uri || $?.media_item?.uri || "", g);
-        Y(X, $?.provider_instance), Y(X, $?.provider_domain), Y(X, $?.provider), Y(X, $?.provider_id), Y(me?.item_id, me?.provider), Y(me?.item_id, $?.provider_instance || $?.provider_domain || $?.provider || $?.provider_id);
+        O(X, $?.provider_instance), O(X, $?.provider_domain), O(X, $?.provider), O(X, $?.provider_id), O(me?.item_id, me?.provider), O(me?.item_id, $?.provider_instance || $?.provider_domain || $?.provider || $?.provider_id);
       }), R.map(({ item_id: $, provider: X }) => ({ item_id: $, provider: X }));
     }
     _normalizeLibraryDetailTrack(s = {}, A = !1) {
@@ -46973,14 +47012,14 @@ function Uh({
       if (y && !["track", "song", "music", "album_track", "albumtrack", "podcast_episode"].includes(y) || !A && !y && !g.uri && !g.media_content_id && !g.item_id) return null;
       const S = y === "podcast_episode" ? "podcast_episode" : "track", B = this._normalizeSearchItem(g, S), E = String(B?.uri || g.uri || g.media_content_id || s.uri || s.media_content_id || "").trim(), I = B?.name || g.name || g.title || s.name || s.title || s.media_title || "";
       if (!E && !I) return null;
-      const R = Array.isArray(B?.artists) ? B.artists : Array.isArray(g.artists) ? g.artists : Array.isArray(s.artists) ? s.artists : [], Y = B?.artist_str || g.artist_str || g.artist || s.artist_str || s.artist || s.media_artist || R.map((_e) => _e?.name || _e).filter(Boolean).join(", "), $ = B?.album || g.album || s.album || {}, X = typeof $ == "string" ? { name: $ } : $, me = this._artUrl(B) || this._artUrl(g) || this._artUrl(s) || "";
+      const R = Array.isArray(B?.artists) ? B.artists : Array.isArray(g.artists) ? g.artists : Array.isArray(s.artists) ? s.artists : [], O = B?.artist_str || g.artist_str || g.artist || s.artist_str || s.artist || s.media_artist || R.map((_e) => _e?.name || _e).filter(Boolean).join(", "), $ = B?.album || g.album || s.album || {}, X = typeof $ == "string" ? { name: $ } : $, me = this._artUrl(B) || this._artUrl(g) || this._artUrl(s) || "";
       return {
         ...B,
         media_type: S,
         uri: E,
         name: I,
         artists: R,
-        artist_str: Y,
+        artist_str: O,
         album: X,
         image: B?.image || B?.image_url || g.image || g.image_url || g.thumbnail || s.image || s.image_url || s.thumbnail || me,
         image_url: B?.image_url || B?.image || g.image_url || g.image || g.thumbnail || s.image_url || s.image || s.thumbnail || me
@@ -46990,18 +47029,18 @@ function Uh({
       const g = [], y = /* @__PURE__ */ new Set(), S = (E, I = !1) => {
         const R = this._normalizeLibraryDetailTrack(E, I);
         if (!R) return !1;
-        const Y = String(R.uri || `${R.name}:${R.artist_str || ""}`).trim().toLowerCase();
-        return !Y || y.has(Y) || (y.add(Y), g.push(R)), !0;
+        const O = String(R.uri || `${R.name}:${R.artist_str || ""}`).trim().toLowerCase();
+        return !O || y.has(O) || (y.add(O), g.push(R)), !0;
       }, B = (E, I = !1, R = 0) => {
         if (!(E == null || R > 5)) {
           if (Array.isArray(E)) {
-            E.forEach((Y) => {
-              S(Y, I) || B(Y, I, R + 1);
+            E.forEach((O) => {
+              S(O, I) || B(O, I, R + 1);
             });
             return;
           }
-          typeof E == "object" && (S(E, I) || ["tracks", "playlist_tracks", "album_tracks", "items", "media_items", "children", "contents", "result", "response"].forEach((Y) => {
-            Y in E && B(E[Y], I || Y.includes("track"), R + 1);
+          typeof E == "object" && (S(E, I) || ["tracks", "playlist_tracks", "album_tracks", "items", "media_items", "children", "contents", "result", "response"].forEach((O) => {
+            O in E && B(E[O], I || O.includes("track"), R + 1);
           }));
         }
       };
@@ -47054,10 +47093,10 @@ function Uh({
         if (!I || typeof I != "object") return !1;
         const R = I.media_item || I.item || I;
         if (!R || typeof R != "object") return !1;
-        const Y = String(
+        const O = String(
           R.media_type || R.type || R.media_content_type || R.media_class || I.media_type || I.type || I.media_content_type || I.media_class || ""
         ).toLowerCase();
-        if (Y && Y !== g) return !1;
+        if (O && O !== g) return !1;
         const $ = this._normalizeSearchItem(R, g);
         if (String($?.media_type || g).toLowerCase() !== g) return !1;
         const me = String($?.uri || R.uri || R.media_content_id || I.uri || I.media_content_id || "").trim(), _e = String($?.name || $?.title || R.name || R.title || I.name || I.title || "").trim();
@@ -47071,17 +47110,17 @@ function Uh({
           image: $?.image || $?.image_url || R.image || R.image_url || I.image || I.image_url || "",
           image_url: $?.image_url || $?.image || R.image_url || R.image || I.image_url || I.image || ""
         })), !0;
-      }, E = (I, R = !1, Y = 0) => {
-        if (I == null || Y > 5) return;
+      }, E = (I, R = !1, O = 0) => {
+        if (I == null || O > 5) return;
         if (Array.isArray(I)) {
           I.forEach((X) => {
-            B(X) || E(X, R, Y + 1);
+            B(X) || E(X, R, O + 1);
           });
           return;
         }
         if (typeof I != "object" || R && B(I)) return;
         (g === "album" ? ["albums", "album", "items", "media_items", "children", "contents", "result", "response"] : ["playlists", "playlist", "items", "media_items", "children", "contents", "result", "response"]).forEach((X) => {
-          X in I && E(I[X], ["albums", "album", "playlists", "playlist", "items", "media_items"].includes(X), Y + 1);
+          X in I && E(I[X], ["albums", "album", "playlists", "playlist", "items", "media_items"].includes(X), O + 1);
         });
       };
       return E(s?.result ?? s?.response ?? s, !1, 0), y;
@@ -47213,28 +47252,28 @@ function Uh({
       const A = /* @__PURE__ */ new Set(), g = /* @__PURE__ */ new Map(), y = (I = {}) => {
         const R = h.normalizeComparableText(I?.name || I?.title || I?.media_item?.name || "");
         if (!R) return "";
-        const Y = this._mediaYearValue(I) || "";
-        return Y ? `${R}::${Y}` : R;
+        const O = this._mediaYearValue(I) || "";
+        return O ? `${R}::${O}` : R;
       }, S = (I = {}) => {
-        const Y = y(I).split("::")[0] || "";
-        if (!Y) return "";
+        const O = y(I).split("::")[0] || "";
+        if (!O) return "";
         const $ = this._mediaYearValue(I) || "", X = h.normalizeComparableText(this._artistName(I) || I?.artist_str || I?.artist || "");
-        return [Y, $, X].filter((me) => me !== "").join("::");
+        return [O, $, X].filter((me) => me !== "").join("::");
       }, B = (I = {}) => {
         let R = 0;
         return I.uri && (R += 4), this._mediaYearValue(I) && (R += 2), (this._artUrl(I) || I.image || I.image_url) && (R += 2), (I.provider_instance === "library" || I.provider === "library") && (R += 3), Array.isArray(I.provider_mappings) && I.provider_mappings.length && (R += I.provider_mappings.length), R;
       }, E = [];
       return (Array.isArray(s) ? s : []).forEach((I) => {
-        const R = String(I?.uri || I?.media_item?.uri || "").trim().toLowerCase(), Y = S(I), $ = y(I);
+        const R = String(I?.uri || I?.media_item?.uri || "").trim().toLowerCase(), O = S(I), $ = y(I);
         if (R && A.has(R)) return;
-        const X = Y && g.has(Y) ? g.get(Y) : $ && g.has(`title:${$}`) ? g.get(`title:${$}`) : -1;
+        const X = O && g.has(O) ? g.get(O) : $ && g.has(`title:${$}`) ? g.get(`title:${$}`) : -1;
         if (X >= 0) {
           B(I) > B(E[X]) && (E[X] = I, R && A.add(R));
           return;
         }
-        if (!R && !Y && !$) return;
+        if (!R && !O && !$) return;
         const me = E.length;
-        R && A.add(R), Y && g.set(Y, me), $ && g.set(`title:${$}`, me), E.push(I);
+        R && A.add(R), O && g.set(O, me), $ && g.set(`title:${$}`, me), E.push(I);
       }), E;
     }
     _artistAlbumsFromTracksPayload(s, A = "") {
@@ -47248,12 +47287,12 @@ function Uh({
       const A = String(s || "").trim();
       if (!A) return [];
       const g = h.normalizeComparableText(A), y = /* @__PURE__ */ new Set(), S = [], B = (E = {}) => {
-        const I = this._normalizeSearchItem(E, "playlist"), R = String(I?.uri || "").trim(), Y = String(I?.name || I?.title || "").trim();
-        if (!R && !Y) return;
-        const $ = String(R || Y).toLowerCase();
+        const I = this._normalizeSearchItem(E, "playlist"), R = String(I?.uri || "").trim(), O = String(I?.name || I?.title || "").trim();
+        if (!R && !O) return;
+        const $ = String(R || O).toLowerCase();
         if (y.has($)) return;
         const X = h.normalizeComparableText([
-          Y,
+          O,
           I?.description,
           I?.metadata?.description,
           I?.provider_label,
@@ -47319,31 +47358,31 @@ function Uh({
           forceTrackItems: !0
         });
       })), g && E.push({ command: "music/item_by_uri", args: { uri: g }, forceTrackItems: !1 });
-      let R = null, Y = [];
+      let R = null, O = [];
       for (const $ of E)
         try {
           const X = await this._callEngineMaCommand($.command, $.args), me = this._libraryMediaDetailTracksFromPayload(X, { forceTrackItems: $.forceTrackItems }), _e = A === "playlist" ? me : this._sortLibraryDetailTracks(me);
           if ($.forceTrackItems)
             return this._cache.library.set(y, { ts: Date.now(), items: _e }), _e;
-          if (_e.length > Y.length && (Y = _e), _e.length > 1 && $.command.includes("album_tracks") || _e.length && A === "playlist") break;
+          if (_e.length > O.length && (O = _e), _e.length > 1 && $.command.includes("album_tracks") || _e.length && A === "playlist") break;
         } catch (X) {
           R = X;
         }
-      if (Y.length > 1 || Y.length && A !== "album")
-        return this._cache.library.set(y, { ts: Date.now(), items: Y }), Y;
+      if (O.length > 1 || O.length && A !== "album")
+        return this._cache.library.set(y, { ts: Date.now(), items: O }), O;
       try {
         const $ = await this._loadLibraryMediaDetailTracksViaHaBrowse(s), X = A === "playlist" ? $ : this._sortLibraryDetailTracks($);
-        X.length > Y.length && (Y = X);
+        X.length > O.length && (O = X);
       } catch {
       }
       if (A === "album" && s?.name)
         try {
           const $ = await this._loadLibraryMediaDetailTracksViaLibrarySearch(s);
-          $.length > Y.length && (Y = $);
+          $.length > O.length && (O = $);
         } catch {
         }
-      if (Y.length)
-        return this._cache.library.set(y, { ts: Date.now(), items: Y }), Y;
+      if (O.length)
+        return this._cache.library.set(y, { ts: Date.now(), items: O }), O;
       if (R) throw R;
       return [];
     }
@@ -47377,14 +47416,14 @@ function Uh({
           });
         } catch {
         }
-      const R = String(E?.name || g || "").trim(), Y = [], $ = (ae) => {
+      const R = String(E?.name || g || "").trim(), O = [], $ = (ae) => {
         if (!ae?.item_id || !ae?.provider) return;
         const ce = `${ae.provider}::${ae.item_id}`.toLowerCase();
-        Y.some((ge) => ge.key === ce) || Y.push({ key: ce, item_id: ae.item_id, provider: ae.provider });
+        O.some((ge) => ge.key === ce) || O.push({ key: ce, item_id: ae.item_id, provider: ae.provider });
       };
       this._libraryMediaDetailCommandArgsList(E, "artist").forEach($), this._libraryMediaDetailCommandArgsList(s, "artist").forEach($);
       const X = [];
-      Y.forEach((ae) => {
+      O.forEach((ae) => {
         X.push({
           command: "music/artists/artist_albums",
           args: { item_id: ae.item_id, provider_instance_id_or_domain: ae.provider, in_library_only: !1 },
@@ -47449,7 +47488,7 @@ function Uh({
       A && this._flashInteraction(A);
       const B = `${y}:${S}:${Date.now()}`, E = this._state.menuPage === "media_detail" ? this._state.mobileLibraryDetail : null, I = g?.replaceCurrentDetail === !0;
       !!(E && !I && E.token && String(E.uri || "") !== S) ? this._pushCurrentLibraryDetailStack() : E || this._clearLibraryDetailStack();
-      const Y = g?.albumBrowseContext || (y === "album" ? this._albumBrowseContextFromDetail(E, s) : null), $ = this._state.menuPage === "discovery" || String(this._state.menuPage || "").startsWith("library_") ? this._state.menuPage : this._libraryDetailParentPageForType(y);
+      const O = g?.albumBrowseContext || (y === "album" ? this._albumBrowseContextFromDetail(E, s) : null), $ = this._state.menuPage === "discovery" || String(this._state.menuPage || "").startsWith("library_") ? this._state.menuPage : this._libraryDetailParentPageForType(y);
       return this._state.mobileLibraryDetailParentPage = $, this._state.mobileLibraryDetail = {
         ...s,
         uri: S,
@@ -47464,7 +47503,7 @@ function Uh({
         artistInfo: null,
         artistSearchQuery: "",
         artistDescriptionExpanded: !!s.artistDescriptionExpanded,
-        albumBrowseContext: Y || null,
+        albumBrowseContext: O || null,
         loading: !0,
         error: "",
         token: B
@@ -47512,7 +47551,7 @@ function Uh({
         (y, S = {}, B = "") => this._i18n(y, S, B),
         s
       ).map((y) => [y.value, y.label]), g = this._mobileRadioBrowserCountry();
-      return g !== "all" && !A.some(([y]) => y === g) && A.push([g, j(g, (y) => this._i18n(y), s)]), A;
+      return g !== "all" && !A.some(([y]) => y === g) && A.push([g, G(g, (y) => this._i18n(y), s)]), A;
     }
     _mobileRadioBrowserCountry() {
       const s = String(this._state.mobileRadioBrowserCountry || "all").trim().toUpperCase();
@@ -47533,7 +47572,7 @@ function Uh({
         code: String(R.iso_3166_1 || R.countrycode || "").trim().toUpperCase(),
         name: R.name || R.country || "",
         stationcount: Number(R.stationcount || 0) || 0
-      })).filter((R) => R.code && R.name && R.stationcount > 0).sort((R, Y) => R.name.localeCompare(Y.name)).slice(0, A);
+      })).filter((R) => R.code && R.name && R.stationcount > 0).sort((R, O) => R.name.localeCompare(O.name)).slice(0, A);
       return this._cache.library.set(g, { ts: Date.now(), items: I }), I;
     }
     async _fetchRadioBrowserStations(s = "", A = 40, g = {}) {
@@ -47548,14 +47587,14 @@ function Uh({
         });
         S && X.set("name", S), E && (X.set("tag", E), X.set("tagExact", "true"), X.set("order", "votes"), X.set("reverse", "true")), I && X.set("countrycode", B), R = `https://de1.api.radio-browser.info/json/stations/search?${X.toString()}`;
       } else I ? R = `https://de1.api.radio-browser.info/json/stations/bycountrycodeexact/${encodeURIComponent(B)}?hidebroken=true&limit=${y}&order=votes&reverse=true` : R = `https://de1.api.radio-browser.info/json/stations/topvote/${y}`;
-      const Y = await fetch(R, {
+      const O = await fetch(R, {
         signal: globalThis.AbortSignal?.timeout?.(12e3),
         headers: {
           Accept: "application/json"
         }
       });
-      if (!Y.ok) throw new Error(`Radio Browser ${Y.status}`);
-      const $ = await Y.json();
+      if (!O.ok) throw new Error(`Radio Browser ${O.status}`);
+      const $ = await O.json();
       return (Array.isArray($) ? $ : []).map((X) => ({
         uri: X.url_resolved || X.url || "",
         media_type: "radio",
@@ -47623,7 +47662,7 @@ function Uh({
       const S = A.uri.toLowerCase(), B = A.name.toLowerCase();
       let E = y.findIndex((X) => String(X.uri || "").toLowerCase() === S);
       E < 0 && B && (E = y.findIndex((X) => String(X.name || "").toLowerCase() === B));
-      const I = s === "next" ? -1 : 0, R = E >= 0 ? E : I, Y = s === "next" ? (R + 1) % y.length : (R - 1 + y.length) % y.length, $ = y[Y];
+      const I = s === "next" ? -1 : 0, R = E >= 0 ? E : I, O = s === "next" ? (R + 1) % y.length : (R - 1 + y.length) % y.length, $ = y[O];
       return $?.uri ? (await this._playMedia($.uri, "radio", "play", { label: $.name || "Radio", silent: !0 }), this._toastSuccess(this._i18n("ui.radio_station_changed")), !0) : !1;
     }
     _searchItemProviderMapping(s = {}) {
@@ -47658,20 +47697,20 @@ function Uh({
       const A = { radio: [], podcasts: [], albums: [], artists: [], tracks: [], playlists: [], genres: [] };
       if (!s) return A;
       const g = (R) => Array.isArray(R) ? R : R?.items && Array.isArray(R.items) ? R.items : [], y = (R = {}) => {
-        const Y = String(R?.media_type || R?.type || R?.item_type || R?.media_item?.media_type || "").toLowerCase();
-        return Y === "radio" ? "radio" : Y === "podcast" ? "podcasts" : Y === "album" ? "albums" : Y === "artist" ? "artists" : Y === "track" ? "tracks" : Y === "playlist" ? "playlists" : Y === "genre" ? "genres" : "";
+        const O = String(R?.media_type || R?.type || R?.item_type || R?.media_item?.media_type || "").toLowerCase();
+        return O === "radio" ? "radio" : O === "podcast" ? "podcasts" : O === "album" ? "albums" : O === "artist" ? "artists" : O === "track" ? "tracks" : O === "playlist" ? "playlists" : O === "genre" ? "genres" : "";
       }, S = (R = []) => {
-        (Array.isArray(R) ? R : []).forEach((Y) => {
-          const $ = y(Y);
-          $ && A[$].push(this._normalizeSearchItem(Y, $ === "podcasts" ? "podcast" : $.replace(/s$/, "")));
+        (Array.isArray(R) ? R : []).forEach((O) => {
+          const $ = y(O);
+          $ && A[$].push(this._normalizeSearchItem(O, $ === "podcasts" ? "podcast" : $.replace(/s$/, "")));
         });
       }, B = (R = {}) => {
-        A.radio.push(...g(R.radio || R.radios).map((Y) => this._normalizeSearchItem(Y, "radio"))), A.podcasts.push(...g(R.podcast || R.podcasts).map((Y) => this._normalizeSearchItem(Y, "podcast"))), A.albums.push(...g(R.album || R.albums).map((Y) => this._normalizeSearchItem(Y, "album"))), A.artists.push(...g(R.artist || R.artists).map((Y) => this._normalizeSearchItem(Y, "artist"))), A.tracks.push(...g(R.track || R.tracks).map((Y) => this._normalizeSearchItem(Y, "track"))), A.playlists.push(...g(R.playlist || R.playlists).map((Y) => this._normalizeSearchItem(Y, "playlist"))), A.genres.push(...g(R.genre || R.genres).map((Y) => this._normalizeSearchItem(Y, "genre")));
+        A.radio.push(...g(R.radio || R.radios).map((O) => this._normalizeSearchItem(O, "radio"))), A.podcasts.push(...g(R.podcast || R.podcasts).map((O) => this._normalizeSearchItem(O, "podcast"))), A.albums.push(...g(R.album || R.albums).map((O) => this._normalizeSearchItem(O, "album"))), A.artists.push(...g(R.artist || R.artists).map((O) => this._normalizeSearchItem(O, "artist"))), A.tracks.push(...g(R.track || R.tracks).map((O) => this._normalizeSearchItem(O, "track"))), A.playlists.push(...g(R.playlist || R.playlists).map((O) => this._normalizeSearchItem(O, "playlist"))), A.genres.push(...g(R.genre || R.genres).map((O) => this._normalizeSearchItem(O, "genre")));
       }, E = s.response ?? s.result ?? s, I = [E];
       return E?.response && I.push(E.response), E?.result && I.push(E.result), E?.data && I.push(E.data), E && typeof E == "object" && !Array.isArray(E) && Object.values(E).forEach((R) => {
         if (!R || typeof R != "object" || Array.isArray(R)) return;
-        const Y = R.response ?? R.result ?? R;
-        Y && typeof Y == "object" && I.push(Y);
+        const O = R.response ?? R.result ?? R;
+        O && typeof O == "object" && I.push(O);
       }), I.forEach((R) => {
         B(R), S(Array.isArray(R) ? R : []), S(R?.items), S(R?.media), S(R?.media_items), S(R?.library_items), S(R?.results);
       }), A;
@@ -47687,7 +47726,7 @@ function Uh({
       return s.forEach((S) => {
         g.forEach((B) => {
           (Array.isArray(S?.[B]) ? S[B] : []).forEach((I) => {
-            const R = String(I?.uri || I?.media_item?.uri || "").trim(), Y = String(I?.name || I?.title || I?.media_item?.name || "").trim().toLowerCase(), $ = String(I?.provider || I?.provider_id || I?.provider_domain || I?.media_item?.provider || "").trim().toLowerCase(), X = `${B}:${R || `${$}:${Y}`}`;
+            const R = String(I?.uri || I?.media_item?.uri || "").trim(), O = String(I?.name || I?.title || I?.media_item?.name || "").trim().toLowerCase(), $ = String(I?.provider || I?.provider_id || I?.provider_domain || I?.media_item?.provider || "").trim().toLowerCase(), X = `${B}:${R || `${$}:${O}`}`;
             !X || y.has(X) || (y.add(X), A[B].push(I));
           });
         });
@@ -47705,22 +47744,22 @@ function Uh({
         playlist: "playlists",
         genre: "genres"
       }, B = /* @__PURE__ */ new Set(), E = (I, R) => {
-        const Y = String(I?.name || I?.title || I?.media_item?.name || "").toLowerCase(), $ = String(this._artistName?.(I) || I?.artist || I?.artist_str || "").toLowerCase(), X = String(I?.album?.name || I?.media_item?.album?.name || "").toLowerCase();
-        if (![Y, $, X, I?.metadata?.description, I?.description].filter(Boolean).join(" ").toLowerCase().includes(g)) return 0;
+        const O = String(I?.name || I?.title || I?.media_item?.name || "").toLowerCase(), $ = String(this._artistName?.(I) || I?.artist || I?.artist_str || "").toLowerCase(), X = String(I?.album?.name || I?.media_item?.album?.name || "").toLowerCase();
+        if (![O, $, X, I?.metadata?.description, I?.description].filter(Boolean).join(" ").toLowerCase().includes(g)) return 0;
         let _e = 1;
-        return Y.startsWith(g) && (_e += 6), Y === g && (_e += 4), $.startsWith(g) && (_e += 3), R === "track" && (_e += 1), _e;
+        return O.startsWith(g) && (_e += 6), O === g && (_e += 4), $.startsWith(g) && (_e += 3), R === "track" && (_e += 1), _e;
       };
       for (const [I, R] of this._cache.library.entries()) {
-        const Y = String(I || "").split(":")[0], $ = S[Y];
+        const O = String(I || "").split(":")[0], $ = S[O];
         !$ || !Array.isArray(R?.items) || R.items.forEach((X) => {
           const me = String(X?.uri || X?.media_item?.uri || "").trim(), _e = `${$}:${me || X?.item_id || X?.name || ""}`;
           if (!_e || B.has(_e)) return;
-          const ne = E(X, Y);
-          ne && (B.add(_e), y[$].push({ ...X, media_type: X?.media_type || Y, _homeiiSearchScore: ne }));
+          const ne = E(X, O);
+          ne && (B.add(_e), y[$].push({ ...X, media_type: X?.media_type || O, _homeiiSearchScore: ne }));
         });
       }
       return Object.keys(y).forEach((I) => {
-        y[I] = y[I].sort((R, Y) => Number(Y._homeiiSearchScore || 0) - Number(R._homeiiSearchScore || 0)).slice(0, A).map(({ _homeiiSearchScore: R, ...Y }) => Y);
+        y[I] = y[I].sort((R, O) => Number(O._homeiiSearchScore || 0) - Number(R._homeiiSearchScore || 0)).slice(0, A).map(({ _homeiiSearchScore: R, ...O }) => O);
       }), y;
     }
     async _searchPreviewResults(s = "", A = 8) {
@@ -47741,24 +47780,24 @@ function Uh({
     async _search(s, A = {}) {
       const g = String(s || "").trim();
       if (!g) return this._emptySearchResults();
-      const y = A?.providerOnly ? "provider" : A?.fastOnly ? "fast" : "full", S = Math.max(5, Math.min(80, Number(A?.limit || 25) || 25)), B = ["radio", "podcast", "album", "artist", "track", "playlist", "genre"];
+      const y = A?.providerOnly ? "provider" : A?.fastOnly ? "fast" : "full", S = Math.max(5, Math.min(80, Number(A?.limit || 25) || 25)), B = ["radio", "podcast", "album", "artist", "track", "playlist", "genre"], E = Array.isArray(A.mediaTypes) ? A.mediaTypes.filter((O) => B.includes(O)) : [], I = E.length ? [...new Set(E)] : B;
       if (!(this._homeiiEngineEnabled?.() && await this._ensureHomeiiEngineReadyForAction() && typeof this._homeiiEngineSearch == "function")) {
         if (this._state.musicAssistantIssueMessage = this._i18n?.("diagnostics.engine_required_missing") || "HOMEii Flow Engine is required.", A.strict) throw new Error(this._state.musicAssistantIssueMessage);
         return this._emptySearchResults();
       }
       try {
-        const I = await this._homeiiEngineSearch({
+        const O = await this._homeiiEngineSearch({
           query: g,
           limit: S,
-          media_types: B,
+          media_types: I,
           library_only: y === "fast",
           provider_only: y === "provider"
-        }), R = this._normalizeSearchResponse(
-          I?.groups ? { ...I.groups, items: I.items || [] } : I?.data?.response ?? I?.data ?? I
+        }), $ = this._normalizeSearchResponse(
+          O?.groups ? { ...O.groups, items: O.items || [] } : O?.data?.response ?? O?.data ?? O
         );
-        return this._state.musicAssistantIssueMessage = "", R;
-      } catch (I) {
-        if (this._debugLog("warn", "[HOMEii Flow] Engine search failed", I), this._handleMusicAssistantIssue?.(I), A.strict) throw I;
+        return this._state.musicAssistantIssueMessage = "", $;
+      } catch (O) {
+        if (this._debugLog("warn", "[HOMEii Flow] Engine search failed", O), this._handleMusicAssistantIssue?.(O), A.strict) throw O;
         return this._emptySearchResults();
       }
     }
@@ -48012,8 +48051,8 @@ function Uh({
       if (B) return B;
       const E = this._playerOverrideSlug(y);
       return E && (Array.isArray(s) ? s : []).find((I) => {
-        const R = this._playerOverrideSlug(I?.entity_id || ""), Y = this._playerOverrideSlug(I?.attributes?.friendly_name || "");
-        return R === E || Y === E;
+        const R = this._playerOverrideSlug(I?.entity_id || ""), O = this._playerOverrideSlug(I?.attributes?.friendly_name || "");
+        return R === E || O === E;
       }) || null;
     }
     _normalizeEnginePlayerEntity(s = {}) {
@@ -48115,7 +48154,7 @@ function Uh({
       }
       const I = this._playerByEntityId(this._state.selectedPlayer);
       this._state.awaitingThisDevicePlayer && this._isExternalBrowserPlayer(I) && (this._state.selectedPlayer = null, this._state.hasAutoSelectedPlayer = !1);
-      const R = this._resolvePlayerOverrideEntity(A), Y = String(this._config?.entity || this.config?.entity || "").trim(), $ = Y ? A.find((K) => K?.entity_id === Y) : null, X = M.pendingPlayerLockState(this._state, A, Date.now());
+      const R = this._resolvePlayerOverrideEntity(A), O = String(this._config?.entity || this.config?.entity || "").trim(), $ = O ? A.find((K) => K?.entity_id === O) : null, X = M.pendingPlayerLockState(this._state, A, Date.now());
       X.lockedPlayerId && this._state.selectedPlayer !== X.lockedPlayerId && (this._state.selectedPlayer = X.lockedPlayerId);
       const me = X.shouldHoldSelectedPlayer;
       R?.entity_id && this._state.selectedPlayer !== R.entity_id && (this._state.selectedPlayer = R.entity_id, this._state.hasAutoSelectedPlayer = !0);
@@ -48204,7 +48243,7 @@ function Uh({
         if (!(typeof this._homeiiEnginePlayMedia == "function" && this._homeiiEngineRequired?.() && I))
           throw new Error(this._i18n?.("diagnostics.engine_required_missing") || "HOMEii Flow Engine is required.");
         s === this._state.selectedPlayer && (this._queueSnapshotToken = (this._queueSnapshotToken || 0) + 1, this._queueReadInFlight = null, this._nowPlayingSnapshotInFlight = null, clearTimeout(this._nowPlayingTransitionTimer), this._nowPlayingTransitionTimer = null, this._nowPlayingTransitionCandidate = null);
-        const Y = await this._homeiiEnginePlayMedia({
+        const O = await this._homeiiEnginePlayMedia({
           player: s,
           media_id: A,
           media_type: g,
@@ -48212,8 +48251,8 @@ function Uh({
           radio_mode: !!S.radioMode,
           verify_playback: S.verifyPlayback !== !1 && ["play", "replace", "shuffle"].includes(y)
         });
-        if (!Y?.ok)
-          throw new Error(Y?.error || "HOMEii Flow Engine did not confirm playback.");
+        if (!O?.ok)
+          throw new Error(O?.error || "HOMEii Flow Engine did not confirm playback.");
         if (S.isCurrentRequest && !S.isCurrentRequest()) return !1;
         if (!S.silent) {
           const $ = this._playerByEntityId(s);
@@ -48249,8 +48288,8 @@ function Uh({
       if (this._libraryPlaybackRequest?.key === B) return this._libraryPlaybackRequest.promise;
       const E = { key: B, promise: null }, I = ["play", "replace", "shuffle"].includes(g);
       I && (this._libraryPlaybackRequest?.clearFeedback?.(), this._libraryPlaybackRequest = E, this._state.mobileArtBrowseOffset = 0, this._scheduleMobileArtBrowseReset?.());
-      const R = S && I, Y = R ? Jn.call(this, this._m(`Starting ${y.label || "music"}…`, `מתחיל לנגן ${y.label || "מוזיקה"}…`), "info", { duration: 22e3, dedupe: !1 }) : null;
-      E.clearFeedback = Y;
+      const R = S && I, O = R ? Jn.call(this, this._m(`Starting ${y.label || "music"}…`, `מתחיל לנגן ${y.label || "מוזיקה"}…`), "info", { duration: 22e3, dedupe: !1 }) : null;
+      E.clearFeedback = O;
       const $ = this._playMediaOnPlayer(this._state.selectedPlayer, s, A, g, {
         ...y,
         // Direct library taps should return when MA accepts the command; a slow
@@ -48259,7 +48298,7 @@ function Uh({
         ...I ? { isCurrentRequest: () => this._libraryPlaybackRequest === E } : {}
       });
       return E.promise = $.finally(() => {
-        Y?.(), this._libraryPlaybackRequest === E && (this._libraryPlaybackRequest = null);
+        O?.(), this._libraryPlaybackRequest === E && (this._libraryPlaybackRequest = null);
       }), R && this._closeMobileMenu?.(), E.promise;
     }
     _supportsMusicAssistantRadioMode(s = "") {
@@ -48489,15 +48528,15 @@ function Uh({
     }
     _getCurrentPosition() {
       if (this._progressSeekDragging && Number.isFinite(this._progressSeekPreview)) return this._progressSeekPreview;
-      const s = this._getSelectedPlayer(), A = this._getCurrentDuration(), g = (Y = 0) => {
-        const $ = Number(Y);
+      const s = this._getSelectedPlayer(), A = this._getCurrentDuration(), g = (O = 0) => {
+        const $ = Number(O);
         if (Number.isFinite($) && A > 0 && $ > A + 5) {
           const X = $ / 1e3;
           if (X <= A + 5) return Math.max(0, X);
         }
-        return v.coercePlaybackSeconds(Y || 0);
-      }, y = s?.attributes?.media_position !== void 0 && s?.attributes?.media_position !== null && s?.attributes?.media_position !== "", S = this._state.maQueueState?.elapsed_time !== void 0 && this._state.maQueueState?.elapsed_time !== null && this._state.maQueueState?.elapsed_time !== "", B = (Y = 0, $ = "") => {
-        let X = g(Y || 0);
+        return v.coercePlaybackSeconds(O || 0);
+      }, y = s?.attributes?.media_position !== void 0 && s?.attributes?.media_position !== null && s?.attributes?.media_position !== "", S = this._state.maQueueState?.elapsed_time !== void 0 && this._state.maQueueState?.elapsed_time !== null && this._state.maQueueState?.elapsed_time !== "", B = (O = 0, $ = "") => {
+        let X = g(O || 0);
         if (s?.state === "playing" && $) {
           const me = v.parsePlaybackTimestampMs($);
           me && (X += Math.max(0, (Date.now() - me) / 1e3));
@@ -48555,8 +48594,8 @@ function Uh({
       I.className = "scrolling-text-inner";
       const R = document.createElement("span");
       if (R.className = "scrolling-text-item", R.textContent = y, I.appendChild(R), S) {
-        const Y = document.createElement("span");
-        Y.className = "scrolling-text-item", Y.setAttribute("aria-hidden", "true"), Y.textContent = y, I.appendChild(Y);
+        const O = document.createElement("span");
+        O.className = "scrolling-text-item", O.setAttribute("aria-hidden", "true"), O.textContent = y, I.appendChild(O);
       }
       g.appendChild(I), S && this._queueNowPlayingSubtitleOverflowSync(g);
     }
@@ -48588,8 +48627,8 @@ function Uh({
         s.attributes.entity_picture
       ], { size: 420, cacheKey: this._currentArtworkCacheKey(s, A) }), I = this.$("npArt");
       E && I?.querySelector("img")?.getAttribute("src") !== E ? I.innerHTML = this._imgHtml(E, "", { loading: "eager", fetchpriority: "high", fallbackIcon: "album" }) : E || (I.innerHTML = this._artPlaceholderHtml("album"));
-      const R = Math.round((s.attributes.volume_level || 0) * 100), Y = this.$("volSlider");
-      Y && (Y.value = R, Y.style.setProperty("--vol-pct", `${R}%`)), this._setButtonIcon(this.$("btnMute"), this._volumeIconName(s));
+      const R = Math.round((s.attributes.volume_level || 0) * 100), O = this.$("volSlider");
+      O && (O.value = R, O.style.setProperty("--vol-pct", `${R}%`)), this._setButtonIcon(this.$("btnMute"), this._volumeIconName(s));
       const $ = this._getCurrentDuration(), X = this._getCurrentPosition();
       this.$("progressFill") && (this.$("progressFill").style.width = $ ? `${Math.min(100, X / $ * 100)}%` : "0%");
       const me = String(s.attributes.media_content_id || "").trim() || String(this._getQueueItemUri(A) || "").trim() || "";
@@ -48599,7 +48638,7 @@ function Uh({
       if (this._state.view !== "now_playing") return;
       const s = this._getSelectedPlayer();
       if (!s) return;
-      const A = s.attributes.media_title || this._i18n("ui.no_active_media"), g = s.attributes.media_artist || this._i18n("ui.unknown"), y = s.attributes.media_album_name || "", S = this._getCurrentDuration(), B = this._getCurrentPosition(), E = S ? Math.min(100, B / S * 100) : 0, I = Math.round((s.attributes.volume_level || 0) * 100), R = this._state.maQueueState?.current_item || null, Y = this._currentArtworkUrl(s, R, 620, { preferPlayerArtwork: !0 }), $ = s.attributes.repeat || "off", X = this.$("bigPlayBtn");
+      const A = s.attributes.media_title || this._i18n("ui.no_active_media"), g = s.attributes.media_artist || this._i18n("ui.unknown"), y = s.attributes.media_album_name || "", S = this._getCurrentDuration(), B = this._getCurrentPosition(), E = S ? Math.min(100, B / S * 100) : 0, I = Math.round((s.attributes.volume_level || 0) * 100), R = this._state.maQueueState?.current_item || null, O = this._currentArtworkUrl(s, R, 620, { preferPlayerArtwork: !0 }), $ = s.attributes.repeat || "off", X = this.$("bigPlayBtn");
       this._setButtonIcon(X, this._playPauseIconName(s));
       const me = this.$("bigShuffleBtn");
       me && me.classList.toggle("active", !!s.attributes.shuffle);
@@ -48612,7 +48651,7 @@ function Uh({
       const ae = this.$("bigProgressFill");
       ae && (ae.style.width = `${E}%`), this.$("bigCurTime") && (this.$("bigCurTime").textContent = this._fmtDur(B)), this.$("bigTotalTime") && (this.$("bigTotalTime").textContent = this._fmtDur(S));
       const ce = this.$("nowHeroArt");
-      ce && (ce.innerHTML = Y ? this._imgHtml(Y, "", { loading: "eager", fetchpriority: "high", fallbackIcon: "album" }) : this._artPlaceholderHtml("album"));
+      ce && (ce.innerHTML = O ? this._imgHtml(O, "", { loading: "eager", fetchpriority: "high", fallbackIcon: "album" }) : this._artPlaceholderHtml("album"));
       const ge = this.shadowRoot.querySelector(".now-track-title");
       ge && (ge.textContent = A);
       const ye = this.shadowRoot.querySelector(".now-track-subtitle");
@@ -48804,11 +48843,11 @@ function Uh({
           g.innerHTML = `<div class="state-box">${this._esc(this._i18n("ui.queue_is_empty"))}</div>`;
           return;
         }
-        g.innerHTML = I.map((R, Y) => {
-          const $ = R.sort_index === B, X = R.sort_index < B, me = this._queueItemImageUrl(R, 120), _e = R.media_item?.artists?.map((ae) => ae.name).join(", ") || "", ne = this._getQueueItemKey(R), K = $ || Y < 24;
+        g.innerHTML = I.map((R, O) => {
+          const $ = R.sort_index === B, X = R.sort_index < B, me = this._queueItemImageUrl(R, 120), _e = R.media_item?.artists?.map((ae) => ae.name).join(", ") || "", ne = this._getQueueItemKey(R), K = $ || O < 24;
           return `
             <div class="queue-item ${$ ? "active" : ""} ${X ? "past" : ""}" data-uri="${this._esc(R.media_item?.uri || "")}" data-type="track" data-queue-item-id="${this._esc(ne)}" data-sort-index="${this._esc(R.sort_index ?? "")}">
-              <div class="queue-num">${$ ? "▶" : R.sort_index ?? Y + 1}</div>
+              <div class="queue-num">${$ ? "▶" : R.sort_index ?? O + 1}</div>
               <div class="queue-thumb">${me ? this._imgHtml(me, "", { loading: K ? "eager" : "lazy", fetchpriority: K ? "high" : "low" }) : "♫"}</div>
               <div class="queue-item-meta">
                 <div class="queue-name">${this._esc(R.media_item?.name || R.name || "")}</div>
@@ -48826,7 +48865,7 @@ function Uh({
     }
     _queueItemsAfterLocalAction(s, A, g = this._state.queueItems || [], y = null) {
       const S = [...Array.isArray(g) ? g : []], B = String(A || "").trim(), E = S.findIndex(
-        (Y) => this._getQueueItemKey(Y) === B || this._getQueueItemStableId(Y) === B || this._getQueueItemUri(Y) === B
+        (O) => this._getQueueItemKey(O) === B || this._getQueueItemStableId(O) === B || this._getQueueItemUri(O) === B
       );
       if (E === -1) return null;
       const I = [...S];
@@ -48838,25 +48877,25 @@ function Uh({
       if (s === "down")
         return E >= R && E < I.length - 1 ? ([I[E + 1], I[E]] = [I[E], I[E + 1]], this._queueItemsWithSequentialSortIndexes(I)) : null;
       if (s === "next") {
-        const Y = I[E], $ = Math.max(0, R);
-        return Y && E > $ ? (I.splice(E, 1), I.splice($, 0, Y), this._queueItemsWithSequentialSortIndexes(I)) : null;
+        const O = I[E], $ = Math.max(0, R);
+        return O && E > $ ? (I.splice(E, 1), I.splice($, 0, O), this._queueItemsWithSequentialSortIndexes(I)) : null;
       }
       if (s === "move_to") {
-        const Y = I[E], $ = Math.round(Number(y));
-        if (!Y || !Number.isFinite($)) return null;
+        const O = I[E], $ = Math.round(Number(y));
+        if (!O || !Number.isFinite($)) return null;
         const X = this._queueMoveGlobalIndexForDisplayPosition(I, $);
-        return X < 0 ? null : E === X ? I : (I.splice(E, 1), I.splice(Math.max(R, Math.min(I.length, X)), 0, Y), this._queueItemsWithSequentialSortIndexes(I));
+        return X < 0 ? null : E === X ? I : (I.splice(E, 1), I.splice(Math.max(R, Math.min(I.length, X)), 0, O), this._queueItemsWithSequentialSortIndexes(I));
       }
       return null;
     }
     async _handleQueueAction(s, A, g = "", y = "", S = null) {
       const B = this._getSelectedPlayer();
       if (!B || !A || this._state.queueActionPending) return !1;
-      const E = [...this._state.queueItems || []], I = this._resolveQueueActionTarget(E, A, g, y), R = I ? this._getQueueItemKey(I) : String(A || "").trim(), Y = I ? E.indexOf(I) : E.findIndex(($) => this._getQueueItemKey($) === R);
-      if (Y === -1) return !1;
+      const E = [...this._state.queueItems || []], I = this._resolveQueueActionTarget(E, A, g, y), R = I ? this._getQueueItemKey(I) : String(A || "").trim(), O = I ? E.indexOf(I) : E.findIndex(($) => this._getQueueItemKey($) === R);
+      if (O === -1) return !1;
       try {
         this._setQueueBusy(!0);
-        const $ = Math.round(Number(S)), X = s === "move_to" && Number.isFinite($) ? this._queueMoveGlobalIndexForDisplayPosition(E, $) : null, me = s === "next" ? this._queueFirstMovableIndex(E) : null, _e = s === "move_to" && Number.isFinite(X) && X >= 0 ? X - Y : s === "next" && Number.isFinite(me) ? me - Y : null, ne = this._queueItemsAfterLocalAction(s, R, E, $), K = this._queueIdForPlayer(B), ae = {
+        const $ = Math.round(Number(S)), X = s === "move_to" && Number.isFinite($) ? this._queueMoveGlobalIndexForDisplayPosition(E, $) : null, me = s === "next" ? this._queueFirstMovableIndex(E) : null, _e = s === "move_to" && Number.isFinite(X) && X >= 0 ? X - O : s === "next" && Number.isFinite(me) ? me - O : null, ne = this._queueItemsAfterLocalAction(s, R, E, $), K = this._queueIdForPlayer(B), ae = {
           up: "move_queue_item_up",
           down: "move_queue_item_down",
           next: "move_queue_item_next",
@@ -48909,15 +48948,15 @@ function Uh({
       s && await this._callHaMediaPlayerService(s, "media_stop");
     }
     async _rebuildQueue(s, A, g = 0) {
-      const y = this._state.maQueueState?.current_index ?? 0, S = A.find((Y) => (Y.sort_index ?? -1) === y) || A[0], B = A.indexOf(S), E = B >= 0 ? A.slice(B + 1) : A.filter((Y) => Number(Y?.sort_index ?? -1) > Number(y)), I = this._getQueueItemUri(S);
+      const y = this._state.maQueueState?.current_index ?? 0, S = A.find((O) => (O.sort_index ?? -1) === y) || A[0], B = A.indexOf(S), E = B >= 0 ? A.slice(B + 1) : A.filter((O) => Number(O?.sort_index ?? -1) > Number(y)), I = this._getQueueItemUri(S);
       if (!I) throw new Error(this._i18n("ui.no_queue_item_to_rebuild"));
-      const R = [I, ...E.map((Y) => this._getQueueItemUri(Y)).filter(Boolean)];
+      const R = [I, ...E.map((O) => this._getQueueItemUri(O)).filter(Boolean)];
       await this._clearQueueForPlayer(s);
-      for (const [Y, $] of R.entries()) {
+      for (const [O, $] of R.entries()) {
         const X = this._parseMediaReference($, "track");
-        await this._playMediaOnPlayer(s, $, X.media_type || "track", Y === 0 ? "play" : "add", {
+        await this._playMediaOnPlayer(s, $, X.media_type || "track", O === 0 ? "play" : "add", {
           silent: !0,
-          verifyPlayback: Y === 0
+          verifyPlayback: O === 0
         });
       }
       g > 0 && setTimeout(() => {
@@ -48997,9 +49036,9 @@ function Uh({
         maUrl: S,
         seen: g,
         depth: y
-      }), E = this._normalizeArtworkUrl(B, { size: A }), I = v.rebaseImageProxyUrl(B, A, S), R = this._normalizeArtworkUrl(I, { size: A }), Y = v.legacyImageProxyFallbackUrl(s, A, {
+      }), E = this._normalizeArtworkUrl(B, { size: A }), I = v.rebaseImageProxyUrl(B, A, S), R = this._normalizeArtworkUrl(I, { size: A }), O = v.legacyImageProxyFallbackUrl(s, A, {
         maUrl: S
-      }), $ = this._normalizeArtworkUrl(Y, { size: A }), X = E || R;
+      }), $ = this._normalizeArtworkUrl(O, { size: A }), X = E || R;
       return this._rememberArtworkFallback(X, [R, $]);
     }
     _artUrl(s, A = {}) {
@@ -49033,9 +49072,9 @@ function Uh({
         }
         return "";
       }
-      const S = this._maArtworkBaseUrl(), B = v.artUrl(s, S, g), E = this._normalizeArtworkUrl(B, { size: g, cacheKey: A?.cacheKey || "" }), I = v.rebaseImageProxyUrl(B, g, S), R = this._normalizeArtworkUrl(I, { size: g, cacheKey: A?.cacheKey || "" }), Y = v.legacyImageProxyFallbackUrl(s, g, {
+      const S = this._maArtworkBaseUrl(), B = v.artUrl(s, S, g), E = this._normalizeArtworkUrl(B, { size: g, cacheKey: A?.cacheKey || "" }), I = v.rebaseImageProxyUrl(B, g, S), R = this._normalizeArtworkUrl(I, { size: g, cacheKey: A?.cacheKey || "" }), O = v.legacyImageProxyFallbackUrl(s, g, {
         maUrl: S
-      }), $ = this._normalizeArtworkUrl(Y, { size: g, cacheKey: A?.cacheKey || "" }), X = E || R;
+      }), $ = this._normalizeArtworkUrl(O, { size: g, cacheKey: A?.cacheKey || "" }), X = E || R;
       return this._rememberArtworkFallback(X, [R, $]);
     }
     _artistName(s) {
@@ -49050,8 +49089,8 @@ function Uh({
     _imgHtml(s = "", A = "", g = {}) {
       const y = String(s || "").trim();
       if (!y) return "";
-      const S = g.loading || "lazy", B = g.decoding || "async", E = g.className ? ` class="${this._esc(g.className)}"` : "", I = g.fetchpriority || g.fetchPriority || "low", R = ` fetchpriority="${this._esc(I)}"`, Y = g.fallbackIcon || g.placeholder || "album";
-      return `<img${E} src="${this._esc(y)}" alt="${this._esc(A)}" loading="${this._esc(S)}" decoding="${this._esc(B)}"${R} data-homeii-inline-art="1" data-homeii-art-src="${this._esc(y)}" data-homeii-art-fallback-icon="${this._esc(Y)}">`;
+      const S = g.loading || "lazy", B = g.decoding || "async", E = g.className ? ` class="${this._esc(g.className)}"` : "", I = g.fetchpriority || g.fetchPriority || "low", R = ` fetchpriority="${this._esc(I)}"`, O = g.fallbackIcon || g.placeholder || "album";
+      return `<img${E} src="${this._esc(y)}" alt="${this._esc(A)}" loading="${this._esc(S)}" decoding="${this._esc(B)}"${R} data-homeii-inline-art="1" data-homeii-art-src="${this._esc(y)}" data-homeii-art-fallback-icon="${this._esc(O)}">`;
     }
     _toast(s, A = "info", g = {}) {
       return Jn.call(this, s, A, g);
@@ -49114,8 +49153,8 @@ function Uh({
         if (s) {
           const g = (E, I = !1) => {
             if (!E?.dataset?.img) return;
-            const R = E.dataset.img, Y = E.dataset.placeholder || "album";
-            delete E.dataset.img, this._loadImgInto(R, E, Y, { priority: I });
+            const R = E.dataset.img, O = E.dataset.placeholder || "album";
+            delete E.dataset.img, this._loadImgInto(R, E, O, { priority: I });
           }, y = Array.from(A.querySelectorAll("[data-img]"));
           this._menuImgObserver?.disconnect?.(), this._menuImgObserver = null, [
             ...Array.from(A.querySelectorAll(".active[data-img], .active [data-img], [data-homeii-art-priority='1'][data-img]")),
@@ -49180,9 +49219,9 @@ function Uh({
         E(), this._scheduleImageRetry(s, A, B);
         return;
       }
-      const Y = this._imageBlobCache.get(s);
-      if (Y) {
-        I(Y);
+      const O = this._imageBlobCache.get(s);
+      if (O) {
+        I(O);
         return;
       }
       if (!this._shouldFetchArtworkUrl(s, { crossOrigin: R })) {
@@ -49554,8 +49593,8 @@ function x_(o, {
   hidePlayers: t = !1,
   fallbackItems: a = []
 } = {}) {
-  const l = new Set(os), p = fi(a), h = e ? p.filter((F) => F !== "settings") : p, v = Array.isArray(o) && o.length ? o : h, k = fi(v).filter((F) => l.has(F)).filter((F) => !(e && F === "settings")).filter((F) => !(t && F === "players")), M = h.filter((F) => !(t && F === "players")), P = k.length ? k : M;
-  return !e && !P.includes("settings") && P.push("settings"), P;
+  const l = new Set(os), p = fi(a), h = e ? p.filter((F) => F !== "settings") : p, v = Array.isArray(o) && o.length ? o : h, k = fi(v).filter((F) => l.has(F)).filter((F) => !(e && F === "settings")).filter((F) => !(t && F === "players")), M = h.filter((F) => !(t && F === "players")), Q = k.length ? k : M;
+  return !e && !Q.includes("settings") && Q.push("settings"), Q;
 }
 function Cc(o = {}, e = []) {
   const t = new Set(os), a = fi(e).filter((p) => t.has(p)), l = [];
@@ -49764,7 +49803,7 @@ function Q_({
   height: e = 0,
   layoutMode: t = "mobile"
 } = {}) {
-  const a = Math.max(0, Number(o || 0)), l = Math.max(0, Number(e || 0)), p = a < 380 ? "xs" : a < 520 ? "sm" : a < 760 ? "md" : a < 1100 ? "lg" : "xl", h = l > 0 && l < 620 ? "short" : l >= 900 ? "tall" : "normal", v = l > 0 && a / l >= 1.08 ? "wide" : a > 0 && l / a >= 1.18 ? "portrait" : "balanced", k = l > 0 && l < 560, M = p === "xs" || h === "short", P = p === "xl" && h === "tall";
+  const a = Math.max(0, Number(o || 0)), l = Math.max(0, Number(e || 0)), p = a < 380 ? "xs" : a < 520 ? "sm" : a < 760 ? "md" : a < 1100 ? "lg" : "xl", h = l > 0 && l < 620 ? "short" : l >= 900 ? "tall" : "normal", v = l > 0 && a / l >= 1.08 ? "wide" : a > 0 && l / a >= 1.18 ? "portrait" : "balanced", k = l > 0 && l < 560, M = p === "xs" || h === "short", Q = p === "xl" && h === "tall";
   return {
     width: a,
     height: l,
@@ -49774,14 +49813,14 @@ function Q_({
     aspect: v,
     tight: k,
     compact: M,
-    roomy: P,
+    roomy: Q,
     classes: [
       `size-${p}`,
       `height-${h}`,
       `aspect-${v}`,
       k ? "height-tight" : "",
       M ? "profile-compact" : "profile-comfort",
-      P ? "profile-roomy" : ""
+      Q ? "profile-roomy" : ""
     ].filter(Boolean)
   };
 }
@@ -49833,15 +49872,15 @@ function z_({
     editingText: l,
     widthDelta: v,
     heightDelta: k
-  }), P = Number(o || 0) >= h, F = Number(e || 0) >= h, q = p ? 140 : 48, O = p ? 180 : 48, H = !M && P === F && v < q && k < O;
+  }), Q = Number(o || 0) >= h, F = Number(e || 0) >= h, q = p ? 140 : 48, Y = p ? 180 : 48, H = !M && Q === F && v < q && k < Y;
   return {
     widthDelta: v,
     heightDelta: k,
     keyboardLikeResize: M,
-    previousTablet: P,
+    previousTablet: Q,
     currentTablet: F,
     widthThreshold: q,
-    heightThreshold: O,
+    heightThreshold: Y,
     softSync: H
   };
 }
@@ -49892,7 +49931,7 @@ function ss(o = Xi, e = [255, 255, 255], t = 0.5) {
   return l.map((h, v) => Oi(h + (p[v] - h) * a));
 }
 function Dc(o = Xi) {
-  let [e, t, a] = Ji(o).map((P) => P / 255);
+  let [e, t, a] = Ji(o).map((Q) => Q / 255);
   const l = Math.max(e, t, a), p = Math.min(e, t, a), h = (l + p) / 2;
   if (l === p) return [0, 0, h];
   const v = l - p, k = h > 0.5 ? v / (2 - l - p) : v / (l + p);
@@ -49916,9 +49955,9 @@ function Tc(o = 0, e = 0, t = 0.5) {
     const M = Oi(p * 255);
     return [M, M, M];
   }
-  const h = (M, P, F) => {
+  const h = (M, Q, F) => {
     let q = F;
-    return q < 0 && (q += 1), q > 1 && (q -= 1), q < 1 / 6 ? M + (P - M) * 6 * q : q < 1 / 2 ? P : q < 2 / 3 ? M + (P - M) * (2 / 3 - q) * 6 : M;
+    return q < 0 && (q += 1), q > 1 && (q -= 1), q < 1 / 6 ? M + (Q - M) * 6 * q : q < 1 / 2 ? Q : q < 2 / 3 ? M + (Q - M) * (2 / 3 - q) * 6 : M;
   }, v = p < 0.5 ? p * (1 + l) : p + l - p * l, k = 2 * p - v;
   return [
     Oi(h(k, v, a + 1 / 3) * 255),
@@ -50042,10 +50081,10 @@ function J_({
   if (p === "on") return !0;
   const h = l.getHours() * 60 + l.getMinutes(), v = cs(e, Xa), k = cs(t, ls);
   if (!qc(h, v, k)) return !1;
-  const M = new Set(Fc(a)), P = Number(l.getDay());
+  const M = new Set(Fc(a)), Q = Number(l.getDay());
   if (v === k || v < k)
-    return M.has(P);
-  const F = h >= v ? P : (P + 6) % 7;
+    return M.has(Q);
+  const F = h >= v ? Q : (Q + 6) % 7;
   return M.has(F);
 }
 function Nc(o, e = Date.now()) {
@@ -50127,14 +50166,14 @@ function ag({
   queueItemImage: a = "",
   fallbackName: l = "Unknown"
 } = {}, p = Yi) {
-  const h = e?.media_item || {}, k = String(o?.attributes?.media_content_id || "").trim() || String(t || "").trim(), M = Array.isArray(h?.artists) ? h.artists.map((F) => F?.name).filter(Boolean).join(", ") : o?.attributes?.media_artist || "", P = p(
+  const h = e?.media_item || {}, k = String(o?.attributes?.media_content_id || "").trim() || String(t || "").trim(), M = Array.isArray(h?.artists) ? h.artists.map((F) => F?.name).filter(Boolean).join(", ") : o?.attributes?.media_artist || "", Q = p(
     k,
     h?.media_type || e?.media_type || o?.attributes?.media_content_type || "track"
   );
   return {
     uri: k,
-    ...P,
-    media_type: P.media_type || h?.media_type || e?.media_type || "track",
+    ...Q,
+    media_type: Q.media_type || h?.media_type || e?.media_type || "track",
     name: o?.attributes?.media_title || h?.name || k || l,
     artist: M || "",
     album: h?.album?.name || o?.attributes?.media_album_name || "",
@@ -50151,16 +50190,16 @@ function Bs(o = {}, e = [], {
 } = {}) {
   if (!Array.isArray(e) || !e.length) return null;
   const a = String(o?.uri || "").trim(), l = String(o?.media_type || o?.type || "track").toLowerCase(), p = String(o?.library_item_id || "").trim(), h = String(o?.item_id || o?.id || "").trim(), v = String(o?.provider || o?.provider_domain || o?.provider_instance || "").trim().toLowerCase(), k = Va(us(o)), M = Va(Tr(o));
-  for (const P of e) {
-    const F = String(P?.library_item_id || "").trim(), q = String(P?.item_id || P?.id || "").trim(), O = String(P?.provider || P?.provider_domain || P?.provider_instance || "").trim().toLowerCase(), H = String(P?.uri || "").trim(), j = String(P?.media_type || P?.type || "").toLowerCase();
-    if (p && F && p === F || h && q && v && O && h === q && v === O || H && a && H === a)
-      return P;
-    const G = t(a, l || "track"), V = t(H, j || l || "track");
-    if (G.provider && V.provider && G.provider === V.provider && G.item_id && G.item_id === V.item_id)
-      return P;
-    const Z = Va(us(P)), W = Va(Tr(P));
+  for (const Q of e) {
+    const F = String(Q?.library_item_id || "").trim(), q = String(Q?.item_id || Q?.id || "").trim(), Y = String(Q?.provider || Q?.provider_domain || Q?.provider_instance || "").trim().toLowerCase(), H = String(Q?.uri || "").trim(), G = String(Q?.media_type || Q?.type || "").toLowerCase();
+    if (p && F && p === F || h && q && v && Y && h === q && v === Y || H && a && H === a)
+      return Q;
+    const j = t(a, l || "track"), V = t(H, G || l || "track");
+    if (j.provider && V.provider && j.provider === V.provider && j.item_id && j.item_id === V.item_id)
+      return Q;
+    const Z = Va(us(Q)), W = Va(Tr(Q));
     if (k && Z === k && (!M || !W || W === M || W.includes(M) || M.includes(W)))
-      return P;
+      return Q;
   }
   return null;
 }
@@ -50219,14 +50258,14 @@ function ng({
   compareMediaRefsFn: k = Hi,
   matchFavoriteLibraryItemFn: M = ir
 } = {}) {
-  const P = String(o || "").trim();
-  if (!P) return !1;
-  if (e?.uri === P && Number(v || 0) - Number(e?.ts || 0) < ig)
+  const Q = String(o || "").trim();
+  if (!Q) return !1;
+  if (e?.uri === Q && Number(v || 0) - Number(e?.ts || 0) < ig)
     return !!e.liked;
   if (l && Array.isArray(p))
-    return p.some((q) => k(String(q?.uri || "").trim(), P, q?.media_type || "track")) || !!M(a || {}, p, a?.media_type || "track");
+    return p.some((q) => k(String(q?.uri || "").trim(), Q, q?.media_type || "track")) || !!M(a || {}, p, a?.media_type || "track");
   const F = t?.media_item?.favorite;
-  return typeof F == "boolean" ? F : typeof t?.favorite == "boolean" ? t.favorite : l ? !1 : h instanceof Set ? h.has(P) : Array.isArray(h) ? h.includes(P) : !1;
+  return typeof F == "boolean" ? F : typeof t?.favorite == "boolean" ? t.favorite : l ? !1 : h instanceof Set ? h.has(Q) : Array.isArray(h) ? h.includes(Q) : !1;
 }
 function lg({
   entry: o = {},
@@ -50240,13 +50279,13 @@ function lg({
   findFavoriteEntryMatchFn: v = Bs,
   matchFavoriteLibraryItemFn: k = ir
 } = {}) {
-  const M = String(o?.uri || "").trim(), P = p(M, e);
-  if (P.provider === "library" && P.item_id)
-    return { media_type: P.media_type || e, library_item_id: P.item_id };
+  const M = String(o?.uri || "").trim(), Q = p(M, e);
+  if (Q.provider === "library" && Q.item_id)
+    return { media_type: Q.media_type || e, library_item_id: Q.item_id };
   const F = v(o, t, { parseMediaReferenceFn: p });
   if (F) {
-    const O = h(F, e, p);
-    if (O) return O;
+    const Y = h(F, e, p);
+    if (Y) return Y;
   }
   const q = k(o, t, e, {
     parseMediaReferenceFn: p,
@@ -50301,22 +50340,22 @@ function Uc(o = [], e = {}) {
   let l = Number.isFinite(a) ? t.findIndex((H) => Number(H?.sort_index) === a) : -1;
   const p = typeof e.isCurrentItemFn == "function" ? e.isCurrentItemFn : null;
   l < 0 && p && (l = t.findIndex((H) => p(H))), l < 0 && (l = 0);
-  const h = Math.max(0, Math.round(Number(e.before ?? 2))), v = Math.max(0, Math.round(Number(e.after ?? 14))), k = Math.max(0, Math.round(Number(e.visibleStartIndex || 0))), M = Math.max(0, Math.round(Number(e.visibleCount || 0))), P = [], F = /* @__PURE__ */ new Set(), q = (H) => {
-    H < 0 || H >= t.length || F.has(H) || (F.add(H), P.push(H));
+  const h = Math.max(0, Math.round(Number(e.before ?? 2))), v = Math.max(0, Math.round(Number(e.after ?? 14))), k = Math.max(0, Math.round(Number(e.visibleStartIndex || 0))), M = Math.max(0, Math.round(Number(e.visibleCount || 0))), Q = [], F = /* @__PURE__ */ new Set(), q = (H) => {
+    H < 0 || H >= t.length || F.has(H) || (F.add(H), Q.push(H));
   };
   q(l);
-  const O = Math.max(h, v);
-  for (let H = 1; H <= O; H += 1)
+  const Y = Math.max(h, v);
+  for (let H = 1; H <= Y; H += 1)
     H <= v && q(l + H), H <= h && q(l - H);
   for (let H = k; H < Math.min(t.length, k + M); H += 1)
     q(H);
-  return P;
+  return Q;
 }
 function dg(o = [], e = {}, t = () => "") {
   const a = Array.isArray(o) ? o.filter(Boolean) : [], l = Uc(a, e), p = l[0] ?? 0, h = [];
   return l.forEach((v) => {
-    const k = a[v], M = Math.abs(v - p), P = t(k, 160);
-    if (P && h.push(P), M <= 3) {
+    const k = a[v], M = Math.abs(v - p), Q = t(k, 160);
+    if (Q && h.push(Q), M <= 3) {
       const F = t(k, 420);
       F && h.push(F);
     }
@@ -50381,13 +50420,13 @@ function fg({
     getQueueItemPlaybackId: v,
     getQueueItemStableId: k,
     getQueueItemKey: M,
-    getQueueItemUri: P
+    getQueueItemUri: Q
   } = Is(p);
   return {
     mobileQueuePlayPendingUntil: Number(a || Date.now()) + Math.max(1, Number(l || 8500)),
-    mobileQueuePlayPendingKey: o && (v(o) || k(o) || M(o) || P(o)) || "",
+    mobileQueuePlayPendingKey: o && (v(o) || k(o) || M(o) || Q(o)) || "",
     mobileQueuePlayPendingIndex: Number.isFinite(h) ? h : null,
-    mobileQueuePlayPendingUri: o && P(o) || "",
+    mobileQueuePlayPendingUri: o && Q(o) || "",
     mobileQueuePlayPendingPlayerId: String(t || "").trim()
   };
 }
@@ -50409,15 +50448,15 @@ function Gc(o = null, e = {}, t = {}, a = Hi) {
     getQueueItemStableId: h,
     getQueueItemKey: v,
     getQueueItemUri: k
-  } = Is(t), M = String(l.pendingKey || "").trim(), P = String(l.pendingUri || "").trim(), F = Vi(l.pendingIndex), q = [
+  } = Is(t), M = String(l.pendingKey || "").trim(), Q = String(l.pendingUri || "").trim(), F = Vi(l.pendingIndex), q = [
     p(o),
     h(o),
     v(o),
     k(o)
   ].map((H) => String(H || "").trim()).filter(Boolean);
   if (M && q.includes(M)) return !0;
-  const O = k(o);
-  return P && O && a(O, P, o?.media_item?.media_type || o?.media_type || "track") ? !0 : Number.isFinite(F) && Number(o?.sort_index) === F;
+  const Y = k(o);
+  return Q && Y && a(Y, Q, o?.media_item?.media_type || o?.media_type || "track") ? !0 : Number.isFinite(F) && Number(o?.sort_index) === F;
 }
 function jc({
   state: o = {},
@@ -50449,9 +50488,9 @@ function vg({
   accessors: v = {},
   compareMediaRefs: k = Hi,
   artworkUrlFn: M = null,
-  size: P = 420
+  size: Q = 420
 } = {}) {
-  const F = p || Ra(l), q = !!F?.hasPendingPlay, O = q && jc({
+  const F = p || Ra(l), q = !!F?.hasPendingPlay, Y = q && jc({
     state: l,
     pendingState: F,
     currentQueueItem: e,
@@ -50459,19 +50498,19 @@ function vg({
     queueItems: a,
     accessors: v,
     compareMediaRefs: k
-  }) || e, H = O?.media_item || {}, j = Array.isArray(H?.artists) ? H.artists.map((g) => g?.name).filter(Boolean).join(", ") : "", G = H?.name || O?.media_title || O?.name || "", V = O?.media_artist || O?.artist_str || j || O?.artist || "", Z = H?.album?.name || O?.media_album_name || O?.album || "", W = q || !o?.attributes?.media_title, ue = W ? G || o?.attributes?.media_title || h : o?.attributes?.media_title || G || h, he = W ? V || o?.attributes?.media_artist || "" : o?.attributes?.media_artist || V || "", s = W ? Z || o?.attributes?.media_album_name || "" : o?.attributes?.media_album_name || Z || "", A = String(
-    W ? H?.media_type || O?.media_type || o?.attributes?.media_content_type || o?.attributes?.media_channel || "" : o?.attributes?.media_content_type || o?.attributes?.media_channel || H?.media_type || O?.media_type || ""
+  }) || e, H = Y?.media_item || {}, G = Array.isArray(H?.artists) ? H.artists.map((g) => g?.name).filter(Boolean).join(", ") : "", j = H?.name || Y?.media_title || Y?.name || "", V = Y?.media_artist || Y?.artist_str || G || Y?.artist || "", Z = H?.album?.name || Y?.media_album_name || Y?.album || "", W = q || !o?.attributes?.media_title, ue = W ? j || o?.attributes?.media_title || h : o?.attributes?.media_title || j || h, he = W ? V || o?.attributes?.media_artist || "" : o?.attributes?.media_artist || V || "", s = W ? Z || o?.attributes?.media_album_name || "" : o?.attributes?.media_album_name || Z || "", A = String(
+    W ? H?.media_type || Y?.media_type || o?.attributes?.media_content_type || o?.attributes?.media_channel || "" : o?.attributes?.media_content_type || o?.attributes?.media_channel || H?.media_type || Y?.media_type || ""
   ).toLowerCase();
   return {
     hasPendingPlay: q,
-    queueItem: O,
+    queueItem: Y,
     media: H,
     title: ue,
     artist: he,
     album: s,
     mediaType: A,
-    art: typeof M == "function" ? M(o, O, { pending: q, size: P }) : "",
-    uri: String(O && Is(v).getQueueItemUri(O) || "").trim()
+    art: typeof M == "function" ? M(o, Y, { pending: q, size: Q }) : "",
+    uri: String(Y && Is(v).getQueueItemUri(Y) || "").trim()
   };
 }
 function wg(o = {}, e = [], t = Date.now()) {
@@ -50494,7 +50533,7 @@ const xg = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   resolvePendingQueueItem: jc
 }, Symbol.toStringTag, { value: "Module" }));
 function kg({ player: o = null, queueItem: e = null } = {}) {
-  const t = e || null, a = t?.media_item || {}, l = a?.name || o?.attributes?.media_title || "", h = (Array.isArray(a?.artists) ? a.artists.map((P) => P?.name).filter(Boolean).join(", ") : "") || o?.attributes?.media_artist || "", v = a?.album?.name || o?.attributes?.media_album_name || "", k = Ds(t?.duration || o?.attributes?.media_duration || 0), M = [l, h, v].map((P) => String(P || "").trim().toLowerCase()).join("|");
+  const t = e || null, a = t?.media_item || {}, l = a?.name || o?.attributes?.media_title || "", h = (Array.isArray(a?.artists) ? a.artists.map((Q) => Q?.name).filter(Boolean).join(", ") : "") || o?.attributes?.media_artist || "", v = a?.album?.name || o?.attributes?.media_album_name || "", k = Ds(t?.duration || o?.attributes?.media_duration || 0), M = [l, h, v].map((Q) => String(Q || "").trim().toLowerCase()).join("|");
   return { title: l, artist: h, album: v, duration: k, key: M };
 }
 function Oc(o = "", { libraryLabel: e = "Library", radioLabel: t = "Radio" } = {}) {
@@ -50532,10 +50571,10 @@ function Mg(o = "") {
 `).forEach((l) => {
     const p = [...l.matchAll(a)];
     if (!p.length) return;
-    const h = l.replace(/\[[^\]]+\]/g, "").trim(), v = /<(\d{1,3}):(\d{2})(?:[.:](\d{1,3}))?>([^<]*)/g, k = [...h.matchAll(v)].map((P) => ({ time: Number(P[1]) * 60 + Number(P[2]) + Number((P[3] || "0").padEnd(3, "0")) / 1e3, text: P[4] })).filter((P) => P.text.length), M = h.replace(/<\d{1,3}:\d{2}(?:[.:]\d{1,3})?>/g, "");
-    M && p.forEach((P) => {
-      const F = Number(P[1]), q = Number(P[2]), O = String(P[3] || "0"), H = Number(O.padEnd(3, "0").slice(0, 3)), j = F * 60 + q + H / 1e3, G = p.length === 1 && k.length && k.map((V) => V.text).join("") === M && k.every((V, Z) => V.time >= j && (!Z || V.time >= k[Z - 1].time));
-      Number.isFinite(j) && e.push({ time: j, text: M, ...G ? { words: k } : {} });
+    const h = l.replace(/\[[^\]]+\]/g, "").trim(), v = /<(\d{1,3}):(\d{2})(?:[.:](\d{1,3}))?>([^<]*)/g, k = [...h.matchAll(v)].map((Q) => ({ time: Number(Q[1]) * 60 + Number(Q[2]) + Number((Q[3] || "0").padEnd(3, "0")) / 1e3, text: Q[4] })).filter((Q) => Q.text.length), M = h.replace(/<\d{1,3}:\d{2}(?:[.:]\d{1,3})?>/g, "");
+    M && p.forEach((Q) => {
+      const F = Number(Q[1]), q = Number(Q[2]), Y = String(Q[3] || "0"), H = Number(Y.padEnd(3, "0").slice(0, 3)), G = F * 60 + q + H / 1e3, j = p.length === 1 && k.length && k.map((V) => V.text).join("") === M && k.every((V, Z) => V.time >= G && (!Z || V.time >= k[Z - 1].time));
+      Number.isFinite(G) && e.push({ time: G, text: M, ...j ? { words: k } : {} });
     });
   }), e.sort((l, p) => l.time - p.time).filter((l, p, h) => p === 0 || l.time !== h[p - 1].time || l.text !== h[p - 1].text);
 }
@@ -50617,8 +50656,8 @@ function Eg(o = "", e = 300, t = "") {
   try {
     const p = new URL(a, l), h = p.pathname.toLowerCase().indexOf("/imageproxy");
     if (h < 0) return a;
-    const v = new URL(l), k = v.pathname.replace(/\/$/, ""), M = p.pathname.slice(h), P = new URL(`${k}${M}`, v);
-    return P.search = p.search, P.hash = p.hash, P.searchParams.set("size", String(ar(e))), P.toString();
+    const v = new URL(l), k = v.pathname.replace(/\/$/, ""), M = p.pathname.slice(h), Q = new URL(`${k}${M}`, v);
+    return Q.search = p.search, Q.hash = p.hash, Q.searchParams.set("size", String(ar(e))), Q.toString();
   } catch {
     return a;
   }
@@ -50629,14 +50668,14 @@ function li(o, e = 300, { maUrl: t = "", seen: a = /* @__PURE__ */ new Set(), de
     const M = String(o).trim();
     if (!M) return null;
     if (/^(data:|blob:)/i.test(M)) return M;
-    const P = Bg(M);
-    return P || (M.includes("/imageproxy?") || M.includes("/imageproxy/") ? $a(M, e, t) : M.startsWith("imageproxy?") || M.startsWith("imageproxy/") ? $a(`/${M}`, e, t) : M.startsWith("/") ? M : Lr(M, "", e, t));
+    const Q = Bg(M);
+    return Q || (M.includes("/imageproxy?") || M.includes("/imageproxy/") ? $a(M, e, t) : M.startsWith("imageproxy?") || M.startsWith("imageproxy/") ? $a(`/${M}`, e, t) : M.startsWith("/") ? M : Lr(M, "", e, t));
   }
   if (typeof o != "object" || a.has(o)) return null;
   if (a.add(o), Array.isArray(o)) {
     for (const M of o) {
-      const P = li(M, e, { maUrl: t, seen: a, depth: l + 1 });
-      if (P) return P;
+      const Q = li(M, e, { maUrl: t, seen: a, depth: l + 1 });
+      if (Q) return Q;
     }
     return null;
   }
@@ -50681,13 +50720,13 @@ function li(o, e = 300, { maUrl: t = "", seen: a = /* @__PURE__ */ new Set(), de
     "metadata"
   ];
   for (const M of k) {
-    const P = li(o[M], e, { maUrl: t, seen: a, depth: l + 1 });
-    if (P) return P;
+    const Q = li(o[M], e, { maUrl: t, seen: a, depth: l + 1 });
+    if (Q) return Q;
   }
   for (const M of Object.values(o)) {
     if (!M || typeof M != "object") continue;
-    const P = li(M, e, { maUrl: t, seen: a, depth: l + 1 });
-    if (P) return P;
+    const Q = li(M, e, { maUrl: t, seen: a, depth: l + 1 });
+    if (Q) return Q;
   }
   return null;
 }
@@ -50835,7 +50874,7 @@ function Zc({
   const v = e || null, k = v?.media_item || v || {}, M = t(
     k?.uri || v?.uri || v?.media_content_id || o?.attributes?.media_content_id || "",
     k?.media_type || v?.media_type || o?.attributes?.media_content_type || "track"
-  ), P = [].concat(Array.isArray(k?.provider_mappings) ? k.provider_mappings : []).concat(Array.isArray(v?.provider_mappings) ? v.provider_mappings : []), q = [
+  ), Q = [].concat(Array.isArray(k?.provider_mappings) ? k.provider_mappings : []).concat(Array.isArray(v?.provider_mappings) ? v.provider_mappings : []), q = [
     k?.provider,
     k?.provider_name,
     k?.provider_domain,
@@ -50847,8 +50886,8 @@ function Zc({
     o?.attributes?.provider,
     o?.attributes?.provider_name,
     M.provider,
-    ...P.flatMap((H) => [H?.provider, H?.provider_domain, H?.provider_instance, H?.provider_name])
-  ].filter(Boolean).map((H) => a(H, { libraryLabel: p, radioLabel: h })).find(Boolean) || null, O = l([
+    ...Q.flatMap((H) => [H?.provider, H?.provider_domain, H?.provider_instance, H?.provider_name])
+  ].filter(Boolean).map((H) => a(H, { libraryLabel: p, radioLabel: h })).find(Boolean) || null, Y = l([
     k?.audio_format,
     k?.quality,
     k?.streamdetails,
@@ -50859,14 +50898,14 @@ function Zc({
     v?.metadata,
     o?.attributes?.media_codec,
     o?.attributes?.media_format,
-    ...P.map((H) => H?.details),
-    ...P.map((H) => H?.quality),
-    ...P.map((H) => H?.audio_format)
+    ...Q.map((H) => H?.details),
+    ...Q.map((H) => H?.quality),
+    ...Q.map((H) => H?.audio_format)
   ]);
   return {
     providerKey: q?.key || "",
     providerLabel: q?.label || "",
-    qualityLabel: O
+    qualityLabel: Y
   };
 }
 function Lg({
@@ -50878,16 +50917,16 @@ function Lg({
   artUrlFn: l,
   buildCurrentSourceBadgeMetaFn: p = Zc
 } = {}) {
-  const h = e || null, v = h?.media_item || h || {}, k = String(t?.(h) || v?.uri || "").trim(), M = String(o?.attributes?.media_content_id || "").trim(), P = !h || k && k === M ? o?.attributes || {} : {}, F = v?.name || h?.name || P.media_title || "", q = Array.isArray(v?.artists) ? v.artists.map((Z) => Z?.name).filter(Boolean).join(", ") : v?.artist_str || v?.publisher || P.media_artist || "", O = v?.album?.name || v?.podcast?.name || h?.album || P.media_album_name || "", H = k || M, j = String(v?.media_type || h?.media_type || o?.attributes?.media_content_type || "track").toLowerCase(), G = [F, q, O].map((Z) => String(Z || "").trim().toLowerCase()).join("|");
-  if (!G || !H || j === "radio") return null;
+  const h = e || null, v = h?.media_item || h || {}, k = String(t?.(h) || v?.uri || "").trim(), M = String(o?.attributes?.media_content_id || "").trim(), Q = !h || k && k === M ? o?.attributes || {} : {}, F = v?.name || h?.name || Q.media_title || "", q = Array.isArray(v?.artists) ? v.artists.map((Z) => Z?.name).filter(Boolean).join(", ") : v?.artist_str || v?.publisher || Q.media_artist || "", Y = v?.album?.name || v?.podcast?.name || h?.album || Q.media_album_name || "", H = k || M, G = String(v?.media_type || h?.media_type || o?.attributes?.media_content_type || "track").toLowerCase(), j = [F, q, Y].map((Z) => String(Z || "").trim().toLowerCase()).join("|");
+  if (!j || !H || G === "radio") return null;
   const V = p({ player: o, queueItem: h });
   return {
-    key: G,
+    key: j,
     uri: H,
-    media_type: j || "track",
+    media_type: G || "track",
     title: F,
     artist: q,
-    album: O,
+    album: Y,
     image: a?.(h, 180) || l?.(v) || l?.(h) || "",
     provider_label: V.providerLabel || "",
     quality_label: V.qualityLabel || ""
@@ -51205,33 +51244,33 @@ function Vg(o = "") {
   return [e.title, e.artist].filter(Boolean).join(" ").trim() || e.query;
 }
 function au(o = {}, e = "", t = Hr(e)) {
-  const a = Ls(o?.media_type || "", ""), l = ri(o?.name || o?.title || ""), p = ri(o?.artist || ""), h = ri(o?.album || ""), v = Ur(e), k = v.query, M = v.title, P = v.artist, F = [l, p, h].filter(Boolean).join(" ");
+  const a = Ls(o?.media_type || "", ""), l = ri(o?.name || o?.title || ""), p = ri(o?.artist || ""), h = ri(o?.album || ""), v = Ur(e), k = v.query, M = v.title, Q = v.artist, F = [l, p, h].filter(Boolean).join(" ");
   let q = 0;
-  a === t.type ? q += t.explicit ? 24 : 10 : !t.explicit && a === "track" ? q += 10 : !t.explicit && a === "album" ? q += 3 : !t.explicit && a === "artist" ? q += 2 : (!t.explicit && a === "playlist" || t.explicit) && (q -= 8), o?._homeiiVoiceFocused === !0 && (q += 8), k && l === k ? q += 28 : k && l.startsWith(k) ? q += 16 : k && l.includes(k) && (q += 10), M && l === M ? q += 34 : M && l.startsWith(M) ? q += 22 : M && l.includes(M) && (q += 15), P && (p === P ? q += 30 : p.includes(P) || P.includes(p) ? q += 18 : P.split(" ").filter(Boolean).every((j) => F.includes(j)) && (q += 12));
-  const O = Da([v.title, v.artist].filter(Boolean).join(" ") || k), H = Ka(O, F);
-  return q += H * 6, O.length && H === O.length && (q += 12), O.length && !H && (q -= 30), !t.explicit && a === "playlist" && (l.includes("hits") || l.includes("top") || l.includes("radio")) && (q -= 4), q;
+  a === t.type ? q += t.explicit ? 24 : 10 : !t.explicit && a === "track" ? q += 10 : !t.explicit && a === "album" ? q += 3 : !t.explicit && a === "artist" ? q += 2 : (!t.explicit && a === "playlist" || t.explicit) && (q -= 8), o?._homeiiVoiceFocused === !0 && (q += 8), k && l === k ? q += 28 : k && l.startsWith(k) ? q += 16 : k && l.includes(k) && (q += 10), M && l === M ? q += 34 : M && l.startsWith(M) ? q += 22 : M && l.includes(M) && (q += 15), Q && (p === Q ? q += 30 : p.includes(Q) || Q.includes(p) ? q += 18 : Q.split(" ").filter(Boolean).every((G) => F.includes(G)) && (q += 12));
+  const Y = Da([v.title, v.artist].filter(Boolean).join(" ") || k), H = Ka(Y, F);
+  return q += H * 6, Y.length && H === Y.length && (q += 12), Y.length && !H && (q -= 30), !t.explicit && a === "playlist" && (l.includes("hits") || l.includes("top") || l.includes("radio")) && (q -= 4), q;
 }
 function ru(o = {}, e = "", t = Hr(e), a = 0) {
-  const l = Ls(o?.media_type || "", ""), p = ri(o?.name || o?.title || ""), h = ri(o?.artist || ""), v = ri(o?.album || ""), k = Ur(e), M = Da([k.title, k.artist].filter(Boolean).join(" ") || k.query), P = Da(k.title), F = Da(k.artist), q = [p, h, v].filter(Boolean).join(" "), O = Ka(M, q), H = Ka(P, p), j = Ka(F, [h, v, q].filter(Boolean).join(" ")), G = !!k.title && (p === k.title || p.startsWith(k.title) || p.includes(k.title)), V = !!k.query && (p === k.query || p.startsWith(k.query) || p.includes(k.query)), Z = G || V || P.length > 0 && H === P.length, W = !!h, ue = F.length ? Math.min(F.length, Math.max(1, Math.ceil(F.length * 0.6))) : 0, he = F.length > 0 && j >= ue, s = au(o, e, t);
+  const l = Ls(o?.media_type || "", ""), p = ri(o?.name || o?.title || ""), h = ri(o?.artist || ""), v = ri(o?.album || ""), k = Ur(e), M = Da([k.title, k.artist].filter(Boolean).join(" ") || k.query), Q = Da(k.title), F = Da(k.artist), q = [p, h, v].filter(Boolean).join(" "), Y = Ka(M, q), H = Ka(Q, p), G = Ka(F, [h, v, q].filter(Boolean).join(" ")), j = !!k.title && (p === k.title || p.startsWith(k.title) || p.includes(k.title)), V = !!k.query && (p === k.query || p.startsWith(k.query) || p.includes(k.query)), Z = j || V || Q.length > 0 && H === Q.length, W = !!h, ue = F.length ? Math.min(F.length, Math.max(1, Math.ceil(F.length * 0.6))) : 0, he = F.length > 0 && G >= ue, s = au(o, e, t);
   let A = !1;
-  if (F.length && !P.length)
+  if (F.length && !Q.length)
     A = he;
-  else if (F.length && P.length)
+  else if (F.length && Q.length)
     A = Z && (he || !W);
   else if (M.length === 1)
-    A = O === 1 && (G || V || H === 1 || j === 1);
+    A = Y === 1 && (j || V || H === 1 || G === 1);
   else if (M.length > 1) {
     const g = Math.min(M.length, Math.max(2, Math.ceil(M.length * 0.55)));
-    A = Z || O >= g;
+    A = Z || Y >= g;
   }
   return t.explicit && l !== t.type && (A = !1), {
     candidate: o,
     index: a,
     score: s,
     accepted: A,
-    matchedTokens: O,
+    matchedTokens: Y,
     queryTokenCount: M.length,
-    exactTitlePhrase: G,
+    exactTitlePhrase: j,
     exactQueryPhrase: V
   };
 }
@@ -51310,7 +51349,7 @@ function eb() {
   } catch {
   }
 }
-const ia = "6.1.1", sl = "homeii-music-flow-browser-editor-v611", zr = "homeii-music-flow-editor-v611", tb = "__homeii_ambient_light_pair_player_", ib = "__homeii_ambient_light_pair_lights_", zs = Object.freeze({
+const ia = "6.1.2", sl = "homeii-music-flow-browser-editor-v612", zr = "homeii-music-flow-editor-v612", tb = "__homeii_ambient_light_pair_player_", ib = "__homeii_ambient_light_pair_lights_", zs = Object.freeze({
   isHebrewLanguageTag: Tl,
   pickEditorLanguageCandidate: Ll,
   detectEditorHebrew: ep
@@ -52436,29 +52475,29 @@ class aa extends As {
           try {
             const k = document.createElement("canvas"), M = 40;
             k.width = M, k.height = M;
-            const P = k.getContext("2d", { willReadFrequently: !0 });
-            if (!P) {
+            const Q = k.getContext("2d", { willReadFrequently: !0 });
+            if (!Q) {
               h(null);
               return;
             }
-            P.drawImage(v, 0, 0, M, M);
-            const { data: F } = P.getImageData(0, 0, M, M);
-            let q = [0, 0, 0], O = 0, H = [0, 0, 0], j = 0;
+            Q.drawImage(v, 0, 0, M, M);
+            const { data: F } = Q.getImageData(0, 0, M, M);
+            let q = [0, 0, 0], Y = 0, H = [0, 0, 0], G = 0;
             for (let Z = 0; Z < F.length; Z += 16) {
               const W = (F[Z + 3] || 0) / 255;
               if (W < 0.08) continue;
               const ue = [F[Z], F[Z + 1], F[Z + 2]], [he, s, A] = this._rgbToHsl(ue), g = 1 - Math.abs(A - 0.52), y = W * (0.35 + s * 0.9 + g * 0.55);
-              q = q.map((E, I) => E + ue[I] * y), O += y;
+              q = q.map((E, I) => E + ue[I] * y), Y += y;
               const S = this._tunePaletteColor(ue, { minSaturation: 0.48, minLightness: 0.4, maxLightness: 0.58 }), B = W * (0.2 + s * 1.9 + g * 0.85 + he * 0.05);
-              H = H.map((E, I) => E + S[I] * B), j += B;
+              H = H.map((E, I) => E + S[I] * B), G += B;
             }
-            if (!O || !j) {
+            if (!Y || !G) {
               h(null);
               return;
             }
-            const G = q.map((Z) => this._clampByte(Z / O)), V = H.map((Z) => this._clampByte(Z / j));
+            const j = q.map((Z) => this._clampByte(Z / Y)), V = H.map((Z) => this._clampByte(Z / G));
             h(gi.buildDynamicThemePalette({
-              baseTuple: G,
+              baseTuple: j,
               vividTuple: V,
               mode: this._mobileDynamicThemeMode()
             }));
@@ -52749,7 +52788,7 @@ class aa extends As {
         ...Array.isArray(p.value) ? p.value : [],
         ...Array.isArray(h.value) ? h.value : [],
         ...Array.isArray(v.value) ? v.value : []
-      ].map((M) => this._normalizeMediaItem(M)).filter((M) => String(M?.uri || "").trim()).filter((M) => String(M?.media_type || "playlist").toLowerCase() === "playlist").filter((M, P, F) => F.findIndex((q) => String(q?.uri || "").trim() === String(M?.uri || "").trim()) === P);
+      ].map((M) => this._normalizeMediaItem(M)).filter((M) => String(M?.uri || "").trim()).filter((M) => String(M?.media_type || "playlist").toLowerCase() === "playlist").filter((M, Q, F) => F.findIndex((q) => String(q?.uri || "").trim() === String(M?.uri || "").trim()) === Q);
       return this._state.mobileStartTimerPlaylists = k, this._state.mobileStartTimerPlaylistsFetchedAt = Date.now(), (!Array.isArray(this._state.mobileRecommendationPlaylists) || !this._state.mobileRecommendationPlaylists.length) && (this._state.mobileRecommendationPlaylists = k.slice(0, 24), this._state.mobileRecommendationPlaylistsFetchedAt = Date.now()), k;
     } catch {
       return a;
@@ -52789,21 +52828,21 @@ class aa extends As {
         k?.description,
         k?.provider_label
       ].filter(Boolean).join(" ").toLowerCase();
-      return p.some((P) => M.includes(P));
+      return p.some((Q) => M.includes(Q));
     }), v = h.length ? h : l;
     return v[Math.floor(Math.random() * v.length)] || null;
   }
   _scheduledStartStatusLabel() {
-    const t = this._scheduledStartSchedules().filter((P) => P.enabled !== !1);
+    const t = this._scheduledStartSchedules().filter((Q) => Q.enabled !== !1);
     if (!t.length)
       return this._i18n("ui.no_scheduled_start_is_active");
     if (t.length > 1)
       return this._i18n("ui.scheduled_starts_active_count", { count: t.length });
-    const a = t[0], p = this._playerByEntityId(this._scheduledStartPlayerId(a))?.attributes?.friendly_name || this._i18n("ui.selected_player_3"), h = this._nightModeDayOptions().filter(([P]) => this._normalizeNightModeDays(a.days).includes(P)).map(([, P]) => P).join(" "), v = this._normalizeClockTime(a.time || "07:00", "07:00"), k = Math.max(0, Math.min(100, Number(a.volume ?? 35))), M = this._scheduledStartPlaylistLabel(a);
+    const a = t[0], p = this._playerByEntityId(this._scheduledStartPlayerId(a))?.attributes?.friendly_name || this._i18n("ui.selected_player_3"), h = this._nightModeDayOptions().filter(([Q]) => this._normalizeNightModeDays(a.days).includes(Q)).map(([, Q]) => Q).join(" "), v = this._normalizeClockTime(a.time || "07:00", "07:00"), k = Math.max(0, Math.min(100, Number(a.volume ?? 35))), M = this._scheduledStartPlaylistLabel(a);
     return `${v} · ${p} · ${M} · ${k}% · ${h}`;
   }
   async _setScheduledStartFromMenu() {
-    const e = this.$("scheduledStartTimeInput"), t = this.$("scheduledStartPlayerSelect"), a = this.$("scheduledStartPlaylistSelect"), l = this.$("scheduledStartVolumeInput"), p = this.$("scheduledStartAfterRunSelect"), h = Array.from(this.shadowRoot?.querySelectorAll("input[data-start-timer-day]:checked") || []).map((O) => Number(O.dataset.startTimerDay)).filter((O) => Number.isInteger(O) && O >= 0 && O <= 6), v = String(t?.value || this._state.selectedPlayer || "").trim();
+    const e = this.$("scheduledStartTimeInput"), t = this.$("scheduledStartPlayerSelect"), a = this.$("scheduledStartPlaylistSelect"), l = this.$("scheduledStartVolumeInput"), p = this.$("scheduledStartAfterRunSelect"), h = Array.from(this.shadowRoot?.querySelectorAll("input[data-start-timer-day]:checked") || []).map((Y) => Number(Y.dataset.startTimerDay)).filter((Y) => Number.isInteger(Y) && Y >= 0 && Y <= 6), v = String(t?.value || this._state.selectedPlayer || "").trim();
     if (!v)
       return this._toastError(this._i18n("ui.select_a_player_first")), !1;
     const k = String(this._state.mobileStartScheduleEditId || "").trim(), M = this._normalizeScheduledStartSchedule({
@@ -52818,8 +52857,8 @@ class aa extends As {
       days: this._normalizeNightModeDays(h),
       lastRunKey: "",
       afterRun: String(p?.value || "keep") === "disable" ? "disable" : "keep"
-    }), P = this._scheduledStartSchedules(), F = P.findIndex((O) => O.id === M.id);
-    F >= 0 ? P[F] = M : P.push(M), this._state.mobileStartSchedules = P, this._state.mobileStartScheduleEditId = "", this._state.mobileStartTimerEnabled = P.some((O) => O.enabled !== !1), this._state.mobileStartTimerTime = M.time, this._state.mobileStartTimerPlayer = M.player, this._state.mobileStartTimerPlaylist = M.playlist, this._state.mobileStartTimerPlaylistName = M.playlistName, this._state.mobileStartTimerVolume = M.volume, this._state.mobileStartTimerFadeSeconds = M.fadeSeconds || 0, this._state.mobileStartTimerDays = M.days, this._state.mobileStartTimerLastRunKey = M.lastRunKey, this._state.mobileStartTimerAfterRun = M.afterRun || "keep", this._persistMobileAppearance();
+    }), Q = this._scheduledStartSchedules(), F = Q.findIndex((Y) => Y.id === M.id);
+    F >= 0 ? Q[F] = M : Q.push(M), this._state.mobileStartSchedules = Q, this._state.mobileStartScheduleEditId = "", this._state.mobileStartTimerEnabled = Q.some((Y) => Y.enabled !== !1), this._state.mobileStartTimerTime = M.time, this._state.mobileStartTimerPlayer = M.player, this._state.mobileStartTimerPlaylist = M.playlist, this._state.mobileStartTimerPlaylistName = M.playlistName, this._state.mobileStartTimerVolume = M.volume, this._state.mobileStartTimerFadeSeconds = M.fadeSeconds || 0, this._state.mobileStartTimerDays = M.days, this._state.mobileStartTimerLastRunKey = M.lastRunKey, this._state.mobileStartTimerAfterRun = M.afterRun || "keep", this._persistMobileAppearance();
     const q = await this._syncScheduleToHomeiiEngine(M, { toast: !0 });
     return this._toastSuccess(q ? this._m("Schedule saved to HOMEii Flow Engine", "התזמון נשמר ב-HOMEii Flow Engine") : this._i18n("ui.scheduled_start_saved")), !0;
   }
@@ -52872,8 +52911,8 @@ class aa extends As {
       if (e.getHours() !== h || e.getMinutes() !== v || !new Set(this._normalizeNightModeDays(l.days)).has(Number(e.getDay()))) return;
       const M = `${l.id}-${e.getFullYear()}-${e.getMonth() + 1}-${e.getDate()}-${p}`;
       if (l.lastRunKey === M) return;
-      const P = this._scheduledStartPlayerId(l);
-      P && (l.lastRunKey = M, l.afterRun === "disable" && (l.enabled = !1), a = !0, this._runScheduledStart(P, l).catch((F) => {
+      const Q = this._scheduledStartPlayerId(l);
+      Q && (l.lastRunKey = M, l.afterRun === "disable" && (l.enabled = !1), a = !0, this._runScheduledStart(Q, l).catch((F) => {
         this._toastError(F?.message || this._i18n("ui.scheduled_start_failed"));
       }));
     }), a) {
@@ -52892,8 +52931,8 @@ class aa extends As {
   }
   _mobileContentDense(e = this._layoutModeConfig(), t = null, a = {}) {
     if (e === "tablet") return !1;
-    const l = t || this._layoutProfileConfig(e), p = Number(l?.width || this._getCardWidth(this._lastCardWidth || 0)), h = Number(l?.height || this._lastCardHeight || 0), v = typeof a.showNightRow == "boolean" ? a.showNightRow : this._mobileNightMode() !== "off", k = typeof a.showUpNextInline == "boolean" ? a.showUpNextInline : this._mobileShowUpNextEnabled() && !!this._mobileUpNextItem(), P = p > 0 && p <= 620 && l?.aspect === "portrait", F = l?.heightSize === "short" || l?.tight || h > 0 && h < 780;
-    return !!(v || k || F || P || l?.size === "xs");
+    const l = t || this._layoutProfileConfig(e), p = Number(l?.width || this._getCardWidth(this._lastCardWidth || 0)), h = Number(l?.height || this._lastCardHeight || 0), v = typeof a.showNightRow == "boolean" ? a.showNightRow : this._mobileNightMode() !== "off", k = typeof a.showUpNextInline == "boolean" ? a.showUpNextInline : this._mobileShowUpNextEnabled() && !!this._mobileUpNextItem(), Q = p > 0 && p <= 620 && l?.aspect === "portrait", F = l?.heightSize === "short" || l?.tight || h > 0 && h < 780;
+    return !!(v || k || F || Q || l?.size === "xs");
   }
   _syncTabletAutoFitUi(e = null) {
     const t = this.shadowRoot?.querySelector(".card");
@@ -52940,8 +52979,8 @@ class aa extends As {
     try {
       const h = await this._homeiiEngineGetTimers({}, { required: !0, timeoutMs: this._homeiiEngineTimeoutMs() }), v = Array.isArray(h?.timers) ? h.timers : [], k = Date.now();
       return v.some((M) => {
-        const P = String(M?.type || M?.timer_type || "sleep"), F = Date.parse(M?.ends_at || M?.target_at || ""), q = l && String(M?.id || M?.timer_id || "").trim() === l, O = p && String(M?.player || M?.entity_id || "").trim() === p;
-        return P === "sleep" && M.enabled !== !1 && (q || O) && Number.isFinite(F) && F > k && (!a || Math.abs(F - a) < 1e3);
+        const Q = String(M?.type || M?.timer_type || "sleep"), F = Date.parse(M?.ends_at || M?.target_at || ""), q = l && String(M?.id || M?.timer_id || "").trim() === l, Y = p && String(M?.player || M?.entity_id || "").trim() === p;
+        return Q === "sleep" && M.enabled !== !1 && (q || Y) && Number.isFinite(F) && F > k && (!a || Math.abs(F - a) < 1e3);
       });
     } catch {
       return !1;
@@ -53046,18 +53085,18 @@ class aa extends As {
       ]), a = [
         ...Array.isArray(e.value) ? e.value : [],
         ...Array.isArray(t.value) ? t.value : []
-      ].filter((M) => M?.uri).filter((M, P, F) => F.findIndex((q) => q?.uri === M?.uri) === P);
+      ].filter((M) => M?.uri).filter((M, Q, F) => F.findIndex((q) => q?.uri === M?.uri) === Q);
       if (!a.length) {
         await this._playRandomFromPlaylists();
         return;
       }
       const l = ["sleep", "night", "chill", "calm", "relax", "ambient", "meditation", "dream", "lofi", "lo-fi", "soft"], p = a.filter((M) => {
-        const P = [
+        const Q = [
           M?.name,
           M?.metadata?.description,
           M?.description
         ].filter(Boolean).join(" ").toLowerCase();
-        return l.some((F) => P.includes(F));
+        return l.some((F) => Q.includes(F));
       }), h = p.length ? p : a, v = h[Math.floor(Math.random() * h.length)];
       await this._playMedia(v.uri, v.media_type || "playlist", "play", {
         label: v.name || this._i18n("ui.chill_mix"),
@@ -53072,32 +53111,32 @@ class aa extends As {
       this._getQueueItemUri(e) || t?.uri || a?.attributes?.media_content_id || ""
     ).trim(), h = String(
       t?.media_type || e?.media_type || a?.attributes?.media_content_type || ""
-    ).toLowerCase(), v = this._parseMediaReference(p, h || "track"), k = String(v?.media_type || h || "").toLowerCase(), M = this._supportsMusicAssistantRadioMode(k) ? k : this._supportsMusicAssistantRadioMode(h) ? h : "", P = this._queueItemPrimaryTitle(e) || a?.attributes?.media_title || "", F = this._queueItemPrimaryArtist(e) || a?.attributes?.media_artist || "";
+    ).toLowerCase(), v = this._parseMediaReference(p, h || "track"), k = String(v?.media_type || h || "").toLowerCase(), M = this._supportsMusicAssistantRadioMode(k) ? k : this._supportsMusicAssistantRadioMode(h) ? h : "", Q = this._queueItemPrimaryTitle(e) || a?.attributes?.media_title || "", F = this._queueItemPrimaryArtist(e) || a?.attributes?.media_artist || "";
     if (p && M)
       return {
         uri: p,
         media_type: M,
-        name: P || this._i18n("ui.quick_mix"),
+        name: Q || this._i18n("ui.quick_mix"),
         image: l
       };
-    const q = [P, F].filter(Boolean).join(" ").trim();
+    const q = [Q, F].filter(Boolean).join(" ").trim();
     if (!q) return null;
-    const O = await this._searchEverything(q), H = [
-      ...Array.isArray(O?.tracks) ? O.tracks.map((W) => ({ ...W, media_type: W?.media_type || "track" })) : [],
-      ...Array.isArray(O?.albums) ? O.albums.map((W) => ({ ...W, media_type: W?.media_type || "album" })) : [],
-      ...Array.isArray(O?.artists) ? O.artists.map((W) => ({ ...W, media_type: W?.media_type || "artist" })) : [],
-      ...Array.isArray(O?.playlists) ? O.playlists.map((W) => ({ ...W, media_type: W?.media_type || "playlist" })) : []
+    const Y = await this._searchEverything(q), H = [
+      ...Array.isArray(Y?.tracks) ? Y.tracks.map((W) => ({ ...W, media_type: W?.media_type || "track" })) : [],
+      ...Array.isArray(Y?.albums) ? Y.albums.map((W) => ({ ...W, media_type: W?.media_type || "album" })) : [],
+      ...Array.isArray(Y?.artists) ? Y.artists.map((W) => ({ ...W, media_type: W?.media_type || "artist" })) : [],
+      ...Array.isArray(Y?.playlists) ? Y.playlists.map((W) => ({ ...W, media_type: W?.media_type || "playlist" })) : []
     ].filter((W) => String(W?.uri || "").trim()).filter((W) => this._supportsMusicAssistantRadioMode(String(W?.media_type || "").toLowerCase()));
     if (!H.length) return null;
-    const j = String(P || "").trim().toLowerCase(), G = String(F || "").trim().toLowerCase(), V = (W) => {
+    const G = String(Q || "").trim().toLowerCase(), j = String(F || "").trim().toLowerCase(), V = (W) => {
       const ue = String(W?.name || W?.title || "").trim().toLowerCase(), he = String(W?.artist || W?.artist_str || this._artistName(W) || "").trim().toLowerCase();
       let s = 0;
-      return j && ue === j ? s += 6 : j && ue.includes(j) && (s += 3), G && he === G ? s += 4 : G && he.includes(G) && (s += 2), String(W?.media_type || "").toLowerCase() === "track" && (s += 2), s;
+      return G && ue === G ? s += 6 : G && ue.includes(G) && (s += 3), j && he === j ? s += 4 : j && he.includes(j) && (s += 2), String(W?.media_type || "").toLowerCase() === "track" && (s += 2), s;
     }, Z = [...H].sort((W, ue) => V(ue) - V(W))[0];
     return Z ? {
       uri: String(Z.uri || "").trim(),
       media_type: String(Z.media_type || "track").toLowerCase(),
-      name: Z.name || P || this._i18n("ui.quick_mix"),
+      name: Z.name || Q || this._i18n("ui.quick_mix"),
       image: this._artUrl(Z) || l
     } : null;
   }
@@ -53112,7 +53151,7 @@ class aa extends As {
         uri: M,
         media_type: k.media_type || v.media_type || "track",
         title: k.name || v.name || this._i18n("ui.recommended_track"),
-        artist: k.artists?.map((P) => P?.name).filter(Boolean).join(", ") || v.media_artist || k.album?.name || "",
+        artist: k.artists?.map((Q) => Q?.name).filter(Boolean).join(", ") || v.media_artist || k.album?.name || "",
         album: k.album?.name || v.album || "",
         image: this._queueItemImageUrl(v, 120) || this._artUrl(k) || ""
       });
@@ -53428,7 +53467,7 @@ class aa extends As {
     `, this.$("engineGateRetry")?.addEventListener("click", async () => {
       this._state.engineLastChecked = 0, await this._ensureHomeiiEngineHandshake() && (this._build(), this._init());
     }), this.$("engineGateDiagnostics")?.addEventListener("click", () => {
-      const P = [
+      const Q = [
         "HOMEii Flow 6 Engine handshake",
         `Card: ${ia}`,
         `Status: ${h}`,
@@ -53438,7 +53477,7 @@ class aa extends As {
       ].join(`
 `);
       try {
-        navigator?.clipboard?.writeText?.(P);
+        navigator?.clipboard?.writeText?.(Q);
       } catch {
       }
       this._toast?.("Engine status copied", "success", { position: "center" });
@@ -53686,11 +53725,11 @@ class aa extends As {
         return;
       }
       clearTimeout(this._homeiiMaContextEventTimer);
-      const P = Math.max(1200, 5e3 - (Date.now() - Number(this._state.engineLastGoodAt || 0)));
+      const Q = Math.max(1200, 5e3 - (Date.now() - Number(this._state.engineLastGoodAt || 0)));
       this._homeiiMaContextEventTimer = setTimeout(
         () => this._refreshHomeiiEngineContext({ force: !1 }).catch(() => {
         }),
-        P
+        Q
       );
       return;
     }
@@ -53717,8 +53756,8 @@ class aa extends As {
     }
     if (v) {
       const M = /favorite/.test(a) ? String(e.media_type || e.data?.media_type || "").trim().toLowerCase() : "";
-      for (const [P, F] of this._cache?.library?.entries?.() || [])
-        M && P !== "liked:ma" && !String(P).startsWith(`${M}:`) && !String(P).startsWith(`tab-search:${M}:`) || F && typeof F == "object" && (F.ts = 0);
+      for (const [Q, F] of this._cache?.library?.entries?.() || [])
+        M && Q !== "liked:ma" && !String(Q).startsWith(`${M}:`) && !String(Q).startsWith(`tab-search:${M}:`) || F && typeof F == "object" && (F.ts = 0);
       clearTimeout(this._homeiiMaLibraryEventTimer), this._homeiiMaLibraryEventTimer = setTimeout(() => {
         this._state?.menuOpen && /^(library_|media_detail|discovery|quick_search)/.test(String(this._state.menuPage || "")) && this._renderMobileMenu?.().catch(() => {
         });
@@ -53856,13 +53895,13 @@ class aa extends As {
     const t = Array.isArray(e.startSchedules) ? e.startSchedules : Array.isArray(e.mobileStartSchedules) ? e.mobileStartSchedules : null, a = String(e.nightMode || e.mobileNightMode || "").trim(), l = ["off", "auto", "on"].includes(a) || Object.prototype.hasOwnProperty.call(e, "nightModeStart") || Object.prototype.hasOwnProperty.call(e, "nightModeEnd") || Object.prototype.hasOwnProperty.call(e, "nightModeDays") || Object.prototype.hasOwnProperty.call(e, "mobileNightModeStart") || Object.prototype.hasOwnProperty.call(e, "mobileNightModeEnd") || Object.prototype.hasOwnProperty.call(e, "mobileNightModeDays"), p = Object.prototype.hasOwnProperty.call(e, "sleepTimerEndsAt") || Object.prototype.hasOwnProperty.call(e, "mobileSleepTimerEndsAt");
     if (!t && !l && !p) return !1;
     if (t) {
-      const h = t.map((P, F) => this._normalizeScheduledStartSchedule(P, F));
-      this._state.mobileStartSchedules = h, this._state.mobileStartTimerEnabled = h.some((P) => P.enabled !== !1);
+      const h = t.map((Q, F) => this._normalizeScheduledStartSchedule(Q, F));
+      this._state.mobileStartSchedules = h, this._state.mobileStartTimerEnabled = h.some((Q) => Q.enabled !== !1);
       const v = String(e.startScheduleEditId || "").trim();
-      this._state.mobileStartScheduleEditId = h.some((P) => P.id === v) ? v : "";
+      this._state.mobileStartScheduleEditId = h.some((Q) => Q.id === v) ? v : "";
       const k = String(e.schedulesTab || "").trim();
       ["timers", "wake", "night"].includes(k) && (this._state.mobileSchedulesTab = k);
-      const M = h.find((P) => P.id === this._state.mobileStartScheduleEditId) || h[0] || null;
+      const M = h.find((Q) => Q.id === this._state.mobileStartScheduleEditId) || h[0] || null;
       M ? (this._state.mobileStartTimerTime = M.time, this._state.mobileStartTimerPlayer = M.player, this._state.mobileStartTimerPlaylist = M.playlist, this._state.mobileStartTimerPlaylistName = M.playlistName, this._state.mobileStartTimerVolume = M.volume, this._state.mobileStartTimerDays = M.days, this._state.mobileStartTimerLastRunKey = M.lastRunKey || "") : this._state.mobileStartTimerLastRunKey = "";
     }
     if (l && (this._state.mobileNightMode = ["off", "auto", "on"].includes(a) ? a : this._mobileNightMode(), this._state.mobileNightModeStart = this._normalizeClockTime(e.nightModeStart || e.mobileNightModeStart || this._state.mobileNightModeStart || "22:00", "22:00"), this._state.mobileNightModeEnd = this._normalizeClockTime(e.nightModeEnd || e.mobileNightModeEnd || this._state.mobileNightModeEnd || "06:00", "06:00"), this._state.mobileNightModeDays = this._normalizeNightModeDays(e.nightModeDays || e.mobileNightModeDays || this._state.mobileNightModeDays)), p) {
@@ -54576,8 +54615,8 @@ class aa extends As {
       this._ambientLightTransition()
     ].join("|");
     if (v === this._ambientLightLastSignature) return;
-    const k = Date.now(), M = h && h !== this._ambientLightLastTrackSignature, P = Math.abs(p - Number(this._ambientLightLastBrightness || 0)) >= 3, F = e === "settings", q = this._ambientLightCooldown() * 1e3;
-    if (!M && !P && !F && q > 0 && k - Number(this._ambientLightLastCallAt || 0) < q) return;
+    const k = Date.now(), M = h && h !== this._ambientLightLastTrackSignature, Q = Math.abs(p - Number(this._ambientLightLastBrightness || 0)) >= 3, F = e === "settings", q = this._ambientLightCooldown() * 1e3;
+    if (!M && !Q && !F && q > 0 && k - Number(this._ambientLightLastCallAt || 0) < q) return;
     this._ambientLightLastSignature = v, this._ambientLightLastTrackSignature = h, this._ambientLightLastCallAt = k, this._ambientLightLastBrightness = p, this._hass.callService("light", "turn_on", {
       entity_id: a,
       rgb_color: l,
@@ -54778,15 +54817,15 @@ class aa extends As {
       const I = B === "screensaverPowerBtn" ? !!this._hass : !!l;
       E.disabled = !I, E.setAttribute("aria-disabled", I ? "false" : "true");
     }), this._setButtonIcon(this.$("screensaverPlayPauseBtn"), this._playPauseIconName(l)), this._setButtonIcon(this.$("screensaverMuteBtn"), this._volumeIconName(l));
-    const P = this.$("screensaverMuteBtn");
-    P && P.classList.toggle("active", this._isMuted(l));
+    const Q = this.$("screensaverMuteBtn");
+    Q && Q.classList.toggle("active", this._isMuted(l));
     const F = this.$("screensaverLikeBtn");
     if (F) {
       F.hidden = !M, F.disabled = !M, F.setAttribute("aria-disabled", M ? "false" : "true");
       const B = this._currentMediaFavoriteState();
       F.classList.toggle("active", B), this._setButtonIcon(F, B ? "heart_filled" : "heart_outline");
     }
-    const q = v || this._i18n("ui.nothing_playing"), O = this._mobileUpNextItem(), H = O ? this._queueItemPrimaryTitle(O) : "", j = O ? this._queueItemPrimaryArtist(O) : "", G = O ? this._queueItemImageUrl(O, 96) : "", V = this._screensaverMessage();
+    const q = v || this._i18n("ui.nothing_playing"), Y = this._mobileUpNextItem(), H = Y ? this._queueItemPrimaryTitle(Y) : "", G = Y ? this._queueItemPrimaryArtist(Y) : "", j = Y ? this._queueItemImageUrl(Y, 96) : "", V = this._screensaverMessage();
     e.classList.toggle("analog-mode", t === "analog"), e.classList.toggle("digital-mode", t !== "analog"), e.classList.toggle("empty-mode", !M), this._setScreensaverBackgroundArt(e, h), this._syncScreensaverLyricsUi(l);
     const Z = this.$("screensaverLyricsBtn"), W = e.classList.contains("lyrics-mode");
     Z && (Z.classList.toggle("active", W), Z.setAttribute("aria-pressed", W ? "true" : "false")), ["screensaverLyricsSyncBtn", "screensaverLyricsFontMinusBtn", "screensaverLyricsFontPlusBtn"].forEach((B) => {
@@ -54806,7 +54845,7 @@ class aa extends As {
     const s = this.$("screensaverMessage");
     s && (s.hidden = !V, s.textContent = V);
     const A = this.$("screensaverNext");
-    A && (A.hidden = !H, H && (this._setScreensaverImageHost(this.$("screensaverNextArt"), G, this._iconSvg("tracks")), this.$("screensaverNextLabel") && (this.$("screensaverNextLabel").textContent = this._i18n("ui.up_next_2")), this.$("screensaverNextTitle") && (this.$("screensaverNextTitle").textContent = H), this.$("screensaverNextArtist") && (this.$("screensaverNextArtist").textContent = j)));
+    A && (A.hidden = !H, H && (this._setScreensaverImageHost(this.$("screensaverNextArt"), j, this._iconSvg("tracks")), this.$("screensaverNextLabel") && (this.$("screensaverNextLabel").textContent = this._i18n("ui.up_next_2")), this.$("screensaverNextTitle") && (this.$("screensaverNextTitle").textContent = H), this.$("screensaverNextArtist") && (this.$("screensaverNextArtist").textContent = G)));
     const g = a.getSeconds(), y = a.getMinutes() + g / 60, S = a.getHours() % 12 + y / 60;
     this.$("screensaverHour")?.style?.setProperty("--hand-rotation", `${S * 30}deg`), this.$("screensaverMinute")?.style?.setProperty("--hand-rotation", `${y * 6}deg`), this.$("screensaverSecond")?.style?.setProperty("--hand-rotation", `${g * 6}deg`);
   }
@@ -54958,8 +54997,8 @@ class aa extends As {
     if (p !== "custom") return t;
     const h = this._playerOrderPreferences(), v = new Map(h.map((k, M) => [k, M]));
     return t.sort((k, M) => {
-      const P = v.has(k?.entity_id) ? v.get(k.entity_id) : Number.MAX_SAFE_INTEGER, F = v.has(M?.entity_id) ? v.get(M.entity_id) : Number.MAX_SAFE_INTEGER;
-      return P !== F ? P - F : l(k, M);
+      const Q = v.has(k?.entity_id) ? v.get(k.entity_id) : Number.MAX_SAFE_INTEGER, F = v.has(M?.entity_id) ? v.get(M.entity_id) : Number.MAX_SAFE_INTEGER;
+      return Q !== F ? Q - F : l(k, M);
     });
   }
   _pinnedPlayerOptionPlayers(e = [], t = {}) {
@@ -55528,37 +55567,37 @@ class aa extends As {
       ...Array.isArray(this._directMaPlayers) ? this._directMaPlayers : [],
       ...e
     ], l = [...new Set([
-      ...a.map((P) => P?.entity_id).filter(Boolean),
+      ...a.map((Q) => Q?.entity_id).filter(Boolean),
       ...t,
       this._state.selectedPlayer
-    ].filter(Boolean))].filter((P) => this._isStopClearTarget(P, t)), p = this._isLocalSendspinDesired() || this._localSendspinConnected || this._localSendspinConnecting || !!this._localSendspinPlayer || !!this._localSendspinSocket;
+    ].filter(Boolean))].filter((Q) => this._isStopClearTarget(Q, t)), p = this._isLocalSendspinDesired() || this._localSendspinConnected || this._localSendspinConnecting || !!this._localSendspinPlayer || !!this._localSendspinSocket;
     if (!l.length && !p) {
       this._toastError(this._i18n("ui.no_active_players"));
       return;
     }
     this._hapticTap([18, 24, 18]);
     const h = await this._disconnectPlayerGroups({ silent: !0 });
-    h.ok && t.forEach((P) => this._clearLocalGroupState(P));
-    const v = await Promise.allSettled(l.map(async (P) => {
+    h.ok && t.forEach((Q) => this._clearLocalGroupState(Q));
+    const v = await Promise.allSettled(l.map(async (Q) => {
       const F = [];
       try {
-        await this._stopPlayer(P);
+        await this._stopPlayer(Q);
       } catch (q) {
         F.push(q);
       }
       try {
-        await this._clearQueueForPlayer(P);
+        await this._clearQueueForPlayer(Q);
       } catch (q) {
         F.push(q);
       }
       if (F.length) throw F[0];
-    })), k = l.filter((P, F) => v[F]?.status === "fulfilled");
+    })), k = l.filter((Q, F) => v[F]?.status === "fulfilled");
     if (this._clearLocalPlaybackStateForPlayers(k), p) {
       this._adoptLocalSendspinGlobalSession();
-      const P = this._getSelectedPlayer();
-      this._isLocalSendspinPlayer(P) && (this._state.selectedPlayer = null, this._state.hasAutoSelectedPlayer = !1), this._state.localSendspinDisconnecting = !0, this._setLocalSendspinDesired(!1), this._rememberThisDevicePlayer(""), this._state.awaitingThisDevicePlayer = !1, this._state.controlRoomRevealThisDevicePending = !1, this._state.knownBrowserPlayerIds = [], this._directMaPlayers = [], this._stopLocalSendspinPlayer("stop_all"), this._state.localSendspinDisconnecting = !1, this._state.localSendspinStatus = "disconnected", this._syncLocalSendspinGlobalSession();
+      const Q = this._getSelectedPlayer();
+      this._isLocalSendspinPlayer(Q) && (this._state.selectedPlayer = null, this._state.hasAutoSelectedPlayer = !1), this._state.localSendspinDisconnecting = !0, this._setLocalSendspinDesired(!1), this._rememberThisDevicePlayer(""), this._state.awaitingThisDevicePlayer = !1, this._state.controlRoomRevealThisDevicePending = !1, this._state.knownBrowserPlayerIds = [], this._directMaPlayers = [], this._stopLocalSendspinPlayer("stop_all"), this._state.localSendspinDisconnecting = !1, this._state.localSendspinStatus = "disconnected", this._syncLocalSendspinGlobalSession();
     }
-    const M = v.some((P) => P.status === "rejected") || h.failed;
+    const M = v.some((Q) => Q.status === "rejected") || h.failed;
     (M ? this._toastError : this._toastSuccess).call(this, M ? this._i18n("ui.some_players_could_not_be_stopped_or_cleared") : this._i18n("ui.stopped_all_players_cleared_playlists_and_disconnected_groups")), this._syncNowPlayingUI(), this._state.menuOpen && this._renderMobileMenu(), this._state.controlRoomOpen && this._syncControlRoomUi({ force: !0 }), setTimeout(() => this._updateNowPlayingState(), 500);
   }
   async _ungroupAllPlayers() {
@@ -55838,8 +55877,8 @@ class aa extends As {
     if (!t) return;
     const a = e?.target?.matches?.(".media-items-list,.queue-list,.library-body,#mobileMediaSearchResults") ? e.target : t, l = a.matches?.("[data-homeii-virtual-total]") ? a : a.querySelector?.("[data-homeii-virtual-total]");
     if (l && !this._virtualExpandPending) {
-      const p = Math.max(0, Number(l.dataset.homeiiVirtualTotal || 0)), h = Math.max(1, Number(l.dataset.virtualColumns || 1)), v = Math.max(48, Number(l.dataset.virtualRowHeight || 88)), k = l === a ? 0 : l.getBoundingClientRect().top - a.getBoundingClientRect().top + a.scrollTop, M = Math.max(0, Math.floor((Number(a.scrollTop || 0) - k) / v)), P = Math.max(0, Math.min(p, Math.max(0, M - 4) * h)), F = this._state.menuPage, q = Number(F === "queue" ? this._queueVirtualStart || 0 : this._mediaVirtualStarts.get(this._mediaVirtualPageKey()) || 0);
-      p > 0 && Math.abs(P - q) >= h * 2 && (F === "queue" ? this._queueVirtualStart = P : this._mediaVirtualStarts.set(this._mediaVirtualPageKey(), P), this._virtualExpandPending = !0, requestAnimationFrame(() => {
+      const p = Math.max(0, Number(l.dataset.homeiiVirtualTotal || 0)), h = Math.max(1, Number(l.dataset.virtualColumns || 1)), v = Math.max(48, Number(l.dataset.virtualRowHeight || 88)), k = l === a ? 0 : l.getBoundingClientRect().top - a.getBoundingClientRect().top + a.scrollTop, M = Math.max(0, Math.floor((Number(a.scrollTop || 0) - k) / v)), Q = Math.max(0, Math.min(p, Math.max(0, M - 4) * h)), F = this._state.menuPage, q = Number(F === "queue" ? this._queueVirtualStart || 0 : this._mediaVirtualStarts.get(this._mediaVirtualPageKey()) || 0);
+      p > 0 && Math.abs(Q - q) >= h * 2 && (F === "queue" ? this._queueVirtualStart = Q : this._mediaVirtualStarts.set(this._mediaVirtualPageKey(), Q), this._virtualExpandPending = !0, requestAnimationFrame(() => {
         this._renderMobileMenu().catch(() => {
         }).finally(() => {
           this._virtualExpandPending = !1;
@@ -55860,7 +55899,7 @@ class aa extends As {
     const t = this._mobileQueueItemsSorted(), a = this._getQueueItemStableId(e), l = this._getQueueItemUri(e), p = this._getQueueItemKey(e) || a || l, h = Ui.findQueueItemIndex(
       t,
       { queueItemId: p, uri: l, sortIndex: e?.sort_index },
-      (M, P, F) => this._mediaRefsEquivalent(M, P, F)
+      (M, Q, F) => this._mediaRefsEquivalent(M, Q, F)
     ), v = Number(e?.sort_index), k = Number.isFinite(v) ? v : h >= 0 ? h : this._state.maQueueState?.current_index;
     this._markMobileQueuePlayPending(e, Number(k)), this._state.maQueueState = {
       ...this._state.maQueueState || {},
@@ -55907,13 +55946,13 @@ class aa extends As {
     if (this._artworkDecodePromises.has(t)) return this._artworkDecodePromises.get(t);
     const a = (p) => new Promise((h) => {
       let v = !1, k = null;
-      const M = new Image(), P = () => {
+      const M = new Image(), Q = () => {
         this._decodedArtworkUrls.add(t), this._decodedArtworkImages.set(t, M);
         const q = Kh(this._performanceProfile());
         for (; this._decodedArtworkUrls.size > q; ) {
-          const O = this._decodedArtworkUrls.values().next().value;
-          if (!O) break;
-          this._decodedArtworkUrls.delete(O), this._decodedArtworkImages.delete(O);
+          const Y = this._decodedArtworkUrls.values().next().value;
+          if (!Y) break;
+          this._decodedArtworkUrls.delete(Y), this._decodedArtworkImages.delete(Y);
         }
         this._artworkDecodePromises.delete(t), h(!0);
       }, F = (q) => {
@@ -55925,12 +55964,12 @@ class aa extends As {
           if (typeof M.decode == "function") {
             Promise.race([
               M.decode(),
-              new Promise((O) => setTimeout(O, 240))
+              new Promise((Y) => setTimeout(Y, 240))
             ]).catch(() => {
-            }).finally(P);
+            }).finally(Q);
             return;
           }
-          P();
+          Q();
         }
       };
       try {
@@ -55982,8 +56021,8 @@ class aa extends As {
       return;
     }
     if (p === l) {
-      e.dataset.homeiiArtSrc = l, this._decodeArtworkUrl(l).then((P) => {
-        !P || !e.isConnected || e.dataset.homeiiArtSrc !== l || (e.src = h(), e.dataset.homeiiAppliedArtSrc = l, e.dataset.homeiiArtDisplaySrc = h(), e.dataset.homeiiArtLoadToken = "", e.dataset.homeiiArtPendingAt = "", e.dataset.homeiiArtReady = "1");
+      e.dataset.homeiiArtSrc = l, this._decodeArtworkUrl(l).then((Q) => {
+        !Q || !e.isConnected || e.dataset.homeiiArtSrc !== l || (e.src = h(), e.dataset.homeiiAppliedArtSrc = l, e.dataset.homeiiArtDisplaySrc = h(), e.dataset.homeiiArtLoadToken = "", e.dataset.homeiiArtPendingAt = "", e.dataset.homeiiArtReady = "1");
       }).catch(() => {
       });
       return;
@@ -55997,8 +56036,8 @@ class aa extends As {
     const M = () => {
       !e.isConnected || e.dataset.homeiiArtSrc !== l || e.dataset.homeiiArtLoadToken !== k || (e.src = h(), e.dataset.homeiiAppliedArtSrc = l, e.dataset.homeiiArtDisplaySrc = h(), e.dataset.homeiiArtLoadToken = "", e.dataset.homeiiArtPendingAt = "", e.dataset.homeiiArtReady = "1");
     };
-    this._decodeArtworkUrl(l).then((P) => {
-      if (!P && p) {
+    this._decodeArtworkUrl(l).then((Q) => {
+      if (!Q && p) {
         e.dataset.homeiiArtLoadToken === k && (e.dataset.homeiiArtLoadToken = "", e.dataset.homeiiArtPendingAt = "");
         return;
       }
@@ -56052,8 +56091,8 @@ class aa extends As {
     e.dataset.homeiiBgArtSrc = l, e.dataset.homeiiBgArtValue = v;
     const k = () => {
       if (!e.isConnected || e.dataset.homeiiBgArtSrc !== l) return;
-      const M = String(e.style.getPropertyValue("--homeii-bg-art-current") || "").trim(), P = this._backgroundCrossfadeTimers?.get(e);
-      if (P && clearTimeout(P), this._backgroundCrossfadeTimers?.delete(e), !M || M === "none" || e.dataset.homeiiBgArtReady !== "1") {
+      const M = String(e.style.getPropertyValue("--homeii-bg-art-current") || "").trim(), Q = this._backgroundCrossfadeTimers?.get(e);
+      if (Q && clearTimeout(Q), this._backgroundCrossfadeTimers?.delete(e), !M || M === "none" || e.dataset.homeiiBgArtReady !== "1") {
         e.classList.remove("bg-art-transitioning"), e.style.setProperty("--homeii-bg-art-current", h()), e.style.removeProperty("--homeii-bg-art-next"), e.dataset.homeiiBgArtReady = "1";
         return;
       }
@@ -56130,9 +56169,9 @@ class aa extends As {
     const t = Number(e.offset || 0), a = e.item || null, l = Math.min(2, Math.abs(t)), p = t === 0 ? "center" : t < 0 ? "prev" : "next", h = t === 0 ? "flow-center" : `${t < 0 ? "flow-before" : "flow-after"} flow-depth-${l}`;
     if (!a && t !== 0)
       return `<div class="art-stack-slide cover-flow-slide ${p} ${h} ghost" data-art-position="${p}" data-cover-flow-offset="${this._esc(String(t))}"><div class="art-stack-card ${p} ghost"></div></div>`;
-    const v = this._getQueueItemStableId(a) || this._getQueueItemKey(a), k = this._getQueueItemUri(a), M = a?.media_item?.media_type || a?.media_type || "track", P = Number.isFinite(Number(a?.sort_index)) ? Number(a.sort_index) : "";
+    const v = this._getQueueItemStableId(a) || this._getQueueItemKey(a), k = this._getQueueItemUri(a), M = a?.media_item?.media_type || a?.media_type || "track", Q = Number.isFinite(Number(a?.sort_index)) ? Number(a.sort_index) : "";
     return `
-      <div class="art-stack-slide cover-flow-slide ${p} ${h}" data-art-position="${p}" data-cover-flow-offset="${this._esc(String(t))}" data-queue-item-id="${this._esc(v || "")}" data-uri="${this._esc(k)}" data-type="${this._esc(M)}" data-sort-index="${this._esc(P)}">
+      <div class="art-stack-slide cover-flow-slide ${p} ${h}" data-art-position="${p}" data-cover-flow-offset="${this._esc(String(t))}" data-queue-item-id="${this._esc(v || "")}" data-uri="${this._esc(k)}" data-type="${this._esc(M)}" data-sort-index="${this._esc(Q)}">
         ${this._mobileStackCardHtml(a, p)}
       </div>
     `;
@@ -56389,8 +56428,8 @@ class aa extends As {
       }), this._hapticTap([8]);
       return;
     }
-    const { queueItems: M, displayIndex: P } = this._mobileArtStackContext(), F = l < 0 ? P + 1 : P - 1, q = M[F] || null, O = q ? this._getQueueItemKey(q) : "", H = q?.media_item?.uri || q?.uri || "", j = q?.media_item?.media_type || q?.media_type || "track", G = Number.isFinite(Number(q?.sort_index)) ? Number(q.sort_index) : "";
-    this._commitArtSwipe(l < 0 ? "next" : "prev", () => q ? this._playQueueItem(O, H, j, G).then((V) => {
+    const { queueItems: M, displayIndex: Q } = this._mobileArtStackContext(), F = l < 0 ? Q + 1 : Q - 1, q = M[F] || null, Y = q ? this._getQueueItemKey(q) : "", H = q?.media_item?.uri || q?.uri || "", G = q?.media_item?.media_type || q?.media_type || "track", j = Number.isFinite(Number(q?.sort_index)) ? Number(q.sort_index) : "";
+    this._commitArtSwipe(l < 0 ? "next" : "prev", () => q ? this._playQueueItem(Y, H, G, j).then((V) => {
       V || this._ensureQueueSnapshot(!0);
     }).catch(() => this._ensureQueueSnapshot(!0)) : this._playAdjacentRadioStation(l < 0 ? "next" : "previous").then((V) => {
       if (!V)
@@ -56409,10 +56448,10 @@ class aa extends As {
     t && (e || this._state.mobileArtRenderKey !== v) && (_i(this) && !this._mobileCoverFlowEnabled() ? Hm(t, this._mobileArtworkStackHtml(), { animate: !this._immersiveSwipeApplying }) : t.innerHTML = this._mobileArtworkStackHtml(), this._state.mobileArtRenderKey = v, queueMicrotask(() => {
       this._initMobileArtCarousel();
     })), t && this._hydrateDecodedArtworkImages(t);
-    const k = this._state.maQueueState?.current_item || null, M = this._mobileNowPlayingDisplaySource(p, k, h), P = M.art || this._displayArtworkForQueueItem(p, M.queueItem || k, { pending: M.hasPendingPlay, size: 420 }), F = this._queueItemArtworkUrl(h.current, 420, p) || P, q = this._mobileBrowsePreviewActive(h) || M.hasPendingPlay ? P : F;
+    const k = this._state.maQueueState?.current_item || null, M = this._mobileNowPlayingDisplaySource(p, k, h), Q = M.art || this._displayArtworkForQueueItem(p, M.queueItem || k, { pending: M.hasPendingPlay, size: 420 }), F = this._queueItemArtworkUrl(h.current, 420, p) || Q, q = this._mobileBrowsePreviewActive(h) || M.hasPendingPlay ? Q : F;
     if (this._setDecodedBackgroundImage(a, this._isHotelMode() ? "" : q), this._setDecodedBackgroundImage(l, this._isHotelMode() ? "" : q), this._mobileBrowsePreviewActive(h)) {
-      const O = h.current?.media_item?.name || h.current?.name || p?.attributes?.media_title || this._i18n("ui.nothing_playing"), H = h.current?.media_item?.artists?.map((G) => G.name).join(", ") || h.current?.artist_str || p?.attributes?.media_artist || "", j = h.current?.media_item?.album?.name || p?.attributes?.media_album_name || "";
-      this.$("npTitle") && (this.$("npTitle").textContent = O), this._setNowPlayingSubtitle([H, j].filter(Boolean).join(" · ") || "—");
+      const Y = h.current?.media_item?.name || h.current?.name || p?.attributes?.media_title || this._i18n("ui.nothing_playing"), H = h.current?.media_item?.artists?.map((j) => j.name).join(", ") || h.current?.artist_str || p?.attributes?.media_artist || "", G = h.current?.media_item?.album?.name || p?.attributes?.media_album_name || "";
+      this.$("npTitle") && (this.$("npTitle").textContent = Y), this._setNowPlayingSubtitle([H, G].filter(Boolean).join(" · ") || "—");
     } else
       this.$("npTitle") && (this.$("npTitle").textContent = M.title || this._i18n("ui.nothing_playing")), this._setNowPlayingSubtitle([M.artist, M.album].filter(Boolean).join(" · ") || "—"), clearTimeout(this._mobileArtBrowseResetTimer), this._mobileArtBrowseResetTimer = null;
   }
@@ -56422,8 +56461,8 @@ class aa extends As {
     if (!t) return;
     const a = t.dataset.artPosition || "center";
     if (this._mobileCoverFlowEnabled()) {
-      const F = Number(t.dataset.coverFlowOffset || 0), q = this._mobileArtStackContext(), O = Math.max(0, Math.min((q.queueItems?.length || 1) - 1, Number(q.displayIndex || 0) + (Number.isFinite(F) ? F : 0))), H = q.queueItems?.[O] || null, j = H ? this._getQueueItemStableId(H) || this._getQueueItemKey(H) : t.dataset.queueItemId || "", G = H ? this._getQueueItemUri(H) : t.dataset.uri || "", V = H?.media_item?.media_type || H?.media_type || t.dataset.type || "track", Z = H && Number.isFinite(Number(H?.sort_index)) ? Number(H.sort_index) : t.dataset.sortIndex || "";
-      if (!j && !G || (_i(this) && jo(this.$("npArt")), !await this._playQueueItem(j, G, V, Z))) return;
+      const F = Number(t.dataset.coverFlowOffset || 0), q = this._mobileArtStackContext(), Y = Math.max(0, Math.min((q.queueItems?.length || 1) - 1, Number(q.displayIndex || 0) + (Number.isFinite(F) ? F : 0))), H = q.queueItems?.[Y] || null, G = H ? this._getQueueItemStableId(H) || this._getQueueItemKey(H) : t.dataset.queueItemId || "", j = H ? this._getQueueItemUri(H) : t.dataset.uri || "", V = H?.media_item?.media_type || H?.media_type || t.dataset.type || "track", Z = H && Number.isFinite(Number(H?.sort_index)) ? Number(H.sort_index) : t.dataset.sortIndex || "";
+      if (!G && !j || (_i(this) && jo(this.$("npArt")), !await this._playQueueItem(G, j, V, Z))) return;
       this._state.mobileArtBrowseOffset = 0, clearTimeout(this._mobileArtBrowseResetTimer), this._mobileArtBrowseResetTimer = null, this._refreshMobileArtStack(!0);
       return;
     }
@@ -56434,8 +56473,8 @@ class aa extends As {
     if (a === "prev" || a === "next") {
       const { queueItems: F, displayIndex: q } = this._mobileArtStackContext();
       if (!F.length) return;
-      const O = a === "prev" ? q - 1 : q + 1;
-      if (O < 0 || O >= F.length) return;
+      const Y = a === "prev" ? q - 1 : q + 1;
+      if (Y < 0 || Y >= F.length) return;
       this._state.mobileArtBrowseOffset += a === "prev" ? -1 : 1, this._refreshMobileArtStack(!0), this._scheduleMobileArtBrowseReset(), this._hapticTap([8]);
       return;
     }
@@ -56459,20 +56498,20 @@ class aa extends As {
   _build() {
     for (const L of this._fanDisposers?.values() || []) L();
     this.$("npArt")?._cancelCoverTransition?.(), this.classList.toggle("action-labels", this._mobileFooterMode() !== "icon");
-    const e = this._isHebrew(), t = this._visualTheme(), a = this._mobileLayoutMode(), l = this._mobileCompactModeEnabled(), p = this._isCompactTileMode(), h = _i(this) && !p, v = this._mobileCoverFlowEnabled(), k = l && !p, M = k && this._compactEdgeToEdgeAllowed(), P = k && !M, F = M || P, q = this._getCardWidth(this._lastCardWidth || (typeof window < "u" ? Number(window.innerWidth || 0) : 0) || 390), O = p && this._compactMiniWidgetMode({ width: q }), H = this._compactTileReservedHeight();
+    const e = this._isHebrew(), t = this._visualTheme(), a = this._mobileLayoutMode(), l = this._mobileCompactModeEnabled(), p = this._isCompactTileMode(), h = _i(this) && !p, v = this._mobileCoverFlowEnabled(), k = l && !p, M = k && this._compactEdgeToEdgeAllowed(), Q = k && !M, F = M || Q, q = this._getCardWidth(this._lastCardWidth || (typeof window < "u" ? Number(window.innerWidth || 0) : 0) || 390), Y = p && this._compactMiniWidgetMode({ width: q }), H = this._compactTileReservedHeight();
     this.style?.setProperty("--homeii-compact-tile-height", `${H}px`);
-    const j = typeof window < "u" ? Number(window.innerWidth || 0) : 0, G = this._configuredCardHeightFallback(760) || 760, V = this._getViewportHeight(G), Z = j > 0 && j < 760 ? 156 : 112, W = P ? Math.max(320, Math.min(720, Math.max(0, j || q || 390) - 32)) : 0, ue = P ? Math.max(340, Math.min(860, Math.max(0, V - Z), G)) : 0;
-    P ? (this.style?.setProperty("--homeii-compact-window-width", `${Math.round(W)}px`), this.style?.setProperty("--homeii-compact-window-height", `${Math.round(ue)}px`)) : (this.style?.removeProperty("--homeii-compact-window-width"), this.style?.removeProperty("--homeii-compact-window-height"));
-    const he = this._layoutModeConfig({ compactPopup: F, width: P ? W : 0 }), s = this._isVisualEditorContext(), A = !s && !F && !p && this._mobileEdgeToEdgeEnabled(), g = this._mobileIconScale(), y = M ? V : P ? ue : A ? V : p ? H : this._getAllocatedCardHeight(G), S = this._layoutProfileConfig(he, {
-      width: M || A ? this._getCardWidth(j) : P ? W : 0,
+    const G = typeof window < "u" ? Number(window.innerWidth || 0) : 0, j = this._configuredCardHeightFallback(760) || 760, V = this._getViewportHeight(j), Z = G > 0 && G < 760 ? 156 : 112, W = Q ? Math.max(320, Math.min(720, Math.max(0, G || q || 390) - 32)) : 0, ue = Q ? Math.max(340, Math.min(860, Math.max(0, V - Z), j)) : 0;
+    Q ? (this.style?.setProperty("--homeii-compact-window-width", `${Math.round(W)}px`), this.style?.setProperty("--homeii-compact-window-height", `${Math.round(ue)}px`)) : (this.style?.removeProperty("--homeii-compact-window-width"), this.style?.removeProperty("--homeii-compact-window-height"));
+    const he = this._layoutModeConfig({ compactPopup: F, width: Q ? W : 0 }), s = this._isVisualEditorContext(), A = !s && !F && !p && this._mobileEdgeToEdgeEnabled(), g = this._mobileIconScale(), y = M ? V : Q ? ue : A ? V : p ? H : this._getAllocatedCardHeight(j), S = this._layoutProfileConfig(he, {
+      width: M || A ? this._getCardWidth(G) : Q ? W : 0,
       height: y,
       compactPopup: F
-    }), B = this._layoutProfileClassNames(S), E = this._layoutProfileStyleVars(S), I = this._performanceProfile(), R = this._performanceModeEnabled(), Y = this._performanceUltraLiteEnabled();
-    this.classList.toggle("compact-popup-open", M), this.classList.toggle("compact-window-popup-open", P), this.classList.toggle("mobile-edge-to-edge-open", A), this.classList.remove("compact-inline-popup-open"), this.classList.toggle("compact-tile-open", l && p), this.classList.toggle("compact-menu-open", this._compactMenuOverlayOpen());
+    }), B = this._layoutProfileClassNames(S), E = this._layoutProfileStyleVars(S), I = this._performanceProfile(), R = this._performanceModeEnabled(), O = this._performanceUltraLiteEnabled();
+    this.classList.toggle("compact-popup-open", M), this.classList.toggle("compact-window-popup-open", Q), this.classList.toggle("mobile-edge-to-edge-open", A), this.classList.remove("compact-inline-popup-open"), this.classList.toggle("compact-tile-open", l && p), this.classList.toggle("compact-menu-open", this._compactMenuOverlayOpen());
     const $ = this._mobileNightMode(), X = this._isNightModeActive(), me = this._sleepTimerRemainingMs() > 0, _e = this._mobileShowUpNextEnabled(), ne = !!this._mobileUpNextItem(), K = _e && ne, ae = $ !== "off", ce = this._tabletAutoFitEnabled(), ge = this._tabletAutoFitDense(ae, K) || he === "tablet" && S.heightSize === "short", ye = this._mobileContentDense(he, S, {
       showNightRow: ae,
       showUpNextInline: K
-    }), fe = this._fullMobileInlineTargetHeight(), ke = Math.max(280, Math.min(2200, Math.round(y || (a === "full" ? fe : G)))), Me = S.heightSize === "short" ? 280 : he === "tablet" ? 420 : 360, Ee = he === "tablet" && !h ? "min(calc(100vw - 32px), 720px)" : "0px", Qe = this._screensaverClockSize(), Ye = this._screensaverClockX(), Ue = this._screensaverClockY(), Ze = this._screensaverControlButtons(), tt = Ze.filter((L) => L !== "like").map((L) => this._screensaverControlButtonHtml(L)).filter(Boolean).join(""), lt = Ze.includes("like") ? `<button class="screensaver-voice-btn screensaver-control-btn screensaver-like-btn ${this._currentMediaFavoriteState() ? "active" : ""}" id="screensaverLikeBtn" data-screensaver-control="like" title="${this._esc(this._i18n("ui.like_2"))}" aria-label="${this._esc(this._i18n("ui.like_2"))}">${this._iconSvg(this._currentMediaFavoriteState() ? "heart_filled" : "heart_outline")}</button>` : "", De = String(this._state.mobileCompactTransition || ""), Je = De === "expand" ? " compact-transition-expand" : De === "collapse" ? " compact-transition-collapse" : "";
+    }), fe = this._fullMobileInlineTargetHeight(), ke = Math.max(280, Math.min(2200, Math.round(y || (a === "full" ? fe : j)))), Me = S.heightSize === "short" ? 280 : he === "tablet" ? 420 : 360, Ee = he === "tablet" && !h ? "min(calc(100vw - 32px), 720px)" : "0px", Qe = this._screensaverClockSize(), Ye = this._screensaverClockX(), Ue = this._screensaverClockY(), Ze = this._screensaverControlButtons(), tt = Ze.filter((L) => L !== "like").map((L) => this._screensaverControlButtonHtml(L)).filter(Boolean).join(""), lt = Ze.includes("like") ? `<button class="screensaver-voice-btn screensaver-control-btn screensaver-like-btn ${this._currentMediaFavoriteState() ? "active" : ""}" id="screensaverLikeBtn" data-screensaver-control="like" title="${this._esc(this._i18n("ui.like_2"))}" aria-label="${this._esc(this._i18n("ui.like_2"))}">${this._iconSvg(this._currentMediaFavoriteState() ? "heart_filled" : "heart_outline")}</button>` : "", De = String(this._state.mobileCompactTransition || ""), Je = De === "expand" ? " compact-transition-expand" : De === "collapse" ? " compact-transition-collapse" : "";
     this._renderedLayoutMode = he, this._lastCardWidth = Math.max(0, Math.round(S.width || this._lastCardWidth || 0)), this._lastCardHeight = Math.max(0, Math.round(ke || this._lastCardHeight || 0)), this._state.mobileNightRenderedActive = X, this._state.mobileNightRenderedMode = $;
     const Ve = ae ? `
       <div class="night-quick-row ${$ === "auto" ? "auto-mode" : "on-mode"}" id="nightQuickRow" ${ae ? "" : "hidden"}>
@@ -56634,7 +56673,7 @@ class aa extends As {
       </div>`, wt = `<aside class="tablet-rail">${ot}${Bt}</aside>`, rt = e ? `<div class="tablet-shell"><div class="tablet-main">${Ft}${vi}</div>${wt}</div>` : `<div class="tablet-shell">${wt}<div class="tablet-main">${Ft}${vi}</div></div>`;
     this.shadowRoot.innerHTML = `
       <style>${$A({ hostMinWidth: Ee, height: ke, minCardHeight: Me, fontScale: this._state.mobileFontScale || 1, iconScale: g.toFixed(2), customRgb: this._customRgb(), customText: this._customTextColor(), customColor: this._state.mobileCustomColor || "#e0a11b", fullInlineTargetHeight: fe })}</style>
-      <div class="card ${e ? "rtl" : ""} theme-${t} layout-${he}${B ? ` ${B}` : ""} mobile-layout-${a}${a === "full" ? " mobile-layout-forced-full" : ""}${a === "compact" ? " mobile-layout-forced-compact" : ""}${A ? " mobile-edge-to-edge" : ""} performance-profile-${I}${R ? " performance-lite" : ""}${Y ? " performance-ultra-lite" : ""}${et ? " hotel-mode" : ""}${p ? " compact-mode compact-collapsed" : l ? " compact-expanded" : ""}${O ? " compact-mini-widget" : ""}${this._compactMenuOverlayOpen() ? " compact-menu-open" : ""}${Je}${X ? " night-mode" : ""}${ae ? " night-mode-enabled" : ""}${ce ? " tablet-auto-fit" : ""}${ge ? " tablet-fit-dense" : ""}${ae ? " tablet-fit-night" : ""}${K ? " tablet-fit-up-next" : ""}${ye ? " mobile-content-dense" : ""}${this._tabletStabilityModeEnabled() ? " tablet-stable" : ""}${!et && this._state.controlRoomOpen ? " control-room-open" : ""}${this._state.screensaverOpen ? " screensaver-active" : ""}" style="${E}--screensaver-clock-scale:${this._esc(Qe.toFixed(2))};--screensaver-clock-x:${this._esc(Ye.toFixed(1))}%;--screensaver-clock-y:${this._esc(Ue.toFixed(1))}%;">
+      <div class="card ${e ? "rtl" : ""} theme-${t} layout-${he}${B ? ` ${B}` : ""} mobile-layout-${a}${a === "full" ? " mobile-layout-forced-full" : ""}${a === "compact" ? " mobile-layout-forced-compact" : ""}${A ? " mobile-edge-to-edge" : ""} performance-profile-${I}${R ? " performance-lite" : ""}${O ? " performance-ultra-lite" : ""}${et ? " hotel-mode" : ""}${p ? " compact-mode compact-collapsed" : l ? " compact-expanded" : ""}${Y ? " compact-mini-widget" : ""}${this._compactMenuOverlayOpen() ? " compact-menu-open" : ""}${Je}${X ? " night-mode" : ""}${ae ? " night-mode-enabled" : ""}${ce ? " tablet-auto-fit" : ""}${ge ? " tablet-fit-dense" : ""}${ae ? " tablet-fit-night" : ""}${K ? " tablet-fit-up-next" : ""}${ye ? " mobile-content-dense" : ""}${this._tabletStabilityModeEnabled() ? " tablet-stable" : ""}${!et && this._state.controlRoomOpen ? " control-room-open" : ""}${this._state.screensaverOpen ? " screensaver-active" : ""}" style="${E}--screensaver-clock-scale:${this._esc(Qe.toFixed(2))};--screensaver-clock-x:${this._esc(Ye.toFixed(1))}%;--screensaver-clock-y:${this._esc(Ue.toFixed(1))}%;">
         <div class="bg" id="mobileBg"></div><div class="shade"></div><div class="glow"></div>
         ${Tt}
         ${_t}
@@ -57338,10 +57377,10 @@ class aa extends As {
       return;
     }
     if (a && (a.textContent = this._playerDisplayName(e) || this._i18n("ui.selected_player")), l && (l.textContent = ""), h) {
-      const v = this._playerGroupCount(e), k = this._resolvedPinnedPlayerEntities().includes(e?.entity_id) || this._frontPinnedPlayerEntity() === e?.entity_id, M = this._mobileNightMode(), P = this._isNightModeActive();
+      const v = this._playerGroupCount(e), k = this._resolvedPinnedPlayerEntities().includes(e?.entity_id) || this._frontPinnedPlayerEntity() === e?.entity_id, M = this._mobileNightMode(), Q = this._isNightModeActive();
       h.innerHTML = [
         k ? `<span class="player-focus-pill pinned"><span>${this._esc(this._i18n("ui.pinned"))}</span></span>` : "",
-        M !== "off" ? `<span class="player-focus-pill ${P ? "night active" : "night"}"><span>${this._esc(this._i18n("ui.night"))}</span></span>` : "",
+        M !== "off" ? `<span class="player-focus-pill ${Q ? "night active" : "night"}"><span>${this._esc(this._i18n("ui.night"))}</span></span>` : "",
         e?.state === "playing" ? `<span class="player-focus-pill playing"><span class="eq-icon" aria-hidden="true"><span></span><span></span><span></span></span><span>${this._esc(this._i18n("ui.playing"))}</span></span>` : "",
         v ? `<span class="player-group-badge player-focus-badge">${this._esc(v)}</span>` : ""
       ].filter(Boolean).join("");
@@ -57353,7 +57392,7 @@ class aa extends As {
     this._syncMobilePlayerNavButtons(), this._setMobileRandomFabVisible(!0);
   }
   _queueMoveSelectHtml(e = 1, t = 1, a = {}) {
-    const l = Math.max(1, Math.round(Number(e)) || 1), p = Math.max(1, Math.min(l, Math.round(Number(t ?? a?.position)) || 1)), h = String(a?.queue_item_id || a?.queueItemId || a?.key || "").trim(), v = String(a?.uri || a?.media_item?.uri || "").trim(), k = String(a?.sort_index ?? "").trim(), M = Array.from({ length: l }, (P, F) => F + 1).map((P) => `<option value="${this._esc(String(P))}" ${P === p ? "selected" : ""}>${this._esc(String(P))}</option>`).join("");
+    const l = Math.max(1, Math.round(Number(e)) || 1), p = Math.max(1, Math.min(l, Math.round(Number(t ?? a?.position)) || 1)), h = String(a?.queue_item_id || a?.queueItemId || a?.key || "").trim(), v = String(a?.uri || a?.media_item?.uri || "").trim(), k = String(a?.sort_index ?? "").trim(), M = Array.from({ length: l }, (Q, F) => F + 1).map((Q) => `<option value="${this._esc(String(Q))}" ${Q === p ? "selected" : ""}>${this._esc(String(Q))}</option>`).join("");
     return `
       <select class="queue-move-select" data-queue-move-target data-queue-move-auto
         data-current-position="${this._esc(String(p))}"
@@ -57594,13 +57633,13 @@ class aa extends As {
       if (this._emptyQuickShelfToken !== l || !this.shadowRoot.querySelector(".card")?.classList.contains("empty-media")) return;
       const [h, v, k, M] = p.map(
         (W) => W.status === "fulfilled" && Array.isArray(W.value) ? W.value : []
-      ), P = h.map((W) => this._normalizeMediaItem(W)), F = v.map((W) => this._normalizeMediaItem(W)), q = k.map((W) => this._normalizeMediaItem(W)), O = M.map((W) => this._normalizeMediaItem(W)), H = [], j = /* @__PURE__ */ new Set(), G = (W = []) => {
+      ), Q = h.map((W) => this._normalizeMediaItem(W)), F = v.map((W) => this._normalizeMediaItem(W)), q = k.map((W) => this._normalizeMediaItem(W)), Y = M.map((W) => this._normalizeMediaItem(W)), H = [], G = /* @__PURE__ */ new Set(), j = (W = []) => {
         (Array.isArray(W) ? W : []).forEach((ue) => {
           const he = String(ue?.uri || "").trim();
-          !he || j.has(he) || (j.add(he), H.push(ue));
+          !he || G.has(he) || (G.add(he), H.push(ue));
         });
       }, V = this._layoutModeConfig() === "tablet" ? 10 : 7;
-      t === "radio" ? (G(this._pickRandomItems(P.filter((W) => (W?.media_type || "") === "radio"), Math.min(4, V))), G(this._pickRandomItems(F.filter((W) => (W?.media_type || "") === "radio"), Math.min(4, Math.max(1, V - H.length)))), G(this._pickRandomItems(q.filter((W) => (W?.media_type || "") === "radio"), Math.min(4, Math.max(1, V - H.length)))), G(this._pickRandomItems(O.filter((W) => (W?.media_type || "") === "radio"), Math.min(4, Math.max(1, V - H.length)))), H.length < V && G(this._pickRandomItems([...P, ...F, ...q, ...O].filter((W) => (W?.media_type || "") === "radio"), V - H.length))) : (G(this._pickRandomItems(P, Math.min(3, V))), G(this._pickRandomItems(F.filter((W) => (W?.media_type || "") === "playlist"), Math.min(3, Math.max(1, V - H.length)))), G(this._pickRandomItems(q, Math.min(2, Math.max(1, V - H.length)))), G(this._pickRandomItems(O, Math.min(2, Math.max(0, V - H.length)))), H.length < V && G(this._pickRandomItems([...F, ...q, ...O], V - H.length)));
+      t === "radio" ? (j(this._pickRandomItems(Q.filter((W) => (W?.media_type || "") === "radio"), Math.min(4, V))), j(this._pickRandomItems(F.filter((W) => (W?.media_type || "") === "radio"), Math.min(4, Math.max(1, V - H.length)))), j(this._pickRandomItems(q.filter((W) => (W?.media_type || "") === "radio"), Math.min(4, Math.max(1, V - H.length)))), j(this._pickRandomItems(Y.filter((W) => (W?.media_type || "") === "radio"), Math.min(4, Math.max(1, V - H.length)))), H.length < V && j(this._pickRandomItems([...Q, ...F, ...q, ...Y].filter((W) => (W?.media_type || "") === "radio"), V - H.length))) : (j(this._pickRandomItems(Q, Math.min(3, V))), j(this._pickRandomItems(F.filter((W) => (W?.media_type || "") === "playlist"), Math.min(3, Math.max(1, V - H.length)))), j(this._pickRandomItems(q, Math.min(2, Math.max(1, V - H.length)))), j(this._pickRandomItems(Y, Math.min(2, Math.max(0, V - H.length)))), H.length < V && j(this._pickRandomItems([...F, ...q, ...Y], V - H.length)));
       const Z = H.slice(0, V);
       if (!Z.length) {
         this._state.emptyQuickShelfItems = [], e.hidden = !0, e.innerHTML = "";
@@ -57635,26 +57674,26 @@ class aa extends As {
       cacheKey: t.artCacheKey || `empty:${k}:${e}`
     });
     (!p || this._state.emptyQuickShelfMode !== k) && (this._state.emptyQuickShelfMode = k, this._state.emptyQuickShelfItems = []);
-    const P = this.$("mobileArtActions"), O = this._mobileEmptyVisibleQuickActions(this._mobileQuickActions()), H = this._mobileActionsWithAuxiliary(O).filter((j) => this._layoutModeConfig() !== "tablet" || j !== "history");
-    if (P && H.length) {
-      const j = `mobile-art-actions empty-quick-actions count-${Math.max(1, H.length)}${H.length === 1 && H[0] === "home" ? " empty-home-actions" : ""}`, G = [
+    const Q = this.$("mobileArtActions"), Y = this._mobileEmptyVisibleQuickActions(this._mobileQuickActions()), H = this._mobileActionsWithAuxiliary(Y).filter((G) => this._layoutModeConfig() !== "tablet" || G !== "history");
+    if (Q && H.length) {
+      const G = `mobile-art-actions empty-quick-actions count-${Math.max(1, H.length)}${H.length === 1 && H[0] === "home" ? " empty-home-actions" : ""}`, j = [
         this._layoutModeConfig(),
         H.join(","),
         this._enabledAuxiliaryButtons().map((V) => `${V.index}:${V.icon}:${V.name}`).join("|"),
         this._voiceAssistantEnabled() ? "voice-on" : "voice-off"
       ].join(";");
-      P.className !== j && (P.className = j), P.dataset.homeiiEmptyActionSignature !== G && (P.dataset.homeiiEmptyActionSignature = G, P.innerHTML = this._mobileQuickActionButtonsHtml("", H), this._bindMobileQuickActionButtons()), P.removeAttribute("hidden");
-    } else P && (P.classList.remove("empty-quick-actions"), P.classList.remove("empty-home-actions"), delete P.dataset.homeiiEmptyActionSignature, P.setAttribute("hidden", ""));
+      Q.className !== G && (Q.className = G), Q.dataset.homeiiEmptyActionSignature !== j && (Q.dataset.homeiiEmptyActionSignature = j, Q.innerHTML = this._mobileQuickActionButtonsHtml("", H), this._bindMobileQuickActionButtons()), Q.removeAttribute("hidden");
+    } else Q && (Q.classList.remove("empty-quick-actions"), Q.classList.remove("empty-home-actions"), delete Q.dataset.homeiiEmptyActionSignature, Q.setAttribute("hidden", ""));
     if (this.$("npTitle") && (this.$("npTitle").textContent = e), this._setNowPlayingSubtitle(t.subtitle || this._i18n("ui.choose_something_from_the_quick_shelf_or_tap_the_wand_for_a_random_playl"), { scrollWhenOverflow: !0 }), this.$("bigCurTime") && (this.$("bigCurTime").textContent = "0:00"), this.$("bigTotalTime") && (this.$("bigTotalTime").textContent = "0:00"), this.$("progressFill") && (this.$("progressFill").style.width = "0%"), !p || !this.$("surpriseMeBtn") || M || h) {
-      const j = !h && this._voiceAssistantEnabled() ? `<button class="empty-voice-btn ${this._state.voiceAssistantListening ? "listening" : ""}" id="emptyVoiceAssistantBtn" title="${this._esc(this._flowAssistantLabel())}" aria-label="${this._esc(this._flowAssistantLabel())}">${this._iconSvg("mic")}</button>` : "", G = h ? `<div class="surprise-me-card compact magic-empty disabled ${M ? "has-art" : ""}" id="surpriseMeBtn" aria-hidden="true">
+      const G = !h && this._voiceAssistantEnabled() ? `<button class="empty-voice-btn ${this._state.voiceAssistantListening ? "listening" : ""}" id="emptyVoiceAssistantBtn" title="${this._esc(this._flowAssistantLabel())}" aria-label="${this._esc(this._flowAssistantLabel())}">${this._iconSvg("mic")}</button>` : "", j = h ? `<div class="surprise-me-card compact magic-empty disabled ${M ? "has-art" : ""}" id="surpriseMeBtn" aria-hidden="true">
             ${M ? `${this._imgHtml(M, e, { loading: "eager", fetchpriority: "high", fallbackIcon: t.artIcon || "radio" })}<span class="surprise-me-wand art-overlay">${this._iconSvg(t.artIcon || "radio")}</span>` : `<span class="surprise-me-glow"></span><span class="surprise-me-wand">${this._iconSvg(t.artIcon || "speaker")}</span>`}
           </div>` : `<button class="surprise-me-card compact magic-empty ${M ? "has-art" : ""}" id="surpriseMeBtn" aria-label="${this._esc(t.artLabel || this._i18n("ui.surprise_me"))}">
             ${M ? `${this._imgHtml(M, e, { loading: "eager", fetchpriority: "high", fallbackIcon: t.artIcon || "radio" })}<span class="surprise-me-wand art-overlay">${this._iconSvg(t.artIcon || "radio")}</span>` : `<span class="surprise-me-glow"></span><span class="surprise-me-wand">${this._iconSvg(t.artIcon || "wand")}</span>`}
           </button>`;
       this.$("npArt") && (this.$("npArt").innerHTML = `
-        <div class="empty-magic-stack ${j ? "has-voice" : ""}">
-          ${G}
+        <div class="empty-magic-stack ${G ? "has-voice" : ""}">
           ${j}
+          ${G}
         </div>
       `), h || this.$("surpriseMeBtn")?.addEventListener("click", async (V) => {
         V.preventDefault(), V.stopPropagation(), this._showEmptyMagicRipple(V.currentTarget), await this._runLockedUiAction(V.currentTarget, async () => {
@@ -57664,11 +57703,11 @@ class aa extends As {
         V.preventDefault(), V.stopPropagation(), this._lockUiButton(V.currentTarget, [8, 18, 8], { lockMs: 1200, disabled: !1 }) && this._startVoiceAssistantCommand({ ignoreWhenListening: !0 });
       });
     }
-    if (P?.classList.contains("empty-quick-actions") || this._setMobileRandomFabVisible(!1), this._setMobileRandomFabDisabled(!1), this._destroyMobileEmbla(), this._state.mobileArtRenderKey = "", M ? this._syncDynamicThemeArtwork(M).catch(() => {
+    if (Q?.classList.contains("empty-quick-actions") || this._setMobileRandomFabVisible(!1), this._setMobileRandomFabDisabled(!1), this._destroyMobileEmbla(), this._state.mobileArtRenderKey = "", M ? this._syncDynamicThemeArtwork(M).catch(() => {
     }) : (this._mobileDynamicThemeToken += 1, this._state.mobileDynamicThemeArtwork = "", this._state.mobileDynamicThemeArtworkUrl = "", this._state.mobileDynamicThemePalette = null, this._applyDynamicThemeStyles()), this._syncSourceBadgesUi(null, null), this._syncRecentHistoryUi(), this._setDecodedBackgroundImage(this.$("mobileArtAura"), this._isHotelMode() ? "" : M), this._setDecodedBackgroundImage(this.$("mobileHeroAura"), this._isHotelMode() ? "" : M), this._setDecodedBackgroundCrossfade(this.$("compactBackdropArt"), this._isHotelMode() ? "" : M), this._setDecodedBackgroundImage(this.$("compactCoverAura"), this._isHotelMode() ? "" : M), v || !this._emptyQuickShelfEnabled()) {
       this._state.emptyQuickShelfItems = [];
-      const j = this.$("emptyQuickShelf");
-      j && (j.hidden = !0, j.innerHTML = "");
+      const G = this.$("emptyQuickShelf");
+      G && (G.hidden = !0, G.innerHTML = "");
     } else (!p || !this.$("emptyQuickShelf")?.children?.length) && this._renderEmptyQuickShelf().catch(() => {
     });
     this._updateActivePlayersBubble();
@@ -57683,7 +57722,7 @@ class aa extends As {
       ]), l = [
         ...Array.isArray(t.value) ? t.value : [],
         ...Array.isArray(a.value) ? a.value : []
-      ].filter((v) => v?.uri).filter((v, k, M) => M.findIndex((P) => P?.uri === v?.uri) === k);
+      ].filter((v) => v?.uri).filter((v, k, M) => M.findIndex((Q) => Q?.uri === v?.uri) === k);
       if (!l.length)
         return this._toastError(this._i18n("ui.no_playlists_found")), !1;
       const p = l[Math.floor(Math.random() * l.length)];
@@ -57710,7 +57749,7 @@ class aa extends As {
         ...Array.isArray(t.value) ? t.value : [],
         ...Array.isArray(a.value) ? a.value : [],
         ...Array.isArray(l.value) ? l.value : []
-      ].map((k) => this._normalizeMediaItem(k)).filter((k) => String(k?.uri || "").trim() && String(k?.media_type || "radio").toLowerCase() === "radio").filter((k, M, P) => P.findIndex((F) => String(F?.uri || "").trim() === String(k?.uri || "").trim()) === M);
+      ].map((k) => this._normalizeMediaItem(k)).filter((k) => String(k?.uri || "").trim() && String(k?.media_type || "radio").toLowerCase() === "radio").filter((k, M, Q) => Q.findIndex((F) => String(F?.uri || "").trim() === String(k?.uri || "").trim()) === M);
       if (!p.length)
         return this._toastError(this._i18n("ui.no_radio_stations_found")), !1;
       const h = p[Math.floor(Math.random() * p.length)], v = await this._playMedia(h.uri, "radio", "play", {
@@ -57803,14 +57842,14 @@ class aa extends As {
     this._syncGroupVolumeShortcut(e), h?.classList.remove("empty-media"), h?.classList.remove("radio-media"), this._hideEmptyPlaybackLoading(), this.$("activePlayerChip")?.classList.toggle("playing", e.state === "playing"), this._clearNotice(), this._setButtonIcon(this.$("btnPlay"), this._playPauseIconName(e)), this.$("btnPlay")?.classList.toggle("is-playing", e.state === "playing"), this._setButtonIcon(this.$("btnMute"), this._volumeIconName(e)), this._setButtonIcon(this.$("controlVolumeBtn"), this._volumeIconName(e)), this.$("controlVolumeBtn")?.classList.toggle("muted", this._isMuted(e)), this._setButtonIcon(this.$("mobileShuffleBtn"), "shuffle");
     const k = e.attributes.repeat || "off", M = this._repeatModeLabel(k);
     this._setButtonIcon(this.$("mobileRepeatBtn"), k === "one" ? "repeat_one" : "repeat"), this.$("mobileShuffleBtn")?.classList.toggle("active", !!e.attributes.shuffle);
-    const P = this.$("mobileRepeatBtn");
-    P && (P.classList.toggle("active", k !== "off"), P.dataset.repeatMode = k, P.title = M, P.setAttribute("aria-label", M));
-    const F = this.$("tabletPopupVolSlider"), q = this.$("tabletPopupMuteBtn"), O = this.$("tabletPopupVolPct"), H = Math.max(0, Math.min(100, Math.round(this._effectivePlayerVolumeLevel(e) * 100)));
-    F && (F.value = H, F.style.setProperty("--vol-pct", `${H}%`)), O && (O.textContent = `${H}%`), q && this._setButtonIcon(q, this._volumeIconName(e));
-    const j = this._state.maQueueState?.current_item || null, G = this._getQueueItemStableId(j) || this._getQueueItemUri(j) || `${e.entity_id}:${e.attributes.media_content_id || e.attributes.media_title || ""}`;
-    this._state.mobileArtAnchorKey !== G && (this._state.mobileArtAnchorKey = G, this._state.mobileArtBrowseOffset = 0);
-    const V = this._mobileArtStackItems(), Z = this._mobileNowPlayingDisplaySource(e, t, V), W = Z.queueItem || t, ue = Z.media || {}, he = Z.hasPendingPlay, s = String(e.attributes.media_content_id || "").trim(), A = String(Z.uri || this._getQueueItemUri(W) || "").trim(), g = Z.title, y = Z.artist, S = Z.album, B = Z.mediaType, E = this._mobileUpNextItem(), I = !!this._state.forceRadioHero, R = this._isLikelyRadioPlayback(e, W, ue), Y = !!(e.attributes.media_title || e.attributes.media_content_id || W?.name || ue?.name), $ = Number(this._state.quickMixPendingUntil || 0) > Date.now() ? this._state.quickMixPendingEntry : null;
-    if (Y && this._state.quickMixPendingUntil && (this._state.quickMixPendingUntil = 0, this._state.quickMixPendingEntry = null), !Y && $) {
+    const Q = this.$("mobileRepeatBtn");
+    Q && (Q.classList.toggle("active", k !== "off"), Q.dataset.repeatMode = k, Q.title = M, Q.setAttribute("aria-label", M));
+    const F = this.$("tabletPopupVolSlider"), q = this.$("tabletPopupMuteBtn"), Y = this.$("tabletPopupVolPct"), H = Math.max(0, Math.min(100, Math.round(this._effectivePlayerVolumeLevel(e) * 100)));
+    F && (F.value = H, F.style.setProperty("--vol-pct", `${H}%`)), Y && (Y.textContent = `${H}%`), q && this._setButtonIcon(q, this._volumeIconName(e));
+    const G = this._state.maQueueState?.current_item || null, j = this._getQueueItemStableId(G) || this._getQueueItemUri(G) || `${e.entity_id}:${e.attributes.media_content_id || e.attributes.media_title || ""}`;
+    this._state.mobileArtAnchorKey !== j && (this._state.mobileArtAnchorKey = j, this._state.mobileArtBrowseOffset = 0);
+    const V = this._mobileArtStackItems(), Z = this._mobileNowPlayingDisplaySource(e, t, V), W = Z.queueItem || t, ue = Z.media || {}, he = Z.hasPendingPlay, s = String(e.attributes.media_content_id || "").trim(), A = String(Z.uri || this._getQueueItemUri(W) || "").trim(), g = Z.title, y = Z.artist, S = Z.album, B = Z.mediaType, E = this._mobileUpNextItem(), I = !!this._state.forceRadioHero, R = this._isLikelyRadioPlayback(e, W, ue), O = !!(e.attributes.media_title || e.attributes.media_content_id || W?.name || ue?.name), $ = Number(this._state.quickMixPendingUntil || 0) > Date.now() ? this._state.quickMixPendingEntry : null;
+    if (O && this._state.quickMixPendingUntil && (this._state.quickMixPendingUntil = 0, this._state.quickMixPendingEntry = null), !O && $) {
       const Me = $.name || this._i18n("ui.quick_mix"), Ee = this._normalizeArtworkUrl($.image || this._currentArtworkUrl(e, t, 420, { preferPlayerArtwork: !0 }), {
         size: 420,
         cacheKey: `quick-mix:${$.uri || Me}`
@@ -57832,7 +57871,7 @@ class aa extends As {
       }), l(), this._syncControlRoomUi();
       return;
     }
-    if (!Y) {
+    if (!O) {
       if (this._state.forceRadioHero = !1, this._syncSourceBadgesUi(null, null), this._syncRecentHistoryUi(), p({
         title: this._i18n("ui.player_is_ready"),
         subtitle: e.attributes?.friendly_name || this._i18n("ui.nothing_is_playing_right_now"),
@@ -57913,13 +57952,13 @@ class aa extends As {
       h && this._mobileMenuScrollTargets(h).forEach(([v, k]) => {
         const M = l[v];
         if (!M) return;
-        const P = Math.max(0, k.scrollHeight - k.clientHeight), F = Math.max(0, k.scrollWidth - k.clientWidth), q = Math.min(Math.max(0, Number(M.top || 0) || 0), P), O = Math.min(Math.max(0, Number(M.left || 0) || 0), F);
+        const Q = Math.max(0, k.scrollHeight - k.clientHeight), F = Math.max(0, k.scrollWidth - k.clientWidth), q = Math.min(Math.max(0, Number(M.top || 0) || 0), Q), Y = Math.min(Math.max(0, Number(M.left || 0) || 0), F);
         try {
-          k.scrollTo({ top: q, left: O, behavior: "auto" });
+          k.scrollTo({ top: q, left: Y, behavior: "auto" });
         } catch {
-          k.scrollTop = q, k.scrollLeft = O;
+          k.scrollTop = q, k.scrollLeft = Y;
         }
-        k.scrollTop = q, k.scrollLeft = O;
+        k.scrollTop = q, k.scrollLeft = Y;
       });
     };
     p(), !(a.startsWith("library_") || a === "queue") && (requestAnimationFrame(() => {
@@ -57987,22 +58026,22 @@ class aa extends As {
     this._isCompactTileMode() && this._isPhoneActionFullscreenMenuPage(a) && this._setCompactExpanded(!0);
     const l = !!this._state.menuOpen, p = this._state.menuPage || "main";
     (!l || p !== a) && fr(this), a === "simple_wizard" && p !== "simple_wizard" && this._resetSimpleWizardState(), a === "discovery" && p !== "discovery" && this._startDiscoverySession(), l && this._rememberMobileMenuScroll(p);
-    const h = t?.scrollTop !== void 0 && t?.scrollTop !== null, v = Number(t?.scrollTop), k = a === "settings" ? Number(this._state.mobileSettingsScrollTop || 0) : null, M = l && p === a ? this.$("mobileMenuBody")?.scrollTop || 0 : null, P = h && Number.isFinite(v) ? v : Number.isFinite(M) && M > 0 ? M : Number.isFinite(k) && k > 0 ? k : M;
+    const h = t?.scrollTop !== void 0 && t?.scrollTop !== null, v = Number(t?.scrollTop), k = a === "settings" ? Number(this._state.mobileSettingsScrollTop || 0) : null, M = l && p === a ? this.$("mobileMenuBody")?.scrollTop || 0 : null, Q = h && Number.isFinite(v) ? v : Number.isFinite(M) && M > 0 ? M : Number.isFinite(k) && k > 0 ? k : M;
     this._state.menuOpen = !0, this._state.menuPage = a;
     let F = null;
     if (!l || p !== a) {
       if (a === "queue") {
-        const H = this._getNowPlayingQueueItems(), j = H.findIndex((G) => this._isQueueItemCurrent(G));
-        this._queueVirtualStart = j >= 0 ? Math.max(0, Math.min(Math.max(0, H.length - 72), j - 12)) : 0, this._queueVirtualStart > 0 && t?.queueFlow !== !0 && (F = this._queueVirtualStart * 104);
+        const H = this._getNowPlayingQueueItems(), G = H.findIndex((j) => this._isQueueItemCurrent(j));
+        this._queueVirtualStart = G >= 0 ? Math.max(0, Math.min(Math.max(0, H.length - 72), G - 12)) : 0, this._queueVirtualStart > 0 && t?.queueFlow !== !0 && (F = this._queueVirtualStart * 104);
       }
       this._mediaVirtualStarts.set(this._mediaVirtualPageKey(a), 0);
     }
     this._state.mobileQueueFlowQuickOpen = a === "queue" && t?.queueFlow === !0, !String(a || "").startsWith("library_") && a !== "media_detail" && (this._state.mobileMediaLayoutManual = !1, this._state.mobileLibraryFlowPage = ""), this._applyLibraryDefaultLayoutForPage(this._state.menuPage), (a === "main" || a === "settings" || String(a).startsWith("library_")) && (this._state.menuStack = []), this._isManualFrontContentSelectionPage(a) && this._refreshManualFrontPlayerHold(this._manualFrontContentHoldMs()), this.$("mobileMenu")?.classList.add("open"), this._syncCompactMenuOverlayState();
     const q = Promise.resolve(this._renderMobileMenu()).catch((H) => {
       this._debugLog?.("warn", "[Homeii Menu] failed to render mobile menu", H), this._state.menuOpen = !1, this._state.menuPage = "main", this.$("mobileMenu")?.classList.remove("open", "search-open", "discovery-open", "action-fullscreen-open", "library-fullscreen-open"), this._syncCompactMenuOverlayState(), this._toastError(H?.message || this._i18n("ui.try_again"));
-    }), O = P !== null ? P : F;
-    O !== null && q.finally(() => {
-      this._restoreMobileMenuScroll(O, a);
+    }), Y = Q !== null ? Q : F;
+    Y !== null && q.finally(() => {
+      this._restoreMobileMenuScroll(Y, a);
     });
   }
   _closeMobileMenu() {
@@ -58127,7 +58166,7 @@ class aa extends As {
     return p.length || p.push(...this._simpleWizardDefaultPlayerIds(a)), e.selectedPlayers = p, e.source = e.source === "content" ? "content" : "genre", e.genre = this._simpleWizardGenres().some((h) => h.id === e.genre) ? e.genre : "pop", e.contentType = this._simpleWizardContentTypes().some((h) => h.id === e.contentType) ? e.contentType : "playlist", this._state.simpleWizard = e, e;
   }
   _musicStyleCatalog(e = {}) {
-    const t = (p, h, v = p) => this._discoveryGenreLabel(p, h, v), a = (p, h, v, k, M, P = {}) => ({
+    const t = (p, h, v = p) => this._discoveryGenreLabel(p, h, v), a = (p, h, v, k, M, Q = {}) => ({
       id: p,
       key: p,
       icon: h,
@@ -58135,7 +58174,7 @@ class aa extends As {
       subtitle: k,
       query: M?.[0] || v,
       queries: M,
-      ...P
+      ...Q
     }), l = [
       a("pop", "music_note", "Pop", t("Popular hits", "להיטים פופולריים"), ["pop hits playlist", "top pop playlist", "pop music"]),
       a("indie-pop", "music_note", "Indie Pop", t("Fresh alternative pop", "פופ אלטרנטיבי רענן"), ["indie pop playlist", "fresh indie pop", "alternative pop"]),
@@ -58367,13 +58406,13 @@ class aa extends As {
             <span class="simple-wizard-check">${this._iconSvg(l ? "check" : "plus")}</span>
           </button>
           ${t.map((p) => {
-      const h = p.entity_id, v = a.has(h), k = this._playerArtworkUrl(p, 120), M = p.attributes?.friendly_name || h, P = p.attributes?.media_title || this._playerStateLabel(p);
+      const h = p.entity_id, v = a.has(h), k = this._playerArtworkUrl(p, 120), M = p.attributes?.friendly_name || h, Q = p.attributes?.media_title || this._playerStateLabel(p);
       return `
               <button class="simple-wizard-player ${v ? "active" : ""} ${this._isPlayerActive(p) ? "is-playing" : ""}" data-simple-player="${this._esc(h)}">
                 <span class="simple-wizard-player-art">${k ? this._imgHtml(k, "", { fallbackIcon: "speaker" }) : this._iconSvg("speaker")}</span>
                 <span class="simple-wizard-player-copy">
                   <span class="simple-wizard-option-title">${this._esc(M)}</span>
-                  <span class="simple-wizard-option-sub">${this._esc(P || "")}</span>
+                  <span class="simple-wizard-option-sub">${this._esc(Q || "")}</span>
                 </span>
                 <span class="simple-wizard-check">${this._iconSvg(v ? "check" : "plus")}</span>
               </button>
@@ -58552,15 +58591,15 @@ class aa extends As {
   async _simpleWizardFindCandidates(e = this._simpleWizardState()) {
     const t = [], a = (h = [], v = "playlist", k = {}) => {
       (Array.isArray(h) ? h : []).forEach((M) => {
-        const P = this._simpleWizardCandidateFromItem(M, v, k);
-        P && t.push(P);
+        const Q = this._simpleWizardCandidateFromItem(M, v, k);
+        Q && t.push(Q);
       });
     };
     if (e.source !== "content") {
-      const h = this._simpleWizardGenres().find((P) => P.id === e.genre) || this._simpleWizardGenres()[0], v = String(e.customGenre || "").trim(), k = h.id === "custom" && v ? v : h.label, M = h.id === "custom" && v ? [v] : h.queries || [h.label];
-      for (const P of M.slice(0, 3)) {
+      const h = this._simpleWizardGenres().find((Q) => Q.id === e.genre) || this._simpleWizardGenres()[0], v = String(e.customGenre || "").trim(), k = h.id === "custom" && v ? v : h.label, M = h.id === "custom" && v ? [v] : h.queries || [h.label];
+      for (const Q of M.slice(0, 3)) {
         try {
-          const F = await this._search(P);
+          const F = await this._search(Q);
           a(F.playlists, "playlist", { subtitle: k }), a(F.tracks, "track", { subtitle: k }), a(F.albums, "album", { subtitle: k }), a(F.radio, "radio", { subtitle: k });
         } catch {
         }
@@ -58693,7 +58732,7 @@ class aa extends As {
           this._toastError(this._i18n("ui.select_at_least_two_players_to_create_a_group"));
           return;
         }
-        await new Promise((P) => window.setTimeout(P, 250));
+        await new Promise((Q) => window.setTimeout(Q, 250));
       } catch (M) {
         this._toastError(M?.message || this._i18n("ui.queue_action_failed"));
         return;
@@ -58757,7 +58796,7 @@ class aa extends As {
       volume: this._state.mobileStartTimerVolume ?? p?.volume ?? 35,
       days: this._state.mobileStartTimerDays || p?.days,
       afterRun: this._state.mobileStartTimerAfterRun || p?.afterRun || "keep"
-    } : p, k = this._normalizeClockTime(v?.time || "07:00", "07:00"), M = this._scheduledStartPlayerId(v), P = Math.max(0, Math.min(100, Number(v?.volume ?? 35))), F = new Set(this._normalizeNightModeDays(v?.days || this._state.mobileStartTimerDays)), q = String(v?.afterRun || "keep") === "disable" ? "disable" : "keep", O = this._mobileNightMode(), H = this._nightModeWindow(), j = new Set(this._nightModeDays()), G = ["timers", "wake", "night"].includes(this._state.mobileSchedulesTab) ? this._state.mobileSchedulesTab : "timers", Z = this._strictSchedulePlayers().map((g) => {
+    } : p, k = this._normalizeClockTime(v?.time || "07:00", "07:00"), M = this._scheduledStartPlayerId(v), Q = Math.max(0, Math.min(100, Number(v?.volume ?? 35))), F = new Set(this._normalizeNightModeDays(v?.days || this._state.mobileStartTimerDays)), q = String(v?.afterRun || "keep") === "disable" ? "disable" : "keep", Y = this._mobileNightMode(), H = this._nightModeWindow(), G = new Set(this._nightModeDays()), j = ["timers", "wake", "night"].includes(this._state.mobileSchedulesTab) ? this._state.mobileSchedulesTab : "timers", Z = this._strictSchedulePlayers().map((g) => {
       const y = g.attributes?.friendly_name || g.entity_id;
       return `<option value="${this._esc(g.entity_id)}" ${g.entity_id === M ? "selected" : ""}>${this._esc(y)}</option>`;
     }).join(""), W = l.length ? `
@@ -58832,8 +58871,8 @@ class aa extends As {
           <label class="night-time-card" ${this._state.engineCapabilities?.schedule_volume_fade ? "" : "hidden"}><span class="settings-label">${this._esc(this._m("Gentle wake-up", "השכמה הדרגתית"))}</span><select class="media-sort-select settings-select" id="scheduledStartFadeInput" data-schedule-form-control>${[[0, this._m("Off", "כבוי")], [30, "30 s"], [60, "1 min"], [120, "2 min"], [300, "5 min"], [600, "10 min"]].map(([g, y]) => `<option value="${g}" ${Number(this._state.mobileStartTimerFadeSeconds || 0) === g ? "selected" : ""}>${this._esc(y)}</option>`).join("")}</select></label>
           <div class="settings-range scheduled-volume-field">
             <div class="settings-label">${this._esc(this._i18n("ui.volume"))}</div>
-            <input id="scheduledStartVolumeInput" data-schedule-form-control type="range" min="0" max="100" step="1" value="${this._esc(String(P))}">
-            <div class="settings-value">${this._esc(String(P))}%</div>
+            <input id="scheduledStartVolumeInput" data-schedule-form-control type="range" min="0" max="100" step="1" value="${this._esc(String(Q))}">
+            <div class="settings-value">${this._esc(String(Q))}%</div>
           </div>
           <div class="settings-label">${this._esc(this._i18n("ui.active_days"))}</div>
           <div class="settings-check-grid">
@@ -58849,7 +58888,7 @@ class aa extends As {
           </div>
         </div>` : ""}
       </div>
-    `, s = O === "auto" ? `
+    `, s = Y === "auto" ? `
         <div class="scheduled-start-grid two-col">
           <label class="night-time-card" for="mobileNightStartInput">
             <span class="night-time-label">${this._esc(this._i18n("ui.start_time_2"))}</span>
@@ -58864,20 +58903,20 @@ class aa extends As {
         <div class="settings-check-grid">
           ${this._nightModeDayOptions().map(([g, y]) => `
             <label class="settings-check-pill">
-              <input type="checkbox" data-schedule-form-control data-setting-night-day="${this._esc(String(g))}" ${j.has(g) ? "checked" : ""}>
+              <input type="checkbox" data-schedule-form-control data-setting-night-day="${this._esc(String(g))}" ${G.has(g) ? "checked" : ""}>
               <span>${this._esc(y)}</span>
             </label>`).join("")}
         </div>
         <div class="settings-actions">
           <button class="settings-pill active" data-setting-night-window-save>${this._esc(this._i18n("ui.apply_schedule"))}</button>
         </div>
-      ` : `<div class="notice open">${this._esc(O === "on" ? this._i18n("ui.night_mode_stays_on_until_you_choose_another_mode") : this._i18n("ui.night_mode_is_off_until_you_choose_another_mode"))}</div>`, A = `
+      ` : `<div class="notice open">${this._esc(Y === "on" ? this._i18n("ui.night_mode_stays_on_until_you_choose_another_mode") : this._i18n("ui.night_mode_is_off_until_you_choose_another_mode"))}</div>`, A = `
       <div class="settings-group scheduled-start-card schedule-panel-card schedule-night-card">
         <div class="settings-label">${this._esc(this._i18n("ui.night_mode"))}</div>
         <div class="settings-pills">
-          ${this._settingsPill(this._i18n("ui.off"), "off", O, "data-setting-night-mode")}
-          ${this._settingsPill("Auto", "auto", O, "data-setting-night-mode")}
-          ${this._settingsPill(this._i18n("ui.on"), "on", O, "data-setting-night-mode")}
+          ${this._settingsPill(this._i18n("ui.off"), "off", Y, "data-setting-night-mode")}
+          ${this._settingsPill("Auto", "auto", Y, "data-setting-night-mode")}
+          ${this._settingsPill(this._i18n("ui.on"), "on", Y, "data-setting-night-mode")}
         </div>
         ${s}
       </div>
@@ -58885,12 +58924,12 @@ class aa extends As {
     return `
       <div class="settings-shell">
         <div class="schedule-tabs" role="tablist" aria-label="${this._esc(this._i18n("ui.schedules"))}">
-          <button class="settings-pill ${G === "timers" ? "active" : ""}" data-schedule-tab="timers">${this._esc(this._i18n("ui.timers"))}</button>
-          <button class="settings-pill ${G === "wake" ? "active" : ""}" data-schedule-tab="wake">${this._esc(this._i18n("ui.wake"))}</button>
-          <button class="settings-pill ${G === "night" ? "active" : ""}" data-schedule-tab="night">${this._esc(this._i18n("ui.night"))}</button>
+          <button class="settings-pill ${j === "timers" ? "active" : ""}" data-schedule-tab="timers">${this._esc(this._i18n("ui.timers"))}</button>
+          <button class="settings-pill ${j === "wake" ? "active" : ""}" data-schedule-tab="wake">${this._esc(this._i18n("ui.wake"))}</button>
+          <button class="settings-pill ${j === "night" ? "active" : ""}" data-schedule-tab="night">${this._esc(this._i18n("ui.night"))}</button>
         </div>
         <div class="schedule-content">
-          ${G === "wake" ? he : G === "night" ? A : ue}
+          ${j === "wake" ? he : j === "night" ? A : ue}
         </div>
       </div>
     `;
@@ -59106,7 +59145,7 @@ class aa extends As {
   _normalizeDiscoveryGenreOptions(e = [], t = 20) {
     const a = (Array.isArray(e) ? e : []).map((p, h) => this._discoveryGenreOptionFromItem(p, h)).filter(Boolean);
     return this._discoveryPopularGenreProfiles().map((p, h) => {
-      const v = a.reduce((M, P) => Math.max(M, this._discoveryGenreProfileScore(P, p)), 0), k = (Array.isArray(p.children) ? p.children : []).map((M) => ({
+      const v = a.reduce((M, Q) => Math.max(M, this._discoveryGenreProfileScore(Q, p)), 0), k = (Array.isArray(p.children) ? p.children : []).map((M) => ({
         ...M,
         key: `${p.key}:${M.key}`,
         parent_key: p.key,
@@ -59151,8 +59190,8 @@ class aa extends As {
   _discoveryUniqueItems(e = [], t = "playlist") {
     const a = /* @__PURE__ */ new Set(), l = [];
     return (Array.isArray(e) ? e : []).forEach((p) => {
-      const h = this._normalizeMediaItem({ ...p, media_type: p?.media_type || t }), v = String(h?.uri || "").trim(), k = String(h?.name || h?.title || "").trim().toLowerCase(), M = String(h?.provider || h?.provider_domain || h?.provider_instance || "").trim().toLowerCase(), P = v || `${M}:${k}`;
-      !P || a.has(P) || (a.add(P), l.push(h));
+      const h = this._normalizeMediaItem({ ...p, media_type: p?.media_type || t }), v = String(h?.uri || "").trim(), k = String(h?.name || h?.title || "").trim().toLowerCase(), M = String(h?.provider || h?.provider_domain || h?.provider_instance || "").trim().toLowerCase(), Q = v || `${M}:${k}`;
+      !Q || a.has(Q) || (a.add(Q), l.push(h));
     }), l;
   }
   async _searchDiscoveryProviderResults(e = "") {
@@ -59195,8 +59234,8 @@ class aa extends As {
     ], h = /* @__PURE__ */ new Set(), v = [];
     return p.forEach((k) => {
       (Array.isArray(k.items) ? k.items : []).forEach((M) => {
-        const P = this._normalizeMediaItem({ ...M, media_type: M?.media_type || k.type }), F = String(P?.uri || "").trim(), q = String(P?.name || P?.title || "").trim().toLowerCase(), O = F || `${k.type}:${q}`;
-        !O || h.has(O) || (h.add(O), v.push({ ...P, media_type: P?.media_type || k.type, _homeiiDiscoveryLabel: k.label }));
+        const Q = this._normalizeMediaItem({ ...M, media_type: M?.media_type || k.type }), F = String(Q?.uri || "").trim(), q = String(Q?.name || Q?.title || "").trim().toLowerCase(), Y = F || `${k.type}:${q}`;
+        !Y || h.has(Y) || (h.add(Y), v.push({ ...Q, media_type: Q?.media_type || k.type, _homeiiDiscoveryLabel: k.label }));
       });
     }), this._shuffleDiscoveryItems(v, (this._state.discoverySessionSeed || Date.now()) + 53).slice(0, 58);
   }
@@ -59231,11 +59270,11 @@ class aa extends As {
         </div>
         <div class="discovery-orb-field ${v ? "has-active" : ""}">
           ${l.map((k, M) => {
-      const P = k?.media_type || "album", F = k?.name || k?.title || this._i18n("ui.discover"), q = this._artistName(k) || k?.artist || k?.album?.name || k?._homeiiDiscoveryLabel || this._emptyQuickSuggestionLabel(P), O = this._artUrl(k) || k?.image || k?.image_url || k?.album?.image || "", H = String(this._state.discoveryExpandedUri || "") === String(k.uri || "");
+      const Q = k?.media_type || "album", F = k?.name || k?.title || this._i18n("ui.discover"), q = this._artistName(k) || k?.artist || k?.album?.name || k?._homeiiDiscoveryLabel || this._emptyQuickSuggestionLabel(Q), Y = this._artUrl(k) || k?.image || k?.image_url || k?.album?.image || "", H = String(this._state.discoveryExpandedUri || "") === String(k.uri || "");
       return `
-              <button class="discovery-orb orb-${M % 7} ${H ? "is-active" : ""}" style="${this._esc(this._discoveryOrbStyle(k, M))}" data-media-uri="${this._esc(k.uri)}" data-media-type="${this._esc(P)}" aria-pressed="${H ? "true" : "false"}" title="${this._esc(F)}">
+              <button class="discovery-orb orb-${M % 7} ${H ? "is-active" : ""}" style="${this._esc(this._discoveryOrbStyle(k, M))}" data-media-uri="${this._esc(k.uri)}" data-media-type="${this._esc(Q)}" aria-pressed="${H ? "true" : "false"}" title="${this._esc(F)}">
                 <span class="discovery-orb-art">
-                  ${O ? this._imgHtml(O, "", { fallbackIcon: P === "radio" ? "radio" : "album" }) : this._iconSvg(P === "radio" ? "radio" : "album")}
+                  ${Y ? this._imgHtml(Y, "", { fallbackIcon: Q === "radio" ? "radio" : "album" }) : this._iconSvg(Q === "radio" ? "radio" : "album")}
                   <span class="discovery-orb-play" aria-hidden="true">${this._iconSvg("play")}</span>
                 </span>
                 <span class="discovery-orb-copy">
@@ -59279,18 +59318,18 @@ class aa extends As {
   }
   _playerRowHtml(e, t = "", a = !1, l = {}) {
     if (!Lt.isPlayerAvailable(e)) return "";
-    const p = this._playerArtworkUrl(e, 180), h = e?.state === "playing", v = !!l.controls, k = l.pin !== !1, M = this._frontPinnedPlayerEntity() === e?.entity_id, P = this._playerDisplayName(e), F = Lt.isPlayerAvailable(e), q = F ? e.attributes?.media_title || e.attributes?.media_artist || "" : this._i18n("ui.disconnected"), O = `<span class="player-premium-bars eq-icon ${h ? "is-active" : "is-static"}" aria-label="${this._esc(this._playerStateLabel(e))}"><span></span><span></span><span></span></span>`, H = k ? `<button type="button" class="player-premium-side player-front-pin ${M ? "active" : ""}" data-front-pin-player="${this._esc(e.entity_id)}" title="${this._esc(M ? this._m("Clear front pin", "בטל נעיצה בחזית") : this._m("Pin player to front", "נעץ נגן בחזית"))}" aria-pressed="${M ? "true" : "false"}">${this._iconSvg("pin")}</button>` : "";
+    const p = this._playerArtworkUrl(e, 180), h = e?.state === "playing", v = !!l.controls, k = l.pin !== !1, M = this._frontPinnedPlayerEntity() === e?.entity_id, Q = this._playerDisplayName(e), F = Lt.isPlayerAvailable(e), q = F ? e.attributes?.media_title || e.attributes?.media_artist || "" : this._i18n("ui.disconnected"), Y = `<span class="player-premium-bars eq-icon ${h ? "is-active" : "is-static"}" aria-label="${this._esc(this._playerStateLabel(e))}"><span></span><span></span><span></span></span>`, H = k ? `<button type="button" class="player-premium-side player-front-pin ${M ? "active" : ""}" data-front-pin-player="${this._esc(e.entity_id)}" title="${this._esc(M ? this._m("Clear front pin", "בטל נעיצה בחזית") : this._m("Pin player to front", "נעץ נגן בחזית"))}" aria-pressed="${M ? "true" : "false"}">${this._iconSvg("pin")}</button>` : "";
     if (_i(this) && t.includes("data-menu-player="))
-      return $m(this, e, { attrs: t, active: a, available: F, name: P, track: q, art: p, pinHtml: H });
-    const j = `
+      return $m(this, e, { attrs: t, active: a, available: F, name: Q, track: q, art: p, pinHtml: H });
+    const G = `
       <button class="player-premium-head ${a ? "active" : ""} ${h ? "is-playing" : ""}" ${t}>
         <span class="player-premium-art">
           ${p ? this._imgHtml(p, "", { fallbackIcon: "speaker" }) : this._iconSvg("speaker")}
         </span>
         <span class="player-premium-copy">
           <span class="player-premium-title-row">
-            <span class="player-premium-name">${this._esc(P)}</span>
-            ${O}
+            <span class="player-premium-name">${this._esc(Q)}</span>
+            ${Y}
           </span>
           ${q ? `<span class="player-premium-track">${this._esc(q)}</span>` : ""}
         </span>
@@ -59298,20 +59337,20 @@ class aa extends As {
     `;
     return v ? `
       <div class="player-menu-card ${a ? "active" : ""}">
-        ${j}
+        ${G}
         ${H}
         ${Hn(this, e)}
       </div>
     ` : `
         <div class="player-menu-card ${a ? "active" : ""}">
-          ${j}
+          ${G}
           ${H}
         </div>
       `;
   }
   _playersMenuHtml(e = {}) {
     this._loadPlayers();
-    const t = this._isHotelMode(), a = this._state.selectedPlayer, l = (this._state.players || []).filter(Lt.isPlayerAvailable), p = new Set(this._resolvedPinnedPlayerEntities(l)), h = this._getBrowserPlayers(l), v = this._getThisDevicePlayer(l), k = !!this._localSendspinConnecting, M = !!this._state.awaitingThisDevicePlayer, P = this._isLocalSendspinDesired(), F = String(this._state.localSendspinStatus || "").toLowerCase(), q = !!this._state.localSendspinDisconnecting || F === "disconnecting", O = !!v || this._localSendspinConnected || F === "connected", H = !O && !q && (k || M || P || ["connecting", "reconnecting", "suspended"].includes(F)), G = q ? this._i18n("ui.disconnecting") : O ? this._i18n("ui.connected") : H ? this._i18n("ui.connecting") : !O && !H && F === "disconnected" ? this._i18n("ui.disconnected") : this._i18n("ui.enable"), V = O || H || P || k || M ? "disconnect_this_device" : "connect_this_device", W = `${this._i18n("ui.player_on_this_device")} · ${G}`, ue = v ? `
+    const t = this._isHotelMode(), a = this._state.selectedPlayer, l = (this._state.players || []).filter(Lt.isPlayerAvailable), p = new Set(this._resolvedPinnedPlayerEntities(l)), h = this._getBrowserPlayers(l), v = this._getThisDevicePlayer(l), k = !!this._localSendspinConnecting, M = !!this._state.awaitingThisDevicePlayer, Q = this._isLocalSendspinDesired(), F = String(this._state.localSendspinStatus || "").toLowerCase(), q = !!this._state.localSendspinDisconnecting || F === "disconnecting", Y = !!v || this._localSendspinConnected || F === "connected", H = !Y && !q && (k || M || Q || ["connecting", "reconnecting", "suspended"].includes(F)), j = q ? this._i18n("ui.disconnecting") : Y ? this._i18n("ui.connected") : H ? this._i18n("ui.connecting") : !Y && !H && F === "disconnected" ? this._i18n("ui.disconnected") : this._i18n("ui.enable"), V = Y || H || Q || k || M ? "disconnect_this_device" : "connect_this_device", W = `${this._i18n("ui.player_on_this_device")} · ${j}`, ue = v ? `
         <div class="players-premium-grid">
           ${this._playerRowHtml(v, `data-menu-player="${this._esc(v.entity_id)}"`, v.entity_id === a, { controls: !t, pin: !0 })}
         </div>
@@ -59390,7 +59429,7 @@ class aa extends As {
     </div>`;
   }
   _settingsSectionDisplay() {
-    const e = this._state.cardTheme === "light" || this._state.cardTheme === "custom" ? this._state.cardTheme : "dark", t = this._performanceProfile(), a = this._mobileDynamicThemeMode(), l = this._mobileBackgroundMotionMode(), p = Number(this._state.mobileFontScale || 1).toFixed(2), h = this._mobileIconScale().toFixed(2), v = this._mobileLayoutMode(), k = !!this._state.mobileCompactMode, M = this._mobileCompactWidgetMode(), P = this._mobileShowUpNextEnabled(), F = this._mobileCoverFlowEnabled(), q = this._mobileFooterMode(), O = this._mobileMicMode(), H = this._mobileHomeShortcutEnabled();
+    const e = this._state.cardTheme === "light" || this._state.cardTheme === "custom" ? this._state.cardTheme : "dark", t = this._performanceProfile(), a = this._mobileDynamicThemeMode(), l = this._mobileBackgroundMotionMode(), p = Number(this._state.mobileFontScale || 1).toFixed(2), h = this._mobileIconScale().toFixed(2), v = this._mobileLayoutMode(), k = !!this._state.mobileCompactMode, M = this._mobileCompactWidgetMode(), Q = this._mobileShowUpNextEnabled(), F = this._mobileCoverFlowEnabled(), q = this._mobileFooterMode(), Y = this._mobileMicMode(), H = this._mobileHomeShortcutEnabled();
     return `
         <div class="settings-group">
           <div class="settings-label">${this._i18n("ui.language")}</div>
@@ -59464,8 +59503,8 @@ class aa extends As {
           <div class="settings-hint">${this._i18n("ui.choose_when_compact_mode_uses_the_two_row_mobile_widget")}</div>
           <div class="settings-label">${this._i18n("ui.show_up_next")}</div>
           <div class="settings-pills">
-            ${this._settingsPill(this._i18n("ui.enabled"), "on", P ? "on" : "off", "data-setting-show-up-next")}
-            ${this._settingsPill(this._i18n("ui.disabled"), "off", P ? "on" : "off", "data-setting-show-up-next")}
+            ${this._settingsPill(this._i18n("ui.enabled"), "on", Q ? "on" : "off", "data-setting-show-up-next")}
+            ${this._settingsPill(this._i18n("ui.disabled"), "off", Q ? "on" : "off", "data-setting-show-up-next")}
           </div>
           <div class="settings-label">${this._esc(this._i18n("ui.mobile_cover_flow", {}, "Artwork cover flow"))}</div>
           <div class="settings-pills">
@@ -59480,9 +59519,9 @@ class aa extends As {
           </div>
           <div class="settings-label">${this._i18n("ui.microphone")}</div>
           <div class="settings-pills">
-            ${this._settingsPill(this._i18n("ui.on"), "on", O, "data-setting-mic-mode")}
-            ${this._settingsPill(this._i18n("ui.off_2"), "off", O, "data-setting-mic-mode")}
-            ${this._settingsPill(this._i18n("ui.smart"), "smart", O, "data-setting-mic-mode")}
+            ${this._settingsPill(this._i18n("ui.on"), "on", Y, "data-setting-mic-mode")}
+            ${this._settingsPill(this._i18n("ui.off_2"), "off", Y, "data-setting-mic-mode")}
+            ${this._settingsPill(this._i18n("ui.smart"), "smart", Y, "data-setting-mic-mode")}
           </div>
           <div class="settings-label">${this._m("Player design", "עיצוב הנגן")}</div>
           <div class="settings-pills">
@@ -59506,7 +59545,7 @@ class aa extends As {
         </div>`;
   }
   _settingsSectionPlayersLibrary() {
-    const e = new Set(this._pinnedPlayerPreferences()), t = new Set(this._excludedPlayerPreferences()), a = this._playerSortMode(), l = this._playerOrderPreferences(), p = this._pinnedPlayerOptionPlayers([], { includeExcluded: !0 }), h = p.map((O) => [O.entity_id, this._playerDisplayName(O, p)]), v = [
+    const e = new Set(this._pinnedPlayerPreferences()), t = new Set(this._excludedPlayerPreferences()), a = this._playerSortMode(), l = this._playerOrderPreferences(), p = this._pinnedPlayerOptionPlayers([], { includeExcluded: !0 }), h = p.map((Y) => [Y.entity_id, this._playerDisplayName(Y, p)]), v = [
       ["library_playlists", this._i18n("ui.playlists")],
       ["library_artists", this._i18n("ui.artists")],
       ["library_albums", this._i18n("ui.albums")],
@@ -59515,23 +59554,23 @@ class aa extends As {
       ["library_podcasts", this._i18n("ui.podcasts")],
       ["library_liked", this._i18n("ui.liked")],
       ["library_search", this._i18n("ui.search")]
-    ], k = new Set(this._mobileLibraryTabs()), M = this._defaultMobileMediaLayout(), P = this._mobileRadioSourceMode(), F = this._mobileRadioBrowserCountry(), q = this._radioBrowserCountryOptions();
+    ], k = new Set(this._mobileLibraryTabs()), M = this._defaultMobileMediaLayout(), Q = this._mobileRadioSourceMode(), F = this._mobileRadioBrowserCountry(), q = this._radioBrowserCountryOptions();
     return `
         <div class="settings-group">
           <div class="settings-label">${this._i18n("ui.pinned_players")}</div>
           <div class="settings-check-grid">
-            ${h.length ? h.map(([O, H]) => `
+            ${h.length ? h.map(([Y, H]) => `
               <label class="settings-check-pill">
-                <input type="checkbox" data-setting-pinned-player="${this._esc(O)}" ${e.has(O) ? "checked" : ""}>
+                <input type="checkbox" data-setting-pinned-player="${this._esc(Y)}" ${e.has(Y) ? "checked" : ""}>
                 <span>${this._esc(H)}</span>
               </label>`).join("") : `<div class="settings-hint">${this._i18n("ui.no_music_assistant_players_were_found_for_pinning")}</div>`}
           </div>
           <div class="settings-hint">${this._i18n("ui.only_music_assistant_players_are_shown_here_browser_and_local_sendspin_p")}</div>
           <div class="settings-label">${this._i18n("ui.excluded_players")}</div>
           <div class="settings-check-grid">
-            ${h.length ? h.map(([O, H]) => `
+            ${h.length ? h.map(([Y, H]) => `
               <label class="settings-check-pill">
-                <input type="checkbox" data-setting-excluded-player="${this._esc(O)}" ${t.has(O) ? "checked" : ""}>
+                <input type="checkbox" data-setting-excluded-player="${this._esc(Y)}" ${t.has(Y) ? "checked" : ""}>
                 <span>${this._esc(H)}</span>
               </label>`).join("") : `<div class="settings-hint">${this._i18n("ui.no_music_assistant_players_were_found_for_pinning")}</div>`}
           </div>
@@ -59544,14 +59583,14 @@ class aa extends As {
           </select>
           ${a === "custom" ? `
             <div class="settings-check-grid quick-actions-grid">
-              ${h.map(([O, H]) => {
-      const j = l.includes(O) ? l.indexOf(O) : l.length + h.findIndex(([G]) => G === O);
+              ${h.map(([Y, H]) => {
+      const G = l.includes(Y) ? l.indexOf(Y) : l.length + h.findIndex(([j]) => j === Y);
       return `
                   <div class="settings-check-pill quick-action-pill">
                     <span>${this._esc(H)}</span>
                     <span class="quick-action-order-controls">
-                      <button type="button" class="quick-action-order-btn" data-setting-player-order-move="${this._esc(O)}" data-direction="-1" title="${this._esc(this._i18n("ui.move_up"))}" ${j <= 0 ? "disabled" : ""}>${this._iconSvg("up")}</button>
-                      <button type="button" class="quick-action-order-btn" data-setting-player-order-move="${this._esc(O)}" data-direction="1" title="${this._esc(this._i18n("ui.move_down"))}" ${j >= h.length - 1 ? "disabled" : ""}>${this._iconSvg("down")}</button>
+                      <button type="button" class="quick-action-order-btn" data-setting-player-order-move="${this._esc(Y)}" data-direction="-1" title="${this._esc(this._i18n("ui.move_up"))}" ${G <= 0 ? "disabled" : ""}>${this._iconSvg("up")}</button>
+                      <button type="button" class="quick-action-order-btn" data-setting-player-order-move="${this._esc(Y)}" data-direction="1" title="${this._esc(this._i18n("ui.move_down"))}" ${G >= h.length - 1 ? "disabled" : ""}>${this._iconSvg("down")}</button>
                     </span>
                   </div>`;
     }).join("")}
@@ -59566,23 +59605,23 @@ class aa extends As {
           </div>
           <div class="settings-hint">${this._i18n("ui.choose_how_library_pages_open_grid_or_list_can_still_be_changed_manually", {}, this._m("Choose how library pages open. You can still switch Grid/List inside the library.", "בחר איך דפי הספרייה נפתחים. עדיין אפשר להחליף Grid/List בתוך הספרייה."))}</div>
           <div class="settings-check-grid">
-            ${v.map(([O, H]) => `
+            ${v.map(([Y, H]) => `
               <label class="settings-check-pill">
-                <input type="checkbox" data-setting-library-tab="${this._esc(O)}" ${k.has(O) ? "checked" : ""}>
+                <input type="checkbox" data-setting-library-tab="${this._esc(Y)}" ${k.has(Y) ? "checked" : ""}>
                 <span>${this._esc(H)}</span>
               </label>`).join("")}
           </div>
           <div class="settings-label">${this._esc(this._i18n("ui.radio_source", {}, "Radio source"))}</div>
           <select class="media-sort-select settings-select" id="mobileRadioSourceModeSelect" aria-label="${this._esc(this._i18n("ui.radio_source", {}, "Radio source"))}">
-            <option value="combined" ${P === "combined" ? "selected" : ""}>${this._esc(this._m("Combined", "משולב"))}</option>
-            <option value="ma_first" ${P === "ma_first" ? "selected" : ""}>${this._esc(this._m("Music Assistant first", "Music Assistant ראשון"))}</option>
-            <option value="ma_only" ${P === "ma_only" ? "selected" : ""}>${this._esc(this._m("Music Assistant only", "Music Assistant בלבד"))}</option>
-            <option value="radiobrowser_only" ${P === "radiobrowser_only" ? "selected" : ""}>${this._esc(this._m("RadioBrowser only", "RadioBrowser בלבד"))}</option>
+            <option value="combined" ${Q === "combined" ? "selected" : ""}>${this._esc(this._m("Combined", "משולב"))}</option>
+            <option value="ma_first" ${Q === "ma_first" ? "selected" : ""}>${this._esc(this._m("Music Assistant first", "Music Assistant ראשון"))}</option>
+            <option value="ma_only" ${Q === "ma_only" ? "selected" : ""}>${this._esc(this._m("Music Assistant only", "Music Assistant בלבד"))}</option>
+            <option value="radiobrowser_only" ${Q === "radiobrowser_only" ? "selected" : ""}>${this._esc(this._m("RadioBrowser only", "RadioBrowser בלבד"))}</option>
           </select>
           <div class="settings-hint">${this._esc(this._m("Controls whether the Radio library page uses Music Assistant stations, RadioBrowser stations, or both.", "קובע אם דף הרדיו משתמש בתחנות Music Assistant, בתחנות RadioBrowser, או בשניהם."))}</div>
           <div class="settings-label">Radio Browser</div>
           <select class="media-sort-select settings-select" id="mobileRadioCountrySelect" aria-label="${this._esc(this._i18n("ui.radio_browser_country"))}">
-            ${q.map(([O, H]) => `<option value="${this._esc(O)}" ${O === F ? "selected" : ""}>${this._esc(H)}</option>`).join("")}
+            ${q.map(([Y, H]) => `<option value="${this._esc(Y)}" ${Y === F ? "selected" : ""}>${this._esc(H)}</option>`).join("")}
           </select>
           <div class="settings-hint">${this._i18n("ui.choose_a_country_or_all_countries_to_browse_every_country_inside_the_rad")}</div>
         </div>`;
@@ -59596,18 +59635,18 @@ class aa extends As {
       ["actions", this._i18n("ui.actions_2")],
       ["settings", this._i18n("ui.settings")],
       ["theme", this._i18n("ui.theme_toggle")]
-    ], h = new Set(this._mobileMainBarItems()), v = this._controlRoomEnabled(), k = this._mobileStudioShortcutEnabled(), M = !this._usesVisualSettings(), P = this._mobileVolumeMode(), F = this._mobileVolumeStepButtonsEnabled(), q = this._mobileVolumeStepPercent(), O = this._useMaLikedMode() ? "ma" : "local";
+    ], h = new Set(this._mobileMainBarItems()), v = this._controlRoomEnabled(), k = this._mobileStudioShortcutEnabled(), M = !this._usesVisualSettings(), Q = this._mobileVolumeMode(), F = this._mobileVolumeStepButtonsEnabled(), q = this._mobileVolumeStepPercent(), Y = this._useMaLikedMode() ? "ma" : "local";
     return `
         <div class="settings-group quick-actions-settings-card">
           <div class="settings-label">${this._i18n("ui.quick_actions")}</div>
           <div class="settings-check-grid quick-actions-grid">
-            ${e.map(({ value: H, label: j, icon: G, tone: V }) => {
+            ${e.map(({ value: H, label: G, icon: j, tone: V }) => {
       const Z = t.indexOf(H), W = Z >= 0;
       return `
               <div class="settings-check-pill quick-action-pill ${V === "danger" ? "danger" : ""}">
                 <input type="checkbox" data-setting-quick-action="${this._esc(H)}" ${a.has(H) ? "checked" : ""}>
-                <span class="quick-action-setting-icon">${this._iconSvg(G)}</span>
-                <span class="quick-action-pill-label">${this._esc(j)}</span>
+                <span class="quick-action-setting-icon">${this._iconSvg(j)}</span>
+                <span class="quick-action-pill-label">${this._esc(G)}</span>
                 ${W ? `
                   <span class="quick-action-order-controls">
                     <button type="button" class="quick-action-order-btn" data-setting-quick-action-move="${this._esc(H)}" data-direction="-1" title="${this._esc(this._i18n("ui.move_up"))}" ${Z <= 0 ? "disabled" : ""}>${this._iconSvg("up")}</button>
@@ -59628,13 +59667,13 @@ class aa extends As {
                 <span>${this._esc(this._controlRoomLabel())}</span>
               </label>
             ` : ""}
-            ${p.map(([H, j]) => {
-      const G = M && H === "settings";
+            ${p.map(([H, G]) => {
+      const j = M && H === "settings";
       return `
-              <div class="settings-check-pill quick-action-pill ${G ? "is-locked" : ""}">
-                <input type="checkbox" data-setting-main-bar-item="${this._esc(H)}" ${h.has(H) || G ? "checked" : ""} ${G ? "disabled" : ""}>
-                <span>${this._esc(j)}</span>
-                ${G ? `<span class="settings-fixed-badge">${this._esc(this._i18n("ui.fixed"))}</span>` : ""}
+              <div class="settings-check-pill quick-action-pill ${j ? "is-locked" : ""}">
+                <input type="checkbox" data-setting-main-bar-item="${this._esc(H)}" ${h.has(H) || j ? "checked" : ""} ${j ? "disabled" : ""}>
+                <span>${this._esc(G)}</span>
+                ${j ? `<span class="settings-fixed-badge">${this._esc(this._i18n("ui.fixed"))}</span>` : ""}
                 ${h.has(H) ? `
                   <span class="quick-action-order-controls">
                     <button type="button" class="quick-action-order-btn" data-setting-main-bar-move="${this._esc(H)}" data-direction="-1" title="${this._esc(this._i18n("ui.move_up"))}" ${this._mobileMainBarItems().indexOf(H) <= 0 ? "disabled" : ""}>${this._iconSvg("up")}</button>
@@ -59651,8 +59690,8 @@ class aa extends As {
           </div>
           <div class="settings-label">${this._i18n("ui.volume_control_large_screen_only")}</div>
           <div class="settings-pills">
-            ${this._settingsPill(this._i18n("ui.always_visible"), "always", P, "data-setting-volume-mode")}
-            ${this._settingsPill(this._i18n("ui.button"), "button", P, "data-setting-volume-mode")}
+            ${this._settingsPill(this._i18n("ui.always_visible"), "always", Q, "data-setting-volume-mode")}
+            ${this._settingsPill(this._i18n("ui.button"), "button", Q, "data-setting-volume-mode")}
           </div>
           <div class="settings-label">${this._i18n("ui.volume_step_buttons")}</div>
           <div class="settings-pills">
@@ -59666,7 +59705,7 @@ class aa extends As {
           </div>
           <div class="settings-label">${this._i18n("ui.liked_sync")}</div>
           <div class="settings-pills">
-            ${this._settingsPill("Music Assistant", "ma", O, "data-setting-liked-mode")}
+            ${this._settingsPill("Music Assistant", "ma", Y, "data-setting-liked-mode")}
           </div>
         </div>`;
   }
@@ -59779,7 +59818,7 @@ class aa extends As {
           </select>
           <input class="settings-text-input" id="powerButtonEntityInput" type="text" value="${this._esc(this._powerButtonEntity())}" placeholder="script.movie_time">
           ${p.slice(1).map((v, k) => {
-      const M = k + 2, P = Ge.normalizePowerButtonAction(v.action), F = Ge.normalizeAuxiliaryButtonIcon(v.icon || "power");
+      const M = k + 2, Q = Ge.normalizePowerButtonAction(v.action), F = Ge.normalizeAuxiliaryButtonIcon(v.icon || "power");
       return `
               <div class="settings-label">${this._esc(`${this._i18n("ui.auxiliary_button")} ${M}`)}</div>
               <div class="settings-pills">
@@ -59788,15 +59827,15 @@ class aa extends As {
               </div>
               <input class="settings-text-input" id="auxButtonNameInput${M}" data-aux-button-name="${M}" type="text" value="${this._esc(v.name || "")}" placeholder="${this._esc(this._i18n("ui.auxiliary_button"))}">
               <select class="media-sort-select settings-select" id="auxButtonIconSelect${M}" data-aux-button-icon="${M}" aria-label="${this._esc(this._i18n("ui.auxiliary_button_icon"))}">
-                ${h.map(([q, O]) => `<option value="${this._esc(q)}" ${q === F ? "selected" : ""}>${this._esc(O)}</option>`).join("")}
+                ${h.map(([q, Y]) => `<option value="${this._esc(q)}" ${q === F ? "selected" : ""}>${this._esc(Y)}</option>`).join("")}
               </select>
               <select class="media-sort-select settings-select" id="auxButtonActionSelect${M}" data-aux-button-action="${M}" aria-label="${this._esc(this._i18n("ui.auxiliary_button_action"))}">
-                <option value="stop_player" ${P === "stop_player" ? "selected" : ""}>${this._esc(this._i18n("ui.stop_player"))}</option>
-                <option value="toggle" ${P === "toggle" ? "selected" : ""}>${this._esc(this._i18n("ui.toggle"))}</option>
-                <option value="turn_on" ${P === "turn_on" ? "selected" : ""}>${this._esc(this._i18n("ui.turn_on"))}</option>
-                <option value="turn_off" ${P === "turn_off" ? "selected" : ""}>${this._esc(this._i18n("ui.turn_off"))}</option>
-                <option value="scene" ${P === "scene" ? "selected" : ""}>${this._esc(this._i18n("ui.scene"))}</option>
-                <option value="script" ${P === "script" ? "selected" : ""}>${this._esc(this._i18n("ui.script"))}</option>
+                <option value="stop_player" ${Q === "stop_player" ? "selected" : ""}>${this._esc(this._i18n("ui.stop_player"))}</option>
+                <option value="toggle" ${Q === "toggle" ? "selected" : ""}>${this._esc(this._i18n("ui.toggle"))}</option>
+                <option value="turn_on" ${Q === "turn_on" ? "selected" : ""}>${this._esc(this._i18n("ui.turn_on"))}</option>
+                <option value="turn_off" ${Q === "turn_off" ? "selected" : ""}>${this._esc(this._i18n("ui.turn_off"))}</option>
+                <option value="scene" ${Q === "scene" ? "selected" : ""}>${this._esc(this._i18n("ui.scene"))}</option>
+                <option value="script" ${Q === "script" ? "selected" : ""}>${this._esc(this._i18n("ui.script"))}</option>
               </select>
               <input class="settings-text-input" id="auxButtonEntityInput${M}" data-aux-button-entity="${M}" type="text" value="${this._esc(v.entity || "")}" placeholder="script.movie_time">
             `;
@@ -59877,19 +59916,19 @@ class aa extends As {
     if (typeof a != "function")
       return { ok: !1, skipped: !0, reason: "The browser Image API is not available in this context." };
     const l = (v) => new Promise((k) => {
-      let M = !1, P = null;
-      const F = (q, O = "", H = null) => {
-        M || (M = !0, clearTimeout(P), H && (H.onload = null, H.onerror = null), k({
+      let M = !1, Q = null;
+      const F = (q, Y = "", H = null) => {
+        M || (M = !0, clearTimeout(Q), H && (H.onload = null, H.onerror = null), k({
           ok: q,
           skipped: !1,
-          reason: O,
+          reason: Y,
           width: Number(H?.naturalWidth || 0) || 0,
           height: Number(H?.naturalHeight || 0) || 0
         }));
       };
       try {
         const q = new a();
-        q.decoding = "async", q.loading = "eager", q.onload = () => F(!0, "", q), q.onerror = () => F(!1, "Browser image load failed.", q), P = setTimeout(() => F(!1, "Timed out while loading artwork.", q), 4500), q.src = v, q.complete && q.naturalWidth > 0 && F(!0, "", q);
+        q.decoding = "async", q.loading = "eager", q.onload = () => F(!0, "", q), q.onerror = () => F(!1, "Browser image load failed.", q), Q = setTimeout(() => F(!1, "Timed out while loading artwork.", q), 4500), q.src = v, q.complete && q.naturalWidth > 0 && F(!0, "", q);
       } catch (q) {
         F(!1, q?.message || "Browser image load failed.");
       }
@@ -59928,12 +59967,12 @@ class aa extends As {
       e("info", "Rendered artwork DOM", "Skipped because the card shadow DOM is not available.");
       return;
     }
-    const a = (P) => {
-      const F = String(P?.currentSrc || P?.getAttribute?.("src") || "").trim(), q = P?.dataset || {};
-      return F.includes("/imageproxy") || F.includes("/api/media_player_proxy/") || q.homeiiArtSrc || q.homeiiAppliedArtSrc || q.img ? !0 : !!P?.closest?.(".media-items-list,.queue-list,.queue-panel,.now-art,.np-art,.menu-thumb,.queue-thumb,.art-stack-card,.compact-cover-image");
-    }, l = Array.from(t.querySelectorAll("img")).filter(a), p = l.filter((P) => {
-      const F = P.complete === !0, q = Number(P.naturalWidth || 0), O = P.dataset?.homeiiArtReady === "0";
-      return F && q <= 0 || O;
+    const a = (Q) => {
+      const F = String(Q?.currentSrc || Q?.getAttribute?.("src") || "").trim(), q = Q?.dataset || {};
+      return F.includes("/imageproxy") || F.includes("/api/media_player_proxy/") || q.homeiiArtSrc || q.homeiiAppliedArtSrc || q.img ? !0 : !!Q?.closest?.(".media-items-list,.queue-list,.queue-panel,.now-art,.np-art,.menu-thumb,.queue-thumb,.art-stack-card,.compact-cover-image");
+    }, l = Array.from(t.querySelectorAll("img")).filter(a), p = l.filter((Q) => {
+      const F = Q.complete === !0, q = Number(Q.naturalWidth || 0), Y = Q.dataset?.homeiiArtReady === "0";
+      return F && q <= 0 || Y;
     }), h = Array.from(t.querySelectorAll("[data-img]")), v = Array.from(t.querySelectorAll(".media-placeholder,.homeii-art-fallback,.art-stack-fallback,.static-fallback")), k = this._state?.menuOpen ? `menu=${this._state.menuPage || "unknown"}` : "menu=closed", M = `Rendered ${l.length} artwork image(s), ${p.length} broken/pending image(s), ${h.length} lazy placeholder(s), ${v.length} fallback placeholder(s). Run diagnostics while the affected Library/Queue screen is open for the strongest signal.`;
     e(p.length ? "warn" : "ok", "Rendered artwork DOM", M, k);
   }
@@ -60071,9 +60110,9 @@ class aa extends As {
       e("fail", "Configured entity", "The configured entity was not found in Home Assistant states. Check the entity id in YAML or the visual editor.", p);
       return;
     }
-    const M = (Array.isArray(this._state?.players) ? this._state.players : []).some((W) => W?.entity_id === p), P = t?.entity_id === p, F = this._diagnosticIsStrictMusicAssistantPlayer(v, l), q = !F && this._isGenericMusicAssistantFallbackPlayer?.(v), O = this._isPlayerExcluded?.(v), H = t && t.entity_id !== p && this._isPlayerActive?.(t), j = v.attributes?.friendly_name || p, G = t?.attributes?.friendly_name || t?.entity_id || "(none)";
+    const M = (Array.isArray(this._state?.players) ? this._state.players : []).some((W) => W?.entity_id === p), Q = t?.entity_id === p, F = this._diagnosticIsStrictMusicAssistantPlayer(v, l), q = !F && this._isGenericMusicAssistantFallbackPlayer?.(v), Y = this._isPlayerExcluded?.(v), H = t && t.entity_id !== p && this._isPlayerActive?.(t), G = v.attributes?.friendly_name || p, j = t?.attributes?.friendly_name || t?.entity_id || "(none)";
     let V = "ok", Z = "Configured entity exists and is available as the card default player.";
-    O ? (V = "warn", Z = "Configured entity exists, but it is excluded in HOMEii settings.") : !F && !q ? (V = "warn", Z = "Configured entity exists, but it does not look like a Music Assistant player.") : M ? h ? (V = P ? "ok" : "info", Z = P ? "Configured entity is selected even with a query-string override present." : "A query-string player override is active, so it can intentionally win over the configured entity.") : P ? Z = "Configured entity is the currently selected player." : H ? (V = "info", Z = "Another player is currently active, so HOMEii is showing the active player and keeping the configured entity as the fallback default.") : (V = "warn", Z = "Configured entity exists, but HOMEii selected a different player. This usually means manual/front selection, pinned order, or remembered state is taking priority.") : (V = "warn", Z = "Configured entity exists, but it is not in the current visible player list. Check pinned/excluded player filters."), e(V, "Configured entity", `${Z} Selected now: ${G}.`, `${j} | ${p} | ${this._diagnosticPlayerMarkerSummary(v, l)}`);
+    Y ? (V = "warn", Z = "Configured entity exists, but it is excluded in HOMEii settings.") : !F && !q ? (V = "warn", Z = "Configured entity exists, but it does not look like a Music Assistant player.") : M ? h ? (V = Q ? "ok" : "info", Z = Q ? "Configured entity is selected even with a query-string override present." : "A query-string player override is active, so it can intentionally win over the configured entity.") : Q ? Z = "Configured entity is the currently selected player." : H ? (V = "info", Z = "Another player is currently active, so HOMEii is showing the active player and keeping the configured entity as the fallback default.") : (V = "warn", Z = "Configured entity exists, but HOMEii selected a different player. This usually means manual/front selection, pinned order, or remembered state is taking priority.") : (V = "warn", Z = "Configured entity exists, but it is not in the current visible player list. Check pinned/excluded player filters."), e(V, "Configured entity", `${Z} Selected now: ${j}.`, `${G} | ${p} | ${this._diagnosticPlayerMarkerSummary(v, l)}`);
   }
   async _diagnosticSearchRows(e, t = []) {
     const a = this._diagnosticSearchQuery(), l = this._hasService?.("music_assistant", "search") || Array.isArray(t) && t.includes("search"), p = Number(this._cache?.library?.size || 0);
@@ -60087,7 +60126,7 @@ class aa extends As {
       return;
     }
     const h = async (v, k, M) => {
-      const P = Date.now(), F = await this._withTimeout(
+      const Q = Date.now(), F = await this._withTimeout(
         this._search(a, k),
         M,
         this._timeoutMessage(v)
@@ -60096,7 +60135,7 @@ class aa extends As {
         results: F,
         count: this._diagnosticSearchResultCount(F),
         breakdown: this._diagnosticSearchResultBreakdown(F),
-        elapsed: Date.now() - P
+        elapsed: Date.now() - Q
       };
     };
     try {
@@ -60161,53 +60200,53 @@ class aa extends As {
       `Rendered queue items ${v}; queue state reports ${Number.isFinite(k) ? k : "unknown"} item(s).${M ? " The rendered queue appears to be a partial window." : ""}`,
       this._state.maQueueState ? "state present" : "state missing"
     );
-    const P = [], F = [];
+    const Q = [], F = [];
     await (async (he, s) => {
       try {
         const A = await s(), g = this._diagnosticSnapshotCount(A), y = typeof this._queueSnapshotExpectedCount == "function" ? this._queueSnapshotExpectedCount(A) : 0, S = typeof this._queueSnapshotLooksPartial == "function" ? this._queueSnapshotLooksPartial(A) : !1, B = S && y > g ? `${g}/${y} item(s), partial window` : `${g} item(s)`;
-        P.push(`${he}: ${A ? B : "no snapshot"}`), A && F.push({ label: he, snapshot: A, count: g, expected: y, partial: S });
+        Q.push(`${he}: ${A ? B : "no snapshot"}`), A && F.push({ label: he, snapshot: A, count: g, expected: y, partial: S });
       } catch (A) {
-        P.push(`${he}: ${A?.message || "failed"}`);
+        Q.push(`${he}: ${A?.message || "failed"}`);
       }
     })("HOMEii Flow Engine queue", () => this._fetchMusicAssistantQueueSnapshot(t));
-    const O = F.sort((he, s) => s.count - he.count)[0], H = P.join("; ") || "No queue providers were available.";
-    if (O?.count > 0) {
-      const he = O.snapshot?.state || null, s = Array.isArray(O.snapshot?.items) ? O.snapshot.items : [];
+    const Y = F.sort((he, s) => s.count - he.count)[0], H = Q.join("; ") || "No queue providers were available.";
+    if (Y?.count > 0) {
+      const he = Y.snapshot?.state || null, s = Array.isArray(Y.snapshot?.items) ? Y.snapshot.items : [];
       he && s.length && typeof this._applyQueueSnapshot == "function" && this._applyQueueSnapshot(he, s, !0);
-      const A = Array.isArray(this._state.queueItems) ? this._state.queueItems.length : 0, g = v === 0 && O.count > 0, y = g && A > 0;
+      const A = Array.isArray(this._state.queueItems) ? this._state.queueItems.length : 0, g = v === 0 && Y.count > 0, y = g && A > 0;
       e(
-        O.partial ? "warn" : y ? "ok" : g ? "warn" : "ok",
+        Y.partial ? "warn" : y ? "ok" : g ? "warn" : "ok",
         "Queue snapshot",
-        O.partial ? `${H}. The Engine returned a partial queue window; the card will keep the best Engine state it has and refresh the queue from Engine again after mutations.` : y ? `${H}. Diagnostics applied the queue snapshot to the card UI state. Reopen the Queue screen if it was already open.` : g ? `${H}. API returned queue items while the UI currently has no rendered queue items; refresh/reopen the queue panel and send this report if it remains empty.` : H,
-        `${O.label}: ${O.partial && O.expected > O.count ? `${O.count}/${O.expected}` : O.count}`
+        Y.partial ? `${H}. The Engine returned a partial queue window; the card will keep the best Engine state it has and refresh the queue from Engine again after mutations.` : y ? `${H}. Diagnostics applied the queue snapshot to the card UI state. Reopen the Queue screen if it was already open.` : g ? `${H}. API returned queue items while the UI currently has no rendered queue items; refresh/reopen the queue panel and send this report if it remains empty.` : H,
+        `${Y.label}: ${Y.partial && Y.expected > Y.count ? `${Y.count}/${Y.expected}` : Y.count}`
       );
-    } else if (O)
+    } else if (Y)
       e("warn", "Queue snapshot", `${H}. Queue API is reachable but returned no items; this can be normal for an idle/empty queue.`);
     else {
       const he = this._diagnosticIsStrictMusicAssistantPlayer(t);
       e(he && !h ? "warn" : "fail", "Queue snapshot", he && !h ? `${H}. The selected Engine player has no active_queue/queue_id, so the Engine may not be able to resolve its Music Assistant queue.` : H);
     }
-    const j = Array.isArray(O?.snapshot?.items) ? O.snapshot.items : [];
-    if (!j.length) {
+    const G = Array.isArray(Y?.snapshot?.items) ? Y.snapshot.items : [];
+    if (!G.length) {
       e("info", "Queue artwork sample", "Skipped because the selected player's queue returned no items.");
       return;
     }
-    const G = j.map((he) => ({
+    const j = G.map((he) => ({
       item: he,
       art: this._queueItemImageUrl?.(he, 300) || this._artUrl(he, { size: 300 }) || this._artUrl(he?.media_item || he, { size: 300 })
     })).find((he) => he.art);
-    if (!G) {
-      e("warn", "Queue artwork sample", "Queue items were returned, but HOMEii could not infer artwork from the sample window.", `${O.label}: ${j.length} item(s)`);
+    if (!j) {
+      e("warn", "Queue artwork sample", "Queue items were returned, but HOMEii could not infer artwork from the sample window.", `${Y.label}: ${G.length} item(s)`);
       return;
     }
-    const Z = (G.item?.media_item || G.item)?.name || G.item?.name || G.item?.media_title || "queue item", W = this._diagnosticUrlHasMixedContentRisk(G.art);
-    e(W ? "warn" : "ok", "Queue artwork sample", W ? "Queue artwork resolves to HTTP while the dashboard is HTTPS, so the browser may block it." : "Queue artwork URL was inferred from a selected-player queue item.", `${Z} -> ${this._sanitizeDiagnosticUrl(G.art)}`);
-    const ue = await this._diagnosticProbeArtworkLoad(G.art);
-    ue.skipped ? e("info", "Queue artwork browser load", ue.reason, `${Z} -> ${this._sanitizeDiagnosticUrl(G.art)}`) : e(
+    const Z = (j.item?.media_item || j.item)?.name || j.item?.name || j.item?.media_title || "queue item", W = this._diagnosticUrlHasMixedContentRisk(j.art);
+    e(W ? "warn" : "ok", "Queue artwork sample", W ? "Queue artwork resolves to HTTP while the dashboard is HTTPS, so the browser may block it." : "Queue artwork URL was inferred from a selected-player queue item.", `${Z} -> ${this._sanitizeDiagnosticUrl(j.art)}`);
+    const ue = await this._diagnosticProbeArtworkLoad(j.art);
+    ue.skipped ? e("info", "Queue artwork browser load", ue.reason, `${Z} -> ${this._sanitizeDiagnosticUrl(j.art)}`) : e(
       ue.ok ? "ok" : "warn",
       "Queue artwork browser load",
       ue.ok ? "This browser loaded the queue artwork sample as an image." : `${ue.reason} The artwork URL was inferred, but this browser could not display it from the current access path.`,
-      `${Z} -> ${this._sanitizeDiagnosticUrl(G.art)}${ue.ok && ue.width && ue.height ? ` (${ue.width}x${ue.height})` : ""}`
+      `${Z} -> ${this._sanitizeDiagnosticUrl(j.art)}${ue.ok && ue.width && ue.height ? ` (${ue.width}x${ue.height})` : ""}`
     );
   }
   async _diagnosticLibraryRows(e, t = []) {
@@ -60218,34 +60257,34 @@ class aa extends As {
     e("info", "Library providers", `Engine library yes; HA get_library ${t.includes("get_library") ? "available to Engine" : "not exposed"}; Direct browser library disabled for HOMEii Flow 6.`);
     const a = ["playlist", "artist", "album", "track", "radio"], l = await Promise.all(a.map(async (H) => {
       try {
-        const j = await this._fetchLibrary(H, "sort_name", 3, !1);
-        return { type: H, items: Array.isArray(j) ? j : [], error: "" };
-      } catch (j) {
-        return { type: H, items: [], error: j?.message || "failed" };
+        const G = await this._fetchLibrary(H, "sort_name", 3, !1);
+        return { type: H, items: Array.isArray(G) ? G : [], error: "" };
+      } catch (G) {
+        return { type: H, items: [], error: G?.message || "failed" };
       }
     })), p = l.map((H) => {
-      const j = H.items.filter((G) => this._artUrl(G, { size: 160 })).length;
-      return `${H.type}:${H.error ? `error(${H.error})` : `${H.items.length} item(s), ${j} art`}`;
-    }), h = l.reduce((H, j) => H + j.items.length, 0), v = l.filter((H) => H.error).length;
+      const G = H.items.filter((j) => this._artUrl(j, { size: 160 })).length;
+      return `${H.type}:${H.error ? `error(${H.error})` : `${H.items.length} item(s), ${G} art`}`;
+    }), h = l.reduce((H, G) => H + G.items.length, 0), v = l.filter((H) => H.error).length;
     e(h ? "ok" : v === l.length ? "fail" : "warn", "Library coverage", p.join("; "));
     const k = l.find((H) => H.items.length), M = k?.items?.[0] || null;
     if (!M) {
       e("warn", "Library artwork sample", "No library item was returned, so artwork URL inference could not be checked.");
       return;
     }
-    const P = this._artUrl(M, { size: 300 }), F = M.name || M.title || M.media_item?.name || k.type;
-    if (!P) {
+    const Q = this._artUrl(M, { size: 300 }), F = M.name || M.title || M.media_item?.name || k.type;
+    if (!Q) {
       e("warn", "Library artwork sample", "A library item was returned, but HOMEii could not infer an artwork URL from it.", `${k.type}: ${F}`);
       return;
     }
-    const q = this._diagnosticUrlHasMixedContentRisk(P);
-    e(q ? "warn" : "ok", "Library artwork sample", q ? "Artwork resolves to HTTP while the dashboard is HTTPS, so the browser may block it." : "Artwork URL was inferred for a sample library item.", `${k.type}: ${F} -> ${this._sanitizeDiagnosticUrl(P)}`);
-    const O = await this._diagnosticProbeArtworkLoad(P);
-    O.skipped ? e("info", "Library artwork browser load", O.reason, `${k.type}: ${F} -> ${this._sanitizeDiagnosticUrl(P)}`) : e(
-      O.ok ? "ok" : "warn",
+    const q = this._diagnosticUrlHasMixedContentRisk(Q);
+    e(q ? "warn" : "ok", "Library artwork sample", q ? "Artwork resolves to HTTP while the dashboard is HTTPS, so the browser may block it." : "Artwork URL was inferred for a sample library item.", `${k.type}: ${F} -> ${this._sanitizeDiagnosticUrl(Q)}`);
+    const Y = await this._diagnosticProbeArtworkLoad(Q);
+    Y.skipped ? e("info", "Library artwork browser load", Y.reason, `${k.type}: ${F} -> ${this._sanitizeDiagnosticUrl(Q)}`) : e(
+      Y.ok ? "ok" : "warn",
       "Library artwork browser load",
-      O.ok ? "This browser loaded the library artwork sample as an image." : `${O.reason} The artwork URL was inferred, but this browser could not display it from the current access path.`,
-      `${k.type}: ${F} -> ${this._sanitizeDiagnosticUrl(P)}${O.ok && O.width && O.height ? ` (${O.width}x${O.height})` : ""}`
+      Y.ok ? "This browser loaded the library artwork sample as an image." : `${Y.reason} The artwork URL was inferred, but this browser could not display it from the current access path.`,
+      `${k.type}: ${F} -> ${this._sanitizeDiagnosticUrl(Q)}${Y.ok && Y.width && Y.height ? ` (${Y.width}x${Y.height})` : ""}`
     );
   }
   _diagnosticsSummary(e = this._state.diagnosticsItems || []) {
@@ -60294,7 +60333,7 @@ class aa extends As {
       e("ok", "HOMEii Flow Engine", `Connected to HOMEii Flow Engine ${v}. Capabilities: ${h}.`, t), e("info", "Engine routing", "Card writes will use the resolved Engine instance/profile unless explicitly overridden in the card config.", `instance=${a.instanceId || "default"}; profile=${a.profileId || "default"}; transport=${this._state.engineLastTransport || "websocket"}`);
       const k = a.raw?.required_connections || a.raw?.connections || this._state.engineRequiredConnections;
       if (k && typeof k == "object") {
-        const E = k.music_assistant || k.connections?.music_assistant || {}, I = k.queue_provider || k.connections?.queue_provider || {}, R = k.library_provider || k.connections?.library_provider || {}, Y = k.search_provider || k.connections?.search_provider || {};
+        const E = k.music_assistant || k.connections?.music_assistant || {}, I = k.queue_provider || k.connections?.queue_provider || {}, R = k.library_provider || k.connections?.library_provider || {}, O = k.search_provider || k.connections?.search_provider || {};
         e(
           k.ok ? "ok" : "warn",
           "Engine required connections",
@@ -60305,7 +60344,7 @@ class aa extends As {
           "Engine Music Assistant connection",
           E.message || "Music Assistant connection state was not reported.",
           `${Number(E.music_assistant_player_count || 0)} MA player(s), ${Number(E.service_count || 0)} service(s)`
-        ), e(I.ok ? "ok" : "warn", "Engine queue provider", I.message || "Queue provider state was not reported."), e(R.ok ? "ok" : "fail", "Engine library provider", R.message || "Library provider state was not reported."), e(Y.ok ? "ok" : "fail", "Engine search provider", Y.message || "Search provider state was not reported.");
+        ), e(I.ok ? "ok" : "warn", "Engine queue provider", I.message || "Queue provider state was not reported."), e(R.ok ? "ok" : "fail", "Engine library provider", R.message || "Library provider state was not reported."), e(O.ok ? "ok" : "fail", "Engine search provider", O.message || "Search provider state was not reported.");
       }
       e(
         a.capabilities?.item_artwork_proxy ? "ok" : "info",
@@ -60322,14 +60361,14 @@ class aa extends As {
           `hits=${Number(M.memory_hits || 0)}; stale_hits=${Number(M.stale_hits || 0)}; coalesced=${Number(M.coalesced || 0)}; last_fetch=${Number(M.last_fetch_ms || 0)}ms; warm=${M.warm_status || "pending"}`
         );
       }
-      const P = this._performanceMetrics || {};
+      const Q = this._performanceMetrics || {};
       e(
-        Number(P.lastMenuRenderMs || 0) <= 200 ? "ok" : "warn",
+        Number(Q.lastMenuRenderMs || 0) <= 200 ? "ok" : "warn",
         "Card menu render performance",
-        `Last menu render ${Number(P.lastMenuRenderMs || 0)}ms on ${P.lastMenuPage || "none"} with ${Number(P.lastMenuDomNodes || 0)} DOM node(s).`,
-        `renders=${Number(P.menuRenders || 0)}; slowest=${Number(P.slowestMenuRenderMs || 0)}ms`
+        `Last menu render ${Number(Q.lastMenuRenderMs || 0)}ms on ${Q.lastMenuPage || "none"} with ${Number(Q.lastMenuDomNodes || 0)} DOM node(s).`,
+        `renders=${Number(Q.menuRenders || 0)}; slowest=${Number(Q.slowestMenuRenderMs || 0)}ms`
       ), a.capabilities?.schedule_calendar && e("ok", "Engine schedule calendar", "HOMEii Flow Engine reports a Home Assistant calendar entity for stored schedules.");
-      const [F, q, O, H, j, G, V, Z, W, ue] = await Promise.allSettled([
+      const [F, q, Y, H, G, j, V, Z, W, ue] = await Promise.allSettled([
         this._homeiiEngineGetPlayers(),
         this._homeiiEngineGetStats(),
         this._homeiiEngineGetSchedules(),
@@ -60346,7 +60385,7 @@ class aa extends As {
         e(he ? "ok" : "warn", "Engine player state", `${he} Music Assistant player(s), ${E} playing, ${I} grouped.`, R ? `active=${R}` : "");
       }
       if (Z.status === "fulfilled") {
-        const E = Z.value || {}, I = E.last_schedule_check || {}, R = E.last_schedule_action || {}, Y = E.last_timer_action || {}, $ = E.last_volume_action || {}, X = E.last_button_action || {}, me = I.local_time ? `Last schedule check at ${I.local_time}; ${I.schedule_count ?? 0} schedule(s), ${I.attempted_count ?? 0} attempted, ${I.executed_count ?? 0} executed, ${I.failed_count ?? 0} failed.` : "No schedule check has been recorded yet. Restart Home Assistant or run orchestration once if this stays empty.", _e = R.error ? ` Last schedule action failed: ${R.error}` : R.provider ? ` Last schedule action used ${R.provider}.` : "", ne = Y.error ? ` Last timer action failed: ${Y.error}` : Y.provider ? ` Last timer action used ${Y.provider}.` : "", K = $.player ? ` Last volume rule adjusted ${$.player}.` : "", ae = X.action ? ` Last Engine button action: ${X.action}${X.ok === !1 && X.error ? ` (${X.error})` : ""}.` : "";
+        const E = Z.value || {}, I = E.last_schedule_check || {}, R = E.last_schedule_action || {}, O = E.last_timer_action || {}, $ = E.last_volume_action || {}, X = E.last_button_action || {}, me = I.local_time ? `Last schedule check at ${I.local_time}; ${I.schedule_count ?? 0} schedule(s), ${I.attempted_count ?? 0} attempted, ${I.executed_count ?? 0} executed, ${I.failed_count ?? 0} failed.` : "No schedule check has been recorded yet. Restart Home Assistant or run orchestration once if this stays empty.", _e = R.error ? ` Last schedule action failed: ${R.error}` : R.provider ? ` Last schedule action used ${R.provider}.` : "", ne = O.error ? ` Last timer action failed: ${O.error}` : O.provider ? ` Last timer action used ${O.provider}.` : "", K = $.player ? ` Last volume rule adjusted ${$.player}.` : "", ae = X.action ? ` Last Engine button action: ${X.action}${X.ok === !1 && X.error ? ` (${X.error})` : ""}.` : "";
         e(E.running ? "ok" : "warn", "Engine scheduler", `${me}${_e}`, `running=${E.running ? "yes" : "no"}; last_tick=${E.last_tick_at || "(none)"}`), (ne || K || ae) && e("info", "Engine background actions", `${ne}${K}${ae}`.trim());
       }
       if (W.status === "fulfilled") {
@@ -60357,19 +60396,19 @@ class aa extends As {
         const E = ue.value || {}, I = E.config || {}, R = I.frontend_url || a.raw?.frontend?.system_screensaver_url || "/homeii_flow/homeii-flow-system-screensaver.js";
         e(E.enabled ? "ok" : "info", "Engine system screensaver", `System-wide screensaver is ${E.enabled ? "enabled" : "disabled"}; effective mode ${E.effective_mode || "clock"} after ${E.timeout_seconds || I.timeout_seconds || 90}s.`, `Resource: ${R}`);
       }
-      const s = Array.isArray(O.value?.schedules) ? O.value.schedules : [], A = Array.isArray(H.value?.timers) ? H.value.timers : [], g = Array.isArray(j.value?.volume_rules) ? j.value.volume_rules : [], y = Array.isArray(j.value?.active) ? j.value.active : [], S = Array.isArray(G.value?.announcements) ? G.value.announcements : [], B = Array.isArray(V.value?.activity) ? V.value.activity : [];
-      if (O.status === "fulfilled" || H.status === "fulfilled" || j.status === "fulfilled" || G.status === "fulfilled" || V.status === "fulfilled") {
+      const s = Array.isArray(Y.value?.schedules) ? Y.value.schedules : [], A = Array.isArray(H.value?.timers) ? H.value.timers : [], g = Array.isArray(G.value?.volume_rules) ? G.value.volume_rules : [], y = Array.isArray(G.value?.active) ? G.value.active : [], S = Array.isArray(j.value?.announcements) ? j.value.announcements : [], B = Array.isArray(V.value?.activity) ? V.value.activity : [];
+      if (Y.status === "fulfilled" || H.status === "fulfilled" || G.status === "fulfilled" || j.status === "fulfilled" || V.status === "fulfilled") {
         const E = this._scheduledStartSchedules(), I = this._sleepTimerRemainingMs() > 0;
         e("info", "Engine orchestration store", `${s.length} schedule(s), ${A.length} timer(s), ${g.length} volume rule(s), ${S.length} announcement record(s), ${B.length} activity event(s) stored in HOMEii Flow Engine. Card state has ${E.length} schedule(s) and ${I ? 1 : 0} active sleep timer(s).`), s.length && e("info", "Engine schedule controls", `${s.length} per-schedule Run now button(s) should be available on the HOMEii Flow Engine device page after HA reloads the integration.`);
         const R = V.value?.last_activity || B[0] || {};
-        if (R?.message && e("info", "Engine last activity", `${R.message}`, `${R.kind || "event"} · ${R.created_at || ""}`), j.status === "fulfilled") {
+        if (R?.message && e("info", "Engine last activity", `${R.message}`, `${R.kind || "event"} · ${R.created_at || ""}`), G.status === "fulfilled") {
           const X = y.slice(0, 4).map((me) => `${me.player || "(no player)"} <= ${me.max_volume ?? "?"}%`).join("; ");
           e(g.length ? "ok" : "info", "Engine volume policies", `${y.length}/${g.length} volume rule(s) active now.`, X);
         }
-        const Y = O.value?.next_schedule || {};
-        if (Y?.next_run) {
-          const X = [Y.name, Y.player, Y.media_name || Y.playlist_name].filter(Boolean).join(" · ");
-          e("info", "Engine next schedule", `${Y.next_run}${X ? ` · ${X}` : ""}`);
+        const O = Y.value?.next_schedule || {};
+        if (O?.next_run) {
+          const X = [O.name, O.player, O.media_name || O.playlist_name].filter(Boolean).join(" · ");
+          e("info", "Engine next schedule", `${O.next_run}${X ? ` · ${X}` : ""}`);
         }
         const $ = H.value?.next_timer || {};
         if ($?.ends_at) {
@@ -60396,29 +60435,29 @@ class aa extends As {
   async _runDiagnostics() {
     if (this._state.diagnosticsStatus === "running") return;
     this._state.diagnosticsStatus = "running", this._state.diagnosticsItems = [], this._state.menuOpen && this._state.menuPage === "diagnostics" && await this._renderMobileMenu();
-    const e = [], t = (H, j, G = "", V = "") => e.push(this._diagnosticItem(H, j, G, V)), a = !!(this._hass && this._hass.states && this._hass.services), l = Object.keys(this._hass?.services?.music_assistant || {}), p = l.length > 0, h = this._hass?.states || {}, v = this._hass?.entities || {}, k = Object.values(h).filter((H) => Lt.isMusicAssistantPlayer(H, v?.[H.entity_id])), M = Object.values(h).filter((H) => H?.entity_id?.startsWith?.("media_player."));
-    let P = Array.isArray(this._state.enginePlayers) ? this._state.enginePlayers : [], F = this._getSelectedPlayer(), q = "", O = !1;
-    if (t("ok", "Card version", "HOMEii Flow runtime is loaded.", ia), t("ok", "Diagnostics version", "Diagnostic v7 is active.", "v7"), t("info", "Browser", this._diagnosticBrowserSummary()), t("info", "Viewport", this._diagnosticViewportSummary()), t("info", "Diagnostic privacy", "External/private hostnames are redacted in visible and copied diagnostic output."), t(this._diagnosticCurrentOrigin() ? "ok" : "warn", "Home Assistant URL", this._diagnosticCurrentOrigin() ? this._diagnosticUrlDescription(this._diagnosticCurrentOrigin()) : "Could not read current Home Assistant origin.", this._diagnosticCurrentOrigin() ? this._sanitizeDiagnosticUrl(this._diagnosticCurrentOrigin()) : ""), t(a ? "ok" : "fail", "Home Assistant frontend", a ? "The card can read Home Assistant state and services." : "The card does not have a usable Home Assistant frontend object."), t(l.length ? "ok" : "fail", "Music Assistant services", l.length ? `${l.length} service(s) are exposed by Home Assistant.` : "No music_assistant services are exposed by Home Assistant."), t(p ? "ok" : "warn", "Music Assistant dependency", p ? "Home Assistant exposes Music Assistant services for the Engine to use." : "Home Assistant does not expose music_assistant services. HOMEii Flow Engine will not be able to provide full playback, queue, search and library data."), await this._diagnosticEngineRows(t), this._homeiiEngineRequired?.() && typeof this._refreshEnginePlayers == "function" && (await this._refreshEnginePlayers({ force: !0 }).catch(() => []), P = Array.isArray(this._state.enginePlayers) ? this._state.enginePlayers : [], F = this._getSelectedPlayer()), t("info", "Engine source of truth", "HOMEii Flow 6 uses HOMEii Flow Engine exclusively for players, queue, library, search, artwork and playback. Music Assistant credentials are not stored in the card."), this._hass?.connection?.sendMessagePromise)
+    const e = [], t = (H, G, j = "", V = "") => e.push(this._diagnosticItem(H, G, j, V)), a = !!(this._hass && this._hass.states && this._hass.services), l = Object.keys(this._hass?.services?.music_assistant || {}), p = l.length > 0, h = this._hass?.states || {}, v = this._hass?.entities || {}, k = Object.values(h).filter((H) => Lt.isMusicAssistantPlayer(H, v?.[H.entity_id])), M = Object.values(h).filter((H) => H?.entity_id?.startsWith?.("media_player."));
+    let Q = Array.isArray(this._state.enginePlayers) ? this._state.enginePlayers : [], F = this._getSelectedPlayer(), q = "", Y = !1;
+    if (t("ok", "Card version", "HOMEii Flow runtime is loaded.", ia), t("ok", "Diagnostics version", "Diagnostic v7 is active.", "v7"), t("info", "Browser", this._diagnosticBrowserSummary()), t("info", "Viewport", this._diagnosticViewportSummary()), t("info", "Diagnostic privacy", "External/private hostnames are redacted in visible and copied diagnostic output."), t(this._diagnosticCurrentOrigin() ? "ok" : "warn", "Home Assistant URL", this._diagnosticCurrentOrigin() ? this._diagnosticUrlDescription(this._diagnosticCurrentOrigin()) : "Could not read current Home Assistant origin.", this._diagnosticCurrentOrigin() ? this._sanitizeDiagnosticUrl(this._diagnosticCurrentOrigin()) : ""), t(a ? "ok" : "fail", "Home Assistant frontend", a ? "The card can read Home Assistant state and services." : "The card does not have a usable Home Assistant frontend object."), t(l.length ? "ok" : "fail", "Music Assistant services", l.length ? `${l.length} service(s) are exposed by Home Assistant.` : "No music_assistant services are exposed by Home Assistant."), t(p ? "ok" : "warn", "Music Assistant dependency", p ? "Home Assistant exposes Music Assistant services for the Engine to use." : "Home Assistant does not expose music_assistant services. HOMEii Flow Engine will not be able to provide full playback, queue, search and library data."), await this._diagnosticEngineRows(t), this._homeiiEngineRequired?.() && typeof this._refreshEnginePlayers == "function" && (await this._refreshEnginePlayers({ force: !0 }).catch(() => []), Q = Array.isArray(this._state.enginePlayers) ? this._state.enginePlayers : [], F = this._getSelectedPlayer()), t("info", "Engine source of truth", "HOMEii Flow 6 uses HOMEii Flow Engine exclusively for players, queue, library, search, artwork and playback. Music Assistant credentials are not stored in the card."), this._hass?.connection?.sendMessagePromise)
       try {
         const H = await this._withTimeout(this._hass.connection.sendMessagePromise({
           type: "config_entries/get",
           domain: "music_assistant"
-        }), this._musicAssistantTimeoutMs(), this._timeoutMessage("Music Assistant config lookup")), j = Array.isArray(H) ? H : [], G = j.find((V) => V?.state === "loaded") || j.find((V) => V?.state === "setup_retry") || j.find((V) => V?.state === "not_loaded") || j[0];
-        G?.entry_id ? (this._resolvedConfigEntryId = G.entry_id, this._resolvedConfigEntryState = String(G.state || "").trim(), q = this._resolvedConfigEntryState, O = !0, t(G.state === "loaded" ? "ok" : "warn", "Music Assistant config entry", G.state === "loaded" ? "Home Assistant reports the Music Assistant entry as loaded." : "Home Assistant reports the Music Assistant entry as not fully loaded.", String(G.state || "unknown"))) : (q = "none", t("fail", "Music Assistant config entry", "No Music Assistant config entry was returned by Home Assistant."));
+        }), this._musicAssistantTimeoutMs(), this._timeoutMessage("Music Assistant config lookup")), G = Array.isArray(H) ? H : [], j = G.find((V) => V?.state === "loaded") || G.find((V) => V?.state === "setup_retry") || G.find((V) => V?.state === "not_loaded") || G[0];
+        j?.entry_id ? (this._resolvedConfigEntryId = j.entry_id, this._resolvedConfigEntryState = String(j.state || "").trim(), q = this._resolvedConfigEntryState, Y = !0, t(j.state === "loaded" ? "ok" : "warn", "Music Assistant config entry", j.state === "loaded" ? "Home Assistant reports the Music Assistant entry as loaded." : "Home Assistant reports the Music Assistant entry as not fully loaded.", String(j.state || "unknown"))) : (q = "none", t("fail", "Music Assistant config entry", "No Music Assistant config entry was returned by Home Assistant."));
       } catch (H) {
         q = "unreadable", t("warn", "Music Assistant config entry", H?.message || "Could not read Home Assistant config entries.");
       }
     else
       q = "unavailable", t("warn", "Music Assistant config entry", "Home Assistant connection API is not available in this frontend context.");
-    if (t(p || O ? "ok" : "fail", "Integration signal", `services ${p ? "yes" : "no"}, config entry ${q || "unknown"}, engine ${this._state.engineAvailable ? "yes" : "no"}`), t(
-      P.length ? "ok" : "fail",
+    if (t(p || Y ? "ok" : "fail", "Integration signal", `services ${p ? "yes" : "no"}, config entry ${q || "unknown"}, engine ${this._state.engineAvailable ? "yes" : "no"}`), t(
+      Q.length ? "ok" : "fail",
       "Music Assistant players",
-      P.length ? `${P.length} Engine Music Assistant player(s). HA sees ${k.length} strict MA player(s), ${M.length} generic media_player(s).` : `Engine returned no Music Assistant players. HA sees ${k.length} strict MA player(s), ${M.length} generic media_player(s).`
+      Q.length ? `${Q.length} Engine Music Assistant player(s). HA sees ${k.length} strict MA player(s), ${M.length} generic media_player(s).` : `Engine returned no Music Assistant players. HA sees ${k.length} strict MA player(s), ${M.length} generic media_player(s).`
     ), !F)
       t("fail", "Selected player", "No selected player is available.");
     else {
-      const H = F.attributes?.friendly_name || F.entity_id || "", j = this._isPlayerExcluded?.(F), G = P.some((S) => S?.entity_id === F.entity_id);
-      t(G && !j ? "ok" : "warn", "Selected player", j ? "The selected player is currently excluded in HOMEii settings." : G ? "Selected player was provided by HOMEii Flow Engine." : "Selected player was not found in the Engine player list.", `${H} | ${this._diagnosticPlayerMarkerSummary(F, v)}`);
+      const H = F.attributes?.friendly_name || F.entity_id || "", G = this._isPlayerExcluded?.(F), j = Q.some((S) => S?.entity_id === F.entity_id);
+      t(j && !G ? "ok" : "warn", "Selected player", G ? "The selected player is currently excluded in HOMEii settings." : j ? "Selected player was provided by HOMEii Flow Engine." : "Selected player was not found in the Engine player list.", `${H} | ${this._diagnosticPlayerMarkerSummary(F, v)}`);
       const V = this._playerOverrideParamValue?.() || "", Z = String(this._config?.entity || this.config?.entity || "").trim(), W = V ? `query string (${V})` : Z ? `card entity (${Z})` : "automatic / remembered";
       t("info", "Player selection source", "Query-string player overrides win first, then card entity, then automatic/remembered selection.", W), this._diagnosticConfiguredEntityRows(t, F, h, v);
       const ue = this._currentSpeakerGroupMemberIds?.(F.entity_id) || [], he = ue.map((S) => this._playerByEntityId?.(S)?.attributes?.friendly_name || S).filter(Boolean);
@@ -60588,14 +60627,14 @@ class aa extends As {
   _libraryMediaDetailHtml(e = {}) {
     const t = String(e.media_type || e.type || "album").toLowerCase();
     if (t === "artist") return this._libraryArtistDetailHtml(e);
-    const a = t === "podcast", l = a ? this._i18n("ui.podcasts") : t === "playlist" ? this._i18n("ui.playlist") : this._i18n("ui.album"), p = e.name || l, h = [e.artist, typeof e.album == "string" ? e.album : e.album?.name].filter(Boolean).join(" · ") || l, v = e.image || e.image_url || this._artUrl(e), k = a ? "podcast" : t === "playlist" ? "playlist" : "album", M = Array.isArray(e.tracks) ? e.tracks : [], P = !!e.loading, F = a ? this._m("Episodes", "פרקים") : this._i18n("ui.tracks"), q = M.length ? `${M.length} ${F.toLowerCase()}` : "", O = e.error || (a ? this._m("No episodes were returned by the provider.", "הספק לא החזיר פרקים לפודקאסט הזה.") : this._m("No tracks were returned. You can still play it.", "לא חזרו רצועות. עדיין אפשר להפעיל.")), H = this._mediaDetailEntryData({ ...e, image: v, image_url: v }, t, e), j = this._mediaDetailDataAttrs(H), G = this._isEntryLiked(H), V = t === "album" ? this._albumBrowseState(e) : null, Z = t === "album" ? this._albumKindLabel(e) : "";
+    const a = t === "podcast", l = a ? this._i18n("ui.podcasts") : t === "playlist" ? this._i18n("ui.playlist") : this._i18n("ui.album"), p = e.name || l, h = [e.artist, typeof e.album == "string" ? e.album : e.album?.name].filter(Boolean).join(" · ") || l, v = e.image || e.image_url || this._artUrl(e), k = a ? "podcast" : t === "playlist" ? "playlist" : "album", M = Array.isArray(e.tracks) ? e.tracks : [], Q = !!e.loading, F = a ? this._m("Episodes", "פרקים") : this._i18n("ui.tracks"), q = M.length ? `${M.length} ${F.toLowerCase()}` : "", Y = e.error || (a ? this._m("No episodes were returned by the provider.", "הספק לא החזיר פרקים לפודקאסט הזה.") : this._m("No tracks were returned. You can still play it.", "לא חזרו רצועות. עדיין אפשר להפעיל.")), H = this._mediaDetailEntryData({ ...e, image: v, image_url: v }, t, e), G = this._mediaDetailDataAttrs(H), j = this._isEntryLiked(H), V = t === "album" ? this._albumBrowseState(e) : null, Z = t === "album" ? this._albumKindLabel(e) : "";
     return `
       <div class="media-detail-shell album-detail-shell">
         <div class="menu-list-item media-detail-hero album-detail-player">
           <span class="media-detail-art-stage">
             <span class="media-detail-art">${v ? this._imgHtml(v, "", { fallbackIcon: k }) : this._iconSvg(k)}</span>
             <span class="media-detail-player-actions media-detail-cover-actions">
-              <button class="chip-btn media-detail-play-btn like ${G ? "active" : ""}" data-media-detail-action="like" ${j} title="${this._esc(this._i18n("ui.like_2"))}" aria-label="${this._esc(this._i18n("ui.like_2"))}" aria-pressed="${G ? "true" : "false"}">${this._iconSvg(G ? "heart_filled" : "heart_outline")}</button>
+              <button class="chip-btn media-detail-play-btn like ${j ? "active" : ""}" data-media-detail-action="like" ${G} title="${this._esc(this._i18n("ui.like_2"))}" aria-label="${this._esc(this._i18n("ui.like_2"))}" aria-pressed="${j ? "true" : "false"}">${this._iconSvg(j ? "heart_filled" : "heart_outline")}</button>
             </span>
           </span>
           <span class="media-detail-copy">
@@ -60603,9 +60642,9 @@ class aa extends As {
             <span class="media-detail-title">${this._esc(p)}</span>
             <span class="media-detail-sub">${this._esc(q || h || "—")}${Z ? `<span class="media-detail-kind-badge">${this._esc(Z)}</span>` : ""}</span>
             <span class="media-detail-player-actions media-detail-hero-actions">
-              <button class="chip-btn media-detail-play-btn" data-media-more="${this._esc(H.uri || "")}" ${j} title="${this._esc(this._i18n("ui.actions_2"))}" aria-label="${this._esc(this._i18n("ui.actions_2"))}">${this._iconSvg("more")}</button>
-              <button class="chip-btn media-detail-play-btn subtle" data-media-detail-action="add" ${j} title="${this._esc(this._i18n("ui.add_to_queue"))}" aria-label="${this._esc(this._i18n("ui.add_to_queue"))}">${this._iconSvg("queue_add")}</button>
-              <button class="chip-btn media-detail-play-btn" data-media-detail-action="play" ${j} title="${this._esc(this._i18n("ui.play_now"))}" aria-label="${this._esc(this._i18n("ui.play_now"))}">${this._iconSvg("play")}</button>
+              <button class="chip-btn media-detail-play-btn" data-media-more="${this._esc(H.uri || "")}" ${G} title="${this._esc(this._i18n("ui.actions_2"))}" aria-label="${this._esc(this._i18n("ui.actions_2"))}">${this._iconSvg("more")}</button>
+              <button class="chip-btn media-detail-play-btn subtle" data-media-detail-action="add" ${G} title="${this._esc(this._i18n("ui.add_to_queue"))}" aria-label="${this._esc(this._i18n("ui.add_to_queue"))}">${this._iconSvg("queue_add")}</button>
+              <button class="chip-btn media-detail-play-btn" data-media-detail-action="play" ${G} title="${this._esc(this._i18n("ui.play_now"))}" aria-label="${this._esc(this._i18n("ui.play_now"))}">${this._iconSvg("play")}</button>
             </span>
             ${V ? this._albumBrowseSelectHtml(V) : ""}
           </span>
@@ -60614,7 +60653,7 @@ class aa extends As {
           <div class="media-section-title">${this._esc(F)}</div>
           ${q ? `<div class="media-detail-count-badge">${this._esc(q)}</div>` : ""}
         </div>
-        ${P ? this._loadingStateHtml(this._i18n("ui.loading_library"), { notice: !0 }) : M.length ? this._mediaDetailTrackRowsHtml(M, e) : `<div class="notice open media-detail-empty">${this._esc(O)}</div>`}
+        ${Q ? this._loadingStateHtml(this._i18n("ui.loading_library"), { notice: !0 }) : M.length ? this._mediaDetailTrackRowsHtml(M, e) : `<div class="notice open media-detail-empty">${this._esc(Y)}</div>`}
       </div>
     `;
   }
@@ -60643,7 +60682,7 @@ class aa extends As {
     `;
   }
   _libraryArtistDetailHtml(e = {}) {
-    const t = e.artistInfo || e, a = t.name || e.name || this._i18n("ui.artist"), l = this._artUrl(t, { size: 512 }) || e.image || e.image_url || this._artUrl(e, { size: 512 }), p = this._artistDescriptionText(t), h = Array.isArray(e.albums) ? e.albums : [], v = Array.isArray(e.playlists) ? e.playlists : [], k = !!e.loading, M = e.error || this._m("No albums were returned for this artist.", "לא חזרו אלבומים עבור האמן הזה."), P = e.artistSearchQuery || "", F = !!e.artistSearchOpen, q = this._artistAlbumYearGroups(h), O = this._m("Start artist radio", "הפעל רדיו אמן");
+    const t = e.artistInfo || e, a = t.name || e.name || this._i18n("ui.artist"), l = this._artUrl(t, { size: 512 }) || e.image || e.image_url || this._artUrl(e, { size: 512 }), p = this._artistDescriptionText(t), h = Array.isArray(e.albums) ? e.albums : [], v = Array.isArray(e.playlists) ? e.playlists : [], k = !!e.loading, M = e.error || this._m("No albums were returned for this artist.", "לא חזרו אלבומים עבור האמן הזה."), Q = e.artistSearchQuery || "", F = !!e.artistSearchOpen, q = this._artistAlbumYearGroups(h), Y = this._m("Start artist radio", "הפעל רדיו אמן");
     return `
       <div class="media-detail-shell artist-detail-shell">
         <div class="artist-detail-hero">
@@ -60653,7 +60692,7 @@ class aa extends As {
             <span class="artist-detail-title">${this._esc(a)}</span>
           </span>
           <span class="artist-detail-actions">
-            <button class="artist-hero-icon-btn" data-artist-radio="1" data-media-uri="${this._esc(e.uri || t.uri || "")}" data-media-type="artist" data-media-name="${this._esc(a)}" title="${this._esc(O)}" aria-label="${this._esc(O)}">${this._iconSvg("radio")}</button>
+            <button class="artist-hero-icon-btn" data-artist-radio="1" data-media-uri="${this._esc(e.uri || t.uri || "")}" data-media-type="artist" data-media-name="${this._esc(a)}" title="${this._esc(Y)}" aria-label="${this._esc(Y)}">${this._iconSvg("radio")}</button>
             <button class="artist-hero-icon-btn" data-artist-search-toggle="1" title="${this._esc(this._i18n("ui.search"))}" aria-label="${this._esc(this._i18n("ui.search"))}" aria-expanded="${F ? "true" : "false"}">${this._iconSvg("search")}</button>
             <button class="artist-info-btn" data-artist-info-open="1" title="${this._esc(this._m("Artist info", "מידע על אמן"))}" aria-label="${this._esc(this._m("Artist info", "מידע על אמן"))}">${this._iconSvg("info")}</button>
           </span>
@@ -60663,7 +60702,7 @@ class aa extends As {
           <div class="artist-detail-search">
             <div class="media-search-shell artist-search-shell">
               <span>${this._iconSvg("search")}</span>
-              <input id="artistDetailSearchInput" type="text" value="${this._esc(P)}" placeholder="${this._esc(this._m("Search another artist", "חיפוש אמן נוסף"))}">
+              <input id="artistDetailSearchInput" type="text" value="${this._esc(Q)}" placeholder="${this._esc(this._m("Search another artist", "חיפוש אמן נוסף"))}">
               <button class="chip-btn artist-search-btn" data-artist-detail-search title="${this._esc(this._i18n("ui.search"))}"><span>${this._esc(this._i18n("ui.search"))}</span></button>
             </div>
           </div>
@@ -60677,10 +60716,10 @@ class aa extends As {
                   ${h.length ? `<div class="media-detail-count-badge">${this._esc(`${h.length} ${this._i18n("ui.albums").toLowerCase()}`)}</div>` : ""}
                 </div>
               </div>
-              ${q.length ? q.map(([H, j]) => `
+              ${q.length ? q.map(([H, G]) => `
                     <div class="artist-year-group">
                       <div class="artist-year-title">${this._esc(H)}</div>
-                      ${this._mediaItemsListHtml(j, "album", { albumBadges: !0 })}
+                      ${this._mediaItemsListHtml(G, "album", { albumBadges: !0 })}
                     </div>
                   `).join("") : `<div class="notice open media-detail-empty">${this._esc(M)}</div>`}
             </div>
@@ -60779,12 +60818,12 @@ class aa extends As {
       (Array.isArray(e?.[l]) ? e[l] : []).forEach((v) => {
         const k = String(v?.uri || v?.media_item?.uri || "").trim();
         if (!k) return;
-        const M = v?.media_item || {}, P = this._artistName(v) || this._artistName(M) || v?.artist || v?.artist_str || v?.media_artist || M?.artist || M?.artist_str || M?.media_artist || "";
+        const M = v?.media_item || {}, Q = this._artistName(v) || this._artistName(M) || v?.artist || v?.artist_str || v?.media_artist || M?.artist || M?.artist_str || M?.media_artist || "";
         a.push({
           uri: k,
           media_type: this._voiceAssistantCanonicalMediaType(v?.media_type || v?.type || p, p),
           name: v?.name || v?.title || M?.name || M?.title || k,
-          artist: P,
+          artist: Q,
           album: v?.album?.name || v?.album || M?.album?.name || M?.album || "",
           image: this._artUrl(v) || v?.image || v?.image_url || M?.image || M?.image_url || "",
           _homeiiVoiceFocused: v?._homeiiVoiceFocused === !0
@@ -60960,10 +60999,10 @@ class aa extends As {
     if (h && (p || l || k || a.length))
       return k ? { type: "group_disconnect_all" } : { type: "group_disconnect", playerId: (a[0] || this._voiceAssistantDefaultPlayer())?.entity_id || "" };
     if (!v || !p && !l && !M && a.length < 2) return null;
-    let P = null, F = [];
-    return a.length >= 2 ? (P = a[0], F = a.slice(1)) : a.length === 1 && (P = this._voiceAssistantDefaultPlayer([a[0].entity_id]), F = P ? [a[0]] : []), {
+    let Q = null, F = [];
+    return a.length >= 2 ? (Q = a[0], F = a.slice(1)) : a.length === 1 && (Q = this._voiceAssistantDefaultPlayer([a[0].entity_id]), F = Q ? [a[0]] : []), {
       type: "group_connect",
-      primaryPlayerId: P?.entity_id || "",
+      primaryPlayerId: Q?.entity_id || "",
       memberPlayerIds: F.map((q) => q?.entity_id).filter(Boolean)
     };
   }
@@ -61100,16 +61139,16 @@ class aa extends As {
         const H = await this._voiceAssistantFocusedMusicSearch(v, k);
         p = this._mergeSearchResults(this._markVoiceAssistantFocusedResults(H), p);
       }
-      const M = this._voiceAssistantRankedCandidates(p, l), P = M.find((H) => H.accepted && H.candidate?.uri)?.candidate || M.find((H) => H.candidate?.uri)?.candidate || this._normalizeSmartVoiceCandidates(p).find((H) => H?.uri) || null;
-      if (!P?.uri) {
+      const M = this._voiceAssistantRankedCandidates(p, l), Q = M.find((H) => H.accepted && H.candidate?.uri)?.candidate || M.find((H) => H.candidate?.uri)?.candidate || this._normalizeSmartVoiceCandidates(p).find((H) => H?.uri) || null;
+      if (!Q?.uri) {
         const H = this._i18n("ui.no_matching_content_was_found");
         return this._toastError(H), { handled: !0, ok: !1, message: H };
       }
       a.entity_id !== this._state.selectedPlayer && this._selectPlayer(a.entity_id, !0);
-      const F = P.name || l;
+      const F = Q.name || l;
       this._updateVoiceAssistantDialog({ status: "processing", response: this._i18n("ui.voice_starting_playback", { title: F }) });
-      const q = this._voiceAssistantCanonicalMediaType(P.media_type || k, k);
-      if (!await this._playMediaOnPlayer(a.entity_id, P.uri, q, "play", {
+      const q = this._voiceAssistantCanonicalMediaType(Q.media_type || k, k);
+      if (!await this._playMediaOnPlayer(a.entity_id, Q.uri, q, "play", {
         label: F,
         silent: !0
       })) {
@@ -61341,10 +61380,10 @@ class aa extends As {
         </div>
       </div>
     `;
-      const O = e.querySelector(".voice-assistant-panel"), H = (j) => {
-        this._state.screensaverOpen && this._state.voiceAssistantKeepScreensaver === !0 && j.stopPropagation();
+      const Y = e.querySelector(".voice-assistant-panel"), H = (G) => {
+        this._state.screensaverOpen && this._state.voiceAssistantKeepScreensaver === !0 && G.stopPropagation();
       };
-      O?.addEventListener("pointerdown", H), O?.addEventListener("click", H), O?.addEventListener("keydown", H), e.querySelector("#voiceAssistantDialogClose")?.addEventListener("click", () => this._closeVoiceAssistantDialog()), e.querySelector("#voiceAssistantDialogCloseSecondary")?.addEventListener("click", () => this._closeVoiceAssistantDialog()), e.querySelector("#voiceAssistantDialogRetry")?.addEventListener("click", () => {
+      Y?.addEventListener("pointerdown", H), Y?.addEventListener("click", H), Y?.addEventListener("keydown", H), e.querySelector("#voiceAssistantDialogClose")?.addEventListener("click", () => this._closeVoiceAssistantDialog()), e.querySelector("#voiceAssistantDialogCloseSecondary")?.addEventListener("click", () => this._closeVoiceAssistantDialog()), e.querySelector("#voiceAssistantDialogRetry")?.addEventListener("click", () => {
         this._startVoiceAssistantCommand({ keepScreensaver: this._state.voiceAssistantKeepScreensaver === !0 });
       });
     }
@@ -61352,8 +61391,8 @@ class aa extends As {
     v && (v.hidden = a === "listening" || a === "processing");
     const k = e.querySelector("#voiceAssistantDialogIconSlot"), M = this._voiceAssistantDialogIcon(a);
     k && k.dataset.iconName !== M && (k.dataset.iconName = M, k.innerHTML = this._iconSvg(M));
-    const P = e.querySelector("#voiceAssistantDialogStatus");
-    P && (P.textContent = this._voiceAssistantStatusLabel(a));
+    const Q = e.querySelector("#voiceAssistantDialogStatus");
+    Q && (Q.textContent = this._voiceAssistantStatusLabel(a));
     const F = e.querySelector("#voiceAssistantDialogTranscript");
     F && (F.textContent = l || this._i18n("ui.waiting_for_speech"), F.classList.toggle("voice-assistant-placeholder", !l));
     const q = e.querySelector("#voiceAssistantDialogResponse");
@@ -61376,18 +61415,18 @@ class aa extends As {
       }
   }
   _startVoiceAssistantCommand(e = {}) {
-    const t = e?.keepScreensaver === !0, a = e?.ignoreWhenListening === !0, l = (O = "error", H = null) => {
-      const j = Number(H), G = Number.isFinite(j) && j > 0 ? j : this._flowAssistantAutoCloseMs(O);
-      G > 0 && this._scheduleVoiceAssistantDialogClose(G);
+    const t = e?.keepScreensaver === !0, a = e?.ignoreWhenListening === !0, l = (Y = "error", H = null) => {
+      const G = Number(H), j = Number.isFinite(G) && G > 0 ? G : this._flowAssistantAutoCloseMs(Y);
+      j > 0 && this._scheduleVoiceAssistantDialogClose(j);
     };
     if (t && this._resetScreensaverTimer({ hide: !1, activity: !0 }), !this._voiceAssistantEnabled()) {
-      const O = this._i18n("ui.voice_assistant_disabled");
-      this._toastError(O), this._openVoiceAssistantDialog("error", { response: O, keepScreensaver: t }), l("error");
+      const Y = this._i18n("ui.voice_assistant_disabled");
+      this._toastError(Y), this._openVoiceAssistantDialog("error", { response: Y, keepScreensaver: t }), l("error");
       return;
     }
     if (this._mobileMicMode() === "off") {
-      const O = this._i18n("ui.microphone_is_disabled");
-      this._toastError(O), this._openVoiceAssistantDialog("error", { response: O, keepScreensaver: t }), l("error");
+      const Y = this._i18n("ui.microphone_is_disabled");
+      this._toastError(Y), this._openVoiceAssistantDialog("error", { response: Y, keepScreensaver: t }), l("error");
       return;
     }
     if (this._state.voiceAssistantListening) {
@@ -61405,8 +61444,8 @@ class aa extends As {
     t || this._resetScreensaverTimer({ hide: !0, activity: !0 }), this._openVoiceAssistantDialog("listening", { transcript: "", response: "", keepScreensaver: t });
     const p = this._speechRecognitionCtor(), h = Array.from(this.shadowRoot?.querySelectorAll("#mobileVoiceAssistantBtn, #emptyVoiceAssistantBtn, #screensaverVoiceBtn") || []);
     if (!p) {
-      const O = this._i18n("ui.voice_input_is_not_supported_on_this_device");
-      this._toastError(O), this._updateVoiceAssistantDialog({ status: "error", response: O, keepScreensaver: t }), l("error");
+      const Y = this._i18n("ui.voice_input_is_not_supported_on_this_device");
+      this._toastError(Y), this._updateVoiceAssistantDialog({ status: "error", response: Y, keepScreensaver: t }), l("error");
       return;
     }
     clearTimeout(this._voiceAssistantRecognitionTimer), this._voiceAssistantRecognitionTimer = null;
@@ -61416,62 +61455,62 @@ class aa extends As {
     }
     const v = new p();
     this._voiceAssistantRecognition = v, v.lang = this._voiceAssistantRecognitionLanguage(), v.interimResults = !0, v.continuous = !1, v.maxAlternatives = 1;
-    let k = "", M = !1, P = !1;
+    let k = "", M = !1, Q = !1;
     const F = () => {
-      clearTimeout(this._voiceAssistantRecognitionTimer), this._voiceAssistantRecognitionTimer = null, this._state.voiceAssistantListening = !1, h.forEach((O) => O.classList.remove("listening"));
-    }, q = (O) => {
+      clearTimeout(this._voiceAssistantRecognitionTimer), this._voiceAssistantRecognitionTimer = null, this._state.voiceAssistantListening = !1, h.forEach((Y) => Y.classList.remove("listening"));
+    }, q = (Y) => {
       if (!M) {
         M = !0, F(), this._voiceAssistantRecognition === v && (this._voiceAssistantRecognition = null);
         try {
           v.abort?.();
         } catch {
         }
-        this._updateVoiceAssistantDialog({ status: "processing", transcript: O, response: this._i18n("ui.voice_processing_status") }), this._withTimeout(
-          this._handleVoiceAssistantTranscript(O),
+        this._updateVoiceAssistantDialog({ status: "processing", transcript: Y, response: this._i18n("ui.voice_processing_status") }), this._withTimeout(
+          this._handleVoiceAssistantTranscript(Y),
           this._flowAssistantResponseTimeoutMs(),
           this._timeoutMessage(this._flowAssistantLabel())
         ).then((H) => {
-          const j = H?.message || (H?.ok === !1 ? this._i18n("ui.voice_command_failed") : this._i18n("ui.voice_command_executed")), G = H?.ok === !1 ? "error" : "success";
-          this._updateVoiceAssistantDialog({ status: G, transcript: O, response: j }), H?.ok !== !1 && this._speakVoiceAssistantFeedback(j), l(G, H?.autoCloseMs);
+          const G = H?.message || (H?.ok === !1 ? this._i18n("ui.voice_command_failed") : this._i18n("ui.voice_command_executed")), j = H?.ok === !1 ? "error" : "success";
+          this._updateVoiceAssistantDialog({ status: j, transcript: Y, response: G }), H?.ok !== !1 && this._speakVoiceAssistantFeedback(G), l(j, H?.autoCloseMs);
         }).catch((H) => {
-          const j = H?.message || this._i18n("ui.voice_command_failed");
-          this._toastError(j), this._updateVoiceAssistantDialog({ status: "error", transcript: O, response: j }), l("error");
+          const G = H?.message || this._i18n("ui.voice_command_failed");
+          this._toastError(G), this._updateVoiceAssistantDialog({ status: "error", transcript: Y, response: G }), l("error");
         });
       }
     };
-    v.onresult = (O) => {
-      const H = Array.from(O.results || []).map((G) => G?.[0]?.transcript || "").join(" ").trim();
-      H && (k = H), k && this._updateVoiceAssistantDialog({ status: "listening", transcript: k }), Array.from(O.results || []).some((G) => G?.isFinal) && k && q(k);
-    }, v.onerror = (O) => {
+    v.onresult = (Y) => {
+      const H = Array.from(Y.results || []).map((j) => j?.[0]?.transcript || "").join(" ").trim();
+      H && (k = H), k && this._updateVoiceAssistantDialog({ status: "listening", transcript: k }), Array.from(Y.results || []).some((j) => j?.isFinal) && k && q(k);
+    }, v.onerror = (Y) => {
       if (M || v.__homeiiCancelled) return;
-      P = !0, F(), this._voiceAssistantRecognition === v && (this._voiceAssistantRecognition = null);
-      const H = this._voiceAssistantRecognitionErrorMessage(O?.error);
+      Q = !0, F(), this._voiceAssistantRecognition === v && (this._voiceAssistantRecognition = null);
+      const H = this._voiceAssistantRecognitionErrorMessage(Y?.error);
       this._toastError(H), this._updateVoiceAssistantDialog({ status: "error", response: H }), l("error");
     }, v.onend = () => {
       if (F(), this._voiceAssistantRecognition === v && (this._voiceAssistantRecognition = null), !v.__homeiiCancelled) {
         if (!M && k)
           q(k);
-        else if (!M && !P) {
-          const O = this._i18n("ui.no_speech_was_captured");
-          this._toastError(O), this._updateVoiceAssistantDialog({ status: "error", response: O }), l("error");
+        else if (!M && !Q) {
+          const Y = this._i18n("ui.no_speech_was_captured");
+          this._toastError(Y), this._updateVoiceAssistantDialog({ status: "error", response: Y }), l("error");
         }
       }
     };
     try {
-      this._state.voiceAssistantListening = !0, h.forEach((O) => O.classList.add("listening")), this._hapticTap([8, 18, 8]), this._toast(this._i18n("ui.voice_assistant_listening")), v.start(), this._voiceAssistantRecognitionTimer = setTimeout(() => {
+      this._state.voiceAssistantListening = !0, h.forEach((Y) => Y.classList.add("listening")), this._hapticTap([8, 18, 8]), this._toast(this._i18n("ui.voice_assistant_listening")), v.start(), this._voiceAssistantRecognitionTimer = setTimeout(() => {
         if (M) return;
-        M = !0, P = !0, F(), this._voiceAssistantRecognition === v && (this._voiceAssistantRecognition = null);
+        M = !0, Q = !0, F(), this._voiceAssistantRecognition === v && (this._voiceAssistantRecognition = null);
         try {
           v.__homeiiCancelled = !0, v.abort?.();
         } catch {
         }
-        const O = this._timeoutMessage(this._flowAssistantLabel());
-        this._toastError(O), this._updateVoiceAssistantDialog({ status: "error", transcript: k, response: O }), l("error");
+        const Y = this._timeoutMessage(this._flowAssistantLabel());
+        this._toastError(Y), this._updateVoiceAssistantDialog({ status: "error", transcript: k, response: Y }), l("error");
       }, this._flowAssistantListenTimeoutMs());
     } catch {
       F(), this._voiceAssistantRecognition === v && (this._voiceAssistantRecognition = null);
-      const O = this._i18n("ui.voice_command_failed");
-      this._toastError(O), this._updateVoiceAssistantDialog({ status: "error", response: O }), l("error");
+      const Y = this._i18n("ui.voice_command_failed");
+      this._toastError(Y), this._updateVoiceAssistantDialog({ status: "error", response: Y }), l("error");
     }
   }
   async _handleSmartVoiceTranscript(e = "") {
@@ -61540,8 +61579,8 @@ class aa extends As {
       if (v) return Date.UTC(Number(v[0]), 0, 1);
       const k = Number(h);
       if (Number.isFinite(k) && k > 0) return t(k);
-      const M = h.replace(/^(\d{4}-\d{2}-\d{2})\s+/, "$1T").replace(/(\.\d{3})\d+/, "$1"), P = Date.parse(M);
-      if (Number.isFinite(P)) return P;
+      const M = h.replace(/^(\d{4}-\d{2}-\d{2})\s+/, "$1T").replace(/(\.\d{3})\d+/, "$1"), Q = Date.parse(M);
+      if (Number.isFinite(Q)) return Q;
       const F = h.match(/\b(19|20)\d{2}\b/);
       return F ? Date.UTC(Number(F[0]), 0, 1) : 0;
     }, a = [
@@ -61736,32 +61775,32 @@ class aa extends As {
     if (!h || h === "liked" || h === "search") return [];
     const v = String(l || "").trim(), k = p === !0;
     if (h === "artist" && this._state.albumArtistsOnly === !0) {
-      const H = `album-artists:${t}:${a}:${k}:${v.toLowerCase()}`, j = this._cache.library.get(H);
-      if (j && Date.now() - j.ts < Number(this._config.cache_ttl || 3e5)) return j.items;
-      const G = await this._fetchLibrary(h, t, a, k, v, { albumArtistsOnly: !0 });
-      return this._cache.library.set(H, { ts: Date.now(), items: G }), G;
+      const H = `album-artists:${t}:${a}:${k}:${v.toLowerCase()}`, G = this._cache.library.get(H);
+      if (G && Date.now() - G.ts < Number(this._config.cache_ttl || 3e5)) return G.items;
+      const j = await this._fetchLibrary(h, t, a, k, v, { albumArtistsOnly: !0 });
+      return this._cache.library.set(H, { ts: Date.now(), items: j }), j;
     }
     if (!v) return this._getLibrary(h, t, a, k);
-    const P = `tab-search:${h}:${t}:${a}:${k}:${v.toLowerCase()}`, F = Number(this._config.cache_ttl || 3e5), q = this._cache.library.get(P);
+    const Q = `tab-search:${h}:${t}:${a}:${k}:${v.toLowerCase()}`, F = Number(this._config.cache_ttl || 3e5), q = this._cache.library.get(Q);
     if (q && Date.now() - q.ts < F) return q.items;
-    let O = [];
+    let Y = [];
     try {
-      O = await this._fetchLibrary(h, t, a, k, v);
+      Y = await this._fetchLibrary(h, t, a, k, v);
     } catch (H) {
       if (this._isMusicAssistantAvailabilityError(H))
         throw this._handleMusicAssistantIssue(H), H;
       if (t !== "sort_name")
-        O = await this._fetchLibrary(h, "sort_name", a, k, v);
+        Y = await this._fetchLibrary(h, "sort_name", a, k, v);
       else
         throw H;
     }
-    if (!O.length)
+    if (!Y.length)
       try {
         const H = await this._getLibrary(h, t, a, k);
-        O = this._filterLibraryItemsByQuery(H, v);
+        Y = this._filterLibraryItemsByQuery(H, v);
       } catch {
       }
-    return O = this._dedupeLibraryItems(O), (O.length || !this._state.musicAssistantIssueMessage) && this._cache.library.set(P, { ts: Date.now(), items: O }), O;
+    return Y = this._dedupeLibraryItems(Y), (Y.length || !this._state.musicAssistantIssueMessage) && this._cache.library.set(Q, { ts: Date.now(), items: Y }), Y;
   }
   _libraryTabSearchResultGroup(e = "") {
     const t = String(e || "").toLowerCase();
@@ -61770,7 +61809,7 @@ class aa extends As {
   async _searchLibraryTabProviderItems(e = {}, t = "", a = 50) {
     const l = String(e?.type || "").trim(), p = String(t || "").trim(), h = this._libraryTabSearchResultGroup(l);
     if (!l || !h || !p) return [];
-    const v = await this._search(p, { providerOnly: !0, strict: !0, limit: a });
+    const v = await this._search(p, { providerOnly: !0, strict: !0, limit: Math.min(a, 10), mediaTypes: [l] });
     return this._dedupeLibraryItems((Array.isArray(v?.[h]) ? v[h] : []).map((k) => ({
       ...k,
       media_type: k?.media_type || l
@@ -61817,7 +61856,6 @@ class aa extends As {
         <div class="library-toolbar-actions library-toolbar-icons">
           <button class="media-layout-btn library-toolbar-search-toggle ${p ? "active" : ""}" data-library-tab-search-toggle="${this._esc(a)}" title="${this._esc(this._i18n("ui.search"))}" aria-label="${this._esc(this._i18n("ui.search"))}" aria-expanded="${p ? "true" : "false"}">${this._iconSvg("search")}</button>
           <div class="media-layout-toggle" role="tablist" aria-label="${this._esc(this._i18n("ui.media_layout"))}">
-            ${a === "library_artists" ? `<button class="media-layout-btn library-album-artists-toggle ${this._state.albumArtistsOnly ? "active" : ""}" data-album-artists-only="1" aria-pressed="${this._state.albumArtistsOnly ? "true" : "false"}" title="${this._esc(this._m("Album artists only", "אמני אלבומים בלבד"))}" aria-label="${this._esc(this._m("Album artists only", "אמני אלבומים בלבד"))}">${this._iconSvg("artist")}</button>` : ""}
             ${v ? `<button class="media-layout-btn library-favorites-toggle" data-library-liked-open="library_liked" title="${this._esc(k)}" aria-label="${this._esc(k)}">${this._iconSvg("heart_filled")}</button>` : ""}
             ${l ? "" : `<button class="media-layout-btn" data-media-surprise="1" title="${this._esc(this._i18n("ui.surprise_me"))}">${this._iconSvg("wand")}</button>`}
             ${l ? "" : `<button class="media-layout-btn library-flow-toggle ${h ? "active" : ""}" data-library-flow-toggle="${this._esc(a)}" title="${this._esc(this._libraryFlowLabel())}" aria-label="${this._esc(this._libraryFlowLabel())}" aria-pressed="${h ? "true" : "false"}">${this._iconSvg("queue_flow")}</button>`}
@@ -61831,6 +61869,8 @@ class aa extends As {
           </select>
         </div>
       </div>
+      ${a === "library_artists" ? `<div class="library-context-controls"><button type="button" class="library-context-toggle ${this._state.albumArtistsOnly ? "active" : ""}" data-album-artists-only="1" aria-pressed="${this._state.albumArtistsOnly ? "true" : "false"}">${this._iconSvg("artist")}<span>${this._esc(this._m("Album artists only", "אמני אלבומים בלבד"))}</span></button></div>` : ""}
+      ${a === "library_radio" ? `<div class="library-context-controls"><button type="button" class="library-context-toggle" data-menu-nav="favorite_radios">${this._iconSvg("radio")}<span>${this._esc(this._m("Pin stations to player", "הצמד תחנות לנגן"))}</span></button></div>` : ""}
       ${p ? this._libraryTabSearchBoxHtml("row") : ""}
     `;
   }
@@ -61881,24 +61921,24 @@ class aa extends As {
   }
   _mediaItemsListHtml(e = [], t, a = {}) {
     if (!e.length) return `<div class="notice open">${this._i18n("ui.no_results_found")}</div>`;
-    const l = a.layout || this._state.mobileMediaLayout || this._defaultMobileMediaLayout(), p = { track: "tracks", radio: "radio", album: "album", artist: "artist", podcast: "podcast", playlist: "playlist" }, h = a.virtual !== !1 && e.length > 72, v = this._mediaVirtualPageKey(), k = this._mediaVirtualMetrics(l), M = h ? Math.max(0, Number(this._mediaVirtualStarts.get(v) || 0)) : 0, P = Math.floor(M / k.columns) * k.columns, F = h ? Math.min(e.length, P + k.windowSize) : e.length, q = e.slice(P, F), O = Math.floor(P / k.columns), H = Math.ceil(Math.max(0, e.length - F) / k.columns), j = "grid-column:1/-1;pointer-events:none;";
-    return `<div class="media-items-list layout-${this._esc(l)}" data-homeii-virtual-total="${h ? this._esc(String(e.length)) : "0"}" data-virtual-columns="${this._esc(String(k.columns))}" data-virtual-row-height="${this._esc(String(k.rowHeight))}">${O ? `<div class="virtual-list-spacer top" style="${j}height:${this._esc(String(O * k.rowHeight))}px" aria-hidden="true"></div>` : ""}${q.map((G) => {
-      const V = String(G?.media_type || G?.type || t || "album").toLowerCase(), Z = a.openDetails !== !1 && this._mediaTypeCanOpenDetails(V), W = this._artUrl(G), ue = p[V] || p[t] || "repeat", he = W ? `<span class="menu-thumb" data-img="${this._esc(W)}" data-placeholder="${this._esc(ue)}">${this._iconSvg(ue)}</span>` : `<span class="menu-thumb">${this._iconSvg(ue)}</span>`, s = this._artistName(G) || "", A = V === "artist" ? this._i18n("ui.artist") : V === "radio" ? G.metadata?.description || "" : s || G.album?.name || G.publisher || "", g = G?.radio_browser || G?.radio_browser_id ? "radio_browser" : G?.favorite_scope || a.favorite_scope || "library", y = `data-media-type="${this._esc(V)}" data-media-name="${this._esc(G.name || "")}" data-media-artist="${this._esc(s)}" data-media-album="${this._esc(G.album?.name || "")}" data-media-image="${this._esc(W || "")}" data-media-favorite-scope="${this._esc(g)}"`;
+    const l = a.layout || this._state.mobileMediaLayout || this._defaultMobileMediaLayout(), p = { track: "tracks", radio: "radio", album: "album", artist: "artist", podcast: "podcast", playlist: "playlist" }, h = a.virtual !== !1 && e.length > 72, v = this._mediaVirtualPageKey(), k = this._mediaVirtualMetrics(l), M = h ? Math.max(0, Number(this._mediaVirtualStarts.get(v) || 0)) : 0, Q = Math.floor(M / k.columns) * k.columns, F = h ? Math.min(e.length, Q + k.windowSize) : e.length, q = e.slice(Q, F), Y = Math.floor(Q / k.columns), H = Math.ceil(Math.max(0, e.length - F) / k.columns), G = "grid-column:1/-1;pointer-events:none;";
+    return `<div class="media-items-list layout-${this._esc(l)}" data-homeii-virtual-total="${h ? this._esc(String(e.length)) : "0"}" data-virtual-columns="${this._esc(String(k.columns))}" data-virtual-row-height="${this._esc(String(k.rowHeight))}">${Y ? `<div class="virtual-list-spacer top" style="${G}height:${this._esc(String(Y * k.rowHeight))}px" aria-hidden="true"></div>` : ""}${q.map((j) => {
+      const V = String(j?.media_type || j?.type || t || "album").toLowerCase(), Z = a.openDetails !== !1 && this._mediaTypeCanOpenDetails(V), W = this._artUrl(j), ue = p[V] || p[t] || "repeat", he = W ? `<span class="menu-thumb" data-img="${this._esc(W)}" data-placeholder="${this._esc(ue)}">${this._iconSvg(ue)}</span>` : `<span class="menu-thumb">${this._iconSvg(ue)}</span>`, s = this._artistName(j) || "", A = V === "artist" ? this._i18n("ui.artist") : V === "radio" ? j.metadata?.description || "" : s || j.album?.name || j.publisher || "", g = j?.radio_browser || j?.radio_browser_id ? "radio_browser" : j?.favorite_scope || a.favorite_scope || "library", y = `data-media-type="${this._esc(V)}" data-media-name="${this._esc(j.name || "")}" data-media-artist="${this._esc(s)}" data-media-album="${this._esc(j.album?.name || "")}" data-media-image="${this._esc(W || "")}" data-media-favorite-scope="${this._esc(g)}"`;
       return `
         <div class="menu-list-item media-entry ${this._esc(l)} media-type-${this._esc(V)}">
-          <button class="media-entry-main" ${Z ? `data-media-open="${this._esc(G.uri || "")}"` : `data-media-uri="${this._esc(G.uri || "")}"`} ${y}>
+          <button class="media-entry-main" ${Z ? `data-media-open="${this._esc(j.uri || "")}"` : `data-media-uri="${this._esc(j.uri || "")}"`} ${y}>
             ${he}
             <span style="min-width:0;flex:1;">
-              <span class="menu-item-title">${this._esc(G.name || "")}</span>
+              <span class="menu-item-title">${this._esc(j.name || "")}</span>
               <span class="menu-item-sub">${this._esc(A || "—")}</span>
             </span>
           </button>
-          ${a.albumBadges && V === "album" ? this._albumCardBadgeHtml(G) : ""}
-          ${G.uri ? `<button class="chip-btn queue-more-btn media-play-btn" data-media-play="${this._esc(G.uri || "")}" ${y} title="${this._esc(this._i18n("ui.play"))}" aria-label="${this._esc(this._i18n("ui.play"))}">${this._iconSvg("play")}</button>` : ""}
-          <button class="chip-btn queue-more-btn media-more-btn" data-media-more="${this._esc(G.uri || "")}" ${y} title="${this._esc(this._i18n("ui.actions_2"))}">${this._iconSvg("more")}</button>
+          ${a.albumBadges && V === "album" ? this._albumCardBadgeHtml(j) : ""}
+          ${j.uri ? `<button class="chip-btn queue-more-btn media-play-btn" data-media-play="${this._esc(j.uri || "")}" ${y} title="${this._esc(this._i18n("ui.play"))}" aria-label="${this._esc(this._i18n("ui.play"))}">${this._iconSvg("play")}</button>` : ""}
+          <button class="chip-btn queue-more-btn media-more-btn" data-media-more="${this._esc(j.uri || "")}" ${y} title="${this._esc(this._i18n("ui.actions_2"))}">${this._iconSvg("more")}</button>
         </div>
       `;
-    }).join("")}${H ? `<div class="virtual-list-spacer bottom" style="${j}height:${this._esc(String(H * k.rowHeight))}px" aria-hidden="true"></div>` : ""}</div>`;
+    }).join("")}${H ? `<div class="virtual-list-spacer bottom" style="${G}height:${this._esc(String(H * k.rowHeight))}px" aria-hidden="true"></div>` : ""}</div>`;
   }
   _countryFlagEmoji(e = "") {
     return nu(e);
@@ -61943,12 +61983,12 @@ class aa extends As {
         </div>
       </div>
       <div class="media-items-list layout-${this._esc(t)} liked-items-list">${e.map((p) => {
-      const h = String(p?.uri || "").trim(), v = a.has(h), k = String(p.media_type || p.type || "track").toLowerCase(), M = this._mediaTypeCanOpenDetails(k), P = p.image || p.image_url || "", F = `data-media-type="${this._esc(k)}" data-media-name="${this._esc(p.name || "")}" data-media-artist="${this._esc(p.artist || "")}" data-media-album="${this._esc(p.album || "")}" data-media-image="${this._esc(P)}" data-media-favorite-scope="${this._esc(p.favorite_scope || "library")}"`;
+      const h = String(p?.uri || "").trim(), v = a.has(h), k = String(p.media_type || p.type || "track").toLowerCase(), M = this._mediaTypeCanOpenDetails(k), Q = p.image || p.image_url || "", F = `data-media-type="${this._esc(k)}" data-media-name="${this._esc(p.name || "")}" data-media-artist="${this._esc(p.artist || "")}" data-media-album="${this._esc(p.album || "")}" data-media-image="${this._esc(Q)}" data-media-favorite-scope="${this._esc(p.favorite_scope || "library")}"`;
       return `
           <div class="menu-list-item media-entry ${this._esc(t)} liked-entry media-type-${this._esc(k)}" ${M ? "" : `data-media-uri="${this._esc(h)}"`} ${F}>
             ${this._state.likedSelectionMode ? `<label class="liked-select-box ${v ? "checked" : ""}"><input type="checkbox" data-liked-select-uri="${this._esc(h)}" ${v ? "checked" : ""}><span></span></label>` : ""}
             <button class="media-entry-main" ${M ? `data-media-open="${this._esc(h)}"` : `data-media-uri="${this._esc(h)}"`} ${F}>
-              <span class="menu-thumb">${P ? this._imgHtml(P, "", { fallbackIcon: "heart_filled" }) : this._iconSvg("heart_filled")}</span>
+              <span class="menu-thumb">${Q ? this._imgHtml(Q, "", { fallbackIcon: "heart_filled" }) : this._iconSvg("heart_filled")}</span>
               <span style="min-width:0;flex:1;">
                 <span class="menu-item-title">${this._esc(p.name || "")}</span>
                 <span class="menu-item-sub">${this._esc([p.artist, p.album].filter(Boolean).join(" · ") || "—")}</span>
@@ -61972,10 +62012,10 @@ class aa extends As {
       ["tracks", this._i18n("ui.tracks"), e.tracks || []],
       ["podcasts", this._i18n("ui.podcasts"), e.podcasts || []]
     ], p = Array.isArray(this._config?.search_result_order) ? this._config.search_result_order : [], h = [.../* @__PURE__ */ new Set([...p, ...l.map(([k]) => k)])], v = l.filter(([, , k]) => Array.isArray(k) && k.length).sort(([k], [M]) => h.indexOf(k) - h.indexOf(M));
-    return v.length ? `<div class="media-results">${v.map(([k, M, P]) => `
+    return v.length ? `<div class="media-results">${v.map(([k, M, Q]) => `
       <div>
         <div class="media-section-title">${this._esc(M)}</div>
-        ${this._mediaItemsListHtml(P.slice(0, 8), k === "tracks" ? "track" : k === "playlists" ? "playlist" : k === "albums" ? "album" : k === "artists" ? "artist" : k === "podcasts" ? "podcast" : "radio", { layout: a, openDetails: t.openDetails !== !1 })}
+        ${this._mediaItemsListHtml(Q.slice(0, 8), k === "tracks" ? "track" : k === "playlists" ? "playlist" : k === "albums" ? "album" : k === "artists" ? "artist" : k === "podcasts" ? "podcast" : "radio", { layout: a, openDetails: t.openDetails !== !1 })}
       </div>
     `).join("")}</div>` : `<div class="notice open">${this._i18n("ui.no_results_found")}</div>`;
   }
@@ -61993,50 +62033,45 @@ class aa extends As {
     if (!t) return;
     const l = (this._state.mediaQuery || "").trim();
     this._state.mediaSearchToken = Number(this._state.mediaSearchToken || 0) + 1;
-    const p = this._state.mediaSearchToken;
-    let h = !1;
-    const v = () => this._state.menuOpen && this._state.mediaSearchToken === p && this.$("mobileMenuBody")?.querySelector("#mobileMediaSearchResults") === t && this._isMobileSearchPage() && (this._state.mediaQuery || "").trim() === l;
+    const p = this._state.mediaSearchToken, h = () => this._state.menuOpen && this._state.mediaSearchToken === p && this.$("mobileMenuBody")?.querySelector("#mobileMediaSearchResults") === t && this._isMobileSearchPage() && (this._state.mediaQuery || "").trim() === l;
     if (a && (a.style.display = l ? "" : "none"), a && a.classList.toggle("visible", !!l), !l) {
       t.innerHTML = this._state.menuPage === "quick_search" ? this._quickSearchRecommendationsHtml() : "", this._state.menuPage === "quick_search" && this._hydrateImages(e);
       return;
     }
-    const k = this._cachedLibrarySearchResults(l, 10), M = { openDetails: this._state.menuPage !== "quick_search" };
-    let P = this._hasSearchResults(k), F = k;
-    t.innerHTML = P ? this._mediaSearchSectionsHtml(k, M) : this._loadingStateHtml(this._i18n("ui.searching"), { notice: !0 }), P && this._hydrateImages(e), P || this._withTimeout(this._searchPreviewResults(l, 8), 3200, "Preview search timed out").then((G) => {
-      h || !v() || P || !this._hasSearchResults(G) || (P = !0, F = G, t.innerHTML = this._mediaSearchSectionsHtml(G, M), this._hydrateImages(e));
-    }).catch(() => {
-    });
-    let q = null, O = null, H = null;
+    const v = this._cachedLibrarySearchResults(l, 10), k = { openDetails: this._state.menuPage !== "quick_search" };
+    let M = this._hasSearchResults(v), Q = v;
+    t.innerHTML = M ? this._mediaSearchSectionsHtml(v, k) : this._loadingStateHtml(this._i18n("ui.searching"), { notice: !0 }), M && this._hydrateImages(e);
+    let F = null, q = null, Y = null;
     try {
-      q = (async () => (await new Promise((V) => setTimeout(V, 650)), v() ? this._withTimeout(
-        this._search(l, { providerOnly: !0, limit: 30, strict: !0 }),
+      F = (async () => (await new Promise((j) => setTimeout(j, 650)), h() ? this._withTimeout(
+        this._search(l, { providerOnly: !0, limit: 10, strict: !0 }),
         Math.max(this._musicAssistantTimeoutMs(), 18e3),
         this._timeoutMessage("Music Assistant provider search")
-      ) : this._emptySearchResults()))().catch((V) => (O = V, this._debugLog("warn", "[HOMEii Flow] provider search failed", V), this._emptySearchResults()));
+      ) : this._emptySearchResults()))().catch((j) => (q = j, this._debugLog("warn", "[HOMEii Flow] provider search failed", j), this._emptySearchResults()));
       const G = await this._search(l, { fastOnly: !0, limit: 25, strict: !0 });
-      F = this._mergeSearchResults(F, G);
+      Q = this._mergeSearchResults(Q, G);
     } catch (G) {
-      H = G;
+      Y = G;
     }
-    if (!v()) return;
-    this._hasSearchResults(F) ? (P = !0, t.innerHTML = this._mediaSearchSectionsHtml(F, M), this._hydrateImages(e)) : P || (t.innerHTML = this._loadingStateHtml(this._i18n("ui.searching"), { notice: !0 }));
-    const j = (G) => {
-      if (!v() || !this._hasSearchResults(G)) return !1;
-      const V = this._mergeSearchResults(F, G);
-      return this._hasSearchResults(V) ? (t.innerHTML = this._mediaSearchSectionsHtml(V, M), this._hydrateImages(e), !0) : !1;
+    if (!h()) return;
+    this._hasSearchResults(Q) ? (M = !0, t.innerHTML = this._mediaSearchSectionsHtml(Q, k), this._hydrateImages(e)) : M || (t.innerHTML = this._loadingStateHtml(this._i18n("ui.searching"), { notice: !0 }));
+    const H = (G) => {
+      if (!h() || !this._hasSearchResults(G)) return !1;
+      const j = this._mergeSearchResults(Q, G);
+      return this._hasSearchResults(j) ? (t.innerHTML = this._mediaSearchSectionsHtml(j, k), this._hydrateImages(e), !0) : !1;
     };
-    if (q) {
-      const G = await q;
-      if (h = !0, !v()) return;
-      j(G) && (P = !0);
+    if (F) {
+      const G = await F;
+      if (!h()) return;
+      H(G) && (M = !0);
     }
-    if (h = !0, !!v()) {
-      if (O || H) {
-        const G = `<div class="notice open" role="alert">${this._esc(this._m(P ? "Some search sources could not be loaded. Try again." : "Search could not be completed. Try again.", P ? "חלק ממקורות החיפוש לא נטענו. נסה שוב." : "לא ניתן להשלים את החיפוש. נסה שוב."))}</div><button class="chip-btn" data-menu-action="retry_library">${this._esc(this._m("Retry", "נסה שוב"))}</button>`;
-        P ? t.insertAdjacentHTML("beforeend", G) : t.innerHTML = G;
-      } else if (!P) {
-        const G = this._mergeSearchResults(F, this._emptySearchResults());
-        t.innerHTML = this._mediaSearchSectionsHtml(G, M), this._hydrateImages(e);
+    if (h()) {
+      if (q || Y) {
+        const G = `<div class="notice open" role="alert">${this._esc(this._m(M ? "Some search sources could not be loaded. Try again." : "Search could not be completed. Try again.", M ? "חלק ממקורות החיפוש לא נטענו. נסה שוב." : "לא ניתן להשלים את החיפוש. נסה שוב."))}</div><button class="chip-btn" data-menu-action="retry_library">${this._esc(this._m("Retry", "נסה שוב"))}</button>`;
+        M ? t.insertAdjacentHTML("beforeend", G) : t.innerHTML = G;
+      } else if (!M) {
+        const G = this._mergeSearchResults(Q, this._emptySearchResults());
+        t.innerHTML = this._mediaSearchSectionsHtml(G, k), this._hydrateImages(e);
       }
     }
   }
@@ -62217,30 +62252,30 @@ class aa extends As {
       preview: h
     })), this._announcementSendPending = !0;
     try {
-      const k = this._announcementTtsEntity(), M = l.map((j) => String(j?.entity_id || "").trim()).filter(Boolean), P = /* @__PURE__ */ new Map();
-      for (const j of this._prepareAnnouncementVolumes(l)) {
-        const G = P.get(j.targetVolumePct) || [];
-        G.push(j.entityId), P.set(j.targetVolumePct, G);
+      const k = this._announcementTtsEntity(), M = l.map((G) => String(G?.entity_id || "").trim()).filter(Boolean), Q = /* @__PURE__ */ new Map();
+      for (const G of this._prepareAnnouncementVolumes(l)) {
+        const j = Q.get(G.targetVolumePct) || [];
+        j.push(G.entityId), Q.set(G.targetVolumePct, j);
       }
-      const q = (await Promise.all([...P].map(async ([j, G]) => {
+      const q = (await Promise.all([...Q].map(async ([G, j]) => {
         try {
           const V = await this._homeiiEngineAnnounce({
             message: e,
-            player: G.length === 1 ? G[0] : "",
-            players: G,
-            volume: j,
+            player: j.length === 1 ? j[0] : "",
+            players: j,
+            volume: G,
             language: v,
             tts_entity: k,
             target: t
           });
-          return Array.isArray(V?.results) && V.results.length ? V.results : G.map((Z) => ({ player: Z, ok: V?.ok === !0 || V?.sent === !0 }));
+          return Array.isArray(V?.results) && V.results.length ? V.results : j.map((Z) => ({ player: Z, ok: V?.ok === !0 || V?.sent === !0 }));
         } catch (V) {
-          return G.map((Z) => ({ player: Z, ok: !1, error: V?.message }));
+          return j.map((Z) => ({ player: Z, ok: !1, error: V?.message }));
         }
-      }))).flat(), O = q.filter((j) => j?.ok !== !0);
-      if (!M.every((j) => q.some((G) => G?.player === j && G?.ok === !0)) || O.length) {
-        const j = M.filter((G) => !q.some((V) => V?.player === G && V?.ok === !0)).map((G) => l.find((V) => V.entity_id === G)?.attributes?.friendly_name || G);
-        throw new Error(`${this._m("Announcement not confirmed", "הכריזה לא אושרה")}: ${j.join(", ") || p}`);
+      }))).flat(), Y = q.filter((G) => G?.ok !== !0);
+      if (!M.every((G) => q.some((j) => j?.player === G && j?.ok === !0)) || Y.length) {
+        const G = M.filter((j) => !q.some((V) => V?.player === j && V?.ok === !0)).map((j) => l.find((V) => V.entity_id === j)?.attributes?.friendly_name || j);
+        throw new Error(`${this._m("Announcement not confirmed", "הכריזה לא אושרה")}: ${G.join(", ") || p}`);
       }
       this._toastSuccess(this._i18n("ui.announcement_sent_to_player", { player: p }));
     } catch (k) {
@@ -62315,15 +62350,15 @@ class aa extends As {
     this._refreshGroupingState();
     const e = this._getAvailableGroupPlayers();
     if (!e.length) return `<div class="notice open">${this._i18n("ui.no_extra_ma_players_2")}</div>`;
-    const t = this._getSelectedPlayer(), a = this._groupSelectionDelta(t?.entity_id, this._state.pendingGroupSelections || []), l = new Set(a.currentAll || a.current), p = new Set(a.desiredAll || a.desired), h = a.owner || "", v = this._playerGroupMemberNames(t), k = Math.max(this._playerGroupCount(t), a.current.length ? a.current.length + 1 : 0), M = this._groupAverageVolume(t), P = M !== null && this._playerGroupMemberIds(t).every((H) => Lt.playerCanSetVolume(this._playerByEntityId(H))), F = this._groupChangeSummaryText(a), q = !!(a.ownerRemoved || a.added.length || a.removed.length), O = v.length > 1 ? `<p class="group-members-summary">${this._esc(v.join(" · "))}</p>` : "";
+    const t = this._getSelectedPlayer(), a = this._groupSelectionDelta(t?.entity_id, this._state.pendingGroupSelections || []), l = new Set(a.currentAll || a.current), p = new Set(a.desiredAll || a.desired), h = a.owner || "", v = this._playerGroupMemberNames(t), k = Math.max(this._playerGroupCount(t), a.current.length ? a.current.length + 1 : 0), M = this._groupAverageVolume(t), Q = M !== null && this._playerGroupMemberIds(t).every((H) => Lt.playerCanSetVolume(this._playerByEntityId(H))), F = this._groupChangeSummaryText(a), q = !!(a.ownerRemoved || a.added.length || a.removed.length), Y = v.length > 1 ? `<p class="group-members-summary">${this._esc(v.join(" · "))}</p>` : "";
     return `
       <div class="group-setup-intro"><h3>${this._esc(this._m("Listen together", "להאזין יחד"))}</h3><p>${this._esc(this._m("Select the speakers, then apply. Playback follows the group leader.", "בחר את הרמקולים ואז אשר. הניגון ימשיך לפי הנגן המוביל."))}</p></div>
-      ${O}
+      ${Y}
       <div class="group-change-row" data-group-change-summary ${F ? "" : "hidden"}>${this._esc(F)}</div>
       ${k > 1 ? `
         <details class="group-volume-card"><summary>${this._esc(this._i18n("ui.group_volume"))}</summary>
           <div class="group-volume-title">${this._esc(this._i18n("ui.group_volume"))}<span>${this._esc(String(k))}</span></div>
-          ${P ? `          <div class="player-volume-row">
+          ${Q ? `          <div class="player-volume-row">
             <button class="player-mini-mute ${this._isGroupMuted(t) ? "active" : ""}" data-group-mute="${this._esc(t?.entity_id || "")}" title="${this._esc(this._i18n("ui.mute"))}">${this._iconSvg(this._isGroupMuted(t) ? "volume_mute" : this._volumeIconName(t))}</button>
             <input class="player-mini-volume" data-group-volume="${this._esc(t?.entity_id || "")}" type="range" min="0" max="100" value="${M}" style="--vol-pct:${M}%">
             <button type="button" class="player-mini-value player-volume-percent" data-group-volume-wheel="${this._esc(t?.entity_id || "")}" aria-label="${this._esc(this._i18n("ui.group_volume"))}">${M}%</button>
@@ -62333,11 +62368,11 @@ class aa extends As {
       ` : ""}
       <div class="players-premium-grid">
       ${e.map((H) => {
-      const j = p.has(H.entity_id), G = l.has(H.entity_id), V = H.entity_id === h, Z = Lt.isPlayerAvailable(H), W = this._groupPlayerStatusClass(j, G, V), ue = Z ? this._groupPlayerStatusText(j, G, V) : this._i18n("ui.disconnected"), he = this._playerGroupCount(H), s = this._playerArtworkUrl(H, 180), A = Z && (H?.state === "playing" || G && this._playerByEntityId(h)?.state === "playing"), g = H.attributes?.media_title || H.attributes?.media_artist || "";
+      const G = p.has(H.entity_id), j = l.has(H.entity_id), V = H.entity_id === h, Z = Lt.isPlayerAvailable(H), W = this._groupPlayerStatusClass(G, j, V), ue = Z ? this._groupPlayerStatusText(G, j, V) : this._i18n("ui.disconnected"), he = this._playerGroupCount(H), s = this._playerArtworkUrl(H, 180), A = Z && (H?.state === "playing" || j && this._playerByEntityId(h)?.state === "playing"), g = H.attributes?.media_title || H.attributes?.media_artist || "";
       return `
-          <div data-group-player="${this._esc(H.entity_id)}" class="group-player-card ${j ? "checked" : ""} ${W}" data-group-connected="${G ? "true" : "false"}" data-group-owner="${V ? "true" : "false"}">
-            <label class="group-player-row player-premium-head ${j ? "checked" : ""}">
-              <span class="group-player-toggle ${j ? "checked" : ""}" aria-hidden="true">${this._iconSvg(this._groupPlayerStatusIcon(j, G, V))}</span>
+          <div data-group-player="${this._esc(H.entity_id)}" class="group-player-card ${G ? "checked" : ""} ${W}" data-group-connected="${j ? "true" : "false"}" data-group-owner="${V ? "true" : "false"}">
+            <label class="group-player-row player-premium-head ${G ? "checked" : ""}">
+              <span class="group-player-toggle ${G ? "checked" : ""}" aria-hidden="true">${this._iconSvg(this._groupPlayerStatusIcon(G, j, V))}</span>
               <span class="player-premium-art" ${Z ? 'data-group-drag-art draggable="true"' : ""} title="${this._esc(this._m("Drag onto another player to connect", "גרור לנגן אחר לחיבור"))}">
                 ${s ? this._imgHtml(s, "", { loading: "lazy", fetchpriority: "low" }) : this._iconSvg("speaker")}
                 ${he ? `<span class="player-group-badge">${this._esc(he)}</span>` : ""}
@@ -62350,9 +62385,9 @@ class aa extends As {
                 <span class="group-player-status ${W}">${this._esc(ue)}</span>
                 ${g ? `<span class="player-premium-track">${this._esc(g)}</span>` : ""}
               </span>
-              <input class="group-player-check" type="checkbox" data-menu-group-player="${this._esc(H.entity_id)}" data-group-owner="${V ? "true" : "false"}" ${j ? "checked" : ""} ${!Z && !G ? "disabled" : ""}>
+              <input class="group-player-check" type="checkbox" data-menu-group-player="${this._esc(H.entity_id)}" data-group-owner="${V ? "true" : "false"}" ${G ? "checked" : ""} ${!Z && !j ? "disabled" : ""}>
             </label>
-            ${Z && !V ? `<button type="button" class="group-quick-connect" data-group-quick="${this._esc(H.entity_id)}">${St(this, G ? "group_remove" : "group_add")}<span>${this._esc(G ? this._m("Disconnect", "ניתוק") : this._m("Connect", "חיבור"))}</span></button>` : ""}
+            ${Z && !V ? `<button type="button" class="group-quick-connect" data-group-quick="${this._esc(H.entity_id)}">${St(this, j ? "group_remove" : "group_add")}<span>${this._esc(j ? this._m("Disconnect", "ניתוק") : this._m("Connect", "חיבור"))}</span></button>` : ""}
             ${Z ? Hn(this, H, { inline: !0 }) : ""}
           </div>
         `;
@@ -62411,14 +62446,14 @@ class aa extends As {
     if (!p.length) return `<div class="notice open">${this._i18n("ui.no_results_found")}</div>`;
     const h = l.activeIndex, v = { track: "tracks", radio: "radio", album: "album", artist: "artist", podcast: "podcast", playlist: "playlist" }, k = this._libraryFlowCaptionForItem(p[h] || p[0], t, a);
     this._queueFlowCaptionItems = p.map((q) => this._libraryFlowCaptionForItem(q, t, a));
-    const M = String(a.className || "").trim(), P = a.fullPage === !0, F = `
-        <div class="queue-flow-stage library-flow-stage ${this._esc(M)} ${P ? "library-flow-full-stage" : ""}" data-queue-flow-stage data-queue-flow-total="${this._esc(String(l.totalCount))}" data-queue-flow-start="${this._esc(String(l.startIndex))}">
+    const M = String(a.className || "").trim(), Q = a.fullPage === !0, F = `
+        <div class="queue-flow-stage library-flow-stage ${this._esc(M)} ${Q ? "library-flow-full-stage" : ""}" data-queue-flow-stage data-queue-flow-total="${this._esc(String(l.totalCount))}" data-queue-flow-start="${this._esc(String(l.startIndex))}">
           <div class="queue-flow-picker" data-queue-flow-picker>
             <div class="queue-flow-track">
-              ${p.map((q, O) => {
-      const H = String(q?.media_type || q?.type || t || "album").toLowerCase(), j = a.openDetails !== !1 && this._mediaTypeCanOpenDetails(H), G = String(q?.uri || q?.media_item?.uri || "").trim(), V = this._artUrl(q, { size: 220 }) || q?.image || q?.image_url || "", Z = this._artistName(q) || q?.artist || "", W = typeof q?.album == "string" ? q.album : q?.album?.name || "", ue = v[H] || v[t] || "album", he = this._libraryFlowCaptionForItem(q, t, a), s = G ? j ? `data-media-open="${this._esc(G)}"` : `data-media-uri="${this._esc(G)}"` : "", A = q?.radio_browser || q?.radio_browser_id ? "radio_browser" : q?.favorite_scope || a.favorite_scope || "library";
+              ${p.map((q, Y) => {
+      const H = String(q?.media_type || q?.type || t || "album").toLowerCase(), G = a.openDetails !== !1 && this._mediaTypeCanOpenDetails(H), j = String(q?.uri || q?.media_item?.uri || "").trim(), V = this._artUrl(q, { size: 220 }) || q?.image || q?.image_url || "", Z = this._artistName(q) || q?.artist || "", W = typeof q?.album == "string" ? q.album : q?.album?.name || "", ue = v[H] || v[t] || "album", he = this._libraryFlowCaptionForItem(q, t, a), s = j ? G ? `data-media-open="${this._esc(j)}"` : `data-media-uri="${this._esc(j)}"` : "", A = q?.radio_browser || q?.radio_browser_id ? "radio_browser" : q?.favorite_scope || a.favorite_scope || "library";
       return `
-                  <button class="queue-flow-item library-flow-item ${O === h ? "active centered" : ""}" data-library-flow-item="1" ${s} data-flow-caption-title="${this._esc(he.title)}" data-flow-caption-artist="${this._esc(he.artist)}" data-media-type="${this._esc(H)}" data-media-name="${this._esc(q?.name || q?.title || "")}" data-media-artist="${this._esc(Z)}" data-media-album="${this._esc(W)}" data-media-image="${this._esc(V || "")}" data-media-favorite-scope="${this._esc(A)}" ${G ? "" : "disabled"}>
+                  <button class="queue-flow-item library-flow-item ${Y === h ? "active centered" : ""}" data-library-flow-item="1" ${s} data-flow-caption-title="${this._esc(he.title)}" data-flow-caption-artist="${this._esc(he.artist)}" data-media-type="${this._esc(H)}" data-media-name="${this._esc(q?.name || q?.title || "")}" data-media-artist="${this._esc(Z)}" data-media-album="${this._esc(W)}" data-media-image="${this._esc(V || "")}" data-media-favorite-scope="${this._esc(A)}" ${j ? "" : "disabled"}>
                     <span class="queue-flow-art" ${V ? `data-img="${this._esc(V)}" data-placeholder="${this._esc(ue)}"` : ""}>
                       ${this._iconSvg(ue)}
                     </span>
@@ -62433,7 +62468,7 @@ class aa extends As {
           </div>
         </div>
     `;
-    return P ? F : `
+    return Q ? F : `
       <div class="library-flow-panel ${this._esc(M)}">
         ${F}
       </div>
@@ -62472,10 +62507,10 @@ class aa extends As {
         <div class="queue-flow-picker" data-queue-flow-picker>
           <div class="queue-flow-track">
             ${a.map((h, v) => {
-      const k = this._getQueueItemKey(h), M = h.media_item || {}, P = this._queueItemImageUrl(h, 220);
+      const k = this._getQueueItemKey(h), M = h.media_item || {}, Q = this._queueItemImageUrl(h, 220);
       return `
                 <button class="queue-flow-item ${this._isQueueItemCurrent(h) ? "active centered" : ""}" data-queue-flow-item="1" data-queue-item-id="${this._esc(k)}" data-uri="${this._esc(M.uri || this._getQueueItemUri(h) || "")}" data-type="${this._esc(M.media_type || h.media_type || "track")}" data-sort-index="${this._esc(h.sort_index ?? "")}" data-queue-position="${this._esc(String(t.startIndex + v + 1))}">
-                  <span class="queue-flow-art" ${P ? `data-img="${this._esc(P)}" data-placeholder="album"` : ""}>
+                  <span class="queue-flow-art" ${Q ? `data-img="${this._esc(Q)}" data-placeholder="album"` : ""}>
                     ${this._iconSvg("album")}
                   </span>
                 </button>
@@ -62495,15 +62530,15 @@ class aa extends As {
     if (!t) return;
     const a = Array.from(t.querySelectorAll?.(".queue-flow-item") || []);
     if (!a.length) return;
-    const l = a[0], p = a[1] || null, h = Number(l.offsetTop || 0) + Number(l.offsetHeight || 0) / 2, v = p ? Number(p.offsetTop || 0) - Number(l.offsetTop || 0) : 0, k = Math.max(1, v || Number(l.offsetHeight || 0) + 22), M = Number(t.scrollTop || 0) + Number(t.clientHeight || 0) / 2, P = (O, H, j) => Math.max(H, Math.min(j, O)), F = P(Math.round((M - h) / k), 0, a.length - 1);
-    a.forEach((O, H) => {
-      const j = h + H * k, G = P((j - M) / k, -3, 3), V = Math.abs(G), Z = F >= 0 ? H - F : 0, W = Math.min(3, Math.floor(V + 0.62)), ue = P(1.06 - V * 0.15, 0.58, 1.06), he = P(1 - V * 0.26, 0.18, 1), s = P(V * 0.48, 0, 1.25), A = P(30 - V * 38, -86, 30), g = P(G * -5.5, -16, 16), y = P(1 - V * 0.13, 0.62, 1), S = P(1 - V * 0.09, 0.7, 1);
-      O.classList.toggle("centered", H === F), O.classList.toggle("is-before", Z < 0), O.classList.toggle("is-after", Z > 0), O.classList.toggle("depth-1", W === 1), O.classList.toggle("depth-2", W === 2), O.classList.toggle("depth-3", W >= 3), O.style.setProperty("--queue-flow-scale", ue.toFixed(3)), O.style.setProperty("--queue-flow-opacity", he.toFixed(3)), O.style.setProperty("--queue-flow-blur", `${s.toFixed(2)}px`), O.style.setProperty("--queue-flow-z", `${A.toFixed(1)}px`), O.style.setProperty("--queue-flow-rotate", `${g.toFixed(2)}deg`), O.style.setProperty("--queue-flow-saturate", y.toFixed(3)), O.style.setProperty("--queue-flow-brightness", S.toFixed(3)), O.style.setProperty("--queue-flow-y", `${(G * -2).toFixed(1)}px`);
+    const l = a[0], p = a[1] || null, h = Number(l.offsetTop || 0) + Number(l.offsetHeight || 0) / 2, v = p ? Number(p.offsetTop || 0) - Number(l.offsetTop || 0) : 0, k = Math.max(1, v || Number(l.offsetHeight || 0) + 22), M = Number(t.scrollTop || 0) + Number(t.clientHeight || 0) / 2, Q = (Y, H, G) => Math.max(H, Math.min(G, Y)), F = Q(Math.round((M - h) / k), 0, a.length - 1);
+    a.forEach((Y, H) => {
+      const G = h + H * k, j = Q((G - M) / k, -3, 3), V = Math.abs(j), Z = F >= 0 ? H - F : 0, W = Math.min(3, Math.floor(V + 0.62)), ue = Q(1.06 - V * 0.15, 0.58, 1.06), he = Q(1 - V * 0.26, 0.18, 1), s = Q(V * 0.48, 0, 1.25), A = Q(30 - V * 38, -86, 30), g = Q(j * -5.5, -16, 16), y = Q(1 - V * 0.13, 0.62, 1), S = Q(1 - V * 0.09, 0.7, 1);
+      Y.classList.toggle("centered", H === F), Y.classList.toggle("is-before", Z < 0), Y.classList.toggle("is-after", Z > 0), Y.classList.toggle("depth-1", W === 1), Y.classList.toggle("depth-2", W === 2), Y.classList.toggle("depth-3", W >= 3), Y.style.setProperty("--queue-flow-scale", ue.toFixed(3)), Y.style.setProperty("--queue-flow-opacity", he.toFixed(3)), Y.style.setProperty("--queue-flow-blur", `${s.toFixed(2)}px`), Y.style.setProperty("--queue-flow-z", `${A.toFixed(1)}px`), Y.style.setProperty("--queue-flow-rotate", `${g.toFixed(2)}deg`), Y.style.setProperty("--queue-flow-saturate", y.toFixed(3)), Y.style.setProperty("--queue-flow-brightness", S.toFixed(3)), Y.style.setProperty("--queue-flow-y", `${(j * -2).toFixed(1)}px`);
     });
     const q = t.closest?.("[data-queue-flow-stage]")?.querySelector?.("[data-queue-flow-caption]");
     if (q) {
-      const O = a[F] || null, H = O?.dataset?.flowCaptionTitle !== void 0 || O?.dataset?.flowCaptionArtist !== void 0 ? { title: O?.dataset?.flowCaptionTitle || "", artist: O?.dataset?.flowCaptionArtist || "" } : this._queueFlowCaptionForIndex(F), j = q.querySelector?.("[data-queue-flow-caption-title]"), G = q.querySelector?.("[data-queue-flow-caption-artist]");
-      j && (j.textContent = H.title || ""), G && (G.textContent = H.artist || ""), q.hidden = !(H.title || H.artist);
+      const Y = a[F] || null, H = Y?.dataset?.flowCaptionTitle !== void 0 || Y?.dataset?.flowCaptionArtist !== void 0 ? { title: Y?.dataset?.flowCaptionTitle || "", artist: Y?.dataset?.flowCaptionArtist || "" } : this._queueFlowCaptionForIndex(F), G = q.querySelector?.("[data-queue-flow-caption-title]"), j = q.querySelector?.("[data-queue-flow-caption-artist]");
+      G && (G.textContent = H.title || ""), j && (j.textContent = H.artist || ""), q.hidden = !(H.title || H.artist);
     }
   }
   _bindQueueFlowPicker(e = this.$("mobileMenuBody")) {
@@ -62549,20 +62584,20 @@ class aa extends As {
     const h = Math.max(0, Math.min(a.length, Number(this._queueVirtualStart || 0))), v = Math.min(a.length, h + 72), k = a.slice(h, v);
     this._prefetchQueueArtworkWindow(t.length ? t : a, { immediate: !0, before: 2, after: 18, visibleStartIndex: h, visibleCount: k.length });
     const M = 104;
-    return `${p}${this._queueFlowPickerHtml(t)}<div class="queue-list" data-homeii-virtual-total="${this._esc(String(a.length))}" data-virtual-columns="1" data-virtual-row-height="${M}">${h ? `<div class="virtual-list-spacer top" style="height:${this._esc(String(h * M))}px;pointer-events:none" aria-hidden="true"></div>` : ""}${k.map((P, F) => {
-      const q = this._getQueueItemKey(P), O = this._queueItemImageUrl(P, 120), H = P.media_item?.artists?.map((ue) => ue.name).join(", ") || "", j = this._isQueueItemCurrent(P), G = P.media_item || {}, V = String(this._state.expandedQueueItemId || "") === String(q || ""), Z = h + F + 1, W = this._esc(String(Z));
+    return `${p}${this._queueFlowPickerHtml(t)}<div class="queue-list" data-homeii-virtual-total="${this._esc(String(a.length))}" data-virtual-columns="1" data-virtual-row-height="${M}">${h ? `<div class="virtual-list-spacer top" style="height:${this._esc(String(h * M))}px;pointer-events:none" aria-hidden="true"></div>` : ""}${k.map((Q, F) => {
+      const q = this._getQueueItemKey(Q), Y = this._queueItemImageUrl(Q, 120), H = Q.media_item?.artists?.map((ue) => ue.name).join(", ") || "", G = this._isQueueItemCurrent(Q), j = Q.media_item || {}, V = String(this._state.expandedQueueItemId || "") === String(q || ""), Z = h + F + 1, W = this._esc(String(Z));
       return `
-        <div class="queue-row ${j ? "active" : ""} ${V ? "expanded" : ""}" data-queue-item-id="${this._esc(q)}" data-uri="${this._esc(P.media_item?.uri || "")}" data-type="track" data-sort-index="${this._esc(P.sort_index ?? "")}" data-queue-position="${this._esc(String(Z))}">
+        <div class="queue-row ${G ? "active" : ""} ${V ? "expanded" : ""}" data-queue-item-id="${this._esc(q)}" data-uri="${this._esc(Q.media_item?.uri || "")}" data-type="track" data-sort-index="${this._esc(Q.sort_index ?? "")}" data-queue-position="${this._esc(String(Z))}">
           <button class="queue-index queue-drag-handle" data-queue-drag title="${this._esc(this._m("Drag to reorder; use Actions to choose a position", "גרור לשינוי סדר; בתפריט הפעולות ניתן לבחור מיקום"))}" aria-label="${this._esc(this._m("Reorder", "שינוי סדר"))} ${W}">${this._iconSvg("grip")}</button>
-          <div class="menu-thumb" ${O ? `data-img="${this._esc(O)}" data-placeholder="album"` : ""}>${this._iconSvg("album")}</div>
+          <div class="menu-thumb" ${Y ? `data-img="${this._esc(Y)}" data-placeholder="album"` : ""}>${this._iconSvg("album")}</div>
           <div class="queue-meta">
-            <div class="queue-title">${this._esc(P.media_item?.name || P.name || "")}</div>
+            <div class="queue-title">${this._esc(Q.media_item?.name || Q.name || "")}</div>
             <div class="queue-sub">${this._esc(H)}</div>
           </div>
           <div class="queue-actions">
-            <button class="chip-btn queue-more-btn" data-queue-menu="${this._esc(q)}" data-queue-uri="${this._esc(G.uri || "")}" data-queue-sort-index="${this._esc(P.sort_index ?? "")}" data-queue-position="${this._esc(String(Z))}" data-queue-name="${this._esc(G.name || P.name || "")}" data-queue-artist="${this._esc(H)}" data-queue-album="${this._esc(G.album?.name || "")}" data-queue-image="${this._esc(O || G.image || G.album?.image || "")}" title="${this._esc(this._i18n("ui.actions_2"))}" aria-expanded="${V ? "true" : "false"}">${this._iconSvg("more")}</button>
+            <button class="chip-btn queue-more-btn" data-queue-menu="${this._esc(q)}" data-queue-uri="${this._esc(j.uri || "")}" data-queue-sort-index="${this._esc(Q.sort_index ?? "")}" data-queue-position="${this._esc(String(Z))}" data-queue-name="${this._esc(j.name || Q.name || "")}" data-queue-artist="${this._esc(H)}" data-queue-album="${this._esc(j.album?.name || "")}" data-queue-image="${this._esc(Y || j.image || j.album?.image || "")}" title="${this._esc(this._i18n("ui.actions_2"))}" aria-expanded="${V ? "true" : "false"}">${this._iconSvg("more")}</button>
           </div>
-          ${V ? this._renderQueueInlineActions(P, Z, a.length) : ""}
+          ${V ? this._renderQueueInlineActions(Q, Z, a.length) : ""}
         </div>
       `;
     }).join("")}${v < a.length ? `<div class="virtual-list-spacer bottom" style="height:${this._esc(String((a.length - v) * M))}px;pointer-events:none" aria-hidden="true"></div>` : ""}</div>`;
@@ -62628,16 +62663,16 @@ class aa extends As {
     if (!e || !t || !a || !l || !p) return;
     const h = this._normalizeMobileMenuPage(this._state.menuPage || "main");
     if (h !== this._state.menuPage && (this._state.menuPage = h), h === "sleep_timer" && this._isScheduleFormEditing()) return;
-    const v = typeof performance < "u" && typeof performance.now == "function" ? performance.now() : Date.now(), k = this._mobileMenuRenderToken = (this._mobileMenuRenderToken || 0) + 1, M = () => k === this._mobileMenuRenderToken && this._state.menuOpen && this._state.menuPage === h, P = e.dataset.menuPage || "", F = P === h ? this._captureMobileMenuScroll(h) : null, q = () => {
+    const v = typeof performance < "u" && typeof performance.now == "function" ? performance.now() : Date.now(), k = this._mobileMenuRenderToken = (this._mobileMenuRenderToken || 0) + 1, M = () => k === this._mobileMenuRenderToken && this._state.menuOpen && this._state.menuPage === h, Q = e.dataset.menuPage || "", F = Q === h ? this._captureMobileMenuScroll(h) : null, q = () => {
       if (!M()) return !1;
       e.dataset.menuPage = h, ["players", "players_active", "group", "group_volume"].includes(h) && eA(this, e), Zi(this, e.parentElement, h), h === "queue" && (e.dataset.queueSignature = this._queueRenderSignature()), F && this._restoreMobileMenuScrollSnapshot(F, h), this._hydrateImages(e), this._bindQueueFlowPicker(e);
-      const R = typeof performance < "u" && typeof performance.now == "function" ? performance.now() : Date.now(), Y = Math.max(0, R - v);
-      return this._performanceMetrics.menuRenders += 1, this._performanceMetrics.lastMenuRenderMs = Number(Y.toFixed(2)), this._performanceMetrics.slowestMenuRenderMs = Math.max(
+      const R = typeof performance < "u" && typeof performance.now == "function" ? performance.now() : Date.now(), O = Math.max(0, R - v);
+      return this._performanceMetrics.menuRenders += 1, this._performanceMetrics.lastMenuRenderMs = Number(O.toFixed(2)), this._performanceMetrics.slowestMenuRenderMs = Math.max(
         Number(this._performanceMetrics.slowestMenuRenderMs || 0),
-        Number(Y.toFixed(2))
+        Number(O.toFixed(2))
       ), this._performanceMetrics.lastMenuPage = h, this._performanceMetrics.lastMenuDomNodes = e.querySelectorAll?.("*")?.length || 0, !0;
-    }, O = Array.isArray(this._state.menuStack) && this._state.menuStack.length > 0, H = h === "media_detail" ? this._libraryDetailMediaType(this._state.mobileLibraryDetail || {}) : "", j = h === "media_detail" && H === "artist", G = h === "media_detail", V = this._isMobileSearchPage(h), Z = h.startsWith("library_") || G, W = (h.startsWith("library_") || j) && this._layoutModeConfig() === "tablet", ue = this._isPhoneActionFullscreenMenuPage(h) || j;
-    a.hidden = !(O || h === "media_detail" && Array.isArray(this._state.mobileLibraryDetailStack) && this._state.mobileLibraryDetailStack.length), l.hidden = !0, p.hidden = !1, e.classList.toggle("library-mode", Z), e.classList.toggle("library-flow-mode", this._libraryFlowPageActive(h) || h === "artist_album_flow"), e.classList.toggle("search-mode", V), this.$("mobileMenu")?.classList.toggle("search-open", V), this.$("mobileMenu")?.classList.toggle("discovery-open", h === "discovery"), this.$("mobileMenu")?.classList.toggle("action-fullscreen-open", ue), this.$("mobileMenu")?.classList.toggle("library-fullscreen-open", W), this.$("homeShortcutFab")?.toggleAttribute("hidden", h === "discovery" || W), this._syncCompactMenuOverlayState();
+    }, Y = Array.isArray(this._state.menuStack) && this._state.menuStack.length > 0, H = h === "media_detail" ? this._libraryDetailMediaType(this._state.mobileLibraryDetail || {}) : "", G = h === "media_detail" && H === "artist", j = h === "media_detail", V = this._isMobileSearchPage(h), Z = h.startsWith("library_") || j, W = (h.startsWith("library_") || G) && this._layoutModeConfig() === "tablet", ue = this._isPhoneActionFullscreenMenuPage(h) || G;
+    a.hidden = !(Y || h === "media_detail" && Array.isArray(this._state.mobileLibraryDetailStack) && this._state.mobileLibraryDetailStack.length), l.hidden = !0, p.hidden = !1, e.classList.toggle("library-mode", Z), e.classList.toggle("library-flow-mode", this._libraryFlowPageActive(h) || h === "artist_album_flow"), e.classList.toggle("search-mode", V), this.$("mobileMenu")?.classList.toggle("search-open", V), this.$("mobileMenu")?.classList.toggle("discovery-open", h === "discovery"), this.$("mobileMenu")?.classList.toggle("action-fullscreen-open", ue), this.$("mobileMenu")?.classList.toggle("library-fullscreen-open", W), this.$("homeShortcutFab")?.toggleAttribute("hidden", h === "discovery" || W), this._syncCompactMenuOverlayState();
     const he = this.$("mobileMenu"), s = he?.querySelector(".menu-sheet"), A = h === "media_detail" ? this._state.mobileLibraryDetail || {} : null, g = A ? this._libraryDetailArtworkUrl(A, 960) : "", y = g || this._currentArtworkUrl(this._getSelectedPlayer(), this._state.maQueueState?.current_item || null, 720);
     he && (y ? (he.style.setProperty("--menu-dynamic-art", `url(${JSON.stringify(y)})`), he.classList.add("has-menu-art")) : (he.style.removeProperty("--menu-dynamic-art"), he.classList.remove("has-menu-art")), A ? this._applyMenuDetailTheme(he, g, A) : this._clearMenuDetailTheme(he));
     const S = [
@@ -62658,7 +62693,7 @@ class aa extends As {
       "sheet-discovery"
     ];
     e.classList.remove(...S), s?.classList.remove(...S);
-    const B = h === "main" ? "sheet-actions" : h === "discovery" ? "sheet-discovery" : h === "simple_wizard" ? "sheet-simple" : h === "players" || h === "players_active" ? "sheet-players" : h === "artist_album_flow" ? "sheet-queue-flow" : h === "queue" ? this._mobileQueueFlowMenuActive() ? "sheet-queue-flow" : "sheet-queue" : h === "media_detail" ? j ? "sheet-artist-detail" : "sheet-media-detail" : V ? "sheet-search" : Z ? "sheet-library" : h === "group" ? "sheet-group" : h === "transfer" ? "sheet-transfer" : h === "announcements" ? "sheet-announcements" : h === "settings" || h === "diagnostics" || h === "queue_settings" ? "sheet-settings" : h === "sleep_timer" ? "sheet-schedules" : "";
+    const B = h === "main" ? "sheet-actions" : h === "discovery" ? "sheet-discovery" : h === "simple_wizard" ? "sheet-simple" : h === "players" || h === "players_active" ? "sheet-players" : h === "artist_album_flow" ? "sheet-queue-flow" : h === "queue" ? this._mobileQueueFlowMenuActive() ? "sheet-queue-flow" : "sheet-queue" : h === "media_detail" ? G ? "sheet-artist-detail" : "sheet-media-detail" : V ? "sheet-search" : Z ? "sheet-library" : h === "group" ? "sheet-group" : h === "transfer" ? "sheet-transfer" : h === "announcements" ? "sheet-announcements" : h === "settings" || h === "diagnostics" || h === "queue_settings" ? "sheet-settings" : h === "sleep_timer" ? "sheet-schedules" : "";
     if (B && (e.classList.add(B), s?.classList.add(B)), Zi(this, e.parentElement, h), h === "main") {
       this._setMobileMenuHeader(this._i18n("ui.actions_2"), this._menuPageIcon(h)), e.innerHTML = this._mainMenuHtml(), q();
       return;
@@ -62669,8 +62704,8 @@ class aa extends As {
     }
     if (h === "discovery") {
       this._setMobileMenuHeader(this._i18n("ui.discover_music", {}, this._m("Discover", "גילוי מוזיקה")), this._menuPageIcon(h));
-      const R = this._discoveryLastView, Y = R?.activeCategory?.key === this._discoveryCategory().key && R?.selectedProvider === (this._state.discoveryProviderPath || "all");
-      this._updateDiscoveryMenuBody(e, Y ? R : { providers: R?.providers || [], loading: !0 });
+      const R = this._discoveryLastView, O = R?.activeCategory?.key === this._discoveryCategory().key && R?.selectedProvider === (this._state.discoveryProviderPath || "all");
+      this._updateDiscoveryMenuBody(e, O ? R : { providers: R?.providers || [], loading: !0 });
       let $;
       try {
         $ = await this._loadDiscoverySections(), M() && (this._discoveryLastView = $);
@@ -62687,7 +62722,7 @@ class aa extends As {
       return;
     }
     if (h === "queue_settings") {
-      this._setMobileMenuHeader(this._m("Playback preferences", "העדפות ניגון"), "settings"), (P !== h || !e.querySelector(".queue-settings-form")) && await sA(this, e, M), q();
+      this._setMobileMenuHeader(this._m("Playback preferences", "העדפות ניגון"), "settings"), (Q !== h || !e.querySelector(".queue-settings-form")) && await sA(this, e, M), q();
       return;
     }
     if (h === "settings") {
@@ -62699,8 +62734,8 @@ class aa extends As {
       return;
     }
     if (h === "media_detail") {
-      const R = this._state.mobileLibraryDetail || {}, Y = String(R.media_type || "").toLowerCase(), $ = Y === "podcast" ? "podcast" : Y === "playlist" ? "playlist" : Y === "artist" ? "artist" : "album", X = Y === "playlist" ? this._i18n("ui.playlist") : Y === "artist" ? this._i18n("ui.artist") : this._i18n("ui.album");
-      this._setMobileMenuHeader(R.name || X, $, "players"), e.innerHTML = this._libraryDetailPopupShellHtml(this._libraryMediaDetailHtml(R), Y === "artist" ? "artist-detail-page-shell" : ""), q();
+      const R = this._state.mobileLibraryDetail || {}, O = String(R.media_type || "").toLowerCase(), $ = O === "podcast" ? "podcast" : O === "playlist" ? "playlist" : O === "artist" ? "artist" : "album", X = O === "playlist" ? this._i18n("ui.playlist") : O === "artist" ? this._i18n("ui.artist") : this._i18n("ui.album");
+      this._setMobileMenuHeader(R.name || X, $, "players"), e.innerHTML = this._libraryDetailPopupShellHtml(this._libraryMediaDetailHtml(R), O === "artist" ? "artist-detail-page-shell" : ""), q();
       return;
     }
     if (h === "artist_album_flow") {
@@ -62722,7 +62757,7 @@ class aa extends As {
         q();
         return;
       }
-      const Y = { playlist: 250, artist: 250, album: 250, track: 350, radio: 200, podcast: 250 }, $ = this._mobileLibraryOrderBy(), X = this._libraryTabSearchQuery(h), me = this._libraryFavoritesOnlyEnabled(h), _e = h === "library_artists" && this._state.albumArtistsOnly ? ":album-artists" : "", ne = `${h}:${$}:${me}:${X.toLowerCase()}${_e}`, K = this._state.engineCapabilities?.library_pagination ? this._state.libraryVisibleLimits?.[ne] || 60 : Y[R.type] || 250, ae = (De) => this._state.engineCapabilities?.library_pagination && De >= K ? `<button type="button" class="chip-btn" data-library-load-more="${this._esc(ne)}" data-library-current-limit="${K}">${this._esc(this._m("Load more from Music Assistant", "טען עוד מ־Music Assistant"))}</button>` : "", ge = `${X ? `tab-search:${R.type}:${$}:${K}:${me}:${X.toLowerCase()}` : `${R.type}:${$}:${K}:${me}`}${_e}`;
+      const O = { playlist: 250, artist: 250, album: 250, track: 350, radio: 200, podcast: 250 }, $ = this._mobileLibraryOrderBy(), X = this._libraryTabSearchQuery(h), me = this._libraryFavoritesOnlyEnabled(h), _e = h === "library_artists" && this._state.albumArtistsOnly ? ":album-artists" : "", ne = `${h}:${$}:${me}:${X.toLowerCase()}${_e}`, K = this._state.engineCapabilities?.library_pagination ? this._state.libraryVisibleLimits?.[ne] || 60 : O[R.type] || 250, ae = (De) => this._state.engineCapabilities?.library_pagination && De >= K ? `<button type="button" class="chip-btn" data-library-load-more="${this._esc(ne)}" data-library-current-limit="${K}">${this._esc(this._m("Load more from Music Assistant", "טען עוד מ־Music Assistant"))}</button>` : "", ge = `${X ? `tab-search:${R.type}:${$}:${K}:${me}:${X.toLowerCase()}` : `${R.type}:${$}:${K}:${me}`}${_e}`;
       !this._cache.library.get(_e ? `album-artists:${$}:${K}:${me}:${X.toLowerCase()}` : ge) && e.dataset.libraryLoadingKey !== ge && (e.innerHTML = this._libraryShellHtml(this._loadingStateHtml(this._i18n("ui.loading"), { notice: !0 }), h), e.dataset.libraryLoadingKey = ge);
       const fe = h === "library_radio" ? this._mobileRadioSourceMode() : "combined", ke = me || fe !== "radiobrowser_only", Me = !me && fe !== "ma_only", Ee = me || fe === "ma_first" || fe === "ma_only";
       let Qe = [], Ye = "";
@@ -62893,11 +62928,11 @@ class aa extends As {
       this._menuPageIcon(h)
     ), h === "queue") {
       if (I) {
-        if ((P !== h || !this._state.maQueueState?.queue_id) && (e.innerHTML = this._state.maQueueState?.queue_id ? this._queueMenuHtml() : this._loadingStateHtml(this._i18n("ui.loading"), { notice: !0 }), this._hydrateImages(e), await this._ensureQueueSnapshot(!0)), !M()) return;
+        if ((Q !== h || !this._state.maQueueState?.queue_id) && (e.innerHTML = this._state.maQueueState?.queue_id ? this._queueMenuHtml() : this._loadingStateHtml(this._i18n("ui.loading"), { notice: !0 }), this._hydrateImages(e), await this._ensureQueueSnapshot(!0)), !M()) return;
         e.innerHTML = this._queueMenuHtml(), q(), this._bindQueueFlowPicker(e);
         return;
       }
-      if ((P !== h || !this._state.maQueueState?.queue_id) && (e.innerHTML = this._state.maQueueState?.queue_id ? this._queueMenuHtml() : this._loadingStateHtml(this._i18n("ui.loading"), { notice: !0 }), this._hydrateImages(e), await this._ensureQueueSnapshot(!0)), !M()) return;
+      if ((Q !== h || !this._state.maQueueState?.queue_id) && (e.innerHTML = this._state.maQueueState?.queue_id ? this._queueMenuHtml() : this._loadingStateHtml(this._i18n("ui.loading"), { notice: !0 }), this._hydrateImages(e), await this._ensureQueueSnapshot(!0)), !M()) return;
       const R = this._getNowPlayingQueueItems().length;
       e.innerHTML = `
         <div class="queue-page-head">
@@ -62937,8 +62972,8 @@ class aa extends As {
       this._setMobileMenuHeader(h === "volume_rules" ? this._m("Volume limits", "מגבלות ווליום") : this._m("Engine playlists", "רשימות במנוע"), h === "volume_rules" ? "volume" : "playlist"), h === "volume_rules" ? await Sl(this, e) : await kr(this, e), M() && q();
       return;
     } else if (["playback_stats", "group_volume", "lighting", "favorite_radios", "smart", "recommendations", "system_screensaver", "night_preferences"].includes(h)) {
-      const R = { night_preferences: ["Night display", "תצוגת לילה", "settings"], system_screensaver: ["System screensaver", "שומר מסך מערכתי", "clock"], smart: ["Smart", "חכם", "studio"], recommendations: ["Recommendations", "המלצות", "compass"], playback_stats: ["Listening statistics", "סטטיסטיקות האזנה", "stats"], lighting: ["Lighting", "תאורה", "lightbulb"], group_volume: ["Group volume", "ווליום משותף", "speaker_group"], favorite_radios: ["Favorite stations", "תחנות מועדפות", "radio"] }, [Y, $, X] = R[h];
-      if (this._setMobileMenuHeader(this._m(Y, $), X), await Zm(this, e, h), !M()) return;
+      const R = { night_preferences: ["Night display", "תצוגת לילה", "settings"], system_screensaver: ["System screensaver", "שומר מסך מערכתי", "clock"], smart: ["Smart", "חכם", "studio"], recommendations: ["Recommendations", "המלצות", "compass"], playback_stats: ["Listening statistics", "סטטיסטיקות האזנה", "stats"], lighting: ["Lighting", "תאורה", "lightbulb"], group_volume: ["Group volume", "ווליום משותף", "speaker_group"], favorite_radios: ["Favorite stations", "תחנות מועדפות", "radio"] }, [O, $, X] = R[h];
+      if (this._setMobileMenuHeader(this._m(O, $), X), await Zm(this, e, h), !M()) return;
     } else if (h === "ai_radio") {
       if (this._setMobileMenuHeader(this._m("AI Radio", "רדיו AI"), "radio"), await Xm(this, e), !M()) return;
     } else if (h === "group") e.innerHTML = this._groupMenuHtml();
@@ -63028,9 +63063,9 @@ class aa extends As {
       e.preventDefault(), e.stopPropagation(), this._flashInteraction(M), this._state.mobileLibraryDetail && (this._state.mobileLibraryDetail.artistSearchOpen = !this._state.mobileLibraryDetail.artistSearchOpen), await this._renderMobileMenu(), this._state.mobileLibraryDetail?.artistSearchOpen && requestAnimationFrame(() => this.$("artistDetailSearchInput")?.focus?.());
       return;
     }
-    const P = t.closest("[data-artist-detail-search]");
-    if (P) {
-      e.preventDefault(), e.stopPropagation(), this._flashInteraction(P), await this._searchArtistDetailFromInput(P);
+    const Q = t.closest("[data-artist-detail-search]");
+    if (Q) {
+      e.preventDefault(), e.stopPropagation(), this._flashInteraction(Q), await this._searchArtistDetailFromInput(Q);
       return;
     }
     const F = t.closest("[data-front-pin-player]");
@@ -63046,12 +63081,12 @@ class aa extends As {
       [T[x], T[Ke]] = [T[Ke], T[x]], this._flashInteraction(q), this._state.mobileQuickActions = T, this._persistMobileAppearance(), this._refreshAfterSettingsChange({ quickActionsChanged: !0 });
       return;
     }
-    const O = t.closest("button[data-setting-main-bar-move]");
-    if (O) {
-      if (e.preventDefault(), e.stopPropagation(), O.disabled) return;
-      const D = String(O.dataset.settingMainBarMove || "").trim(), ve = Number(O.dataset.direction || 0), T = this._mobileMainBarItems().slice(), x = T.indexOf(D), Ke = x + (ve < 0 ? -1 : 1);
+    const Y = t.closest("button[data-setting-main-bar-move]");
+    if (Y) {
+      if (e.preventDefault(), e.stopPropagation(), Y.disabled) return;
+      const D = String(Y.dataset.settingMainBarMove || "").trim(), ve = Number(Y.dataset.direction || 0), T = this._mobileMainBarItems().slice(), x = T.indexOf(D), Ke = x + (ve < 0 ? -1 : 1);
       if (x < 0 || Ke < 0 || Ke >= T.length) return;
-      [T[x], T[Ke]] = [T[Ke], T[x]], this._flashInteraction(O), this._state.mobileMainBarItems = T, this._persistMobileAppearance(), this._refreshAfterSettingsChange({ mainBarChanged: !0 });
+      [T[x], T[Ke]] = [T[Ke], T[x]], this._flashInteraction(Y), this._state.mobileMainBarItems = T, this._persistMobileAppearance(), this._refreshAfterSettingsChange({ mainBarChanged: !0 });
       return;
     }
     const H = t.closest("[data-setting-player-order-move]");
@@ -63065,18 +63100,18 @@ class aa extends As {
       [Ke[Xe], Ke[Ht]] = [Ke[Ht], Ke[Xe]], this._flashInteraction(H), this._state.playerOrderEntities = Ke, this._state.playerSortMode = "custom", this._persistMobileAppearance(), this._refreshAfterSettingsChange({ playerListChanged: !0 });
       return;
     }
-    const j = t.closest("[data-announcement-preset-fill]");
-    if (j) {
+    const G = t.closest("[data-announcement-preset-fill]");
+    if (G) {
       e.preventDefault(), e.stopPropagation();
-      const D = Number(j.dataset.announcementPresetFill), ve = (this._state.mobileAnnouncementPresets || [])[D] || "";
+      const D = Number(G.dataset.announcementPresetFill), ve = (this._state.mobileAnnouncementPresets || [])[D] || "";
       this._state.mobileAnnouncementText = ve;
       const T = this.$("mobileAnnouncementText");
-      T && (T.value = ve), this._flashInteraction(j), this._hapticTap([8]);
+      T && (T.value = ve), this._flashInteraction(G), this._hapticTap([8]);
       return;
     }
-    const G = t.closest("[data-announcement-voice]");
-    if (G) {
-      e.preventDefault(), e.stopPropagation(), this._flashInteraction(G), this._startMobileAnnouncementVoice();
+    const j = t.closest("[data-announcement-voice]");
+    if (j) {
+      e.preventDefault(), e.stopPropagation(), this._flashInteraction(j), this._startMobileAnnouncementVoice();
       return;
     }
     const V = t.closest("[data-announcement-send]");
@@ -63205,9 +63240,9 @@ class aa extends As {
       e.preventDefault(), e.stopPropagation(), this._state.mobileScheduleControlActiveUntil = 0, this._flashInteraction(R), await this._toggleScheduledStart(R.dataset.startScheduleToggle), await this._renderMobileMenu();
       return;
     }
-    const Y = t.closest("[data-start-schedule-delete]");
-    if (Y?.dataset.startScheduleDelete) {
-      e.preventDefault(), e.stopPropagation(), this._state.mobileScheduleControlActiveUntil = 0, this._flashInteraction(Y), await this._deleteScheduledStart(Y.dataset.startScheduleDelete), await this._renderMobileMenu();
+    const O = t.closest("[data-start-schedule-delete]");
+    if (O?.dataset.startScheduleDelete) {
+      e.preventDefault(), e.stopPropagation(), this._state.mobileScheduleControlActiveUntil = 0, this._flashInteraction(O), await this._deleteScheduledStart(O.dataset.startScheduleDelete), await this._renderMobileMenu();
       return;
     }
     const $ = t.closest("[data-sleep-timer-start]");
@@ -63965,18 +64000,18 @@ class aa extends As {
       W[ue] = { ...W[ue] || {}, entity: String(M.value || "").trim() }, this._state.auxiliaryButtons = W, this._persistMobileAppearance();
       return;
     }
-    const P = e.target.closest("input[data-menu-group-player]");
-    if (P) {
-      const Z = P.dataset.menuGroupPlayer, W = new Set(this._state.pendingGroupSelections || []);
-      P.checked ? W.add(Z) : W.delete(Z), this._state.pendingGroupSelections = Array.from(W), this._state.pendingGroupSelectionsDirty = !0;
-      const ue = P.closest(".group-player-card"), he = ue?.dataset?.groupConnected === "true", s = P.dataset.groupOwner === "true" || ue?.dataset?.groupOwner === "true";
-      s && (this._state.pendingGroupOwnerRemoval = !P.checked);
-      const A = this._groupPlayerStatusClass(P.checked, he, s);
-      ue?.classList.toggle("checked", P.checked), ["idle", "connected", "will-add", "will-remove", "master", "will-clear"].forEach((S) => ue?.classList.toggle(S, S === A)), ue?.querySelector(".group-player-row")?.classList.toggle("checked", P.checked);
+    const Q = e.target.closest("input[data-menu-group-player]");
+    if (Q) {
+      const Z = Q.dataset.menuGroupPlayer, W = new Set(this._state.pendingGroupSelections || []);
+      Q.checked ? W.add(Z) : W.delete(Z), this._state.pendingGroupSelections = Array.from(W), this._state.pendingGroupSelectionsDirty = !0;
+      const ue = Q.closest(".group-player-card"), he = ue?.dataset?.groupConnected === "true", s = Q.dataset.groupOwner === "true" || ue?.dataset?.groupOwner === "true";
+      s && (this._state.pendingGroupOwnerRemoval = !Q.checked);
+      const A = this._groupPlayerStatusClass(Q.checked, he, s);
+      ue?.classList.toggle("checked", Q.checked), ["idle", "connected", "will-add", "will-remove", "master", "will-clear"].forEach((S) => ue?.classList.toggle(S, S === A)), ue?.querySelector(".group-player-row")?.classList.toggle("checked", Q.checked);
       const g = ue?.querySelector(".group-player-toggle");
-      g && (g.classList.toggle("checked", P.checked), g.innerHTML = this._iconSvg(this._groupPlayerStatusIcon(P.checked, he, s)));
+      g && (g.classList.toggle("checked", Q.checked), g.innerHTML = this._iconSvg(this._groupPlayerStatusIcon(Q.checked, he, s)));
       const y = ue?.querySelector(".group-player-status");
-      if (y && (["idle", "connected", "will-add", "will-remove", "master", "will-clear"].forEach((S) => y.classList.toggle(S, S === A)), y.textContent = this._groupPlayerStatusText(P.checked, he, s)), this._syncMobileGroupActionState(), this._state.menuPage === "group_volume") {
+      if (y && (["idle", "connected", "will-add", "will-remove", "master", "will-clear"].forEach((S) => y.classList.toggle(S, S === A)), y.textContent = this._groupPlayerStatusText(Q.checked, he, s)), this._syncMobileGroupActionState(), this._state.menuPage === "group_volume") {
         if (this._groupVolumeMembershipPending) return;
         this._groupVolumeMembershipPending = !0, this.$("mobileMenuBody")?.querySelectorAll("[data-menu-group-player]").forEach((S) => {
           S.disabled = !0;
@@ -64085,10 +64120,10 @@ class aa extends As {
       q.checked ? W.add(Z) : W.delete(Z), this._state.excludedPlayerEntities = Array.from(W), this._persistMobileAppearance(), this._loadPlayers(), this._state.selectedPlayer && this._isPlayerExcluded(this._state.selectedPlayer) && (this._state.selectedPlayer = this._resolvedPinnedPlayerEntity() || this._state.players?.[0]?.entity_id || null), this._refreshAfterSettingsChange({ playerListChanged: !0 });
       return;
     }
-    const O = e.target?.closest?.("input[data-setting-library-tab]");
-    if (O) {
-      const Z = O.dataset.settingLibraryTab, W = new Set(this._mobileLibraryTabs());
-      O.checked ? W.add(Z) : W.delete(Z);
+    const Y = e.target?.closest?.("input[data-setting-library-tab]");
+    if (Y) {
+      const Z = Y.dataset.settingLibraryTab, W = new Set(this._mobileLibraryTabs());
+      Y.checked ? W.add(Z) : W.delete(Z);
       const ue = Array.from(W);
       this._state.mobileLibraryTabs = ue.length ? ue : this._defaultMobileLibraryTabs(), this._persistMobileAppearance(), this._refreshAfterSettingsChange({ libraryTabsChanged: !0 });
       return;
@@ -64106,18 +64141,18 @@ class aa extends As {
       this._state.mobileMainBarItems = ue.length ? ue : this._defaultMobileMainBarItems(), this._persistMobileAppearance(), this._refreshAfterSettingsChange({ mainBarChanged: !0 });
       return;
     }
-    const j = e.target?.closest?.("input[data-setting-quick-action]");
-    if (j) {
-      const Z = String(j.dataset.settingQuickAction || "").trim(), W = new Set(this._mobileQuickActions());
-      j.checked ? W.add(Z) : W.delete(Z);
+    const G = e.target?.closest?.("input[data-setting-quick-action]");
+    if (G) {
+      const Z = String(G.dataset.settingQuickAction || "").trim(), W = new Set(this._mobileQuickActions());
+      G.checked ? W.add(Z) : W.delete(Z);
       const ue = Array.from(W);
-      this._state.mobileQuickActions = ue, Z === "home" && (this._state.mobileHomeShortcutEnabled = !!j.checked), this._persistMobileAppearance(), this._refreshAfterSettingsChange({ quickActionsChanged: !0 });
+      this._state.mobileQuickActions = ue, Z === "home" && (this._state.mobileHomeShortcutEnabled = !!G.checked), this._persistMobileAppearance(), this._refreshAfterSettingsChange({ quickActionsChanged: !0 });
       return;
     }
-    const G = e.target?.closest?.("input[data-setting-screensaver-control]");
-    if (G) {
-      const Z = String(G.dataset.settingScreensaverControl || "").trim(), W = new Set(this._screensaverControlButtons({ includeDisabled: !0 }));
-      G.checked ? W.add(Z) : W.delete(Z), this._state.screensaverControlButtons = Ge.normalizeScreensaverControlButtons(Array.from(W), []), this._persistMobileAppearance(), this._syncScreensaverUi(), this._reopenSettingsMenuPreservingScroll({ rebuild: !0, init: !0 });
+    const j = e.target?.closest?.("input[data-setting-screensaver-control]");
+    if (j) {
+      const Z = String(j.dataset.settingScreensaverControl || "").trim(), W = new Set(this._screensaverControlButtons({ includeDisabled: !0 }));
+      j.checked ? W.add(Z) : W.delete(Z), this._state.screensaverControlButtons = Ge.normalizeScreensaverControlButtons(Array.from(W), []), this._persistMobileAppearance(), this._syncScreensaverUi(), this._reopenSettingsMenuPreservingScroll({ rebuild: !0, init: !0 });
       return;
     }
     const V = e.target?.closest?.("input[data-setting-studio-shortcut]");
@@ -64220,15 +64255,15 @@ function gb() {
         a.hasOwnProperty(p) && (l[p] = a[p]);
       var h = !1, v = !1, k = !1, M = !1;
       h = typeof window == "object", v = typeof importScripts == "function", k = typeof process == "object" && typeof process.versions == "object" && typeof process.versions.node == "string", M = !h && !k && !v;
-      var P = "";
+      var Q = "";
       function F(Be) {
-        return a.locateFile ? a.locateFile(Be, P) : P + Be;
+        return a.locateFile ? a.locateFile(Be, Q) : Q + Be;
       }
-      var q, O, H, j;
-      k ? (v ? P = t("path").dirname(P) + "/" : P = __dirname + "/", q = function(Ie, He) {
+      var q, Y, H, G;
+      k ? (v ? Q = t("path").dirname(Q) + "/" : Q = __dirname + "/", q = function(Ie, He) {
         var st = gt(Ie);
-        return st ? He ? st : st.toString() : (H || (H = t("fs")), j || (j = t("path")), Ie = j.normalize(Ie), H.readFileSync(Ie, He ? null : "utf8"));
-      }, O = function(Ie) {
+        return st ? He ? st : st.toString() : (H || (H = t("fs")), G || (G = t("path")), Ie = G.normalize(Ie), H.readFileSync(Ie, He ? null : "utf8"));
+      }, Y = function(Ie) {
         var He = q(Ie, !0);
         return He.buffer || (He = new Uint8Array(He)), y(He.buffer), He;
       }, process.argv.length > 1 && process.argv[1].replace(/\\/g, "/"), process.argv.slice(2), o.exports = a, process.on("uncaughtException", function(Be) {
@@ -64239,13 +64274,13 @@ function gb() {
       }) : M ? (typeof read < "u" && (q = function(Ie) {
         var He = gt(Ie);
         return He ? Zt(He) : read(Ie);
-      }), O = function(Ie) {
+      }), Y = function(Ie) {
         var He;
         return He = gt(Ie), He || (typeof readbuffer == "function" ? new Uint8Array(readbuffer(Ie)) : (He = read(Ie, "binary"), y(typeof He == "object"), He));
       }, typeof scriptArgs < "u" && scriptArgs, typeof print < "u" && (typeof console > "u" && (console = /** @type{!Console} */
       {}), console.log = /** @type{!function(this:Console, ...*): undefined} */
       print, console.warn = console.error = /** @type{!function(this:Console, ...*): undefined} */
-      typeof printErr < "u" ? printErr : print)) : (h || v) && (v ? P = self.location.href : typeof document < "u" && document.currentScript && (P = document.currentScript.src), P.indexOf("blob:") !== 0 ? P = P.substr(0, P.lastIndexOf("/") + 1) : P = "", q = function(Be) {
+      typeof printErr < "u" ? printErr : print)) : (h || v) && (v ? Q = self.location.href : typeof document < "u" && document.currentScript && (Q = document.currentScript.src), Q.indexOf("blob:") !== 0 ? Q = Q.substr(0, Q.lastIndexOf("/") + 1) : Q = "", q = function(Be) {
         try {
           var Ie = new XMLHttpRequest();
           return Ie.open("GET", Be, !1), Ie.send(null), Ie.responseText;
@@ -64255,7 +64290,7 @@ function gb() {
             return Zt(He);
           throw st;
         }
-      }, v && (O = function(Be) {
+      }, v && (Y = function(Be) {
         try {
           var Ie = new XMLHttpRequest();
           return Ie.open("GET", Be, !1), Ie.responseType = "arraybuffer", Ie.send(null), new Uint8Array(
@@ -64269,7 +64304,7 @@ function gb() {
           throw st;
         }
       }));
-      var G = a.print || console.log.bind(console), V = a.printErr || console.warn.bind(console);
+      var j = a.print || console.log.bind(console), V = a.printErr || console.warn.bind(console);
       for (p in l)
         l.hasOwnProperty(p) && (a[p] = l[p]);
       l = null, a.arguments && a.arguments, a.thisProgram && a.thisProgram, a.quit && a.quit;
@@ -64334,7 +64369,7 @@ function gb() {
               var rt = wt.memory, $e = rt.buffer, xe = new Int8Array($e), L = new Int16Array($e), i = new Int32Array($e), we = new Uint8Array($e), qe = new Uint16Array($e), dt = new Uint32Array($e), D = new Float32Array($e), ve = new Float64Array($e), T = Math.imul, x = Math.fround, Ke = Math.abs, Xe = Math.clz32, Ht = Math.min, xt = Math.max, ii = Math.floor, si = Math.sqrt, Te = wt.abort, sa = wt.emscripten_resize_heap, rr = wt.emscripten_memcpy_big, Fa = wt.fd_close, Ba = wt.fd_write, Te = wt.abort, qa = wt.setTempRet0, or = wt.fd_seek, pe = 5282864, Qt = 0;
               function $t(r) {
                 r = r | 0;
-                var n = 0, u = 0, c = 0, m = 0, d = 0, _ = 0, b = 0, f = 0, w = 0, C = 0, Q = 0, N = 0;
+                var n = 0, u = 0, c = 0, m = 0, d = 0, _ = 0, b = 0, f = 0, w = 0, C = 0, P = 0, N = 0;
                 N = pe - 16 | 0, pe = N;
                 e: {
                   t: {
@@ -64399,7 +64434,7 @@ function gb() {
                                           }
                                           if (C = c + m | 0, C >>> 0 <= c >>> 0)
                                             break h;
-                                          if (Q = i[c + 24 >> 2], d = i[c + 12 >> 2], (d | 0) != (c | 0)) {
+                                          if (P = i[c + 24 >> 2], d = i[c + 12 >> 2], (d | 0) != (c | 0)) {
                                             r = i[c + 8 >> 2], i[r + 12 >> 2] = d, i[d + 8 >> 2] = r;
                                             break t;
                                           }
@@ -64774,7 +64809,7 @@ function gb() {
                     break e;
                   }
                   t: {
-                    if (!Q)
+                    if (!P)
                       break t;
                     n = i[c + 28 >> 2], r = (n << 2) + 39712 | 0;
                     i: {
@@ -64784,10 +64819,10 @@ function gb() {
                         i[9853] = Mi(-2, n) & f;
                         break t;
                       }
-                      if (i[(i[Q + 16 >> 2] == (c | 0) ? 16 : 20) + Q >> 2] = d, !d)
+                      if (i[(i[P + 16 >> 2] == (c | 0) ? 16 : 20) + P >> 2] = d, !d)
                         break t;
                     }
-                    if (i[d + 24 >> 2] = Q, r = i[c + 16 >> 2], r && (i[d + 16 >> 2] = r, i[r + 24 >> 2] = d), r = i[c + 20 >> 2], !r)
+                    if (i[d + 24 >> 2] = P, r = i[c + 16 >> 2], r && (i[d + 16 >> 2] = r, i[r + 24 >> 2] = d), r = i[c + 20 >> 2], !r)
                       break t;
                     i[d + 20 >> 2] = r, i[r + 24 >> 2] = d;
                   }
@@ -64814,7 +64849,7 @@ function gb() {
                 return pe = N + 16 | 0, r | 0;
               }
               function Fe(r, n, u, c, m, d) {
-                var _ = 0, b = 0, f = 0, w = 0, C = x(0), Q = 0, N = 0, U = 0, J = 0, z = 0, ee = 0, re = 0, de = 0, te = 0, se = 0, Ae = 0, be = 0, oe = 0, le = 0, Se = 0, Ce = 0, Pe = 0, ze = 0, Ne = 0;
+                var _ = 0, b = 0, f = 0, w = 0, C = x(0), P = 0, N = 0, U = 0, J = 0, z = 0, ee = 0, re = 0, de = 0, te = 0, se = 0, Ae = 0, be = 0, oe = 0, le = 0, Se = 0, Ce = 0, Pe = 0, ze = 0, Ne = 0;
                 b = pe - 192 | 0, pe = b, f = b, i[f + 136 >> 2] = 0, _ = -2;
                 e: {
                   t: {
@@ -64827,9 +64862,9 @@ function gb() {
                                 u: {
                                   l: {
                                     h: {
-                                      Ae = i[r + 12 >> 2], J = (Ae | 0) / 50 | 0, Q = J >> 3;
+                                      Ae = i[r + 12 >> 2], J = (Ae | 0) / 50 | 0, P = J >> 3;
                                       d: {
-                                        if ((Q | 0) > (m | 0))
+                                        if ((P | 0) > (m | 0))
                                           break d;
                                         ze = i[r >> 2], U = i[r + 4 >> 2], re = J >> 2, w = J >> 1, _ = T((Ae | 0) / 25 | 0, 3), _ = (m | 0) < (_ | 0) ? m : _;
                                         m: {
@@ -64855,11 +64890,11 @@ function gb() {
                                                       }
                                                       if ((_ | 0) > (J | 0)) {
                                                         for (m = _; ; ) {
-                                                          if (Q = Fe(r, 0, 0, c, (m | 0) < (J | 0) ? m : J, 0), (Q | 0) < 0) {
-                                                            _ = Q;
+                                                          if (P = Fe(r, 0, 0, c, (m | 0) < (J | 0) ? m : J, 0), (P | 0) < 0) {
+                                                            _ = P;
                                                             break d;
                                                           }
-                                                          if (c = (T(i[r + 8 >> 2], Q) << 2) + c | 0, m = m - Q | 0, !((m | 0) > 0))
+                                                          if (c = (T(i[r + 8 >> 2], P) << 2) + c | 0, m = m - P | 0, !((m | 0) > 0))
                                                             break;
                                                         }
                                                         break d;
@@ -65039,7 +65074,7 @@ function gb() {
                                             if (L[f + 132 >> 1] = 65535, m = T(i[r + 8 >> 2], N), (m | 0) >= 1 && qt(c, 0, m << 2), !(i[r + 60 >> 2] != 1001 | (i[r + 68 >> 2] ? oe : 0))) {
                                               if (i[f + 48 >> 2] = 0, ki(b, 10010, f + 48 | 0))
                                                 break c;
-                                              sr(b, f + 132 | 0, 2, c, Q, 0, 0);
+                                              sr(b, f + 132 | 0, 2, c, P, 0, 0);
                                             }
                                             se = 0;
                                           }
@@ -65063,9 +65098,9 @@ function gb() {
                                               break t;
                                             if (z = 48e3 / i[r + 12 >> 2] | 0, n = i[r + 8 >> 2], (n | 0) < 1)
                                               break s;
-                                            for (de = (T(n, Q) << 2) + U | 0, d = (T(N - Q | 0, n) << 2) + c | 0, w = 0, ze = (Ae | 0) < 400; ; ) {
+                                            for (de = (T(n, P) << 2) + U | 0, d = (T(N - P | 0, n) << 2) + c | 0, w = 0, ze = (Ae | 0) < 400; ; ) {
                                               if (m = 0, !ze)
-                                                for (; _ = T(n, m) + w << 2, b = _ + d | 0, C = D[(T(m, z) << 2) + J >> 2], C = x(C * C), D[b >> 2] = x(C * D[_ + de >> 2]) + x(x(x(1) - C) * D[b >> 2]), m = m + 1 | 0, (Q | 0) != (m | 0); )
+                                                for (; _ = T(n, m) + w << 2, b = _ + d | 0, C = D[(T(m, z) << 2) + J >> 2], C = x(C * C), D[b >> 2] = x(C * D[_ + de >> 2]) + x(x(x(1) - C) * D[b >> 2]), m = m + 1 | 0, (P | 0) != (m | 0); )
                                                   ;
                                               if (w = w + 1 | 0, (w | 0) == (n | 0))
                                                 break;
@@ -65074,7 +65109,7 @@ function gb() {
                                           s: {
                                             if (!oe || (b = i[r + 8 >> 2], (b | 0) < 1))
                                               break s;
-                                            for (n = (Q | 0) > 1 ? Q : 1, w = 0, z = (Ae | 0) < 400; ; ) {
+                                            for (n = (P | 0) > 1 ? P : 1, w = 0, z = (Ae | 0) < 400; ; ) {
                                               if (m = 0, !z)
                                                 for (; _ = T(m, b) + w << 2, i[_ + c >> 2] = i[_ + U >> 2], m = m + 1 | 0, (m | 0) != (n | 0); )
                                                   ;
@@ -65083,9 +65118,9 @@ function gb() {
                                             }
                                             if (z = 48e3 / i[r + 12 >> 2] | 0, (b | 0) < 1)
                                               break s;
-                                            for (m = T(b, Q) << 2, de = m + c | 0, U = m + U | 0, n = 0, d = (Ae | 0) < 400; ; ) {
+                                            for (m = T(b, P) << 2, de = m + c | 0, U = m + U | 0, n = 0, d = (Ae | 0) < 400; ; ) {
                                               if (m = 0, !d)
-                                                for (; _ = T(m, b) + n << 2, w = de + _ | 0, C = D[(T(m, z) << 2) + J >> 2], C = x(C * C), D[w >> 2] = x(C * D[w >> 2]) + x(x(x(1) - C) * D[_ + U >> 2]), m = m + 1 | 0, (Q | 0) != (m | 0); )
+                                                for (; _ = T(m, b) + n << 2, w = de + _ | 0, C = D[(T(m, z) << 2) + J >> 2], C = x(C * C), D[w >> 2] = x(C * D[w >> 2]) + x(x(x(1) - C) * D[_ + U >> 2]), m = m + 1 | 0, (P | 0) != (m | 0); )
                                                   ;
                                               if (n = n + 1 | 0, (b | 0) == (n | 0))
                                                 break;
@@ -65095,14 +65130,14 @@ function gb() {
                                             if (!Pe)
                                               break s;
                                             if (_ = i[r + 8 >> 2], (N | 0) >= (re | 0)) {
-                                              if (w = T(_, Q), (w | 0) >= 1)
+                                              if (w = T(_, P), (w | 0) >= 1)
                                                 for (m = 0; b = m << 2, i[b + c >> 2] = i[b + be >> 2], m = m + 1 | 0, (w | 0) != (m | 0); )
                                                   ;
                                               if (U = 48e3 / i[r + 12 >> 2] | 0, (_ | 0) < 1)
                                                 break s;
                                               for (m = w << 2, z = m + c | 0, de = m + be | 0, n = 0, d = (Ae | 0) < 400; ; ) {
                                                 if (m = 0, !d)
-                                                  for (; b = T(m, _) + n << 2, w = z + b | 0, C = D[(T(m, U) << 2) + J >> 2], C = x(C * C), D[w >> 2] = x(C * D[w >> 2]) + x(x(x(1) - C) * D[b + de >> 2]), m = m + 1 | 0, (Q | 0) != (m | 0); )
+                                                  for (; b = T(m, _) + n << 2, w = z + b | 0, C = D[(T(m, U) << 2) + J >> 2], C = x(C * C), D[w >> 2] = x(C * D[w >> 2]) + x(x(x(1) - C) * D[b + de >> 2]), m = m + 1 | 0, (P | 0) != (m | 0); )
                                                     ;
                                                 if (n = n + 1 | 0, (_ | 0) == (n | 0))
                                                   break;
@@ -65113,7 +65148,7 @@ function gb() {
                                               break s;
                                             for (n = 0, z = (Ae | 0) < 400; ; ) {
                                               if (m = 0, !z)
-                                                for (; b = T(m, _) + n << 2, w = b + c | 0, C = D[(T(m, U) << 2) + J >> 2], C = x(C * C), D[w >> 2] = x(C * D[w >> 2]) + x(x(x(1) - C) * D[b + be >> 2]), m = m + 1 | 0, (Q | 0) != (m | 0); )
+                                                for (; b = T(m, _) + n << 2, w = b + c | 0, C = D[(T(m, U) << 2) + J >> 2], C = x(C * C), D[w >> 2] = x(C * D[w >> 2]) + x(x(x(1) - C) * D[b + be >> 2]), m = m + 1 | 0, (P | 0) != (m | 0); )
                                                   ;
                                               if (n = n + 1 | 0, (_ | 0) == (n | 0))
                                                 break;
@@ -65121,12 +65156,12 @@ function gb() {
                                           }
                                           m = i[r + 40 >> 2];
                                           s: {
-                                            if (!m || (Q = i[r + 8 >> 2], Ne = lr(+x(x(m | 0) * x(6488140788860619e-19)) * 0.6931471805599453), J = T(N, Q), (J | 0) < 1))
+                                            if (!m || (P = i[r + 8 >> 2], Ne = lr(+x(x(m | 0) * x(6488140788860619e-19)) * 0.6931471805599453), J = T(N, P), (J | 0) < 1))
                                               break s;
-                                            for (C = x(Ne), m = 0; Q = (m << 2) + c | 0, D[Q >> 2] = D[Q >> 2] * C, m = m + 1 | 0, (J | 0) != (m | 0); )
+                                            for (C = x(Ne), m = 0; P = (m << 2) + c | 0, D[P >> 2] = D[P >> 2] * C, m = m + 1 | 0, (J | 0) != (m | 0); )
                                               ;
                                           }
-                                          m = i[f + 136 >> 2], Q = i[f + 172 >> 2], i[r + 60 >> 2] = ee, i[r + 68 >> 2] = (te ^ 1) & le, i[r + 84 >> 2] = (u | 0) < 2 ? 0 : m ^ Q, _ = (se | 0) < 0 ? se : N;
+                                          m = i[f + 136 >> 2], P = i[f + 172 >> 2], i[r + 60 >> 2] = ee, i[r + 68 >> 2] = (te ^ 1) & le, i[r + 84 >> 2] = (u | 0) < 2 ? 0 : m ^ P, _ = (se | 0) < 0 ? se : N;
                                         }
                                       }
                                       return pe = f + 192 | 0, _;
@@ -65153,9 +65188,9 @@ function gb() {
                 }
                 Le(36419, 35333, 488), Te();
               }
-              function kt(r, n, u, c, m, d, _, b, f, w, C, Q, N, U, J, z, ee, re, de, te, se, Ae, be) {
+              function kt(r, n, u, c, m, d, _, b, f, w, C, P, N, U, J, z, ee, re, de, te, se, Ae, be) {
                 var oe = 0, le = 0, Se = 0, Ce = 0, Pe = 0, ze = 0, Ne = 0, Oe = 0, We = 0, at = 0, nt = x(0), ct = x(0), ft = 0, It = 0, Dt = 0, Ut = 0, Jt = 0, Kt = 0, ai = 0, ni = 0, hi = 0, xi = 0, Ci = 0, Bi = 0, Ei = 0, Ii = x(0), Di = 0, zi = 0, Gi = 0, ca = 0, ua = 0, da = 0, ma = 0, Aa = 0, pa = 0, ha = 0, va = 0, wa = 0, xa = 0, pr = 0, oo = 0, so = 0, no = 0, lo = 0, co = 0, uo = 0, mo = 0, Ao = 0, po = 0, ho = 0, _o = 0, go = 0, bo = 0, fo = 0, yo = 0, vo = 0, wo = 0, xo = 0, ko = 0, So = 0, Mo = 0, Co = 0, Bo = 0, Eo = x(0), Io = 0, Po = 0, Qo = 0, Do = 0, To = 0, Lo = 0, zo = 0, Ro = 0, Fo = 0, qo = 0, No = 0, Ho = 0, Uo = 0, Go = 0, Sn = 0, Mn = 0, Cn = 0, Bn = 0, En = 0, In = 0, Pn = 0, Qn = x(0);
-                Pe = pe - 1568 | 0, Se = Pe, pe = Se, ze = 1, Dt = i[n + 32 >> 2], oo = Dt + (u << 1) | 0, ai = L[oo >> 1] << re, Di = d ? 2 : 1, We = Se - ((T(Di, (L[((i[n + 8 >> 2] << 1) + Dt | 0) - 2 >> 1] << re) - ai | 0) << 2) + 15 & -16) | 0, Ce = We, pe = Ce, Pe = i[n + 8 >> 2], Ne = L[((Pe << 1) + Dt | 0) - 2 >> 1], Ut = Ne << re << 2, zi = !Q & ((r | 0) != 0 & (d | 0) != 0) & (se | 0) > 7, va = zi | !r, Jt = w ? 1 << re : 1;
+                Pe = pe - 1568 | 0, Se = Pe, pe = Se, ze = 1, Dt = i[n + 32 >> 2], oo = Dt + (u << 1) | 0, ai = L[oo >> 1] << re, Di = d ? 2 : 1, We = Se - ((T(Di, (L[((i[n + 8 >> 2] << 1) + Dt | 0) - 2 >> 1] << re) - ai | 0) << 2) + 15 & -16) | 0, Ce = We, pe = Ce, Pe = i[n + 8 >> 2], Ne = L[((Pe << 1) + Dt | 0) - 2 >> 1], Ut = Ne << re << 2, zi = !P & ((r | 0) != 0 & (d | 0) != 0) & (se | 0) > 7, va = zi | !r, Jt = w ? 1 << re : 1;
                 e: {
                   if (zi) {
                     ze = L[(Pe << 1) + Dt >> 1] - Ne << re, at = Ce - ((ze << 2) + 15 & -16) | 0, Ce = at, pe = Ce;
@@ -65177,7 +65212,7 @@ function gb() {
                           }
                           z = r << 2, Kt = !va | (((L[ft >> 1] << re) - Pe | 0) < L[oo >> 1] << re ? (be | 0) != (Gi | 0) : 0) ? Kt : C ? be : Kt || be, r = d + z | 0, ho = (be | 0) != (Gi | 0);
                           i: {
-                            if (ho || (Ce = i[n + 32 >> 2], ze = L[Ce + (Gi << 1) >> 1], C = ze - L[(u << 1) + Ce >> 1] << re, w = C << 2, Ce = L[(uo << 1) + Ce >> 1] - ze << re, ze = (C << 1) - Ce << 2, Ce = Ce - C << 2, bt(We + w | 0, We + ze | 0, Ce), !Q))
+                            if (ho || (Ce = i[n + 32 >> 2], ze = L[Ce + (Gi << 1) >> 1], C = ze - L[(u << 1) + Ce >> 1] << re, w = C << 2, Ce = L[(uo << 1) + Ce >> 1] - ze << re, ze = (C << 1) - Ce << 2, Ce = Ce - C << 2, bt(We + w | 0, We + ze | 0, Ce), !P))
                               break i;
                             bt(w + Ut | 0, ze + Ut | 0, Ce);
                           }
@@ -65205,7 +65240,7 @@ function gb() {
                             for (ze = (r | 0) < (Ce | 0) ? z : r, r = 0, Ce = 0; C = T(z, Di), r = we[C + _ | 0] | r, Ce = we[(C + Ae | 0) + _ | 0] | Ce, C = (z | 0) != (ze | 0), z = z + 1 | 0, !!C; )
                               ;
                           }
-                          if (at = zi ? at : Ei, se = Ne ? se : We, w = Ne ? hi : Sn, !Q)
+                          if (at = zi ? at : Ei, se = Ne ? se : We, w = Ne ? hi : Sn, !P)
                             break t;
                           if (!((N | 0) != (be | 0) | Cn)) {
                             if (z = L[ft >> 1] << re, (ai | 0) >= (z | 0))
@@ -65232,21 +65267,21 @@ function gb() {
                       t: {
                         if (w) {
                           if (!(zi ^ 1 | (N | 0) <= (be | 0))) {
-                            for (nt = D[b + pr >> 2], ct = D[(i[n + 8 >> 2] + be << 2) + b >> 2], _o = i[ee + 4 >> 2], go = i[ee >> 2], le = Bi, oe = i[le + 8 >> 2], z = i[le + 12 >> 2], C = oe, bo = Se + 1496 | 0, oe = bo, i[oe >> 2] = C, i[oe + 4 >> 2] = z, oe = i[le + 4 >> 2], z = i[le >> 2], C = z, z = Se, i[z + 1488 >> 2] = C, i[z + 1492 >> 2] = oe, Ei = i[ee + 24 >> 2], fo = z + 1480 | 0, i[fo >> 2] = i[Ci + 16 >> 2], yo = z + 1472 | 0, le = Ci, oe = i[le + 8 >> 2], z = i[le + 12 >> 2], C = oe, oe = yo, i[oe >> 2] = C, i[oe + 4 >> 2] = z, oe = i[le + 4 >> 2], z = i[le >> 2], C = z, z = Se, i[z + 1464 >> 2] = C, i[z + 1468 >> 2] = oe, vo = z + 1408 | 0, ua = z + 1560 | 0, i[vo >> 2] = i[ua >> 2], wo = z + 1400 | 0, hi = z + 1552 | 0, le = hi, oe = i[le >> 2], z = i[le + 4 >> 2], C = oe, oe = wo, i[oe >> 2] = C, i[oe + 4 >> 2] = z, da = Se + 1544 | 0, le = da, z = i[le >> 2], oe = i[le + 4 >> 2], C = z, xo = Se + 1392 | 0, z = xo, i[z >> 2] = C, i[z + 4 >> 2] = oe, ma = Se + 1536 | 0, le = ma, oe = i[le >> 2], z = i[le + 4 >> 2], C = oe, ko = Se + 1384 | 0, oe = ko, i[oe >> 2] = C, i[oe + 4 >> 2] = z, Aa = Se + 1528 | 0, le = Aa, z = i[le >> 2], oe = i[le + 4 >> 2], C = z, So = Se + 1376 | 0, z = So, i[z >> 2] = C, i[z + 4 >> 2] = oe, pa = Se + 1520 | 0, le = pa, oe = i[le >> 2], z = i[le + 4 >> 2], C = oe, Mo = Se + 1368 | 0, oe = Mo, i[oe >> 2] = C, i[oe + 4 >> 2] = z, ha = Se + 1512 | 0, le = ha, z = i[le >> 2], oe = i[le + 4 >> 2], C = z, Co = Se + 1360 | 0, z = Co, i[z >> 2] = C, i[z + 4 >> 2] = oe, le = Se, oe = i[le + 1504 >> 2], z = i[le + 1508 >> 2], C = oe, oe = le, i[oe + 1352 >> 2] = C, i[oe + 1356 >> 2] = z, Q = Pe << 2, C = bt(so, se, Q), ze = bt(no, w, Q), i[hi >> 2] = -1, z = 0, Bo = r | Ce, r = 0, Ii = x((nt < ct ? nt : ct) / x(3)), Eo = x(ct + Ii), Ii = x(nt + Ii), nt = x(0), Oe = (Oe | 0) == -1 ? 0 : (Oe << 2) + We | 0, r = xi ? r : (L[ft >> 1] << re << 2) + ni | 0, En = Yr(oe + 1504 | 0, se, w, Pe, It, Jt, Oe, re, r, at, Bo), ct = x(0); r = z << 2, ct = x(ct + x(D[C + r >> 2] * D[r + se >> 2])), z = z + 1 | 0, (Pe | 0) != (z | 0); )
+                            for (nt = D[b + pr >> 2], ct = D[(i[n + 8 >> 2] + be << 2) + b >> 2], _o = i[ee + 4 >> 2], go = i[ee >> 2], le = Bi, oe = i[le + 8 >> 2], z = i[le + 12 >> 2], C = oe, bo = Se + 1496 | 0, oe = bo, i[oe >> 2] = C, i[oe + 4 >> 2] = z, oe = i[le + 4 >> 2], z = i[le >> 2], C = z, z = Se, i[z + 1488 >> 2] = C, i[z + 1492 >> 2] = oe, Ei = i[ee + 24 >> 2], fo = z + 1480 | 0, i[fo >> 2] = i[Ci + 16 >> 2], yo = z + 1472 | 0, le = Ci, oe = i[le + 8 >> 2], z = i[le + 12 >> 2], C = oe, oe = yo, i[oe >> 2] = C, i[oe + 4 >> 2] = z, oe = i[le + 4 >> 2], z = i[le >> 2], C = z, z = Se, i[z + 1464 >> 2] = C, i[z + 1468 >> 2] = oe, vo = z + 1408 | 0, ua = z + 1560 | 0, i[vo >> 2] = i[ua >> 2], wo = z + 1400 | 0, hi = z + 1552 | 0, le = hi, oe = i[le >> 2], z = i[le + 4 >> 2], C = oe, oe = wo, i[oe >> 2] = C, i[oe + 4 >> 2] = z, da = Se + 1544 | 0, le = da, z = i[le >> 2], oe = i[le + 4 >> 2], C = z, xo = Se + 1392 | 0, z = xo, i[z >> 2] = C, i[z + 4 >> 2] = oe, ma = Se + 1536 | 0, le = ma, oe = i[le >> 2], z = i[le + 4 >> 2], C = oe, ko = Se + 1384 | 0, oe = ko, i[oe >> 2] = C, i[oe + 4 >> 2] = z, Aa = Se + 1528 | 0, le = Aa, z = i[le >> 2], oe = i[le + 4 >> 2], C = z, So = Se + 1376 | 0, z = So, i[z >> 2] = C, i[z + 4 >> 2] = oe, pa = Se + 1520 | 0, le = pa, oe = i[le >> 2], z = i[le + 4 >> 2], C = oe, Mo = Se + 1368 | 0, oe = Mo, i[oe >> 2] = C, i[oe + 4 >> 2] = z, ha = Se + 1512 | 0, le = ha, z = i[le >> 2], oe = i[le + 4 >> 2], C = z, Co = Se + 1360 | 0, z = Co, i[z >> 2] = C, i[z + 4 >> 2] = oe, le = Se, oe = i[le + 1504 >> 2], z = i[le + 1508 >> 2], C = oe, oe = le, i[oe + 1352 >> 2] = C, i[oe + 1356 >> 2] = z, P = Pe << 2, C = bt(so, se, P), ze = bt(no, w, P), i[hi >> 2] = -1, z = 0, Bo = r | Ce, r = 0, Ii = x((nt < ct ? nt : ct) / x(3)), Eo = x(ct + Ii), Ii = x(nt + Ii), nt = x(0), Oe = (Oe | 0) == -1 ? 0 : (Oe << 2) + We | 0, r = xi ? r : (L[ft >> 1] << re << 2) + ni | 0, En = Yr(oe + 1504 | 0, se, w, Pe, It, Jt, Oe, re, r, at, Bo), ct = x(0); r = z << 2, ct = x(ct + x(D[C + r >> 2] * D[r + se >> 2])), z = z + 1 | 0, (Pe | 0) != (z | 0); )
                               ;
                             for (z = 0; r = z << 2, nt = x(nt + x(D[ze + r >> 2] * D[r + w >> 2])), z = z + 1 | 0, (Pe | 0) != (z | 0); )
                               ;
-                            for (le = ee, z = i[le + 40 >> 2], oe = i[le + 44 >> 2], r = z, Io = Se + 1456 | 0, z = Io, i[z >> 2] = r, i[z + 4 >> 2] = oe, z = i[le + 36 >> 2], oe = i[le + 32 >> 2], r = oe, Po = Se + 1448 | 0, oe = Po, i[oe >> 2] = r, i[oe + 4 >> 2] = z, oe = i[le + 28 >> 2], z = i[le + 24 >> 2], r = z, Qo = Se + 1440 | 0, z = Qo, i[z >> 2] = r, i[z + 4 >> 2] = oe, z = i[le + 20 >> 2], oe = i[le + 16 >> 2], r = oe, Do = Se + 1432 | 0, oe = Do, i[oe >> 2] = r, i[oe + 4 >> 2] = z, le = Bi, z = i[le >> 2], oe = i[le + 4 >> 2], r = z, To = Se + 1424 | 0, z = To, i[z >> 2] = r, i[z + 4 >> 2] = oe, le = ee, oe = i[le >> 2], Ce = oe, z = i[le + 4 >> 2], r = z, le = ha, z = i[le >> 2], oe = i[le + 4 >> 2], le = z, Lo = Se + 1296 | 0, z = Lo, i[z >> 2] = le, i[z + 4 >> 2] = oe, le = pa, oe = i[le >> 2], z = i[le + 4 >> 2], le = oe, zo = Se + 1304 | 0, oe = zo, i[oe >> 2] = le, i[oe + 4 >> 2] = z, le = Aa, z = i[le >> 2], oe = i[le + 4 >> 2], le = z, Ro = Se + 1312 | 0, z = Ro, i[z >> 2] = le, i[z + 4 >> 2] = oe, le = ma, oe = i[le >> 2], z = i[le + 4 >> 2], le = oe, Fo = Se + 1320 | 0, oe = Fo, i[oe >> 2] = le, i[oe + 4 >> 2] = z, le = da, z = i[le >> 2], oe = i[le + 4 >> 2], le = z, qo = Se + 1328 | 0, z = qo, i[z >> 2] = le, i[z + 4 >> 2] = oe, le = hi, oe = i[le >> 2], z = i[le + 4 >> 2], le = oe, No = Se + 1336 | 0, oe = No, i[oe >> 2] = le, i[oe + 4 >> 2] = z, Ho = Se + 1344 | 0, i[Ho >> 2] = i[ua >> 2], oe = Se, i[oe + 1416 >> 2] = Ce, z = r, i[oe + 1420 >> 2] = z, le = oe, z = i[oe + 1504 >> 2], oe = i[oe + 1508 >> 2], r = z, z = le, i[z + 1288 >> 2] = r, i[z + 1292 >> 2] = oe, In = bt(lo, se, Q), Pn = bt(co, w, Q), xi || bt(wa, (L[ft >> 1] << re << 2) + ni | 0, Q), Uo = Ei + go | 0, Go = _o - Ei | 0, Ne = bt(Se, Uo, Go), i[ee + 4 >> 2] = _o, i[ee >> 2] = go, le = bo, oe = i[le >> 2], z = i[le + 4 >> 2], r = oe, oe = Bi, i[oe + 8 >> 2] = r, i[oe + 12 >> 2] = z, le = Ne, z = i[le + 1488 >> 2], oe = i[le + 1492 >> 2], r = z, z = Bi, i[z >> 2] = r, i[z + 4 >> 2] = oe, i[ee + 24 >> 2] = Ei, i[Ci + 16 >> 2] = i[fo >> 2], le = yo, oe = i[le >> 2], z = i[le + 4 >> 2], r = oe, oe = Ci, i[oe + 8 >> 2] = r, i[oe + 12 >> 2] = z, le = Ne, z = i[le + 1464 >> 2], oe = i[le + 1468 >> 2], r = z, z = Ci, i[z >> 2] = r, i[z + 4 >> 2] = oe, le = Co, oe = i[le >> 2], z = i[le + 4 >> 2], r = oe, oe = ha, i[oe >> 2] = r, i[oe + 4 >> 2] = z, le = Mo, z = i[le >> 2], oe = i[le + 4 >> 2], r = z, z = pa, i[z >> 2] = r, i[z + 4 >> 2] = oe, le = So, oe = i[le >> 2], z = i[le + 4 >> 2], r = oe, oe = Aa, i[oe >> 2] = r, i[oe + 4 >> 2] = z, le = ko, z = i[le >> 2], oe = i[le + 4 >> 2], r = z, z = ma, i[z >> 2] = r, i[z + 4 >> 2] = oe, le = xo, oe = i[le >> 2], z = i[le + 4 >> 2], r = oe, oe = da, i[oe >> 2] = r, i[oe + 4 >> 2] = z, le = wo, z = i[le >> 2], oe = i[le + 4 >> 2], r = z, z = hi, i[z >> 2] = r, i[z + 4 >> 2] = oe, i[ua >> 2] = i[vo >> 2], le = Ne, oe = i[le + 1352 >> 2], z = i[le + 1356 >> 2], r = oe, oe = le, i[oe + 1504 >> 2] = r, i[oe + 1508 >> 2] = z, Ce = bt(se, C, Q), w = bt(w, ze, Q), ho || (z = i[n + 32 >> 2], se = L[z + (Gi << 1) >> 1], r = se - L[(u << 1) + z >> 1] << re, z = L[(uo << 1) + z >> 1] - se << re, bt((r << 2) + We | 0, ((r << 1) - z << 2) + We | 0, z - r << 2)), i[Ne + 1552 >> 2] = 1, z = 0, r = 0, ct = x(Ii * ct), nt = x(Eo * nt), Qn = x(ct + nt), nt = x(0), r = xi ? r : (L[ft >> 1] << re << 2) + ni | 0, se = Yr(Ne + 1504 | 0, Ce, w, Pe, It, Jt, Oe, re, r, at, Bo), ct = x(0); r = z << 2, ct = x(ct + x(D[C + r >> 2] * D[r + Ce >> 2])), z = z + 1 | 0, (Pe | 0) != (z | 0); )
+                            for (le = ee, z = i[le + 40 >> 2], oe = i[le + 44 >> 2], r = z, Io = Se + 1456 | 0, z = Io, i[z >> 2] = r, i[z + 4 >> 2] = oe, z = i[le + 36 >> 2], oe = i[le + 32 >> 2], r = oe, Po = Se + 1448 | 0, oe = Po, i[oe >> 2] = r, i[oe + 4 >> 2] = z, oe = i[le + 28 >> 2], z = i[le + 24 >> 2], r = z, Qo = Se + 1440 | 0, z = Qo, i[z >> 2] = r, i[z + 4 >> 2] = oe, z = i[le + 20 >> 2], oe = i[le + 16 >> 2], r = oe, Do = Se + 1432 | 0, oe = Do, i[oe >> 2] = r, i[oe + 4 >> 2] = z, le = Bi, z = i[le >> 2], oe = i[le + 4 >> 2], r = z, To = Se + 1424 | 0, z = To, i[z >> 2] = r, i[z + 4 >> 2] = oe, le = ee, oe = i[le >> 2], Ce = oe, z = i[le + 4 >> 2], r = z, le = ha, z = i[le >> 2], oe = i[le + 4 >> 2], le = z, Lo = Se + 1296 | 0, z = Lo, i[z >> 2] = le, i[z + 4 >> 2] = oe, le = pa, oe = i[le >> 2], z = i[le + 4 >> 2], le = oe, zo = Se + 1304 | 0, oe = zo, i[oe >> 2] = le, i[oe + 4 >> 2] = z, le = Aa, z = i[le >> 2], oe = i[le + 4 >> 2], le = z, Ro = Se + 1312 | 0, z = Ro, i[z >> 2] = le, i[z + 4 >> 2] = oe, le = ma, oe = i[le >> 2], z = i[le + 4 >> 2], le = oe, Fo = Se + 1320 | 0, oe = Fo, i[oe >> 2] = le, i[oe + 4 >> 2] = z, le = da, z = i[le >> 2], oe = i[le + 4 >> 2], le = z, qo = Se + 1328 | 0, z = qo, i[z >> 2] = le, i[z + 4 >> 2] = oe, le = hi, oe = i[le >> 2], z = i[le + 4 >> 2], le = oe, No = Se + 1336 | 0, oe = No, i[oe >> 2] = le, i[oe + 4 >> 2] = z, Ho = Se + 1344 | 0, i[Ho >> 2] = i[ua >> 2], oe = Se, i[oe + 1416 >> 2] = Ce, z = r, i[oe + 1420 >> 2] = z, le = oe, z = i[oe + 1504 >> 2], oe = i[oe + 1508 >> 2], r = z, z = le, i[z + 1288 >> 2] = r, i[z + 1292 >> 2] = oe, In = bt(lo, se, P), Pn = bt(co, w, P), xi || bt(wa, (L[ft >> 1] << re << 2) + ni | 0, P), Uo = Ei + go | 0, Go = _o - Ei | 0, Ne = bt(Se, Uo, Go), i[ee + 4 >> 2] = _o, i[ee >> 2] = go, le = bo, oe = i[le >> 2], z = i[le + 4 >> 2], r = oe, oe = Bi, i[oe + 8 >> 2] = r, i[oe + 12 >> 2] = z, le = Ne, z = i[le + 1488 >> 2], oe = i[le + 1492 >> 2], r = z, z = Bi, i[z >> 2] = r, i[z + 4 >> 2] = oe, i[ee + 24 >> 2] = Ei, i[Ci + 16 >> 2] = i[fo >> 2], le = yo, oe = i[le >> 2], z = i[le + 4 >> 2], r = oe, oe = Ci, i[oe + 8 >> 2] = r, i[oe + 12 >> 2] = z, le = Ne, z = i[le + 1464 >> 2], oe = i[le + 1468 >> 2], r = z, z = Ci, i[z >> 2] = r, i[z + 4 >> 2] = oe, le = Co, oe = i[le >> 2], z = i[le + 4 >> 2], r = oe, oe = ha, i[oe >> 2] = r, i[oe + 4 >> 2] = z, le = Mo, z = i[le >> 2], oe = i[le + 4 >> 2], r = z, z = pa, i[z >> 2] = r, i[z + 4 >> 2] = oe, le = So, oe = i[le >> 2], z = i[le + 4 >> 2], r = oe, oe = Aa, i[oe >> 2] = r, i[oe + 4 >> 2] = z, le = ko, z = i[le >> 2], oe = i[le + 4 >> 2], r = z, z = ma, i[z >> 2] = r, i[z + 4 >> 2] = oe, le = xo, oe = i[le >> 2], z = i[le + 4 >> 2], r = oe, oe = da, i[oe >> 2] = r, i[oe + 4 >> 2] = z, le = wo, z = i[le >> 2], oe = i[le + 4 >> 2], r = z, z = hi, i[z >> 2] = r, i[z + 4 >> 2] = oe, i[ua >> 2] = i[vo >> 2], le = Ne, oe = i[le + 1352 >> 2], z = i[le + 1356 >> 2], r = oe, oe = le, i[oe + 1504 >> 2] = r, i[oe + 1508 >> 2] = z, Ce = bt(se, C, P), w = bt(w, ze, P), ho || (z = i[n + 32 >> 2], se = L[z + (Gi << 1) >> 1], r = se - L[(u << 1) + z >> 1] << re, z = L[(uo << 1) + z >> 1] - se << re, bt((r << 2) + We | 0, ((r << 1) - z << 2) + We | 0, z - r << 2)), i[Ne + 1552 >> 2] = 1, z = 0, r = 0, ct = x(Ii * ct), nt = x(Eo * nt), Qn = x(ct + nt), nt = x(0), r = xi ? r : (L[ft >> 1] << re << 2) + ni | 0, se = Yr(Ne + 1504 | 0, Ce, w, Pe, It, Jt, Oe, re, r, at, Bo), ct = x(0); r = z << 2, ct = x(ct + x(D[C + r >> 2] * D[r + Ce >> 2])), z = z + 1 | 0, (Pe | 0) != (z | 0); )
                               ;
                             for (z = 0; r = z << 2, nt = x(nt + x(D[ze + r >> 2] * D[r + w >> 2])), z = z + 1 | 0, (Pe | 0) != (z | 0); )
                               ;
-                            x(x(Ii * ct) + x(Eo * nt)) <= Qn ^ 1 || (z = i[Ne + 1416 >> 2], oe = i[le + 1420 >> 2], r = z, z = ee, i[z >> 2] = r, i[z + 4 >> 2] = oe, le = Io, oe = i[le >> 2], z = i[le + 4 >> 2], r = oe, oe = ee, i[oe + 40 >> 2] = r, i[oe + 44 >> 2] = z, le = Po, z = i[le >> 2], oe = i[le + 4 >> 2], r = z, z = ee, i[z + 32 >> 2] = r, i[z + 36 >> 2] = oe, le = Qo, oe = i[le >> 2], z = i[le + 4 >> 2], r = oe, oe = ee, i[oe + 24 >> 2] = r, i[oe + 28 >> 2] = z, le = Do, z = i[le >> 2], oe = i[le + 4 >> 2], r = z, z = ee, i[z + 16 >> 2] = r, i[z + 20 >> 2] = oe, le = To, oe = i[le >> 2], z = i[le + 4 >> 2], r = oe, oe = Bi, i[oe >> 2] = r, i[oe + 4 >> 2] = z, le = Lo, z = i[le >> 2], oe = i[le + 4 >> 2], r = z, z = ha, i[z >> 2] = r, i[z + 4 >> 2] = oe, le = zo, oe = i[le >> 2], z = i[le + 4 >> 2], r = oe, oe = pa, i[oe >> 2] = r, i[oe + 4 >> 2] = z, le = Ro, z = i[le >> 2], oe = i[le + 4 >> 2], r = z, z = Aa, i[z >> 2] = r, i[z + 4 >> 2] = oe, le = Fo, oe = i[le >> 2], z = i[le + 4 >> 2], r = oe, oe = ma, i[oe >> 2] = r, i[oe + 4 >> 2] = z, le = qo, z = i[le >> 2], oe = i[le + 4 >> 2], r = z, z = da, i[z >> 2] = r, i[z + 4 >> 2] = oe, le = No, oe = i[le >> 2], z = i[le + 4 >> 2], r = oe, oe = hi, i[oe >> 2] = r, i[oe + 4 >> 2] = z, i[ua >> 2] = i[Ho >> 2], le = Ne, z = i[le + 1288 >> 2], oe = i[le + 1292 >> 2], r = z, z = le, i[z + 1504 >> 2] = r, i[z + 1508 >> 2] = oe, bt(Ce, In, Q), bt(w, Pn, Q), xi || bt((L[ft >> 1] << re << 2) + ni | 0, wa, Q), bt(Uo, Ne, Go), se = En), Q = 0;
+                            x(x(Ii * ct) + x(Eo * nt)) <= Qn ^ 1 || (z = i[Ne + 1416 >> 2], oe = i[le + 1420 >> 2], r = z, z = ee, i[z >> 2] = r, i[z + 4 >> 2] = oe, le = Io, oe = i[le >> 2], z = i[le + 4 >> 2], r = oe, oe = ee, i[oe + 40 >> 2] = r, i[oe + 44 >> 2] = z, le = Po, z = i[le >> 2], oe = i[le + 4 >> 2], r = z, z = ee, i[z + 32 >> 2] = r, i[z + 36 >> 2] = oe, le = Qo, oe = i[le >> 2], z = i[le + 4 >> 2], r = oe, oe = ee, i[oe + 24 >> 2] = r, i[oe + 28 >> 2] = z, le = Do, z = i[le >> 2], oe = i[le + 4 >> 2], r = z, z = ee, i[z + 16 >> 2] = r, i[z + 20 >> 2] = oe, le = To, oe = i[le >> 2], z = i[le + 4 >> 2], r = oe, oe = Bi, i[oe >> 2] = r, i[oe + 4 >> 2] = z, le = Lo, z = i[le >> 2], oe = i[le + 4 >> 2], r = z, z = ha, i[z >> 2] = r, i[z + 4 >> 2] = oe, le = zo, oe = i[le >> 2], z = i[le + 4 >> 2], r = oe, oe = pa, i[oe >> 2] = r, i[oe + 4 >> 2] = z, le = Ro, z = i[le >> 2], oe = i[le + 4 >> 2], r = z, z = Aa, i[z >> 2] = r, i[z + 4 >> 2] = oe, le = Fo, oe = i[le >> 2], z = i[le + 4 >> 2], r = oe, oe = ma, i[oe >> 2] = r, i[oe + 4 >> 2] = z, le = qo, z = i[le >> 2], oe = i[le + 4 >> 2], r = z, z = da, i[z >> 2] = r, i[z + 4 >> 2] = oe, le = No, oe = i[le >> 2], z = i[le + 4 >> 2], r = oe, oe = hi, i[oe >> 2] = r, i[oe + 4 >> 2] = z, i[ua >> 2] = i[Ho >> 2], le = Ne, z = i[le + 1288 >> 2], oe = i[le + 1292 >> 2], r = z, z = le, i[z + 1504 >> 2] = r, i[z + 1508 >> 2] = oe, bt(Ce, In, P), bt(w, Pn, P), xi || bt((L[ft >> 1] << re << 2) + ni | 0, wa, P), bt(Uo, Ne, Go), se = En), P = 0;
                             break t;
                           }
-                          Q = 0, i[Se + 1552 >> 2] = 0, z = 0, C = (Oe | 0) == -1 ? 0 : (Oe << 2) + We | 0, z = xi ? z : (L[ft >> 1] << re << 2) + ni | 0, se = Yr(Se + 1504 | 0, se, w, Pe, It, Jt, C, re, z, at, r | Ce);
+                          P = 0, i[Se + 1552 >> 2] = 0, z = 0, C = (Oe | 0) == -1 ? 0 : (Oe << 2) + We | 0, z = xi ? z : (L[ft >> 1] << re << 2) + ni | 0, se = Yr(Se + 1504 | 0, se, w, Pe, It, Jt, C, re, z, at, r | Ce);
                           break t;
                         }
-                        Q = 0, z = 0, C = (Oe | 0) == -1 ? 0 : (Oe << 2) + We | 0, z = xi ? z : (L[ft >> 1] << re << 2) + ni | 0, se = ea(Se + 1504 | 0, se, Pe, It, Jt, C, re, z, x(1), at, r | Ce);
+                        P = 0, z = 0, C = (Oe | 0) == -1 ? 0 : (Oe << 2) + We | 0, z = xi ? z : (L[ft >> 1] << re << 2) + ni | 0, se = ea(Se + 1504 | 0, se, Pe, It, Jt, C, re, z, x(1), at, r | Ce);
                       }
                       z = se;
                     }
@@ -65258,7 +65293,7 @@ function gb() {
                 i[te >> 2] = Pe, pe = Se + 1568 | 0;
               }
               function Mt(r, n, u, c, m, d, _) {
-                var b = 0, f = 0, w = 0, C = 0, Q = 0, N = 0, U = 0, J = 0, z = 0, ee = 0, re = 0, de = 0, te = 0, se = 0, Ae = 0, be = 0;
+                var b = 0, f = 0, w = 0, C = 0, P = 0, N = 0, U = 0, J = 0, z = 0, ee = 0, re = 0, de = 0, te = 0, se = 0, Ae = 0, be = 0;
                 b = pe - 80 | 0, pe = b, i[b + 76 >> 2] = n, be = b + 55 | 0, se = b + 56 | 0, n = 0;
                 e: {
                   t: for (; ; ) {
@@ -65340,7 +65375,7 @@ function gb() {
                                     break r;
                                   n = i[b + 76 >> 2];
                                 }
-                                Q = -1;
+                                P = -1;
                                 o: {
                                   if (we[n | 0] != 46)
                                     break o;
@@ -65348,15 +65383,15 @@ function gb() {
                                     n: {
                                       if (!Ya(xe[n + 2 | 0]) || (n = i[b + 76 >> 2], we[n + 3 | 0] != 36))
                                         break n;
-                                      i[((xe[n + 2 | 0] << 2) + m | 0) - 192 >> 2] = 10, Q = i[((xe[n + 2 | 0] << 3) + c | 0) - 384 >> 2], n = n + 4 | 0, i[b + 76 >> 2] = n;
+                                      i[((xe[n + 2 | 0] << 2) + m | 0) - 192 >> 2] = 10, P = i[((xe[n + 2 | 0] << 3) + c | 0) - 384 >> 2], n = n + 4 | 0, i[b + 76 >> 2] = n;
                                       break o;
                                     }
                                     if (Ae)
                                       break r;
-                                    r ? (n = i[u >> 2], i[u >> 2] = n + 4, Q = i[n >> 2]) : Q = 0, n = i[b + 76 >> 2] + 2 | 0, i[b + 76 >> 2] = n;
+                                    r ? (n = i[u >> 2], i[u >> 2] = n + 4, P = i[n >> 2]) : P = 0, n = i[b + 76 >> 2] + 2 | 0, i[b + 76 >> 2] = n;
                                     break o;
                                   }
-                                  i[b + 76 >> 2] = n + 1, Q = bn(b + 76 | 0), n = i[b + 76 >> 2];
+                                  i[b + 76 >> 2] = n + 1, P = bn(b + 76 | 0), n = i[b + 76 >> 2];
                                 }
                                 for (f = 0; ; ) {
                                   if (w = f, ee = -1, xe[n | 0] - 65 >>> 0 > 57)
@@ -65499,7 +65534,7 @@ function gb() {
                                                           C = re, J = C >> 31, C = i[b + 64 >> 2], i[C >> 2] = re, i[C + 4 >> 2] = J;
                                                           continue t;
                                                         }
-                                                        Q = Q >>> 0 > 8 ? Q : 8, f = f | 8, n = 120;
+                                                        P = P >>> 0 > 8 ? P : 8, f = f | 8, n = 120;
                                                       }
                                                       if (J = i[b + 64 >> 2], C = i[b + 68 >> 2], U = Pd(J, C, se, n & 32), !(f & 8) || (C = i[b + 64 >> 2], J = i[b + 68 >> 2], !(C | J)))
                                                         break s;
@@ -65508,7 +65543,7 @@ function gb() {
                                                     }
                                                     if (J = i[b + 64 >> 2], C = i[b + 68 >> 2], U = Td(J, C, se), !(f & 8))
                                                       break s;
-                                                    n = se - U | 0, Q = (n | 0) < (Q | 0) ? Q : n + 1 | 0;
+                                                    n = se - U | 0, P = (n | 0) < (P | 0) ? P : n + 1 | 0;
                                                     break s;
                                                   }
                                                   if (J = i[b + 68 >> 2], n = J, C = i[b + 64 >> 2], w = C, (J | 0) < -1 || (J | 0) <= -1) {
@@ -65523,30 +65558,30 @@ function gb() {
                                                 }
                                                 C = n, U = yd(w, C, se);
                                               }
-                                              if (f = (Q | 0) > -1 ? f & -65537 : f, C = i[b + 64 >> 2], w = C, n = i[b + 68 >> 2], !(!!(C | n) | Q)) {
-                                                Q = 0, U = se;
+                                              if (f = (P | 0) > -1 ? f & -65537 : f, C = i[b + 64 >> 2], w = C, n = i[b + 68 >> 2], !(!!(C | n) | P)) {
+                                                P = 0, U = se;
                                                 break a;
                                               }
-                                              n = !(w | n) + (se - U | 0) | 0, Q = (n | 0) < (Q | 0) ? Q : n;
+                                              n = !(w | n) + (se - U | 0) | 0, P = (n | 0) < (P | 0) ? P : n;
                                               break a;
                                             }
-                                            n = i[b + 64 >> 2], U = n || 1038, n = cd(U, 0, Q), de = n || Q + U | 0, f = J, Q = n ? n - U | 0 : Q;
+                                            n = i[b + 64 >> 2], U = n || 1038, n = cd(U, 0, P), de = n || P + U | 0, f = J, P = n ? n - U | 0 : P;
                                             break a;
                                           }
-                                          if (w = i[b + 64 >> 2], Q)
+                                          if (w = i[b + 64 >> 2], P)
                                             break l;
                                           n = 0, ba(r, 32, z, 0, f);
                                           break u;
                                         }
-                                        i[b + 12 >> 2] = 0, i[b + 8 >> 2] = i[b + 64 >> 2], i[b + 64 >> 2] = b + 8, Q = -1, w = b + 8 | 0;
+                                        i[b + 12 >> 2] = 0, i[b + 8 >> 2] = i[b + 64 >> 2], i[b + 64 >> 2] = b + 8, P = -1, w = b + 8 | 0;
                                       }
                                       n = 0;
                                       l: {
                                         for (; ; ) {
                                           if (N = i[w >> 2], !N)
                                             break l;
-                                          if (N = kn(b + 4 | 0, N), U = (N | 0) < 0, !(U | Q - n >>> 0 < N >>> 0)) {
-                                            if (w = w + 4 | 0, n = n + N | 0, Q >>> 0 > n >>> 0)
+                                          if (N = kn(b + 4 | 0, N), U = (N | 0) < 0, !(U | P - n >>> 0 < N >>> 0)) {
+                                            if (w = w + 4 | 0, n = n + N | 0, P >>> 0 > n >>> 0)
                                               continue;
                                             break l;
                                           }
@@ -65569,10 +65604,10 @@ function gb() {
                                     ba(r, 32, z, n, f ^ 8192), n = (n | 0) < (z | 0) ? z : n;
                                     continue t;
                                   }
-                                  n = ta[d | 0](r, ve[b + 64 >> 3], z, Q, f, n) | 0;
+                                  n = ta[d | 0](r, ve[b + 64 >> 3], z, P, f, n) | 0;
                                   continue t;
                                 }
-                                C = i[b + 64 >> 2], xe[b + 55 | 0] = C, Q = 1, U = be, f = J;
+                                C = i[b + 64 >> 2], xe[b + 55 | 0] = C, P = 1, U = be, f = J;
                                 break a;
                               }
                               w = n + 1 | 0, i[b + 76 >> 2] = w, f = we[n + 1 | 0], n = w;
@@ -65602,7 +65637,7 @@ function gb() {
                         ee = -1;
                         break e;
                       }
-                      N = de - U | 0, de = (Q | 0) < (N | 0) ? N : Q, w = de + ee | 0, n = (w | 0) > (z | 0) ? w : z, ba(r, 32, n, w, f), Ea(r, te, ee), ba(r, 48, n, w, f ^ 65536), ba(r, 48, de, N, 0), Ea(r, U, N), ba(r, 32, n, w, f ^ 8192);
+                      N = de - U | 0, de = (P | 0) < (N | 0) ? N : P, w = de + ee | 0, n = (w | 0) > (z | 0) ? w : z, ba(r, 32, n, w, f), Ea(r, te, ee), ba(r, 48, n, w, f ^ 65536), ba(r, 48, de, N, 0), Ea(r, U, N), ba(r, 32, n, w, f ^ 8192);
                       continue;
                     }
                     break;
@@ -65612,7 +65647,7 @@ function gb() {
                 return pe = b + 80 | 0, ee;
               }
               function jt(r, n, u, c, m) {
-                var d = 0, _ = 0, b = 0, f = 0, w = 0, C = 0, Q = 0, N = 0, U = 0, J = 0, z = 0, ee = 0, re = 0, de = 0, te = 0, se = 0, Ae = 0, be = 0, oe = 0, le = 0, Se = 0, Ce = 0, Pe = 0, ze = 0, Ne = 0;
+                var d = 0, _ = 0, b = 0, f = 0, w = 0, C = 0, P = 0, N = 0, U = 0, J = 0, z = 0, ee = 0, re = 0, de = 0, te = 0, se = 0, Ae = 0, be = 0, oe = 0, le = 0, Se = 0, Ce = 0, Pe = 0, ze = 0, Ne = 0;
                 if (N = pe - 32 | 0, Pe = N, pe = N, oe = N - ((i[r + 2336 >> 2] << 1) + 15 & -16) | 0, N = oe, pe = N, b = i[r + 2328 >> 2], Ae = N - ((b + i[r + 2336 >> 2] << 2) + 15 & -16) | 0, N = Ae, pe = N, w = i[r + 2332 >> 2] << 2, le = N - (w + 15 & -16) | 0, N = le, pe = N, z = N - (w + 79 & -16) | 0, pe = z, U = xe[r + 2767 | 0], (b | 0) >= 1)
                   for (ee = L[((xe[r + 2765 | 0] << 1 & -4) + (xe[r + 2766 | 0] << 1) | 0) + 6720 >> 1] << 4, f = xe[r + 2770 | 0], b = 0; ; ) {
                     d = (b << 2) + r | 0, se = d + 4 | 0, w = L[(b << 1) + c >> 1], N = w << 14, i[se >> 2] = N, f = T(f, 196314165) + 907633515 | 0, _ = d;
@@ -65633,7 +65668,7 @@ function gb() {
                 e: {
                   if (i[r + 2324 >> 2] >= 1)
                     for (be = r + 4 | 0, se = i[r + 2336 >> 2], Ne = (U | 0) < 4, Se = u; ; ) {
-                      ze = ((de << 4 & -32) + n | 0) + 32 | 0, N = bt(Pe, ze, i[r + 2340 >> 2] << 1), Ce = (de << 2) + n | 0, te = i[Ce + 16 >> 2], b = te >> 31, c = b ^ b + te, f = Xe(c), ee = te << f - 1, w = ee >> 16, b = 536870911 / (w | 0) | 0, d = (b >> 15) + 1 >> 1, U = b << 16, b = U >> 16, w = 0 - ((T(b, ee & 65535) >> 16) + T(b, w) << 3) | 0, w = ((T(w, d) + U | 0) + T(w >> 16, b) | 0) + (T(w & 65528, b) >> 16) | 0, U = 15 - f | 0, re = T(de, 10), Q = we[r + 2765 | 0];
+                      ze = ((de << 4 & -32) + n | 0) + 32 | 0, N = bt(Pe, ze, i[r + 2340 >> 2] << 1), Ce = (de << 2) + n | 0, te = i[Ce + 16 >> 2], b = te >> 31, c = b ^ b + te, f = Xe(c), ee = te << f - 1, w = ee >> 16, b = 536870911 / (w | 0) | 0, d = (b >> 15) + 1 >> 1, U = b << 16, b = U >> 16, w = 0 - ((T(b, ee & 65535) >> 16) + T(b, w) << 3) | 0, w = ((T(w, d) + U | 0) + T(w >> 16, b) | 0) + (T(w & 65528, b) >> 16) | 0, U = 15 - f | 0, re = T(de, 10), P = we[r + 2765 | 0];
                       t: {
                         if (c >>> 0 <= 131071) {
                           c = 0 - U | 0, U = 2147483647 >>> c | 0, _ = -2147483648 >> c, J = ((w | 0) > (U | 0) ? U : (w | 0) < (_ | 0) ? _ : w) << c;
@@ -65657,11 +65692,11 @@ function gb() {
                       t: {
                         i: {
                           a: {
-                            if (!(!i[r + 4160 >> 2] | i[r + 4164 >> 2] != 2 | ((Q & 255) == 2 | de >>> 0 > 1))) {
+                            if (!(!i[r + 4160 >> 2] | i[r + 4164 >> 2] != 2 | ((P & 255) == 2 | de >>> 0 > 1))) {
                               _ = re, L[_ + 96 >> 1] = 0, L[_ + 98 >> 1] = 0, L[_ + 100 >> 1] = 0, L[_ + 102 >> 1] = 0, L[_ + 104 >> 1] = 0, L[_ + 100 >> 1] = 4096, _ = i[r + 2308 >> 2], i[Ce >> 2] = _;
                               break a;
                             }
-                            if ((Q & 255) != 2) {
+                            if ((P & 255) != 2) {
                               f = i[r + 2332 >> 2], c = be;
                               break i;
                             }
@@ -65679,12 +65714,12 @@ function gb() {
                             }
                             if ((c | 0) == 65536 | (_ | 0) < -1)
                               break a;
-                            for (ee = _ + 1 | 0, U = c & 65535, Q = c >> 16, b = 0; w = ((b ^ -1) + se << 2) + Ae | 0, d = w, w = i[w >> 2], f = w << 16 >> 16, i[d >> 2] = ((T(U, f) >> 16) + T(f, Q) | 0) + T((w >> 15) + 1 >> 1, c), w = (b | 0) != (ee | 0), b = b + 1 | 0, !!w; )
+                            for (ee = _ + 1 | 0, U = c & 65535, P = c >> 16, b = 0; w = ((b ^ -1) + se << 2) + Ae | 0, d = w, w = i[w >> 2], f = w << 16 >> 16, i[d >> 2] = ((T(U, f) >> 16) + T(f, P) | 0) + T((w >> 15) + 1 >> 1, c), w = (b | 0) != (ee | 0), b = b + 1 | 0, !!w; )
                               ;
                           }
                           if (f = i[r + 2332 >> 2], (f | 0) < 1)
                             break t;
-                          for (b = ((se - _ << 2) + Ae | 0) + 8 | 0, c = L[re + 104 >> 1], ee = L[re + 102 >> 1], U = L[re + 100 >> 1], Q = L[re + 98 >> 1], re = L[re + 96 >> 1], w = 0; _ = w << 2, d = le + _ | 0, J = i[b >> 2], C = T(J >> 16, re) + (T(J & 65535, re) >> 16) | 0, J = i[b - 4 >> 2], C = (C + T(J >> 16, Q) | 0) + (T(J & 65535, Q) >> 16) | 0, J = i[b - 8 >> 2], C = (C + T(J >> 16, U) | 0) + (T(J & 65535, U) >> 16) | 0, J = i[b - 12 >> 2], C = (C + T(J >> 16, ee) | 0) + (T(J & 65535, ee) >> 16) | 0, J = i[b - 16 >> 2], _ = (i[_ + be >> 2] + ((C + T(J >> 16, c) | 0) + (T(J & 65535, c) >> 16) << 1) | 0) + 4 | 0, i[d >> 2] = _, i[(se << 2) + Ae >> 2] = _ << 1, se = se + 1 | 0, b = b + 4 | 0, w = w + 1 | 0, (w | 0) != (f | 0); )
+                          for (b = ((se - _ << 2) + Ae | 0) + 8 | 0, c = L[re + 104 >> 1], ee = L[re + 102 >> 1], U = L[re + 100 >> 1], P = L[re + 98 >> 1], re = L[re + 96 >> 1], w = 0; _ = w << 2, d = le + _ | 0, J = i[b >> 2], C = T(J >> 16, re) + (T(J & 65535, re) >> 16) | 0, J = i[b - 4 >> 2], C = (C + T(J >> 16, P) | 0) + (T(J & 65535, P) >> 16) | 0, J = i[b - 8 >> 2], C = (C + T(J >> 16, U) | 0) + (T(J & 65535, U) >> 16) | 0, J = i[b - 12 >> 2], C = (C + T(J >> 16, ee) | 0) + (T(J & 65535, ee) >> 16) | 0, J = i[b - 16 >> 2], _ = (i[_ + be >> 2] + ((C + T(J >> 16, c) | 0) + (T(J & 65535, c) >> 16) << 1) | 0) + 4 | 0, i[d >> 2] = _, i[(se << 2) + Ae >> 2] = _ << 1, se = se + 1 | 0, b = b + 4 | 0, w = w + 1 | 0, (w | 0) != (f | 0); )
                             ;
                           c = le;
                         }
@@ -65699,7 +65734,7 @@ function gb() {
                               case 6:
                                 break i;
                             }
-                          Q = L[N >> 1], U = w << 2, b = U + z | 0, f = i[b + 60 >> 2], d = (T(Q, f >> 16) + _ | 0) + (T(f & 65535, Q) >> 16) | 0, Q = L[N + 2 >> 1], f = i[b + 56 >> 2], d = (d + T(Q, f >> 16) | 0) + (T(f & 65535, Q) >> 16) | 0, Q = L[N + 4 >> 1], f = i[b + 52 >> 2], d = (d + T(Q, f >> 16) | 0) + (T(f & 65535, Q) >> 16) | 0, Q = L[N + 6 >> 1], f = i[b + 48 >> 2], d = (d + T(Q, f >> 16) | 0) + (T(f & 65535, Q) >> 16) | 0, Q = L[N + 8 >> 1], f = i[b + 44 >> 2], d = (d + T(Q, f >> 16) | 0) + (T(f & 65535, Q) >> 16) | 0, Q = L[N + 10 >> 1], f = i[b + 40 >> 2], d = (d + T(Q, f >> 16) | 0) + (T(f & 65535, Q) >> 16) | 0, Q = L[N + 12 >> 1], f = i[b + 36 >> 2], d = (d + T(Q, f >> 16) | 0) + (T(f & 65535, Q) >> 16) | 0, Q = L[N + 14 >> 1], f = i[b + 32 >> 2], d = (d + T(Q, f >> 16) | 0) + (T(f & 65535, Q) >> 16) | 0, Q = L[N + 16 >> 1], f = i[b + 28 >> 2], d = (d + T(Q, f >> 16) | 0) + (T(f & 65535, Q) >> 16) | 0, Q = L[N + 18 >> 1], f = i[b + 24 >> 2], f = (d + T(Q, f >> 16) | 0) + (T(f & 65535, Q) >> 16) | 0, (ee | 0) == 16 && (te = L[N + 20 >> 1], Q = i[b + 20 >> 2], d = (T(te, Q >> 16) + f | 0) + (T(Q & 65535, te) >> 16) | 0, Q = L[N + 22 >> 1], f = i[b + 16 >> 2], d = (d + T(Q, f >> 16) | 0) + (T(f & 65535, Q) >> 16) | 0, Q = L[N + 24 >> 1], f = i[b + 12 >> 2], d = (d + T(Q, f >> 16) | 0) + (T(f & 65535, Q) >> 16) | 0, Q = L[N + 26 >> 1], f = i[b + 8 >> 2], d = (d + T(Q, f >> 16) | 0) + (T(f & 65535, Q) >> 16) | 0, Q = L[N + 28 >> 1], f = i[b + 4 >> 2], d = (d + T(Q, f >> 16) | 0) + (T(f & 65535, Q) >> 16) | 0, f = L[N + 30 >> 1], b = i[b >> 2], f = (d + T(f, b >> 16) | 0) + (T(b & 65535, f) >> 16) | 0), Q = w + 16 | 0, d = (Q << 2) + z | 0, b = (f | 0) > -134217728 ? f : -134217728, b = ((b | 0) < 134217727 ? b : 134217727) << 4, f = i[U + re >> 2], U = b + f | 0;
+                          P = L[N >> 1], U = w << 2, b = U + z | 0, f = i[b + 60 >> 2], d = (T(P, f >> 16) + _ | 0) + (T(f & 65535, P) >> 16) | 0, P = L[N + 2 >> 1], f = i[b + 56 >> 2], d = (d + T(P, f >> 16) | 0) + (T(f & 65535, P) >> 16) | 0, P = L[N + 4 >> 1], f = i[b + 52 >> 2], d = (d + T(P, f >> 16) | 0) + (T(f & 65535, P) >> 16) | 0, P = L[N + 6 >> 1], f = i[b + 48 >> 2], d = (d + T(P, f >> 16) | 0) + (T(f & 65535, P) >> 16) | 0, P = L[N + 8 >> 1], f = i[b + 44 >> 2], d = (d + T(P, f >> 16) | 0) + (T(f & 65535, P) >> 16) | 0, P = L[N + 10 >> 1], f = i[b + 40 >> 2], d = (d + T(P, f >> 16) | 0) + (T(f & 65535, P) >> 16) | 0, P = L[N + 12 >> 1], f = i[b + 36 >> 2], d = (d + T(P, f >> 16) | 0) + (T(f & 65535, P) >> 16) | 0, P = L[N + 14 >> 1], f = i[b + 32 >> 2], d = (d + T(P, f >> 16) | 0) + (T(f & 65535, P) >> 16) | 0, P = L[N + 16 >> 1], f = i[b + 28 >> 2], d = (d + T(P, f >> 16) | 0) + (T(f & 65535, P) >> 16) | 0, P = L[N + 18 >> 1], f = i[b + 24 >> 2], f = (d + T(P, f >> 16) | 0) + (T(f & 65535, P) >> 16) | 0, (ee | 0) == 16 && (te = L[N + 20 >> 1], P = i[b + 20 >> 2], d = (T(te, P >> 16) + f | 0) + (T(P & 65535, te) >> 16) | 0, P = L[N + 22 >> 1], f = i[b + 16 >> 2], d = (d + T(P, f >> 16) | 0) + (T(f & 65535, P) >> 16) | 0, P = L[N + 24 >> 1], f = i[b + 12 >> 2], d = (d + T(P, f >> 16) | 0) + (T(f & 65535, P) >> 16) | 0, P = L[N + 26 >> 1], f = i[b + 8 >> 2], d = (d + T(P, f >> 16) | 0) + (T(f & 65535, P) >> 16) | 0, P = L[N + 28 >> 1], f = i[b + 4 >> 2], d = (d + T(P, f >> 16) | 0) + (T(f & 65535, P) >> 16) | 0, f = L[N + 30 >> 1], b = i[b >> 2], f = (d + T(f, b >> 16) | 0) + (T(b & 65535, f) >> 16) | 0), P = w + 16 | 0, d = (P << 2) + z | 0, b = (f | 0) > -134217728 ? f : -134217728, b = ((b | 0) < 134217727 ? b : 134217727) << 4, f = i[U + re >> 2], U = b + f | 0;
                           i: {
                             if ((U | 0) >= 0) {
                               b = (b & f) > -1 ? U : -2147483648;
@@ -65720,7 +65755,7 @@ function gb() {
                 Le(8959, 8991, 144), Te();
               }
               function na(r, n, u, c, m, d, _, b) {
-                var f = 0, w = 0, C = 0, Q = 0, N = 0, U = 0, J = 0, z = 0, ee = 0, re = 0, de = 0, te = 0, se = 0, Ae = 0, be = 0;
+                var f = 0, w = 0, C = 0, P = 0, N = 0, U = 0, J = 0, z = 0, ee = 0, re = 0, de = 0, te = 0, se = 0, Ae = 0, be = 0;
                 J = pe - 656 | 0, pe = J, C = J, i[C + 652 >> 2] = 0, i[C + 640 >> 2] = 0, i[C + 644 >> 2] = 0;
                 e: {
                   t: {
@@ -65735,7 +65770,7 @@ function gb() {
                             c: {
                               if (!(i[r + 2388 >> 2] | (f | 0) < 1))
                                 for (w = 0; ; ) {
-                                  c = 2, Q = 1;
+                                  c = 2, P = 1;
                                   o: {
                                     n: {
                                       u: {
@@ -65773,7 +65808,7 @@ function gb() {
                                             break n;
                                           if ((f | 0) != 60)
                                             break l;
-                                          c = 4, Q = 3;
+                                          c = 4, P = 3;
                                           break o;
                                         }
                                         Le(9390, 9375, 146), Te();
@@ -65781,9 +65816,9 @@ function gb() {
                                       c = 4;
                                       break o;
                                     }
-                                    c = 4, Q = 2;
+                                    c = 4, P = 2;
                                   }
-                                  if (f = T(w, 4264) + r | 0, i[f + 2324 >> 2] = c, i[f + 2392 >> 2] = Q, c = i[n + 12 >> 2] >> 10, c >>> 0 > 15 | !(1 << c & 34944))
+                                  if (f = T(w, 4264) + r | 0, i[f + 2324 >> 2] = c, i[f + 2392 >> 2] = P, c = i[n + 12 >> 2] >> 10, c >>> 0 > 15 | !(1 << c & 34944))
                                     break c;
                                   if (z = Yu(f, c + 1 | 0, i[n + 8 >> 2]) + z | 0, f = i[n + 4 >> 2], w = w + 1 | 0, !((f | 0) > (w | 0)))
                                     break;
@@ -65807,10 +65842,10 @@ function gb() {
                                   if ((f | 0) < 1)
                                     break n;
                                   for (; ; ) {
-                                    if (Q = T(U, 4264) + r | 0, c = i[Q + 2392 >> 2], f = 0, w = Si(m, 1), (c | 0) > 0)
-                                      for (N = Q + 2392 | 0; i[((f << 2) + Q | 0) + 2404 >> 2] = w, c = i[N >> 2], w = Si(m, 1), f = f + 1 | 0, (f | 0) < (c | 0); )
+                                    if (P = T(U, 4264) + r | 0, c = i[P + 2392 >> 2], f = 0, w = Si(m, 1), (c | 0) > 0)
+                                      for (N = P + 2392 | 0; i[((f << 2) + P | 0) + 2404 >> 2] = w, c = i[N >> 2], w = Si(m, 1), f = f + 1 | 0, (f | 0) < (c | 0); )
                                         ;
-                                    if (i[Q + 2416 >> 2] = w, f = i[n + 4 >> 2], U = U + 1 | 0, !((f | 0) > (U | 0)))
+                                    if (i[P + 2416 >> 2] = w, f = i[n + 4 >> 2], U = U + 1 | 0, !((f | 0) > (U | 0)))
                                       break;
                                   }
                                   if (N = 0, (f | 0) <= 0)
@@ -65826,7 +65861,7 @@ function gb() {
                                       }
                                       if (f = At(m, i[(f << 2) + 6688 >> 2], 8), c = i[w + 2392 >> 2], (c | 0) < 1)
                                         break u;
-                                      for (Q = f + 1 | 0, f = 0; i[((f << 2) + w | 0) + 2420 >> 2] = Q >>> f & 1, f = f + 1 | 0, (f | 0) != (c | 0); )
+                                      for (P = f + 1 | 0, f = 0; i[((f << 2) + w | 0) + 2420 >> 2] = P >>> f & 1, f = f + 1 | 0, (f | 0) != (c | 0); )
                                         ;
                                     }
                                     if (f = i[n + 4 >> 2], N = N + 1 | 0, !((f | 0) > (N | 0)))
@@ -65835,18 +65870,18 @@ function gb() {
                                 }
                                 if (i[r + 2392 >> 2] < 1 | u)
                                   break o;
-                                for (re = r + 6684 | 0, Q = 0; ; ) {
+                                for (re = r + 6684 | 0, P = 0; ; ) {
                                   if ((f | 0) >= 1)
-                                    for (U = Q - 1 | 0, N = Q << 2, ee = re + N | 0, c = 0; ; ) {
+                                    for (U = P - 1 | 0, N = P << 2, ee = re + N | 0, c = 0; ; ) {
                                       if (w = T(c, 4264) + r | 0, i[(N + w | 0) + 2420 >> 2]) {
                                         n: {
                                           if ((f | 0) != 2 | c || (Zr(m, C + 640 | 0), i[ee >> 2]))
                                             break n;
                                           xn(m, C + 652 | 0);
                                         }
-                                        de = w, te = m, se = Q;
+                                        de = w, te = m, se = P;
                                         n: {
-                                          if (Q && (f = 2, i[((U << 2) + w | 0) + 2420 >> 2]))
+                                          if (P && (f = 2, i[((U << 2) + w | 0) + 2420 >> 2]))
                                             break n;
                                           f = 0;
                                         }
@@ -65855,7 +65890,7 @@ function gb() {
                                       if (c = c + 1 | 0, !((f | 0) > (c | 0)))
                                         break;
                                     }
-                                  if (Q = Q + 1 | 0, !((Q | 0) < i[r + 2392 >> 2]))
+                                  if (P = P + 1 | 0, !((P | 0) < i[r + 2392 >> 2]))
                                     break;
                                 }
                               }
@@ -65895,7 +65930,7 @@ function gb() {
                       break t;
                     qt(r + 5548 | 0, 0, 1024), i[r + 8428 >> 2] = 0, xe[r + 6576 | 0] = 10, i[r + 6572 >> 2] = 100, i[r + 6640 >> 2] = 1, f = i[n + 4 >> 2];
                   }
-                  Q = 1, c = C, U = (T(i[n + 12 >> 2], f) | 0) >= (T(i[n >> 2], i[n + 8 >> 2]) | 0);
+                  P = 1, c = C, U = (T(i[n + 12 >> 2], f) | 0) >= (T(i[n >> 2], i[n + 8 >> 2]) | 0);
                   t: {
                     if (!U) {
                       i[C >> 2] = d, w = d, f = r + 2328 | 0;
@@ -65907,14 +65942,14 @@ function gb() {
                   t: {
                     i: {
                       if (!u) {
-                        Q = !i[C + 652 >> 2];
+                        P = !i[C + 652 >> 2];
                         break i;
                       }
                       if (!i[r + 8548 >> 2])
                         break i;
-                      if (Q = 0, f = i[n + 4 >> 2], (u | 0) != 2 | (f | 0) != 2)
+                      if (P = 0, f = i[n + 4 >> 2], (u | 0) != 2 | (f | 0) != 2)
                         break t;
-                      Q = i[((i[r + 6652 >> 2] << 2) + r | 0) + 6684 >> 2] == 1;
+                      P = i[((i[r + 6652 >> 2] << 2) + r | 0) + 6684 >> 2] == 1;
                     }
                     f = i[n + 4 >> 2];
                   }
@@ -65925,7 +65960,7 @@ function gb() {
                       if (f = i[r + 2388 >> 2], c = ((f | 0) > 0) << 1, c = (u | 0) != 2 | (f | 0) < 1 ? c : (i[((f << 2) + r | 0) + 2416 >> 2] != 0) << 1, c = en(r, m, i[C >> 2] + 4 | 0, C + 648 | 0, u, c, b), f = 1, i[r + 2388 >> 2] = i[r + 2388 >> 2] + 1, z = c + z | 0, c = i[n + 4 >> 2], (c | 0) >= 2)
                         for (; ; ) {
                           a: {
-                            if (Q) {
+                            if (P) {
                               se = T(f, 4264) + r | 0, de = m, re = i[(f << 2) + C >> 2] + 4 | 0, be = C + 648 | 0, te = u, c = i[r + 2388 >> 2] - f | 0, ee = 0;
                               r: {
                                 if ((c | 0) < 1 || (ee = (i[((T(f, 4264) + r | 0) + (c << 2) | 0) + 2416 >> 2] != 0) << 1, (u | 0) == 2))
@@ -65942,26 +65977,26 @@ function gb() {
                         }
                       if ((c | 0) != 2 | i[n >> 2] != 2)
                         break i;
-                      w = i[C >> 2], zu(r + 8528 | 0, w, N, C + 640 | 0, i[r + 2316 >> 2], i[C + 648 >> 2]), Q = i[C + 648 >> 2];
+                      w = i[C >> 2], zu(r + 8528 | 0, w, N, C + 640 | 0, i[r + 2316 >> 2], i[C + 648 >> 2]), P = i[C + 648 >> 2];
                       break t;
                     }
-                    c = i[r + 8532 >> 2], L[w >> 1] = c, L[w + 2 >> 1] = c >>> 16, Q = i[C + 648 >> 2], c = (Q << 1) + w | 0, i[r + 8532 >> 2] = qe[c >> 1] | qe[c + 2 >> 1] << 16;
+                    c = i[r + 8532 >> 2], L[w >> 1] = c, L[w + 2 >> 1] = c >>> 16, P = i[C + 648 >> 2], c = (P << 1) + w | 0, i[r + 8532 >> 2] = qe[c >> 1] | qe[c + 2 >> 1] << 16;
                   }
-                  f = (T(i[n + 8 >> 2], Q) | 0) / (T(L[r + 2316 >> 1], 1e3) | 0) | 0, i[_ >> 2] = f, N = i[n >> 2], c = (N | 0) == 2, m = J - (((c ? f : 1) << 1) + 15 & -16) | 0, b = m, pe = m, f = i[n + 4 >> 2], U || (U = i[r + 2328 >> 2], J = T(U + 2 | 0, f) << 1, w = b - (J + 15 & -16) | 0, pe = w, b = bt(w, d, J), i[C + 4 >> 2] = (b + (U << 1) | 0) + 4, i[C >> 2] = b), m = c ? m : d;
+                  f = (T(i[n + 8 >> 2], P) | 0) / (T(L[r + 2316 >> 1], 1e3) | 0) | 0, i[_ >> 2] = f, N = i[n >> 2], c = (N | 0) == 2, m = J - (((c ? f : 1) << 1) + 15 & -16) | 0, b = m, pe = m, f = i[n + 4 >> 2], U || (U = i[r + 2328 >> 2], J = T(U + 2 | 0, f) << 1, w = b - (J + 15 & -16) | 0, pe = w, b = bt(w, d, J), i[C + 4 >> 2] = (b + (U << 1) | 0) + 4, i[C >> 2] = b), m = c ? m : d;
                   t: {
                     if ((((f | 0) > (N | 0) ? N : f) | 0) < 1)
                       break t;
                     for (c = 0; ; ) {
-                      U = nn((T(c, 4264) + r | 0) + 2432 | 0, m, w + 2 | 0, Q), N = i[n >> 2];
+                      U = nn((T(c, 4264) + r | 0) + 2432 | 0, m, w + 2 | 0, P), N = i[n >> 2];
                       i: {
-                        if ((N | 0) != 2 || (f = 0, Q = i[_ >> 2], (Q | 0) < 1))
+                        if ((N | 0) != 2 || (f = 0, P = i[_ >> 2], (P | 0) < 1))
                           break i;
-                        for (; w = f << 1, L[(w + c << 1) + d >> 1] = qe[m + w >> 1], f = f + 1 | 0, (Q | 0) != (f | 0); )
+                        for (; w = f << 1, L[(w + c << 1) + d >> 1] = qe[m + w >> 1], f = f + 1 | 0, (P | 0) != (f | 0); )
                           ;
                       }
                       if (z = z + U | 0, c = c + 1 | 0, f = i[n + 4 >> 2], (c | 0) >= (((f | 0) > (N | 0) ? N : f) | 0))
                         break t;
-                      w = i[(c << 2) + C >> 2], Q = i[C + 648 >> 2];
+                      w = i[(c << 2) + C >> 2], P = i[C + 648 >> 2];
                     }
                   }
                   t: {
@@ -65999,7 +66034,7 @@ function gb() {
                 return pe = C + 656 | 0, c;
               }
               function Na(r, n) {
-                var u = 0, c = x(0), m = 0, d = x(0), _ = x(0), b = 0, f = x(0), w = 0, C = 0, Q = x(0), N = 0, U = x(0), J = 0, z = x(0), ee = x(0), re = x(0), de = 0, te = x(0), se = x(0), Ae = 0, be = x(0), oe = x(0), le = x(0), Se = 0, Ce = 0, Pe = 0, ze = 0, Ne = 0, Oe = 0, We = x(0), at = x(0), nt = x(0), ct = 0, ft = 0, It = 0, Dt = x(0), Ut = 0, Jt = 0, Kt = x(0), ai = x(0), ni = x(0), hi = x(0), xi = x(0), Ci = x(0), Bi = x(0), Ei = x(0), Ii = x(0), Di = x(0), zi = 0;
+                var u = 0, c = x(0), m = 0, d = x(0), _ = x(0), b = 0, f = x(0), w = 0, C = 0, P = x(0), N = 0, U = x(0), J = 0, z = x(0), ee = x(0), re = x(0), de = 0, te = x(0), se = x(0), Ae = 0, be = x(0), oe = x(0), le = x(0), Se = 0, Ce = 0, Pe = 0, ze = 0, Ne = 0, Oe = 0, We = x(0), at = x(0), nt = x(0), ct = 0, ft = 0, It = 0, Dt = x(0), Ut = 0, Jt = 0, Kt = x(0), ai = x(0), ni = x(0), hi = x(0), xi = x(0), Ci = x(0), Bi = x(0), Ei = x(0), Ii = x(0), Di = x(0), zi = 0;
                 for (Ne = pe - 32 | 0, pe = Ne, J = i[r + 8 >> 2], i[Ne >> 2] = 1, b = r + 12 | 0, w = 1; u = m, C = u << 2, de = qe[(C | 2) + b >> 1], m = u + 1 | 0, w = T(L[b + C >> 1], w), i[(m << 2) + Ne >> 2] = w, (de | 0) != 1; )
                   ;
                 Ut = (J | 0) > 0 ? J : 0, ft = L[((m << 2) + r | 0) + 10 >> 1];
@@ -66014,14 +66049,14 @@ function gb() {
                               break e;
                             if (m = 0, u = n, C = i[(Oe << 2) + Ne >> 2], (C | 0) <= 0)
                               break t;
-                            for (; _ = D[u >> 2], c = D[u + 32 >> 2], D[u + 32 >> 2] = _ - c, D[u >> 2] = c + _, b = u + 36 | 0, _ = D[b >> 2], c = D[u + 4 >> 2], D[u + 4 >> 2] = _ + c, D[u + 36 >> 2] = c - _, _ = D[u + 8 >> 2], c = D[u + 40 >> 2], b = u + 44 | 0, d = D[b >> 2], f = x(x(c + d) * x(0.7071067690849304)), D[u + 40 >> 2] = _ - f, w = u + 12 | 0, Q = D[w >> 2], c = x(x(d - c) * x(0.7071067690849304)), D[u + 44 >> 2] = Q - c, D[u + 8 >> 2] = _ + f, D[u + 12 >> 2] = c + Q, _ = D[u + 48 >> 2], c = D[u + 16 >> 2], b = u + 52 | 0, d = D[b >> 2], D[u + 48 >> 2] = c - d, w = u + 20 | 0, f = D[w >> 2], D[u + 52 >> 2] = _ + f, D[u + 20 >> 2] = f - _, D[u + 16 >> 2] = d + c, _ = D[u + 24 >> 2], b = u + 60 | 0, c = D[b >> 2], d = D[u + 56 >> 2], f = x(x(c - d) * x(0.7071067690849304)), D[u + 56 >> 2] = _ - f, w = u + 28 | 0, Q = D[w >> 2], c = x(x(c + d) * x(-0.7071067690849304)), D[u + 60 >> 2] = Q - c, D[u + 28 >> 2] = c + Q, D[u + 24 >> 2] = _ + f, u = u - -64 | 0, m = m + 1 | 0, (C | 0) != (m | 0); )
+                            for (; _ = D[u >> 2], c = D[u + 32 >> 2], D[u + 32 >> 2] = _ - c, D[u >> 2] = c + _, b = u + 36 | 0, _ = D[b >> 2], c = D[u + 4 >> 2], D[u + 4 >> 2] = _ + c, D[u + 36 >> 2] = c - _, _ = D[u + 8 >> 2], c = D[u + 40 >> 2], b = u + 44 | 0, d = D[b >> 2], f = x(x(c + d) * x(0.7071067690849304)), D[u + 40 >> 2] = _ - f, w = u + 12 | 0, P = D[w >> 2], c = x(x(d - c) * x(0.7071067690849304)), D[u + 44 >> 2] = P - c, D[u + 8 >> 2] = _ + f, D[u + 12 >> 2] = c + P, _ = D[u + 48 >> 2], c = D[u + 16 >> 2], b = u + 52 | 0, d = D[b >> 2], D[u + 48 >> 2] = c - d, w = u + 20 | 0, f = D[w >> 2], D[u + 52 >> 2] = _ + f, D[u + 20 >> 2] = f - _, D[u + 16 >> 2] = d + c, _ = D[u + 24 >> 2], b = u + 60 | 0, c = D[b >> 2], d = D[u + 56 >> 2], f = x(x(c - d) * x(0.7071067690849304)), D[u + 56 >> 2] = _ - f, w = u + 28 | 0, P = D[w >> 2], c = x(x(c + d) * x(-0.7071067690849304)), D[u + 60 >> 2] = P - c, D[u + 28 >> 2] = c + P, D[u + 24 >> 2] = _ + f, u = u - -64 | 0, m = m + 1 | 0, (C | 0) != (m | 0); )
                               ;
                             break t;
                           case 2:
                             if (ct = i[(Oe << 2) + Ne >> 2], (N | 0) == 1) {
                               if (m = 0, u = n, (ct | 0) < 1)
                                 break t;
-                              for (; _ = D[u >> 2], c = D[u + 16 >> 2], d = x(_ + c), f = D[u + 8 >> 2], Q = D[u + 24 >> 2], z = x(f + Q), D[u + 16 >> 2] = d - z, D[u >> 2] = d + z, b = u + 20 | 0, N = b, d = D[u + 4 >> 2], z = D[u + 20 >> 2], se = x(d + z), b = u + 12 | 0, be = D[b >> 2], w = u + 28 | 0, ee = D[w >> 2], re = x(be + ee), D[N >> 2] = se - re, d = x(d - z), f = x(f - Q), D[u + 28 >> 2] = d + f, _ = x(_ - c), c = x(be - ee), D[u + 24 >> 2] = _ - c, D[u + 12 >> 2] = d - f, D[u + 8 >> 2] = _ + c, D[u + 4 >> 2] = se + re, u = u + 32 | 0, m = m + 1 | 0, (ct | 0) != (m | 0); )
+                              for (; _ = D[u >> 2], c = D[u + 16 >> 2], d = x(_ + c), f = D[u + 8 >> 2], P = D[u + 24 >> 2], z = x(f + P), D[u + 16 >> 2] = d - z, D[u >> 2] = d + z, b = u + 20 | 0, N = b, d = D[u + 4 >> 2], z = D[u + 20 >> 2], se = x(d + z), b = u + 12 | 0, be = D[b >> 2], w = u + 28 | 0, ee = D[w >> 2], re = x(be + ee), D[N >> 2] = se - re, d = x(d - z), f = x(f - P), D[u + 28 >> 2] = d + f, _ = x(_ - c), c = x(be - ee), D[u + 24 >> 2] = _ - c, D[u + 12 >> 2] = d - f, D[u + 8 >> 2] = _ + c, D[u + 4 >> 2] = se + re, u = u + 32 | 0, m = m + 1 | 0, (ct | 0) != (m | 0); )
                                 ;
                               break t;
                             }
@@ -66029,7 +66064,7 @@ function gb() {
                               break t;
                             for (Ce = T(N, 3), Pe = N << 1, Ae = ct << Ut, ze = T(Ae, 3), Jt = Ae << 1, zi = i[r + 48 >> 2], It = 0; ; ) {
                               if ((N | 0) >= 1)
-                                for (u = (T(ft, It) << 3) + n | 0, Se = 0, m = zi, b = m, w = m; C = (N << 3) + u | 0, _ = D[C + 4 >> 2], c = D[C >> 2], de = (Ce << 3) + u | 0, d = D[de + 4 >> 2], f = D[de >> 2], Q = D[w >> 2], z = D[w + 4 >> 2], se = D[m >> 2], be = D[m + 4 >> 2], ee = D[b >> 2], J = (Pe << 3) + u | 0, re = D[J + 4 >> 2], U = D[J >> 2], te = D[b + 4 >> 2], We = x(x(ee * re) + x(U * te)), oe = D[u + 4 >> 2], le = x(We + oe), D[u + 4 >> 2] = le, ee = x(x(U * ee) - x(re * te)), re = D[u >> 2], U = x(ee + re), D[u >> 2] = U, te = x(x(Q * _) + x(c * z)), at = x(x(se * d) + x(f * be)), nt = x(te + at), D[J + 4 >> 2] = le - nt, _ = x(x(c * Q) - x(_ * z)), c = x(x(f * se) - x(d * be)), d = x(_ + c), D[J >> 2] = U - d, D[u >> 2] = d + D[u >> 2], D[u + 4 >> 2] = nt + D[u + 4 >> 2], d = x(oe - We), _ = x(_ - c), D[C + 4 >> 2] = d - _, c = x(re - ee), f = x(te - at), D[C >> 2] = c + f, D[de + 4 >> 2] = d + _, D[de >> 2] = c - f, u = u + 8 | 0, m = (ze << 3) + m | 0, b = (Jt << 3) + b | 0, w = (Ae << 3) + w | 0, Se = Se + 1 | 0, (Se | 0) != (N | 0); )
+                                for (u = (T(ft, It) << 3) + n | 0, Se = 0, m = zi, b = m, w = m; C = (N << 3) + u | 0, _ = D[C + 4 >> 2], c = D[C >> 2], de = (Ce << 3) + u | 0, d = D[de + 4 >> 2], f = D[de >> 2], P = D[w >> 2], z = D[w + 4 >> 2], se = D[m >> 2], be = D[m + 4 >> 2], ee = D[b >> 2], J = (Pe << 3) + u | 0, re = D[J + 4 >> 2], U = D[J >> 2], te = D[b + 4 >> 2], We = x(x(ee * re) + x(U * te)), oe = D[u + 4 >> 2], le = x(We + oe), D[u + 4 >> 2] = le, ee = x(x(U * ee) - x(re * te)), re = D[u >> 2], U = x(ee + re), D[u >> 2] = U, te = x(x(P * _) + x(c * z)), at = x(x(se * d) + x(f * be)), nt = x(te + at), D[J + 4 >> 2] = le - nt, _ = x(x(c * P) - x(_ * z)), c = x(x(f * se) - x(d * be)), d = x(_ + c), D[J >> 2] = U - d, D[u >> 2] = d + D[u >> 2], D[u + 4 >> 2] = nt + D[u + 4 >> 2], d = x(oe - We), _ = x(_ - c), D[C + 4 >> 2] = d - _, c = x(re - ee), f = x(te - at), D[C >> 2] = c + f, D[de + 4 >> 2] = d + _, D[de >> 2] = c - f, u = u + 8 | 0, m = (ze << 3) + m | 0, b = (Jt << 3) + b | 0, w = (Ae << 3) + w | 0, Se = Se + 1 | 0, (Se | 0) != (N | 0); )
                                   ;
                               if (It = It + 1 | 0, (It | 0) == (ct | 0))
                                 break;
@@ -66039,7 +66074,7 @@ function gb() {
                             if (ze = i[(Oe << 2) + Ne >> 2], (ze | 0) < 1)
                               break t;
                             for (Se = N << 1, Pe = i[r + 48 >> 2], J = ze << Ut, _ = D[(Pe + (T(J, N) << 3) | 0) + 4 >> 2], Ae = J << 1, Ce = 0; ; ) {
-                              for (u = (T(Ce, ft) << 3) + n | 0, b = Pe, w = b, de = N; m = (N << 3) + u | 0, c = D[m >> 2], d = D[w >> 2], f = D[m + 4 >> 2], Q = D[w + 4 >> 2], z = x(x(c * d) - x(f * Q)), C = (Se << 3) + u | 0, se = D[C >> 2], be = D[b >> 2], ee = D[C + 4 >> 2], re = D[b + 4 >> 2], U = x(x(se * be) - x(ee * re)), te = x(z + U), D[m >> 2] = D[u >> 2] - x(te * x(0.5)), c = x(x(d * f) + x(c * Q)), d = x(x(be * ee) + x(se * re)), f = x(c + d), D[m + 4 >> 2] = D[u + 4 >> 2] - x(f * x(0.5)), D[u >> 2] = te + D[u >> 2], D[u + 4 >> 2] = f + D[u + 4 >> 2], c = x(_ * x(c - d)), D[C >> 2] = c + D[m >> 2], d = x(_ * x(z - U)), D[C + 4 >> 2] = D[m + 4 >> 2] - d, D[m >> 2] = D[m >> 2] - c, D[m + 4 >> 2] = d + D[m + 4 >> 2], u = u + 8 | 0, b = (Ae << 3) + b | 0, w = (J << 3) + w | 0, de = de - 1 | 0, !!de; )
+                              for (u = (T(Ce, ft) << 3) + n | 0, b = Pe, w = b, de = N; m = (N << 3) + u | 0, c = D[m >> 2], d = D[w >> 2], f = D[m + 4 >> 2], P = D[w + 4 >> 2], z = x(x(c * d) - x(f * P)), C = (Se << 3) + u | 0, se = D[C >> 2], be = D[b >> 2], ee = D[C + 4 >> 2], re = D[b + 4 >> 2], U = x(x(se * be) - x(ee * re)), te = x(z + U), D[m >> 2] = D[u >> 2] - x(te * x(0.5)), c = x(x(d * f) + x(c * P)), d = x(x(be * ee) + x(se * re)), f = x(c + d), D[m + 4 >> 2] = D[u + 4 >> 2] - x(f * x(0.5)), D[u >> 2] = te + D[u >> 2], D[u + 4 >> 2] = f + D[u + 4 >> 2], c = x(_ * x(c - d)), D[C >> 2] = c + D[m >> 2], d = x(_ * x(z - U)), D[C + 4 >> 2] = D[m + 4 >> 2] - d, D[m >> 2] = D[m >> 2] - c, D[m + 4 >> 2] = d + D[m + 4 >> 2], u = u + 8 | 0, b = (Ae << 3) + b | 0, w = (J << 3) + w | 0, de = de - 1 | 0, !!de; )
                                 ;
                               if (Ce = Ce + 1 | 0, (ze | 0) == (Ce | 0))
                                 break;
@@ -66054,7 +66089,7 @@ function gb() {
                         break t;
                       for (de = i[r + 48 >> 2], Ce = ze << Ut, u = T(Ce, N), m = de + (u << 4) | 0, _ = D[m + 4 >> 2], c = D[m >> 2], u = (u << 3) + de | 0, d = D[u + 4 >> 2], f = D[u >> 2], Jt = N << 2, It = T(N, 3), ct = N << 1, Pe = 0; ; ) {
                         if ((N | 0) >= 1)
-                          for (u = (T(Pe, ft) << 3) + n | 0, m = u + (N << 3) | 0, b = (ct << 3) + u | 0, w = (It << 3) + u | 0, C = (Jt << 3) + u | 0, Se = 0; Q = D[u >> 2], z = D[u + 4 >> 2], J = T(Se, Ce), Ae = (J << 4) + de | 0, ee = D[Ae >> 2], re = D[b + 4 >> 2], U = D[b >> 2], te = D[Ae + 4 >> 2], We = x(x(ee * re) + x(U * te)), Ae = T(J, 24) + de | 0, oe = D[Ae >> 2], le = D[w + 4 >> 2], at = D[w >> 2], nt = D[Ae + 4 >> 2], Dt = x(x(oe * le) + x(at * nt)), se = x(We + Dt), Ae = (J << 3) + de | 0, Kt = D[Ae >> 2], ai = D[m + 4 >> 2], ni = D[m >> 2], hi = D[Ae + 4 >> 2], xi = x(x(Kt * ai) + x(ni * hi)), J = (J << 5) + de | 0, Ci = D[J >> 2], Bi = D[C + 4 >> 2], Ei = D[C >> 2], Ii = D[J + 4 >> 2], Di = x(x(Ci * Bi) + x(Ei * Ii)), be = x(xi + Di), D[u + 4 >> 2] = z + x(se + be), U = x(x(U * ee) - x(re * te)), te = x(x(at * oe) - x(le * nt)), ee = x(U + te), oe = x(x(ni * Kt) - x(ai * hi)), le = x(x(Ei * Ci) - x(Bi * Ii)), re = x(oe + le), D[u >> 2] = Q + x(ee + re), U = x(U - te), te = x(oe - le), oe = x(x(_ * U) + x(d * te)), le = x(z + x(x(c * se) + x(f * be))), D[m + 4 >> 2] = oe + le, at = x(Q + x(x(c * ee) + x(f * re))), We = x(We - Dt), nt = x(xi - Di), Dt = x(x(_ * We) + x(d * nt)), D[m >> 2] = at - Dt, D[C + 4 >> 2] = le - oe, D[C >> 2] = Dt + at, U = x(x(_ * te) - x(d * U)), z = x(z + x(x(f * se) + x(c * be))), D[b + 4 >> 2] = U + z, se = x(x(d * We) - x(_ * nt)), Q = x(Q + x(x(f * ee) + x(c * re))), D[b >> 2] = se + Q, D[w + 4 >> 2] = z - U, D[w >> 2] = Q - se, C = C + 8 | 0, w = w + 8 | 0, b = b + 8 | 0, m = m + 8 | 0, u = u + 8 | 0, Se = Se + 1 | 0, (Se | 0) != (N | 0); )
+                          for (u = (T(Pe, ft) << 3) + n | 0, m = u + (N << 3) | 0, b = (ct << 3) + u | 0, w = (It << 3) + u | 0, C = (Jt << 3) + u | 0, Se = 0; P = D[u >> 2], z = D[u + 4 >> 2], J = T(Se, Ce), Ae = (J << 4) + de | 0, ee = D[Ae >> 2], re = D[b + 4 >> 2], U = D[b >> 2], te = D[Ae + 4 >> 2], We = x(x(ee * re) + x(U * te)), Ae = T(J, 24) + de | 0, oe = D[Ae >> 2], le = D[w + 4 >> 2], at = D[w >> 2], nt = D[Ae + 4 >> 2], Dt = x(x(oe * le) + x(at * nt)), se = x(We + Dt), Ae = (J << 3) + de | 0, Kt = D[Ae >> 2], ai = D[m + 4 >> 2], ni = D[m >> 2], hi = D[Ae + 4 >> 2], xi = x(x(Kt * ai) + x(ni * hi)), J = (J << 5) + de | 0, Ci = D[J >> 2], Bi = D[C + 4 >> 2], Ei = D[C >> 2], Ii = D[J + 4 >> 2], Di = x(x(Ci * Bi) + x(Ei * Ii)), be = x(xi + Di), D[u + 4 >> 2] = z + x(se + be), U = x(x(U * ee) - x(re * te)), te = x(x(at * oe) - x(le * nt)), ee = x(U + te), oe = x(x(ni * Kt) - x(ai * hi)), le = x(x(Ei * Ci) - x(Bi * Ii)), re = x(oe + le), D[u >> 2] = P + x(ee + re), U = x(U - te), te = x(oe - le), oe = x(x(_ * U) + x(d * te)), le = x(z + x(x(c * se) + x(f * be))), D[m + 4 >> 2] = oe + le, at = x(P + x(x(c * ee) + x(f * re))), We = x(We - Dt), nt = x(xi - Di), Dt = x(x(_ * We) + x(d * nt)), D[m >> 2] = at - Dt, D[C + 4 >> 2] = le - oe, D[C >> 2] = Dt + at, U = x(x(_ * te) - x(d * U)), z = x(z + x(x(f * se) + x(c * be))), D[b + 4 >> 2] = U + z, se = x(x(d * We) - x(_ * nt)), P = x(P + x(x(f * ee) + x(c * re))), D[b >> 2] = se + P, D[w + 4 >> 2] = z - U, D[w >> 2] = P - se, C = C + 8 | 0, w = w + 8 | 0, b = b + 8 | 0, m = m + 8 | 0, u = u + 8 | 0, Se = Se + 1 | 0, (Se | 0) != (N | 0); )
                             ;
                         if (Pe = Pe + 1 | 0, (ze | 0) == (Pe | 0))
                           break;
@@ -66069,12 +66104,12 @@ function gb() {
                 Le(34088, 34072, 76), Te();
               }
               function sr(r, n, u, c, m, d, _) {
-                var b = 0, f = 0, w = 0, C = 0, Q = 0, N = 0, U = 0, J = 0, z = 0, ee = 0, re = 0, de = 0, te = 0, se = x(0), Ae = 0, be = 0, oe = 0, le = 0, Se = 0, Ce = 0, Pe = x(0), ze = 0, Ne = 0, Oe = 0, We = 0, at = 0, nt = 0, ct = 0, ft = 0, It = 0, Dt = 0, Ut = 0, Jt = 0, Kt = 0, ai = 0, ni = 0, hi = 0, xi = 0, Ci = 0, Bi = 0, Ei = 0, Ii = 0, Di = 0, zi = 0, Gi = x(0);
+                var b = 0, f = 0, w = 0, C = 0, P = 0, N = 0, U = 0, J = 0, z = 0, ee = 0, re = 0, de = 0, te = 0, se = x(0), Ae = 0, be = 0, oe = 0, le = 0, Se = 0, Ce = 0, Pe = x(0), ze = 0, Ne = 0, Oe = 0, We = 0, at = 0, nt = 0, ct = 0, ft = 0, It = 0, Dt = 0, Ut = 0, Jt = 0, Kt = 0, ai = 0, ni = 0, hi = 0, xi = 0, Ci = 0, Bi = 0, Ei = 0, Ii = 0, Di = 0, zi = 0, Gi = x(0);
                 te = pe - 80 | 0, pe = te, Ne = i[r + 8 >> 2], re = te, i[re + 12 >> 2] = 0, i[re + 8 >> 2] = 0, Ae = i[r + 12 >> 2], ku(r), C = -1, N = i[r >> 2], be = i[N + 36 >> 2];
                 e: {
                   if ((be | 0) < 0)
                     break e;
-                  for (J = i[N + 8 >> 2], b = J << 3, nt = i[N + 4 >> 2], Q = nt + 2048 | 0, ee = (((T(Ne, Q) << 2) + r | 0) + T(Ne, 96) | 0) + 92 | 0, Ce = b + ee | 0, Oe = b + Ce | 0, xi = Oe + b | 0, m = T(i[r + 16 >> 2], m), U = i[r + 24 >> 2], ct = i[N + 32 >> 2], f = i[N + 44 >> 2]; ; ) {
+                  for (J = i[N + 8 >> 2], b = J << 3, nt = i[N + 4 >> 2], P = nt + 2048 | 0, ee = (((T(Ne, P) << 2) + r | 0) + T(Ne, 96) | 0) + 92 | 0, Ce = b + ee | 0, Oe = b + Ce | 0, xi = Oe + b | 0, m = T(i[r + 16 >> 2], m), U = i[r + 24 >> 2], ct = i[N + 32 >> 2], f = i[N + 44 >> 2]; ; ) {
                     if (f << w != (m | 0)) {
                       if (b = (w | 0) < (be | 0), w = w + 1 | 0, b)
                         continue;
@@ -66084,7 +66119,7 @@ function gb() {
                   }
                   if (!c | u >>> 0 > 1275)
                     break e;
-                  for (de = i[r + 20 >> 2], ft = J << 1, ni = 1 << w, be = (Ne | 0) > 1 ? Ne : 1, b = 0, z = 0 - m << 2; f = b << 2, C = ((T(b, Q) << 2) + r | 0) + 92 | 0, i[f + (re + 24 | 0) >> 2] = C, i[(re + 16 | 0) + f >> 2] = (C + z | 0) - -8192, b = b + 1 | 0, (be | 0) != (b | 0); )
+                  for (de = i[r + 20 >> 2], ft = J << 1, ni = 1 << w, be = (Ne | 0) > 1 ? Ne : 1, b = 0, z = 0 - m << 2; f = b << 2, C = ((T(b, P) << 2) + r | 0) + 92 | 0, i[f + (re + 24 | 0) >> 2] = C, i[(re + 16 | 0) + f >> 2] = (C + z | 0) - -8192, b = b + 1 | 0, (be | 0) != (b | 0); )
                     ;
                   if (!((u | 0) > 1 && n)) {
                     yu(r, m, w), Zs(re + 16 | 0, c, m, Ne, i[r + 16 >> 2], N + 16 | 0, r + 84 | 0, _), C = (m | 0) / i[r + 16 >> 2] | 0;
@@ -66115,11 +66150,11 @@ function gb() {
                     }
                     b = (i[d + 20 >> 2] + Xe(i[d + 28 >> 2]) | 0) - 32 | 0;
                   }
-                  b = b + 3 | 0, !w | (le | 0) < (b | 0) || (ze = Si(d, 3), b = (i[d + 20 >> 2] + Xe(i[d + 28 >> 2]) | 0) - 29 | 0), f = 0, n = N, Q = de, C = U, Se = ee, (b | 0) <= (le | 0) && (f = Si(d, 3)), Ou(n, Q, C, Se, f, d, Ae, w), at = te - ((J << 2) + 15 & -16) | 0, Se = at, pe = Se, f = i[d + 4 >> 2] << 3, C = (i[d + 20 >> 2] + Xe(i[d + 28 >> 2]) | 0) - 32 | 0, b = ze ? 2 : 4, n = (w | 0) != 0 & f >>> 0 >= C + (b | 1) >>> 0, z = 0, oe = (U | 0) <= (de | 0);
+                  b = b + 3 | 0, !w | (le | 0) < (b | 0) || (ze = Si(d, 3), b = (i[d + 20 >> 2] + Xe(i[d + 28 >> 2]) | 0) - 29 | 0), f = 0, n = N, P = de, C = U, Se = ee, (b | 0) <= (le | 0) && (f = Si(d, 3)), Ou(n, P, C, Se, f, d, Ae, w), at = te - ((J << 2) + 15 & -16) | 0, Se = at, pe = Se, f = i[d + 4 >> 2] << 3, C = (i[d + 20 >> 2] + Xe(i[d + 28 >> 2]) | 0) - 32 | 0, b = ze ? 2 : 4, n = (w | 0) != 0 & f >>> 0 >= C + (b | 1) >>> 0, z = 0, oe = (U | 0) <= (de | 0);
                   t: {
                     if (oe || (te = f - n | 0, te >>> 0 >= b + C >>> 0 && (z = Si(d, b), C = (i[d + 20 >> 2] + Xe(i[d + 28 >> 2]) | 0) - 32 | 0), i[(de << 2) + at >> 2] = z, b = de + 1 | 0, (U | 0) == (b | 0)))
                       break t;
-                    for (Q = ze ? 4 : 5, f = z; C + Q >>> 0 <= te >>> 0 && (f = Si(d, Q) ^ f, z = z | f, C = (i[d + 20 >> 2] + Xe(i[d + 28 >> 2]) | 0) - 32 | 0), i[(b << 2) + at >> 2] = f, b = b + 1 | 0, (U | 0) != (b | 0); )
+                    for (P = ze ? 4 : 5, f = z; C + P >>> 0 <= te >>> 0 && (f = Si(d, P) ^ f, z = z | f, C = (i[d + 20 >> 2] + Xe(i[d + 28 >> 2]) | 0) - 32 | 0), i[(b << 2) + at >> 2] = f, b = b + 1 | 0, (U | 0) != (b | 0); )
                       ;
                   }
                   b = 0;
@@ -66129,7 +66164,7 @@ function gb() {
                     b = Si(d, 1) << 1;
                   }
                   if (!oe)
-                    for (C = (ze << 2) + b | 0, Q = w << 3, b = de; f = (b << 2) + at | 0, i[f >> 2] = xe[((i[f >> 2] + C | 0) + Q | 0) + 1664 | 0], b = b + 1 | 0, (U | 0) != (b | 0); )
+                    for (C = (ze << 2) + b | 0, P = w << 3, b = de; f = (b << 2) + at | 0, i[f >> 2] = xe[((i[f >> 2] + C | 0) + P | 0) + 1664 | 0], b = b + 1 | 0, (U | 0) != (b | 0); )
                       ;
                   hi = 2, ((i[d + 20 >> 2] + Xe(i[d + 28 >> 2]) | 0) - 28 | 0) <= (le | 0) && (hi = At(d, 35249, 5)), b = (J << 2) + 15 & -16, Kt = Se - b | 0, f = Kt, pe = f, wd(N, f, w, Ae), n = 6, Dt = u << 6, Se = f - b | 0, ai = Se, pe = Se, f = la(d);
                   t: {
@@ -66137,34 +66172,34 @@ function gb() {
                       C = Dt;
                       break t;
                     }
-                    for (Q = de, C = Dt; ; ) {
-                      u = Q + 1 | 0, oe = Q << 2;
+                    for (P = de, C = Dt; ; ) {
+                      u = P + 1 | 0, oe = P << 2;
                       i: {
                         a: {
                           r: {
                             if (((n << 3) + f | 0) < (C | 0)) {
                               if (b = 0, te = oe + Kt | 0, i[te >> 2] <= 0)
                                 break a;
-                              f = T(L[(u << 1) + ct >> 1] - L[(Q << 1) + ct >> 1] | 0, Ae) << w, Q = f << 3, f = (f | 0) > 48 ? f : 48, z = (f | 0) > (Q | 0) ? Q : f, Q = n;
+                              f = T(L[(u << 1) + ct >> 1] - L[(P << 1) + ct >> 1] | 0, Ae) << w, P = f << 3, f = (f | 0) > 48 ? f : 48, z = (f | 0) > (P | 0) ? P : f, P = n;
                               break r;
                             }
                             i[oe + Se >> 2] = 0;
                             break i;
                           }
                           for (; ; ) {
-                            if (Q = Si(d, Q), f = la(d), !Q || (b = b + z | 0, C = C - z | 0, (C | 0) <= (f + 8 | 0)))
+                            if (P = Si(d, P), f = la(d), !P || (b = b + z | 0, C = C - z | 0, (C | 0) <= (f + 8 | 0)))
                               break a;
-                            if (Q = 1, !(i[te >> 2] > (b | 0)))
+                            if (P = 1, !(i[te >> 2] > (b | 0)))
                               break;
                           }
                         }
                         i[oe + Se >> 2] = b, n = (b | 0) > 0 ? (n | 0) > 2 ? n - 1 | 0 : 2 : n;
                       }
-                      if (Q = u, (U | 0) == (Q | 0))
+                      if (P = u, (U | 0) == (P | 0))
                         break;
                     }
                   }
-                  Q = ai - ((J << 2) + 15 & -16) | 0, te = Q, pe = Q, u = 5, (f + 48 | 0) <= (C | 0) && (u = At(d, 35253, 7)), C = (U | 0) > (It | 0), f = (la(d) ^ -1) + Dt | 0, b = 0, ct = C ? It : U, It = ze ? ni : 0, C = (J << 2) + 15 & -16, te = te - C | 0, n = te, pe = n, n = n - C | 0, ai = n, pe = n, C = N, Bi = de, Ei = U, Ii = re + 12 | 0, Di = re + 8 | 0, zi = f;
+                  P = ai - ((J << 2) + 15 & -16) | 0, te = P, pe = P, u = 5, (f + 48 | 0) <= (C | 0) && (u = At(d, 35253, 7)), C = (U | 0) > (It | 0), f = (la(d) ^ -1) + Dt | 0, b = 0, ct = C ? It : U, It = ze ? ni : 0, C = (J << 2) + 15 & -16, te = te - C | 0, n = te, pe = n, n = n - C | 0, ai = n, pe = n, C = N, Bi = de, Ei = U, Ii = re + 12 | 0, Di = re + 8 | 0, zi = f;
                   t: {
                     if (w >>> 0 < 2) {
                       oe = 0, z = 0;
@@ -66174,22 +66209,22 @@ function gb() {
                       break t;
                     oe = ((w << 3) + 16 | 0) <= (f | 0), z = oe << 3;
                   }
-                  for (u = gu(C, Bi, Ei, Se, Kt, u, Ii, Di, zi - z | 0, re + 4 | 0, te, Q, n, Ae, w, d, 0, 0), gd(N, de, U, ee, Q, d, Ae), C = (((nt | 0) / 2 | 0) - m << 2) - -8192 | 0; f = i[(re + 24 | 0) + (b << 2) >> 2], ga(f, (m << 2) + f | 0, C), b = b + 1 | 0, (be | 0) != (b | 0); )
+                  for (u = gu(C, Bi, Ei, Se, Kt, u, Ii, Di, zi - z | 0, re + 4 | 0, te, P, n, Ae, w, d, 0, 0), gd(N, de, U, ee, P, d, Ae), C = (((nt | 0) / 2 | 0) - m << 2) - -8192 | 0; f = i[(re + 24 | 0) + (b << 2) >> 2], ga(f, (m << 2) + f | 0, C), b = b + 1 | 0, (be | 0) != (b | 0); )
                     ;
                   f = T(J, Ae), b = ai - (f + 15 & -16) | 0, pe = b, C = b - ((T(m, Ae) << 2) + 15 & -16) | 0, pe = C, kt(0, N, de, U, C, (Ae | 0) == 2 ? (m << 2) + C | 0 : 0, b, 0, te, It, hi, i[re + 8 >> 2], i[re + 12 >> 2], at, Dt - z | 0, i[re + 4 >> 2], d, w, u, r + 40 | 0, 0, i[r + 36 >> 2], i[r + 32 >> 2]);
                   t: {
                     if (oe) {
-                      if (z = Ki(d, 1), an(N, de, U, ee, Q, n, ((le - i[d + 20 >> 2] | 0) - Xe(i[d + 28 >> 2]) | 0) + 32 | 0, d, Ae), !z)
+                      if (z = Ki(d, 1), an(N, de, U, ee, P, n, ((le - i[d + 20 >> 2] | 0) - Xe(i[d + 28 >> 2]) | 0) + 32 | 0, d, Ae), !z)
                         break t;
                       Ru(N, C, b, w, Ae, m, de, U, ee, Ce, Oe, te, i[r + 40 >> 2], i[r + 36 >> 2]);
                       break t;
                     }
-                    an(N, de, U, ee, Q, n, ((le - i[d + 20 >> 2] | 0) - Xe(i[d + 28 >> 2]) | 0) + 32 | 0, d, Ae);
+                    an(N, de, U, ee, P, n, ((le - i[d + 20 >> 2] | 0) - Xe(i[d + 28 >> 2]) | 0) + 32 | 0, d, Ae);
                   }
                   if (!(Ci ^ 1 | (f | 0) < 1))
                     for (b = 0; i[(b << 2) + ee >> 2] = -1042284544, b = b + 1 | 0, (f | 0) != (b | 0); )
                       ;
-                  for (Ks(N, C, re + 16 | 0, ee, de, ct, Ae, Ne, ze, w, i[r + 16 >> 2], We, i[r + 36 >> 2]), b = 0; f = i[r + 60 >> 2], C = (f | 0) > 15 ? f : 15, i[r + 60 >> 2] = C, f = i[r + 64 >> 2], Q = (f | 0) > 15 ? f : 15, i[r + 64 >> 2] = Q, f = i[(re + 16 | 0) + (b << 2) >> 2], Wr(f, f, Q, C, i[N + 44 >> 2], D[r + 72 >> 2], D[r + 68 >> 2], i[r + 80 >> 2], i[r + 76 >> 2], i[N + 60 >> 2], nt, i[r + 36 >> 2]), w && (C = i[N + 44 >> 2], f = (C << 2) + f | 0, Wr(f, f, i[r + 60 >> 2], Jt, m - C | 0, D[r + 68 >> 2], se, i[r + 76 >> 2], Ut, i[N + 60 >> 2], nt, i[r + 36 >> 2])), b = b + 1 | 0, (be | 0) != (b | 0); )
+                  for (Ks(N, C, re + 16 | 0, ee, de, ct, Ae, Ne, ze, w, i[r + 16 >> 2], We, i[r + 36 >> 2]), b = 0; f = i[r + 60 >> 2], C = (f | 0) > 15 ? f : 15, i[r + 60 >> 2] = C, f = i[r + 64 >> 2], P = (f | 0) > 15 ? f : 15, i[r + 64 >> 2] = P, f = i[(re + 16 | 0) + (b << 2) >> 2], Wr(f, f, P, C, i[N + 44 >> 2], D[r + 72 >> 2], D[r + 68 >> 2], i[r + 80 >> 2], i[r + 76 >> 2], i[N + 60 >> 2], nt, i[r + 36 >> 2]), w && (C = i[N + 44 >> 2], f = (C << 2) + f | 0, Wr(f, f, i[r + 60 >> 2], Jt, m - C | 0, D[r + 68 >> 2], se, i[r + 76 >> 2], Ut, i[N + 60 >> 2], nt, i[r + 36 >> 2])), b = b + 1 | 0, (be | 0) != (b | 0); )
                     ;
                   i[r + 64 >> 2] = i[r + 60 >> 2], b = i[r + 68 >> 2], D[r + 68 >> 2] = se, i[r + 72 >> 2] = b, b = i[r + 76 >> 2], i[r + 76 >> 2] = Ut, i[r + 80 >> 2] = b, i[r + 60 >> 2] = Jt, w && (i[r + 80 >> 2] = Ut, D[r + 72 >> 2] = se, i[r + 64 >> 2] = Jt), (Ae | 0) == 1 && (w = J << 2, bt(ee + w | 0, ee, w));
                   t: {
@@ -66221,7 +66256,7 @@ function gb() {
                 }
                 return pe = re + 80 | 0, C;
               }
-              function gu(r, n, u, c, m, d, _, b, f, w, C, Q, N, U, J, z, ee, re, de) {
+              function gu(r, n, u, c, m, d, _, b, f, w, C, P, N, U, J, z, ee, re, de) {
                 var te = 0, se = 0, Ae = 0, be = 0, oe = 0, le = 0, Se = 0, Ce = 0, Pe = 0, ze = 0, Ne = 0, Oe = 0, We = 0, at = 0, nt = 0, ct = 0, ft = 0, It = 0, Dt = 0, Ut = 0, Jt = 0, Kt = 0, ai = 0, ni = 0;
                 te = pe, ai = te, f = (f | 0) > 0 ? f : 0, Jt = ((f | 0) > 7) << 3, nt = f - Jt | 0, Dt = i[r + 8 >> 2];
                 e: {
@@ -66364,21 +66399,21 @@ function gb() {
                                     break c;
                                   n = (oe >> 3) + n | 0;
                                 }
-                                oe = f + Q | 0, le = ((Ae << 2) + le | 0) + n | 0, Ae = (((le | 0) > 0 ? le : 0) >>> 0) / (Ae >>> 0) >>> 3 | 0, i[oe >> 2] = Ae, le = i[te >> 2], (T(U, Ae) | 0) > le >> 3 && (Ae = le >> c >> 3, i[oe >> 2] = Ae), Ae = (Ae | 0) < 8 ? Ae : 8, i[oe >> 2] = Ae, i[f + N >> 2] = (i[te >> 2] + n | 0) <= (T(Ae, Ce) | 0), i[te >> 2] = i[te >> 2] - T(i[oe >> 2], ze);
+                                oe = f + P | 0, le = ((Ae << 2) + le | 0) + n | 0, Ae = (((le | 0) > 0 ? le : 0) >>> 0) / (Ae >>> 0) >>> 3 | 0, i[oe >> 2] = Ae, le = i[te >> 2], (T(U, Ae) | 0) > le >> 3 && (Ae = le >> c >> 3, i[oe >> 2] = Ae), Ae = (Ae | 0) < 8 ? Ae : 8, i[oe >> 2] = Ae, i[f + N >> 2] = (i[te >> 2] + n | 0) <= (T(Ae, Ce) | 0), i[te >> 2] = i[te >> 2] - T(i[oe >> 2], ze);
                                 break r;
                               }
-                              n = Ae - ze | 0, se = (n | 0) > 0 ? n : 0, i[te >> 2] = Ae - se, i[f + Q >> 2] = 0, i[f + N >> 2] = 1;
+                              n = Ae - ze | 0, se = (n | 0) > 0 ? n : 0, i[te >> 2] = Ae - se, i[f + P >> 2] = 0, i[f + N >> 2] = 1;
                             }
-                            if (se ? (n = f + Q | 0, z = n, Ae = se >>> Ne | 0, n = i[n >> 2], oe = 8 - n | 0, Ae = (Ae | 0) < (oe | 0) ? Ae : oe, i[z >> 2] = n + Ae, n = T(Ae, ze), i[f + N >> 2] = (n | 0) >= (se - Pe | 0), Pe = se - n | 0) : Pe = 0, i[te >> 2] <= -1)
+                            if (se ? (n = f + P | 0, z = n, Ae = se >>> Ne | 0, n = i[n >> 2], oe = 8 - n | 0, Ae = (Ae | 0) < (oe | 0) ? Ae : oe, i[z >> 2] = n + Ae, n = T(Ae, ze), i[f + N >> 2] = (n | 0) >= (se - Pe | 0), Pe = se - n | 0) : Pe = 0, i[te >> 2] <= -1)
                               break t;
-                            if (n = Se, !(i[f + Q >> 2] > -1))
+                            if (n = Se, !(i[f + P >> 2] > -1))
                               break;
                           }
                           Le(24984, 24941, 514), Te();
                         }
                         if (i[w >> 2] = Pe, (u | 0) > (d | 0))
                           for (f = d; ; ) {
-                            if (te = f << 2, se = te + Q | 0, n = C + te | 0, Ae = i[n >> 2] >> c >> 3, i[se >> 2] = Ae, i[n >> 2] != (T(Ae, ze) | 0))
+                            if (te = f << 2, se = te + P | 0, n = C + te | 0, Ae = i[n >> 2] >> c >> 3, i[se >> 2] = Ae, i[n >> 2] != (T(Ae, ze) | 0))
                               break e;
                             if (i[n >> 2] = 0, i[N + te >> 2] = i[se >> 2] < 1, f = f + 1 | 0, (f | 0) == (u | 0))
                               break;
@@ -66394,8 +66429,8 @@ function gb() {
                 Le(25016, 24941, 524), Te();
               }
               function Ns(r, n, u, c, m, d, _, b, f, w, C) {
-                var Q = 0, N = 0, U = 0, J = 0, z = x(0), ee = x(0), re = 0, de = 0, te = 0, se = 0, Ae = x(0), be = 0, oe = 0, le = 0, Se = 0;
-                be = i[r + 36 >> 2], J = i[r + 28 >> 2], N = i[r + 16 >> 2], oe = i[r >> 2], Q = 1, te = i[d >> 2], le = i[r + 8 >> 2], se = i[r + 12 >> 2], f = L[i[le + 56 >> 2] + (se << 1) >> 1] + (f << 3) | 0, U = (te - f | 0) - 32 | 0, re = f >> 1, f = (m | 0) == 2 & (w | 0) != 0;
+                var P = 0, N = 0, U = 0, J = 0, z = x(0), ee = x(0), re = 0, de = 0, te = 0, se = 0, Ae = x(0), be = 0, oe = 0, le = 0, Se = 0;
+                be = i[r + 36 >> 2], J = i[r + 28 >> 2], N = i[r + 16 >> 2], oe = i[r >> 2], P = 1, te = i[d >> 2], le = i[r + 8 >> 2], se = i[r + 12 >> 2], f = L[i[le + 56 >> 2] + (se << 1) >> 1] + (f << 3) | 0, U = (te - f | 0) - 32 | 0, re = f >> 1, f = (m | 0) == 2 & (w | 0) != 0;
                 e: {
                   t: {
                     i: {
@@ -66408,26 +66443,26 @@ function gb() {
                                   l: {
                                     h: {
                                       d: {
-                                        if (re = re + (f ? -16 : -4) | 0, f = (m << 1) + (f ? -2 : -1) | 0, f = (T(re, f) + te | 0) / (f | 0) | 0, f = (f | 0) > (U | 0) ? U : f, f = (f | 0) < 64 ? f : 64, (f | 0) >= 4 && (Q = (L[((f & 7) << 1) + 33760 >> 1] >> 14 - (f >>> 3 | 0)) + 1 & -2, (Q | 0) >= 257))
+                                        if (re = re + (f ? -16 : -4) | 0, f = (m << 1) + (f ? -2 : -1) | 0, f = (T(re, f) + te | 0) / (f | 0) | 0, f = (f | 0) > (U | 0) ? U : f, f = (f | 0) < 64 ? f : 64, (f | 0) >= 4 && (P = (L[((f & 7) << 1) + 33760 >> 1] >> 14 - (f >>> 3 | 0)) + 1 & -2, (P | 0) >= 257))
                                           break d;
-                                        Q = (N | 0) > (se | 0) ? Q : w ? 1 : Q;
+                                        P = (N | 0) > (se | 0) ? P : w ? 1 : P;
                                         m: {
                                           s: {
                                             A: {
                                               if (oe) {
-                                                if (f = qu(u, c, w, m, i[r + 44 >> 2]), te = la(J), (Q | 0) == 1)
+                                                if (f = qu(u, c, w, m, i[r + 44 >> 2]), te = la(J), (P | 0) == 1)
                                                   break m;
                                                 p: {
                                                   g: {
                                                     if (w) {
                                                       if (r = i[r + 48 >> 2], r)
                                                         break g;
-                                                      r = T(f, Q) - -8192 >> 14;
+                                                      r = T(f, P) - -8192 >> 14;
                                                       break p;
                                                     }
-                                                    f = T(f, Q), U = f - -8192 | 0, N = U >> 14;
+                                                    f = T(f, P), U = f - -8192 | 0, N = U >> 14;
                                                     _: {
-                                                      if ((N | 0) >= (Q | 0)) {
+                                                      if ((N | 0) >= (P | 0)) {
                                                         r = N;
                                                         break _;
                                                       }
@@ -66439,7 +66474,7 @@ function gb() {
                                                         r = N;
                                                         break _;
                                                       }
-                                                      if (r = Q, U = ((U & -16384) >>> 0) / (r >>> 0) << 16, f = T(U >> 13, U >> 16) + 32768 >> 16, de = ((T(f, ((T((T(f, -626) + 16384 >> 15) + 8277 | 0, f) << 1) + 32768 & -65536) - 501415936 >> 16) + 16384 >>> 15 | 0) - f << 16) - -2147483648 >> 16, re = Xe(de), f = 1073741824 - U | 0, f = T(f >> 13, f >> 16) + 32768 >> 16, f = ((T(f, ((T((T(f, -626) + 16384 >> 15) + 8277 | 0, f) << 1) + 32768 & -65536) - 501415936 >> 16) + 16384 >>> 15 | 0) - f << 16) - -2147483648 >> 16, U = Xe(f), de = de << re - 17 << 16 >> 16, f = f << U - 17 << 16 >> 16, f = T((re - U << 11) - (T(de, (T(de, -2597) + 16384 >> 15) + 7932 | 0) + 16384 >>> 15 | 0) + (T(f, (T(f, -2597) + 16384 >> 15) + 7932 | 0) + 16384 >>> 15) << 16 >> 16, (m << 23) - 8388608 >> 16) + 16384 >> 15, U = i[d >> 2], (f | 0) > (U | 0))
+                                                      if (r = P, U = ((U & -16384) >>> 0) / (r >>> 0) << 16, f = T(U >> 13, U >> 16) + 32768 >> 16, de = ((T(f, ((T((T(f, -626) + 16384 >> 15) + 8277 | 0, f) << 1) + 32768 & -65536) - 501415936 >> 16) + 16384 >>> 15 | 0) - f << 16) - -2147483648 >> 16, re = Xe(de), f = 1073741824 - U | 0, f = T(f >> 13, f >> 16) + 32768 >> 16, f = ((T(f, ((T((T(f, -626) + 16384 >> 15) + 8277 | 0, f) << 1) + 32768 & -65536) - 501415936 >> 16) + 16384 >>> 15 | 0) - f << 16) - -2147483648 >> 16, U = Xe(f), de = de << re - 17 << 16 >> 16, f = f << U - 17 << 16 >> 16, f = T((re - U << 11) - (T(de, (T(de, -2597) + 16384 >> 15) + 7932 | 0) + 16384 >>> 15 | 0) + (T(f, (T(f, -2597) + 16384 >> 15) + 7932 | 0) + 16384 >>> 15) << 16 >> 16, (m << 23) - 8388608 >> 16) + 16384 >> 15, U = i[d >> 2], (f | 0) > (U | 0))
                                                         break _;
                                                       r = (0 - U | 0) > (f | 0) ? 0 : N;
                                                     }
@@ -66447,17 +66482,17 @@ function gb() {
                                                       break A;
                                                     break u;
                                                   }
-                                                  f = T(f, Q) + ((((f | 0) > 8192 ? 32767 : -32767) | 0) / (Q | 0) | 0) | 0, f = (f | 0) < 0 ? 0 : f >> 14, r = ((r ^ -1) >>> 31 | 0) + ((f | 0) < (Q | 0) ? f : Q - 1 | 0) | 0;
+                                                  f = T(f, P) + ((((f | 0) > 8192 ? 32767 : -32767) | 0) / (P | 0) | 0) | 0, f = (f | 0) < 0 ? 0 : f >> 14, r = ((r ^ -1) >>> 31 | 0) + ((f | 0) < (P | 0) ? f : P - 1 | 0) | 0;
                                                 }
                                                 if ((m | 0) <= 2)
                                                   break u;
-                                                f = (Q | 0) / 2 | 0, N = T(f, 3) + 3 | 0, U = T(r, 3), b = (r | 0) > (f | 0), cr(J, b ? (N + (f ^ -1) | 0) + r | 0 : U, b ? (N - f | 0) + r | 0 : U + 3 | 0, f + N | 0);
+                                                f = (P | 0) / 2 | 0, N = T(f, 3) + 3 | 0, U = T(r, 3), b = (r | 0) > (f | 0), cr(J, b ? (N + (f ^ -1) | 0) + r | 0 : U, b ? (N - f | 0) + r | 0 : U + 3 | 0, f + N | 0);
                                                 break n;
                                               }
-                                              if (te = la(J), (Q | 0) == 1)
+                                              if (te = la(J), (P | 0) == 1)
                                                 break h;
                                               if (!(!w | (m | 0) < 3)) {
-                                                re = J, f = (Q | 0) / 2 | 0, b = f + 1 | 0, N = T(b, 3), U = f + N | 0, r = fn(J, U);
+                                                re = J, f = (P | 0) / 2 | 0, b = f + 1 | 0, N = T(b, 3), U = f + N | 0, r = fn(J, U);
                                                 p: {
                                                   if ((N | 0) > (r | 0)) {
                                                     r = (r | 0) / 3 | 0;
@@ -66470,35 +66505,35 @@ function gb() {
                                               }
                                               if (!w && (b | 0) <= 1)
                                                 break s;
-                                              r = Ua(J, Q + 1 | 0);
+                                              r = Ua(J, P + 1 | 0);
                                               break n;
                                             }
-                                            de = Q - r | 0, re = de + 1 | 0, Se = r + 1 | 0, f = Q >> 1, U = (f | 0) < (r | 0), b = U ? re : Se, f = f + 1 | 0, N = T(f, f), f = U ? N - (T(de + 2 | 0, re) >> 1) | 0 : T(r, Se) >> 1, cr(J, f, b + f | 0, N);
+                                            de = P - r | 0, re = de + 1 | 0, Se = r + 1 | 0, f = P >> 1, U = (f | 0) < (r | 0), b = U ? re : Se, f = f + 1 | 0, N = T(f, f), f = U ? N - (T(de + 2 | 0, re) >> 1) | 0 : T(r, Se) >> 1, cr(J, f, b + f | 0, N);
                                             break n;
                                           }
-                                          b = J, u = Q >> 1, w = u + 1 | 0, c = T(w, w), r = fn(J, c);
+                                          b = J, u = P >> 1, w = u + 1 | 0, c = T(w, w), r = fn(J, c);
                                           s: {
                                             if ((r | 0) < T(u, w) >> 1) {
                                               w = gn(r << 3 | 1) - 1 >>> 1 | 0, r = w + 1 | 0, u = T(r, w) >>> 1 | 0;
                                               break s;
                                             }
-                                            w = Q + 1 | 0, u = w, w = (w << 1) - gn((r ^ -1) + c << 3 | 1) >>> 1 | 0, r = u - w | 0, u = c - (T(r, (Q - w | 0) + 2 | 0) >> 1) | 0;
+                                            w = P + 1 | 0, u = w, w = (w << 1) - gn((r ^ -1) + c << 3 | 1) >>> 1 | 0, r = u - w | 0, u = c - (T(r, (P - w | 0) + 2 | 0) >> 1) | 0;
                                           }
-                                          Kr(b, u, r + u | 0, c), f = (w << 14 >>> 0) / (Q >>> 0) | 0;
+                                          Kr(b, u, r + u | 0, c), f = (w << 14 >>> 0) / (P >>> 0) | 0;
                                           break r;
                                         }
                                         if (!w)
                                           break r;
                                         w = 0, N = 0;
                                         m: {
-                                          if ((f | 0) < 8193 || (Q = i[r + 52 >> 2], Q) || (N = 1, (m | 0) < 1))
+                                          if ((f | 0) < 8193 || (P = i[r + 52 >> 2], P) || (N = 1, (m | 0) < 1))
                                             break m;
-                                          for (N = !Q, Q = 0; f = (Q << 2) + c | 0, D[f >> 2] = -D[f >> 2], Q = Q + 1 | 0, (Q | 0) != (m | 0); )
+                                          for (N = !P, P = 0; f = (P << 2) + c | 0, D[f >> 2] = -D[f >> 2], P = P + 1 | 0, (P | 0) != (m | 0); )
                                             ;
                                         }
                                         if ((m | 0) < 1)
                                           break l;
-                                        for (z = D[(se << 2) + be >> 2], ee = D[(i[le + 8 >> 2] + se << 2) + be >> 2], Ae = x(x(si(x(x(x(z * z) + x(10000000036274937e-31)) + x(ee * ee)))) + x(10000000036274937e-31)), ee = x(ee / Ae), z = x(z / Ae); Q = w << 2, f = Q + u | 0, D[f >> 2] = x(z * D[f >> 2]) + x(ee * D[c + Q >> 2]), w = w + 1 | 0, (w | 0) != (m | 0); )
+                                        for (z = D[(se << 2) + be >> 2], ee = D[(i[le + 8 >> 2] + se << 2) + be >> 2], Ae = x(x(si(x(x(x(z * z) + x(10000000036274937e-31)) + x(ee * ee)))) + x(10000000036274937e-31)), ee = x(ee / Ae), z = x(z / Ae); P = w << 2, f = P + u | 0, D[f >> 2] = x(z * D[f >> 2]) + x(ee * D[c + P >> 2]), w = w + 1 | 0, (w | 0) != (m | 0); )
                                           ;
                                         break l;
                                       }
@@ -66520,22 +66555,22 @@ function gb() {
                                   N = i[r + 52 >> 2] ? 0 : m;
                                   break o;
                                 }
-                                un(J, r, Q + 1 | 0);
+                                un(J, r, P + 1 | 0);
                               }
                               if ((r | 0) <= -1)
                                 break c;
-                              if (r = r << 14, f = (r >>> 0) / (Q >>> 0) | 0, !w | !oe)
+                              if (r = r << 14, f = (r >>> 0) / (P >>> 0) | 0, !w | !oe)
                                 break r;
-                              if (r >>> 0 < Q >>> 0) {
+                              if (r >>> 0 < P >>> 0) {
                                 if (N = 0, (m | 0) < 1)
                                   break o;
-                                for (z = D[(se << 2) + be >> 2], ee = D[(i[le + 8 >> 2] + se << 2) + be >> 2], Ae = x(x(si(x(x(x(z * z) + x(10000000036274937e-31)) + x(ee * ee)))) + x(10000000036274937e-31)), ee = x(ee / Ae), z = x(z / Ae), w = 0; r = w << 2, Q = u + r | 0, D[Q >> 2] = x(z * D[Q >> 2]) + x(ee * D[r + c >> 2]), w = w + 1 | 0, (w | 0) != (m | 0); )
+                                for (z = D[(se << 2) + be >> 2], ee = D[(i[le + 8 >> 2] + se << 2) + be >> 2], Ae = x(x(si(x(x(x(z * z) + x(10000000036274937e-31)) + x(ee * ee)))) + x(10000000036274937e-31)), ee = x(ee / Ae), z = x(z / Ae), w = 0; r = w << 2, P = u + r | 0, D[P >> 2] = x(z * D[P >> 2]) + x(ee * D[r + c >> 2]), w = w + 1 | 0, (w | 0) != (m | 0); )
                                   ;
                                 break o;
                               }
                               if ((m | 0) < 1)
                                 break r;
-                              for (w = 0; r = w << 2, Q = u + r | 0, ee = x(D[Q >> 2] * x(0.7071067690849304)), r = r + c | 0, z = x(D[r >> 2] * x(0.7071067690849304)), D[Q >> 2] = ee + z, D[r >> 2] = z - ee, w = w + 1 | 0, (w | 0) != (m | 0); )
+                              for (w = 0; r = w << 2, P = u + r | 0, ee = x(D[P >> 2] * x(0.7071067690849304)), r = r + c | 0, z = x(D[r >> 2] * x(0.7071067690849304)), D[P >> 2] = ee + z, D[r >> 2] = z - ee, w = w + 1 | 0, (w | 0) != (m | 0); )
                                 ;
                               break r;
                             }
@@ -66556,13 +66591,13 @@ function gb() {
                     i[C >> 2] = i[C >> 2] & (-1 << _ ^ -1) << _, u = 32767, N = 0, c = 0, m = 16384;
                     break e;
                   }
-                  u = f << 16, w = T(u >> 13, u >> 16) + 32768 >> 16, c = ((T(w, ((T((T(w, -626) + 16384 >> 15) + 8277 | 0, w) << 1) + 32768 & -65536) - 501415936 >> 16) + 16384 >>> 15 | 0) - w << 16) - -2147483648 >> 16, Q = Xe(c), w = 1073741824 - u | 0, w = T(w >> 13, w >> 16) + 32768 >> 16, u = ((T(w, ((T((T(w, -626) + 16384 >> 15) + 8277 | 0, w) << 1) + 32768 & -65536) - 501415936 >> 16) + 16384 >>> 15 | 0) - w << 16) - -2147483648 >> 16, w = Xe(u), d = Q - w << 11, Q = c << Q - 17 << 16 >> 16, w = u << w - 17 << 16 >> 16, m = T(d - (T(Q, (T(Q, -2597) + 16384 >> 15) + 7932 | 0) + 16384 >>> 15 | 0) + (T(w, (T(w, -2597) + 16384 >> 15) + 7932 | 0) + 16384 >>> 15) << 16 >> 16, (m << 23) - 8388608 >> 16) + 16384 >> 15, N = 0, w = f;
+                  u = f << 16, w = T(u >> 13, u >> 16) + 32768 >> 16, c = ((T(w, ((T((T(w, -626) + 16384 >> 15) + 8277 | 0, w) << 1) + 32768 & -65536) - 501415936 >> 16) + 16384 >>> 15 | 0) - w << 16) - -2147483648 >> 16, P = Xe(c), w = 1073741824 - u | 0, w = T(w >> 13, w >> 16) + 32768 >> 16, u = ((T(w, ((T((T(w, -626) + 16384 >> 15) + 8277 | 0, w) << 1) + 32768 & -65536) - 501415936 >> 16) + 16384 >>> 15 | 0) - w << 16) - -2147483648 >> 16, w = Xe(u), d = P - w << 11, P = c << P - 17 << 16 >> 16, w = u << w - 17 << 16 >> 16, m = T(d - (T(P, (T(P, -2597) + 16384 >> 15) + 7932 | 0) + 16384 >>> 15 | 0) + (T(w, (T(w, -2597) + 16384 >> 15) + 7932 | 0) + 16384 >>> 15) << 16 >> 16, (m << 23) - 8388608 >> 16) + 16384 >> 15, N = 0, w = f;
                 }
                 i[n + 20 >> 2] = r, i[n + 16 >> 2] = w, i[n + 12 >> 2] = m, i[n + 8 >> 2] = u, i[n + 4 >> 2] = c, i[n >> 2] = N;
               }
               function bu(r, n, u, c) {
-                var m = 0, d = 0, _ = 0, b = 0, f = 0, w = 0, C = 0, Q = 0, N = 0, U = 0, J = 0, z = 0, ee = 0, re = 0, de = 0, te = 0, se = 0, Ae = 0, be = 0, oe = 0, le = 0, Se = 0, Ce = 0, Pe = 0, ze = 0, Ne = 0, Oe = 0, We = 0, at = 0, nt = 0, ct = 0;
-                m = pe + -64 | 0, pe = m, ee = m - ((i[r + 2328 >> 2] + i[r + 2336 >> 2] << 2) + 15 & -16) | 0, d = ee, pe = d, Q = d - ((i[r + 2336 >> 2] << 1) + 15 & -16) | 0, pe = Q, w = m, i[m + 8 >> 2] = i[r + 4244 >> 2] >> 6, Ce = i[r + 4248 >> 2], Pe = Ce >> 6, i[m + 12 >> 2] = Pe, i[r + 2376 >> 2] && (d = r + 4210 | 0, L[d >> 1] = 0, L[d + 2 >> 1] = 0, L[d + 4 >> 1] = 0, L[d + 6 >> 1] = 0, d = r + 4202 | 0, L[d >> 1] = 0, L[d + 2 >> 1] = 0, L[d + 4 >> 1] = 0, L[d + 6 >> 1] = 0, d = r + 4194 | 0, L[d >> 1] = 0, L[d + 2 >> 1] = 0, L[d + 4 >> 1] = 0, L[d + 6 >> 1] = 0, d = r + 4186 | 0, L[d >> 1] = 0, L[d + 2 >> 1] = 0, L[d + 4 >> 1] = 0, L[d + 6 >> 1] = 0), f = r + 4 | 0, ed(w + 52 | 0, w + 60 | 0, w + 48 | 0, w + 56 | 0, f, w + 8 | 0, i[r + 2332 >> 2], i[r + 2324 >> 2]), te = qe[r + 4228 >> 1], se = i[r + 4260 >> 2], le = i[r + 4256 >> 2], d = i[r + 4160 >> 2], b = i[r + 4164 >> 2], z = i[w + 56 >> 2], Ae = i[w + 52 >> 2], re = i[w + 60 >> 2], Se = i[w + 48 >> 2], _ = r + 4186 | 0, eo(_, i[r + 2340 >> 2], 64881), m = i[r + 2340 >> 2], bt(w + 16 | 0, _, m << 1), be = ((d | 0) < 1 ? d : 1) << 1, C = L[be + ((b | 0) == 2 ? 2234 : 2238) >> 1];
+                var m = 0, d = 0, _ = 0, b = 0, f = 0, w = 0, C = 0, P = 0, N = 0, U = 0, J = 0, z = 0, ee = 0, re = 0, de = 0, te = 0, se = 0, Ae = 0, be = 0, oe = 0, le = 0, Se = 0, Ce = 0, Pe = 0, ze = 0, Ne = 0, Oe = 0, We = 0, at = 0, nt = 0, ct = 0;
+                m = pe + -64 | 0, pe = m, ee = m - ((i[r + 2328 >> 2] + i[r + 2336 >> 2] << 2) + 15 & -16) | 0, d = ee, pe = d, P = d - ((i[r + 2336 >> 2] << 1) + 15 & -16) | 0, pe = P, w = m, i[m + 8 >> 2] = i[r + 4244 >> 2] >> 6, Ce = i[r + 4248 >> 2], Pe = Ce >> 6, i[m + 12 >> 2] = Pe, i[r + 2376 >> 2] && (d = r + 4210 | 0, L[d >> 1] = 0, L[d + 2 >> 1] = 0, L[d + 4 >> 1] = 0, L[d + 6 >> 1] = 0, d = r + 4202 | 0, L[d >> 1] = 0, L[d + 2 >> 1] = 0, L[d + 4 >> 1] = 0, L[d + 6 >> 1] = 0, d = r + 4194 | 0, L[d >> 1] = 0, L[d + 2 >> 1] = 0, L[d + 4 >> 1] = 0, L[d + 6 >> 1] = 0, d = r + 4186 | 0, L[d >> 1] = 0, L[d + 2 >> 1] = 0, L[d + 4 >> 1] = 0, L[d + 6 >> 1] = 0), f = r + 4 | 0, ed(w + 52 | 0, w + 60 | 0, w + 48 | 0, w + 56 | 0, f, w + 8 | 0, i[r + 2332 >> 2], i[r + 2324 >> 2]), te = qe[r + 4228 >> 1], se = i[r + 4260 >> 2], le = i[r + 4256 >> 2], d = i[r + 4160 >> 2], b = i[r + 4164 >> 2], z = i[w + 56 >> 2], Ae = i[w + 52 >> 2], re = i[w + 60 >> 2], Se = i[w + 48 >> 2], _ = r + 4186 | 0, eo(_, i[r + 2340 >> 2], 64881), m = i[r + 2340 >> 2], bt(w + 16 | 0, _, m << 1), be = ((d | 0) < 1 ? d : 1) << 1, C = L[be + ((b | 0) == 2 ? 2234 : 2238) >> 1];
                 e: {
                   if (i[r + 4160 >> 2])
                     break e;
@@ -66573,7 +66608,7 @@ function gb() {
                   m = Jr(_, m), m = (m | 0) < 134217728 ? m : 134217728, m = (m | 0) > 4194304 ? m : 4194304, C = (T(m << 3 & 65528, C) >> 16) + T(m >>> 13 & 65535, C) >> 14, m = i[r + 2340 >> 2], te = 16384;
                 }
                 if (d = i[r + 2336 >> 2], U = (i[r + 4172 >> 2] >> 7) + 1 >> 1, _ = (d - U | 0) - m | 0, (_ | 0) > 2) {
-                  Ne = i[r + 4224 >> 2], _ = _ - 2 | 0, b = _ << 1, on(Q + b | 0, (r + b | 0) + 1348 | 0, w + 16 | 0, d - _ | 0, m, c), m = i[r + 4248 >> 2], c = m >> 31, b = c ^ c + m, N = Xe(b), m = m << N - 1, c = m >> 16, J = 536870911 / (c | 0) | 0, de = (J >> 15) + 1 >> 1, oe = m & 65535, J = J << 16, m = J >> 16, c = 0 - ((T(oe, m) >> 16) + T(c, m) << 3) | 0, m = ((T(c, de) + J | 0) + T(c >> 16, m) | 0) + (T(c & 65528, m) >> 16) | 0, c = 16 - N | 0;
+                  Ne = i[r + 4224 >> 2], _ = _ - 2 | 0, b = _ << 1, on(P + b | 0, (r + b | 0) + 1348 | 0, w + 16 | 0, d - _ | 0, m, c), m = i[r + 4248 >> 2], c = m >> 31, b = c ^ c + m, N = Xe(b), m = m << N - 1, c = m >> 16, J = 536870911 / (c | 0) | 0, de = (J >> 15) + 1 >> 1, oe = m & 65535, J = J << 16, m = J >> 16, c = 0 - ((T(oe, m) >> 16) + T(c, m) << 3) | 0, m = ((T(c, de) + J | 0) + T(c >> 16, m) | 0) + (T(c & 65528, m) >> 16) | 0, c = 16 - N | 0;
                   e: {
                     if (b >>> 0 <= 65535) {
                       c = 0 - c | 0, b = 2147483647 >>> c | 0, N = -2147483648 >> c, c = ((m | 0) > (b | 0) ? b : (m | 0) < (N | 0) ? N : m) << c;
@@ -66582,38 +66617,38 @@ function gb() {
                     c = m >> c;
                   }
                   if (oe = i[r + 2340 >> 2], m = oe + _ | 0, de = i[r + 2336 >> 2], (m | 0) < (de | 0))
-                    for (_ = (c | 0) < 1073741823 ? c : 1073741823, c = _ & 65535, b = _ >> 16; _ = L[(m << 1) + Q >> 1], i[(m << 2) + ee >> 2] = (T(_, c) >> 16) + T(b, _), m = m + 1 | 0, (de | 0) > (m | 0); )
+                    for (_ = (c | 0) < 1073741823 ? c : 1073741823, c = _ & 65535, b = _ >> 16; _ = L[(m << 1) + P >> 1], i[(m << 2) + ee >> 2] = (T(_, c) >> 16) + T(b, _), m = m + 1 | 0, (de | 0) > (m | 0); )
                       ;
                   if (ze = i[r + 2324 >> 2], (ze | 0) >= 1) {
                     for (m = T(le - (Ae >> z < Se >> re) | 0, se), le = ((((m | 0) > 128 ? m : 128) << 2) + f | 0) - 512 | 0, z = L[be + 2230 >> 1], Ae = T(L[r + 2316 >> 1], 4608), Se = C << 16 >> 16, m = qe[r + 4184 >> 1], c = qe[r + 4182 >> 1], b = qe[r + 4180 >> 1], C = qe[r + 4178 >> 1], N = qe[r + 4176 >> 1], se = i[r + 2332 >> 2], be = we[r + 2765 | 0], re = 0; ; ) {
                       e: {
                         if ((se | 0) <= 0) {
-                          _ = te << 16 >> 16, Q = m << 16 >> 16, c = c << 16 >> 16, b = b << 16 >> 16, C = C << 16 >> 16, N = N << 16 >> 16;
+                          _ = te << 16 >> 16, P = m << 16 >> 16, c = c << 16 >> 16, b = b << 16 >> 16, C = C << 16 >> 16, N = N << 16 >> 16;
                           break e;
                         }
-                        for (_ = te << 16 >> 16, Q = m << 16 >> 16, c = c << 16 >> 16, b = b << 16 >> 16, C = C << 16 >> 16, N = N << 16 >> 16, m = ((d - U << 2) + ee | 0) + 8 | 0, J = 0; f = i[m >> 2], U = T(f >> 16, N) + (T(f & 65535, N) >> 16) | 0, f = i[m - 4 >> 2], U = (U + T(f >> 16, C) | 0) + (T(f & 65535, C) >> 16) | 0, f = i[m - 8 >> 2], U = (U + T(f >> 16, b) | 0) + (T(f & 65535, b) >> 16) | 0, f = i[m - 12 >> 2], U = (U + T(f >> 16, c) | 0) + (T(f & 65535, c) >> 16) | 0, f = i[m - 16 >> 2], U = (U + T(f >> 16, Q) | 0) + (T(f & 65535, Q) >> 16) | 0, Ne = T(Ne, 196314165) + 907633515 | 0, f = i[(Ne >>> 23 & 508) + le >> 2], i[(d << 2) + ee >> 2] = ((U + T(f >> 16, _) | 0) + (T(f & 65535, _) >> 16) << 2) + 8, d = d + 1 | 0, m = m + 4 | 0, J = J + 1 | 0, (se | 0) != (J | 0); )
+                        for (_ = te << 16 >> 16, P = m << 16 >> 16, c = c << 16 >> 16, b = b << 16 >> 16, C = C << 16 >> 16, N = N << 16 >> 16, m = ((d - U << 2) + ee | 0) + 8 | 0, J = 0; f = i[m >> 2], U = T(f >> 16, N) + (T(f & 65535, N) >> 16) | 0, f = i[m - 4 >> 2], U = (U + T(f >> 16, C) | 0) + (T(f & 65535, C) >> 16) | 0, f = i[m - 8 >> 2], U = (U + T(f >> 16, b) | 0) + (T(f & 65535, b) >> 16) | 0, f = i[m - 12 >> 2], U = (U + T(f >> 16, c) | 0) + (T(f & 65535, c) >> 16) | 0, f = i[m - 16 >> 2], U = (U + T(f >> 16, P) | 0) + (T(f & 65535, P) >> 16) | 0, Ne = T(Ne, 196314165) + 907633515 | 0, f = i[(Ne >>> 23 & 508) + le >> 2], i[(d << 2) + ee >> 2] = ((U + T(f >> 16, _) | 0) + (T(f & 65535, _) >> 16) << 2) + 8, d = d + 1 | 0, m = m + 4 | 0, J = J + 1 | 0, (se | 0) != (J | 0); )
                           ;
                       }
-                      if (m = i[r + 4172 >> 2], m = m + T(m >> 16, 655) + (T(m & 65535, 655) >>> 16) | 0, m = (m | 0) < (Ae | 0) ? m : Ae, i[r + 4172 >> 2] = m, U = (m >> 7) + 1 >> 1, te = be ? T(_, Se) >>> 15 | 0 : te, m = T(Q, z) >>> 15 | 0, c = T(c, z) >>> 15 | 0, b = T(b, z) >>> 15 | 0, C = T(C, z) >>> 15 | 0, N = T(N, z) >>> 15 | 0, re = re + 1 | 0, (ze | 0) == (re | 0))
+                      if (m = i[r + 4172 >> 2], m = m + T(m >> 16, 655) + (T(m & 65535, 655) >>> 16) | 0, m = (m | 0) < (Ae | 0) ? m : Ae, i[r + 4172 >> 2] = m, U = (m >> 7) + 1 >> 1, te = be ? T(_, Se) >>> 15 | 0 : te, m = T(P, z) >>> 15 | 0, c = T(c, z) >>> 15 | 0, b = T(b, z) >>> 15 | 0, C = T(C, z) >>> 15 | 0, N = T(N, z) >>> 15 | 0, re = re + 1 | 0, (ze | 0) == (re | 0))
                         break;
                     }
                     L[r + 4184 >> 1] = m, L[r + 4182 >> 1] = c, L[r + 4180 >> 1] = b, L[r + 4178 >> 1] = C, L[r + 4176 >> 1] = N;
                   }
                   if (d = i[r + 1288 >> 2], _ = i[r + 1284 >> 2], c = ((de << 2) + ee | 0) + -64 | 0, i[c >> 2] = _, i[c + 4 >> 2] = d, m = r + 1340 | 0, d = i[m >> 2], _ = i[m + 4 >> 2], i[c + 56 >> 2] = d, i[c + 60 >> 2] = _, m = r + 1332 | 0, _ = i[m >> 2], d = i[m + 4 >> 2], i[c + 48 >> 2] = _, i[c + 52 >> 2] = d, m = r + 1324 | 0, d = i[m >> 2], _ = i[m + 4 >> 2], i[c + 40 >> 2] = d, i[c + 44 >> 2] = _, m = r + 1316 | 0, _ = i[m >> 2], d = i[m + 4 >> 2], i[c + 32 >> 2] = _, i[c + 36 >> 2] = d, m = r + 1308 | 0, d = i[m >> 2], _ = i[m + 4 >> 2], i[c + 24 >> 2] = d, i[c + 28 >> 2] = _, m = r + 1300 | 0, _ = i[m >> 2], d = i[m + 4 >> 2], i[c + 16 >> 2] = _, i[c + 20 >> 2] = d, m = r + 1292 | 0, d = i[m >> 2], _ = i[m + 4 >> 2], i[c + 8 >> 2] = d, i[c + 12 >> 2] = _, (oe | 0) >= 10) {
                     if (Oe = i[r + 2328 >> 2], (Oe | 0) >= 1)
-                      for (We = oe >>> 1 | 0, se = Pe << 16 >> 16, at = (Ce >> 21) + 1 >> 1, d = i[c + 28 >> 2], _ = i[c + 36 >> 2], Q = i[c + 44 >> 2], b = i[c + 52 >> 2], m = i[c + 60 >> 2], le = L[w + 34 >> 1], z = L[w + 32 >> 1], Ae = L[w + 30 >> 1], re = L[w + 28 >> 1], ze = L[w + 26 >> 1], Se = L[w + 24 >> 1], be = L[w + 22 >> 1], de = L[w + 20 >> 1], Ce = L[w + 18 >> 1], Pe = L[w + 16 >> 1], nt = (oe | 0) < 11, C = 0; ; ) {
-                        if (ct = (T(m >> 16, Pe) + We | 0) + (T(m & 65535, Pe) >> 16) | 0, m = (C << 2) + c | 0, N = i[m + 56 >> 2], J = i[m + 48 >> 2], f = i[m + 40 >> 2], ee = i[m + 32 >> 2], m = i[m + 24 >> 2], d = (((((((((((((((((ct + T(N >> 16, Ce) | 0) + (T(N & 65535, Ce) >> 16) | 0) + T(b >> 16, de) | 0) + (T(b & 65535, de) >> 16) | 0) + T(J >> 16, be) | 0) + (T(J & 65535, be) >> 16) | 0) + T(Q >> 16, Se) | 0) + (T(Q & 65535, Se) >> 16) | 0) + T(f >> 16, ze) | 0) + (T(f & 65535, ze) >> 16) | 0) + T(_ >> 16, re) | 0) + (T(_ & 65535, re) >> 16) | 0) + T(ee >> 16, Ae) | 0) + (T(ee & 65535, Ae) >> 16) | 0) + T(d >> 16, z) | 0) + (T(d & 65535, z) >> 16) | 0) + T(m >> 16, le) | 0) + (T(m & 65535, le) >> 16) | 0, b = C + 16 | 0, m = 10, !nt)
-                          for (; Q = L[(w + 16 | 0) + (m << 1) >> 1], _ = i[((m ^ -1) + b << 2) + c >> 2], d = (T(Q, _ >> 16) + d | 0) + (T(_ & 65535, Q) >> 16) | 0, m = m + 1 | 0, (oe | 0) != (m | 0); )
+                      for (We = oe >>> 1 | 0, se = Pe << 16 >> 16, at = (Ce >> 21) + 1 >> 1, d = i[c + 28 >> 2], _ = i[c + 36 >> 2], P = i[c + 44 >> 2], b = i[c + 52 >> 2], m = i[c + 60 >> 2], le = L[w + 34 >> 1], z = L[w + 32 >> 1], Ae = L[w + 30 >> 1], re = L[w + 28 >> 1], ze = L[w + 26 >> 1], Se = L[w + 24 >> 1], be = L[w + 22 >> 1], de = L[w + 20 >> 1], Ce = L[w + 18 >> 1], Pe = L[w + 16 >> 1], nt = (oe | 0) < 11, C = 0; ; ) {
+                        if (ct = (T(m >> 16, Pe) + We | 0) + (T(m & 65535, Pe) >> 16) | 0, m = (C << 2) + c | 0, N = i[m + 56 >> 2], J = i[m + 48 >> 2], f = i[m + 40 >> 2], ee = i[m + 32 >> 2], m = i[m + 24 >> 2], d = (((((((((((((((((ct + T(N >> 16, Ce) | 0) + (T(N & 65535, Ce) >> 16) | 0) + T(b >> 16, de) | 0) + (T(b & 65535, de) >> 16) | 0) + T(J >> 16, be) | 0) + (T(J & 65535, be) >> 16) | 0) + T(P >> 16, Se) | 0) + (T(P & 65535, Se) >> 16) | 0) + T(f >> 16, ze) | 0) + (T(f & 65535, ze) >> 16) | 0) + T(_ >> 16, re) | 0) + (T(_ & 65535, re) >> 16) | 0) + T(ee >> 16, Ae) | 0) + (T(ee & 65535, Ae) >> 16) | 0) + T(d >> 16, z) | 0) + (T(d & 65535, z) >> 16) | 0) + T(m >> 16, le) | 0) + (T(m & 65535, le) >> 16) | 0, b = C + 16 | 0, m = 10, !nt)
+                          for (; P = L[(w + 16 | 0) + (m << 1) >> 1], _ = i[((m ^ -1) + b << 2) + c >> 2], d = (T(P, _ >> 16) + d | 0) + (T(_ & 65535, P) >> 16) | 0, m = m + 1 | 0, (oe | 0) != (m | 0); )
                             ;
-                        _ = (b << 2) + c | 0, m = i[_ >> 2], d = (d | 0) > -134217728 ? d : -134217728, d = ((d | 0) < 134217727 ? d : 134217727) << 4, Q = m + d | 0;
+                        _ = (b << 2) + c | 0, m = i[_ >> 2], d = (d | 0) > -134217728 ? d : -134217728, d = ((d | 0) < 134217727 ? d : 134217727) << 4, P = m + d | 0;
                         e: {
-                          if ((Q | 0) >= 0) {
-                            m = (m & d) > -1 ? Q : -2147483648;
+                          if ((P | 0) >= 0) {
+                            m = (m & d) > -1 ? P : -2147483648;
                             break e;
                           }
-                          m = (m | d) > -1 ? 2147483647 : Q;
+                          m = (m | d) > -1 ? 2147483647 : P;
                         }
-                        if (i[_ >> 2] = m, d = (T(m >> 16, se) + T(m, at) | 0) + (T(m & 65535, se) >> 16) | 0, L[(C << 1) + u >> 1] = (d | 0) > 8388479 ? 32767 : (d | 0) < -8388736 ? -32768 : (d >>> 7 | 0) + 1 >>> 1 | 0, d = ee, _ = f, Q = J, b = N, C = C + 1 | 0, (Oe | 0) == (C | 0))
+                        if (i[_ >> 2] = m, d = (T(m >> 16, se) + T(m, at) | 0) + (T(m & 65535, se) >> 16) | 0, L[(C << 1) + u >> 1] = (d | 0) > 8388479 ? 32767 : (d | 0) < -8388736 ? -32768 : (d >>> 7 | 0) + 1 >>> 1 | 0, d = ee, _ = f, P = J, b = N, C = C + 1 | 0, (Oe | 0) == (C | 0))
                           break;
                       }
                     m = (Oe << 2) + c | 0, d = i[m + 4 >> 2], _ = i[m >> 2], c = _, u = r + 1284 | 0, _ = u, i[_ >> 2] = c, i[_ + 4 >> 2] = d, _ = i[m + 60 >> 2], d = i[m + 56 >> 2], c = d, d = u, i[d + 56 >> 2] = c, i[d + 60 >> 2] = _, d = i[m + 52 >> 2], _ = i[m + 48 >> 2], c = _, _ = u, i[_ + 48 >> 2] = c, i[_ + 52 >> 2] = d, _ = i[m + 44 >> 2], d = i[m + 40 >> 2], c = d, d = u, i[d + 40 >> 2] = c, i[d + 44 >> 2] = _, d = i[m + 36 >> 2], _ = i[m + 32 >> 2], c = _, _ = u, i[_ + 32 >> 2] = c, i[_ + 36 >> 2] = d, _ = i[m + 28 >> 2], d = i[m + 24 >> 2], c = d, d = u, i[d + 24 >> 2] = c, i[d + 28 >> 2] = _, d = i[m + 20 >> 2], _ = i[m + 16 >> 2], c = _, _ = u, i[_ + 16 >> 2] = c, i[_ + 20 >> 2] = d, _ = i[m + 12 >> 2], d = i[m + 8 >> 2], c = d, d = u, i[d + 8 >> 2] = c, i[d + 12 >> 2] = _, L[r + 4228 >> 1] = te, i[r + 4224 >> 2] = Ne, i[n + 12 >> 2] = U, i[n + 8 >> 2] = U, i[n + 4 >> 2] = U, i[n >> 2] = U, pe = w - -64 | 0;
@@ -66624,7 +66659,7 @@ function gb() {
                 Le(2242, 2268, 294), Te();
               }
               function fu(r, n, u, c) {
-                var m = 0, d = 0, _ = 0, b = 0, f = 0, w = 0, C = 0, Q = 0, N = 0, U = 0, J = 0, z = 0, ee = 0, re = 0, de = 0, te = 0, se = 0, Ae = 0, be = 0, oe = 0, le = 0, Se = 0, Ce = 0, Pe = 0, ze = 0, Ne = 0, Oe = 0, We = 0, at = 0, nt = 0;
+                var m = 0, d = 0, _ = 0, b = 0, f = 0, w = 0, C = 0, P = 0, N = 0, U = 0, J = 0, z = 0, ee = 0, re = 0, de = 0, te = 0, se = 0, Ae = 0, be = 0, oe = 0, le = 0, Se = 0, Ce = 0, Pe = 0, ze = 0, Ne = 0, Oe = 0, We = 0, at = 0, nt = 0;
                 if (U = pe - 32 | 0, w = U, pe = w, f = i[r + 2316 >> 2], (f | 0) != i[r + 4156 >> 2]) {
                   if (d = i[r + 2340 >> 2], _ = 32767 / (d + 1 | 0) | 0, (d | 0) >= 1)
                     for (; b = b + _ | 0, L[((m << 1) + r | 0) + 4052 >> 1] = b, m = m + 1 | 0, (d | 0) != (m | 0); )
@@ -66708,13 +66743,13 @@ function gb() {
                     }
                     if ((c | 0) >= 1)
                       for (at = z >>> 1 | 0, J = n << 10 >> 16, nt = (n >> 21) + 1 >> 1, r = i[f + 28 >> 2], d = i[f + 36 >> 2], _ = i[f + 44 >> 2], n = i[f + 52 >> 2], m = i[f + 60 >> 2], ee = L[w + 30 >> 1], re = L[w + 28 >> 1], de = L[w + 26 >> 1], te = L[w + 24 >> 1], se = L[w + 22 >> 1], Ae = L[w + 20 >> 1], be = L[w + 18 >> 1], oe = L[w + 16 >> 1], le = L[w + 14 >> 1], Se = L[w + 12 >> 1], Ce = L[w + 10 >> 1], Pe = L[w + 8 >> 1], ze = L[w + 6 >> 1], Ne = L[w + 4 >> 1], Oe = L[w + 2 >> 1], We = L[w >> 1], b = 0; ; ) {
-                        C = (T(m >> 16, We) + at | 0) + (T(m & 65535, We) >> 16) | 0, m = (b << 2) + f | 0, U = i[m + 56 >> 2], C = (((C + T(U >> 16, Oe) | 0) + (T(U & 65535, Oe) >> 16) | 0) + T(n >> 16, Ne) | 0) + (T(n & 65535, Ne) >> 16) | 0, n = i[m + 48 >> 2], C = (((C + T(n >> 16, ze) | 0) + (T(n & 65535, ze) >> 16) | 0) + T(_ >> 16, Pe) | 0) + (T(_ & 65535, Pe) >> 16) | 0, _ = i[m + 40 >> 2], C = (((C + T(_ >> 16, Ce) | 0) + (T(_ & 65535, Ce) >> 16) | 0) + T(d >> 16, Se) | 0) + (T(d & 65535, Se) >> 16) | 0, d = i[m + 32 >> 2], C = (((C + T(d >> 16, le) | 0) + (T(d & 65535, le) >> 16) | 0) + T(r >> 16, oe) | 0) + (T(r & 65535, oe) >> 16) | 0, r = i[m + 24 >> 2], r = (C + T(r >> 16, be) | 0) + (T(r & 65535, be) >> 16) | 0, C = b + 16 | 0, (z | 0) == 16 && (Q = i[m + 20 >> 2], Q = (T(Q >> 16, Ae) + r | 0) + (T(Q & 65535, Ae) >> 16) | 0, r = i[m + 16 >> 2], Q = (Q + T(r >> 16, se) | 0) + (T(r & 65535, se) >> 16) | 0, r = i[m + 12 >> 2], Q = (Q + T(r >> 16, te) | 0) + (T(r & 65535, te) >> 16) | 0, r = i[m + 8 >> 2], Q = (Q + T(r >> 16, de) | 0) + (T(r & 65535, de) >> 16) | 0, r = i[m + 4 >> 2], m = i[m >> 2], r = (((Q + T(r >> 16, re) | 0) + (T(r & 65535, re) >> 16) | 0) + T(m >> 16, ee) | 0) + (T(m & 65535, ee) >> 16) | 0), m = (r | 0) > -134217728 ? r : -134217728, m = ((m | 0) < 134217727 ? m : 134217727) << 4, r = (C << 2) + f | 0, C = i[r >> 2], Q = m + C | 0;
+                        C = (T(m >> 16, We) + at | 0) + (T(m & 65535, We) >> 16) | 0, m = (b << 2) + f | 0, U = i[m + 56 >> 2], C = (((C + T(U >> 16, Oe) | 0) + (T(U & 65535, Oe) >> 16) | 0) + T(n >> 16, Ne) | 0) + (T(n & 65535, Ne) >> 16) | 0, n = i[m + 48 >> 2], C = (((C + T(n >> 16, ze) | 0) + (T(n & 65535, ze) >> 16) | 0) + T(_ >> 16, Pe) | 0) + (T(_ & 65535, Pe) >> 16) | 0, _ = i[m + 40 >> 2], C = (((C + T(_ >> 16, Ce) | 0) + (T(_ & 65535, Ce) >> 16) | 0) + T(d >> 16, Se) | 0) + (T(d & 65535, Se) >> 16) | 0, d = i[m + 32 >> 2], C = (((C + T(d >> 16, le) | 0) + (T(d & 65535, le) >> 16) | 0) + T(r >> 16, oe) | 0) + (T(r & 65535, oe) >> 16) | 0, r = i[m + 24 >> 2], r = (C + T(r >> 16, be) | 0) + (T(r & 65535, be) >> 16) | 0, C = b + 16 | 0, (z | 0) == 16 && (P = i[m + 20 >> 2], P = (T(P >> 16, Ae) + r | 0) + (T(P & 65535, Ae) >> 16) | 0, r = i[m + 16 >> 2], P = (P + T(r >> 16, se) | 0) + (T(r & 65535, se) >> 16) | 0, r = i[m + 12 >> 2], P = (P + T(r >> 16, te) | 0) + (T(r & 65535, te) >> 16) | 0, r = i[m + 8 >> 2], P = (P + T(r >> 16, de) | 0) + (T(r & 65535, de) >> 16) | 0, r = i[m + 4 >> 2], m = i[m >> 2], r = (((P + T(r >> 16, re) | 0) + (T(r & 65535, re) >> 16) | 0) + T(m >> 16, ee) | 0) + (T(m & 65535, ee) >> 16) | 0), m = (r | 0) > -134217728 ? r : -134217728, m = ((m | 0) < 134217727 ? m : 134217727) << 4, r = (C << 2) + f | 0, C = i[r >> 2], P = m + C | 0;
                         i: {
-                          if ((Q | 0) >= 0) {
-                            m = (m & C) > -1 ? Q : -2147483648;
+                          if ((P | 0) >= 0) {
+                            m = (m & C) > -1 ? P : -2147483648;
                             break i;
                           }
-                          m = (m | C) > -1 ? 2147483647 : Q;
+                          m = (m | C) > -1 ? 2147483647 : P;
                         }
                         if (i[r >> 2] = m, C = (b << 1) + u | 0, r = (T(m >> 16, J) + T(m, nt) | 0) + (T(m & 65535, J) >> 16) | 0, r = L[C >> 1] + ((r | 0) > 8388479 ? 32767 : (r | 0) < -8388736 ? -32768 : (r >> 7) + 1 >> 1) | 0, r = (r | 0) > -32768 ? r : -32768, L[C >> 1] = (r | 0) < 32767 ? r : 32767, r = d, d = _, _ = n, n = U, b = b + 1 | 0, (b | 0) == (c | 0))
                           break;
@@ -66727,7 +66762,7 @@ function gb() {
                 pe = w + 32 | 0;
               }
               function Hs(r, n, u, c) {
-                var m = 0, d = 0, _ = 0, b = 0, f = 0, w = 0, C = 0, Q = 0, N = 0, U = 0, J = 0, z = 0, ee = 0, re = 0, de = 0, te = 0, se = 0, Ae = 0;
+                var m = 0, d = 0, _ = 0, b = 0, f = 0, w = 0, C = 0, P = 0, N = 0, U = 0, J = 0, z = 0, ee = 0, re = 0, de = 0, te = 0, se = 0, Ae = 0;
                 for (C = pe, se = C, _ = i[r + 268 >> 2], f = i[r + 276 >> 2], C = C - ((_ + f << 2) + 15 & -16) | 0, pe = C, re = r + 24 | 0, N = bt(C, re, f << 2), C = i[r + 296 >> 2], de = C + 4 | 0, z = i[r + 272 >> 2], d = C; ; ) {
                   U = (c | 0) < (_ | 0) ? c : _, vd(r, (f << 2) + N | 0, u, d, U), J = U << 16;
                   e: {
@@ -66747,7 +66782,7 @@ function gb() {
                             }
                           if ((J | 0) < 1)
                             break e;
-                          for (te = i[r + 280 >> 2], Ae = te << 16 >> 16, d = 0; b = T(d & 65535, Ae) >> 16, f = T(b, 18) + de | 0, w = L[f >> 1], _ = (d >> 16 << 2) + N | 0, m = i[_ >> 2], Q = (T(w, m & 65535) >> 16) + T(m >> 16, w) | 0, w = L[f + 2 >> 1], m = i[_ + 4 >> 2], Q = (Q + T(w, m >> 16) | 0) + (T(m & 65535, w) >> 16) | 0, w = L[f + 4 >> 1], m = i[_ + 8 >> 2], Q = (Q + T(w, m >> 16) | 0) + (T(m & 65535, w) >> 16) | 0, w = L[f + 6 >> 1], m = i[_ + 12 >> 2], Q = (Q + T(w, m >> 16) | 0) + (T(m & 65535, w) >> 16) | 0, w = L[f + 8 >> 1], m = i[_ + 16 >> 2], Q = (Q + T(w, m >> 16) | 0) + (T(m & 65535, w) >> 16) | 0, w = L[f + 10 >> 1], m = i[_ + 20 >> 2], Q = (Q + T(w, m >> 16) | 0) + (T(m & 65535, w) >> 16) | 0, w = L[f + 12 >> 1], m = i[_ + 24 >> 2], Q = (Q + T(w, m >> 16) | 0) + (T(m & 65535, w) >> 16) | 0, w = L[f + 14 >> 1], m = i[_ + 28 >> 2], w = (Q + T(w, m >> 16) | 0) + (T(m & 65535, w) >> 16) | 0, f = L[f + 16 >> 1], m = i[_ + 32 >> 2], w = (w + T(f, m >> 16) | 0) + (T(m & 65535, f) >> 16) | 0, f = T((b ^ -1) + te | 0, 18) + de | 0, b = L[f >> 1], m = i[_ + 68 >> 2], w = (w + T(b, m >> 16) | 0) + (T(m & 65535, b) >> 16) | 0, b = L[f + 2 >> 1], m = i[_ + 64 >> 2], w = (w + T(b, m >> 16) | 0) + (T(m & 65535, b) >> 16) | 0, b = L[f + 4 >> 1], m = i[_ + 60 >> 2], w = (w + T(b, m >> 16) | 0) + (T(m & 65535, b) >> 16) | 0, b = L[f + 6 >> 1], m = i[_ + 56 >> 2], w = (w + T(b, m >> 16) | 0) + (T(m & 65535, b) >> 16) | 0, b = L[f + 8 >> 1], m = i[_ + 52 >> 2], w = (w + T(b, m >> 16) | 0) + (T(m & 65535, b) >> 16) | 0, b = L[f + 10 >> 1], m = i[_ + 48 >> 2], w = (w + T(b, m >> 16) | 0) + (T(m & 65535, b) >> 16) | 0, b = L[f + 12 >> 1], m = i[_ + 44 >> 2], w = (w + T(b, m >> 16) | 0) + (T(m & 65535, b) >> 16) | 0, b = L[f + 14 >> 1], m = i[_ + 40 >> 2], f = L[f + 16 >> 1], _ = i[_ + 36 >> 2], _ = (((w + T(b, m >> 16) | 0) + (T(m & 65535, b) >> 16) | 0) + T(f, _ >> 16) | 0) + (T(_ & 65535, f) >> 16) | 0, f = (_ >> 5) + 1 >> 1, L[n >> 1] = (_ | 0) > 2097119 ? 32767 : (f | 0) > -32768 ? f : -32768, n = n + 2 | 0, d = d + z | 0, (J | 0) > (d | 0); )
+                          for (te = i[r + 280 >> 2], Ae = te << 16 >> 16, d = 0; b = T(d & 65535, Ae) >> 16, f = T(b, 18) + de | 0, w = L[f >> 1], _ = (d >> 16 << 2) + N | 0, m = i[_ >> 2], P = (T(w, m & 65535) >> 16) + T(m >> 16, w) | 0, w = L[f + 2 >> 1], m = i[_ + 4 >> 2], P = (P + T(w, m >> 16) | 0) + (T(m & 65535, w) >> 16) | 0, w = L[f + 4 >> 1], m = i[_ + 8 >> 2], P = (P + T(w, m >> 16) | 0) + (T(m & 65535, w) >> 16) | 0, w = L[f + 6 >> 1], m = i[_ + 12 >> 2], P = (P + T(w, m >> 16) | 0) + (T(m & 65535, w) >> 16) | 0, w = L[f + 8 >> 1], m = i[_ + 16 >> 2], P = (P + T(w, m >> 16) | 0) + (T(m & 65535, w) >> 16) | 0, w = L[f + 10 >> 1], m = i[_ + 20 >> 2], P = (P + T(w, m >> 16) | 0) + (T(m & 65535, w) >> 16) | 0, w = L[f + 12 >> 1], m = i[_ + 24 >> 2], P = (P + T(w, m >> 16) | 0) + (T(m & 65535, w) >> 16) | 0, w = L[f + 14 >> 1], m = i[_ + 28 >> 2], w = (P + T(w, m >> 16) | 0) + (T(m & 65535, w) >> 16) | 0, f = L[f + 16 >> 1], m = i[_ + 32 >> 2], w = (w + T(f, m >> 16) | 0) + (T(m & 65535, f) >> 16) | 0, f = T((b ^ -1) + te | 0, 18) + de | 0, b = L[f >> 1], m = i[_ + 68 >> 2], w = (w + T(b, m >> 16) | 0) + (T(m & 65535, b) >> 16) | 0, b = L[f + 2 >> 1], m = i[_ + 64 >> 2], w = (w + T(b, m >> 16) | 0) + (T(m & 65535, b) >> 16) | 0, b = L[f + 4 >> 1], m = i[_ + 60 >> 2], w = (w + T(b, m >> 16) | 0) + (T(m & 65535, b) >> 16) | 0, b = L[f + 6 >> 1], m = i[_ + 56 >> 2], w = (w + T(b, m >> 16) | 0) + (T(m & 65535, b) >> 16) | 0, b = L[f + 8 >> 1], m = i[_ + 52 >> 2], w = (w + T(b, m >> 16) | 0) + (T(m & 65535, b) >> 16) | 0, b = L[f + 10 >> 1], m = i[_ + 48 >> 2], w = (w + T(b, m >> 16) | 0) + (T(m & 65535, b) >> 16) | 0, b = L[f + 12 >> 1], m = i[_ + 44 >> 2], w = (w + T(b, m >> 16) | 0) + (T(m & 65535, b) >> 16) | 0, b = L[f + 14 >> 1], m = i[_ + 40 >> 2], f = L[f + 16 >> 1], _ = i[_ + 36 >> 2], _ = (((w + T(b, m >> 16) | 0) + (T(m & 65535, b) >> 16) | 0) + T(f, _ >> 16) | 0) + (T(_ & 65535, f) >> 16) | 0, f = (_ >> 5) + 1 >> 1, L[n >> 1] = (_ | 0) > 2097119 ? 32767 : (f | 0) > -32768 ? f : -32768, n = n + 2 | 0, d = d + z | 0, (J | 0) > (d | 0); )
                             ;
                           break e;
                         }
@@ -66773,8 +66808,8 @@ function gb() {
                 bt(re, (U << 2) + N | 0, ee << 2), pe = se;
               }
               function yu(r, n, u) {
-                var c = 0, m = 0, d = 0, _ = 0, b = x(0), f = 0, w = x(0), C = 0, Q = 0, N = 0, U = 0, J = 0, z = 0, ee = 0, re = 0, de = x(0), te = 0, se = 0, Ae = 0, be = x(0), oe = 0, le = 0, Se = 0, Ce = 0, Pe = 0, ze = x(0), Ne = 0, Oe = 0, We = 0, at = 0, nt = 0, ct = x(0), ft = 0, It = 0, Dt = 0, Ut = 0, Jt = 0, Kt = 0, ai = 0, ni = 0, hi = 0, xi = 0, Ci = 0, Bi = 0, Ei = 0, Ii = 0, Di = 0, zi = 0, Gi = 0, ca = 0, ua = 0, da = 0, ma = 0, Aa = 0, pa = 0, ha = 0, va = 0, wa = 0, xa = 0;
-                for (C = pe - 4320 | 0, d = C, pe = d, J = i[r + 8 >> 2], Ce = (J | 0) > 1 ? J : 1, nt = 0 - n | 0, U = i[r >> 2], z = i[U + 4 >> 2], f = z + 2048 | 0, Q = i[U + 32 >> 2], re = i[U + 8 >> 2]; m = c << 2, _ = ((T(c, f) << 2) + r | 0) + 92 | 0, i[m + (d + 4312 | 0) >> 2] = _, i[(d + 4304 | 0) + m >> 2] = ((nt << 2) + _ | 0) - -8192, c = c + 1 | 0, (Ce | 0) != (c | 0); )
+                var c = 0, m = 0, d = 0, _ = 0, b = x(0), f = 0, w = x(0), C = 0, P = 0, N = 0, U = 0, J = 0, z = 0, ee = 0, re = 0, de = x(0), te = 0, se = 0, Ae = 0, be = x(0), oe = 0, le = 0, Se = 0, Ce = 0, Pe = 0, ze = x(0), Ne = 0, Oe = 0, We = 0, at = 0, nt = 0, ct = x(0), ft = 0, It = 0, Dt = 0, Ut = 0, Jt = 0, Kt = 0, ai = 0, ni = 0, hi = 0, xi = 0, Ci = 0, Bi = 0, Ei = 0, Ii = 0, Di = 0, zi = 0, Gi = 0, ca = 0, ua = 0, da = 0, ma = 0, Aa = 0, pa = 0, ha = 0, va = 0, wa = 0, xa = 0;
+                for (C = pe - 4320 | 0, d = C, pe = d, J = i[r + 8 >> 2], Ce = (J | 0) > 1 ? J : 1, nt = 0 - n | 0, U = i[r >> 2], z = i[U + 4 >> 2], f = z + 2048 | 0, P = i[U + 32 >> 2], re = i[U + 8 >> 2]; m = c << 2, _ = ((T(c, f) << 2) + r | 0) + 92 | 0, i[m + (d + 4312 | 0) >> 2] = _, i[(d + 4304 | 0) + m >> 2] = ((nt << 2) + _ | 0) - -8192, c = c + 1 | 0, (Ce | 0) != (c | 0); )
                   ;
                 Ne = ((T(f, J) << 2) + r | 0) + 92 | 0, ee = i[r + 20 >> 2], le = i[r + 52 >> 2];
                 e: {
@@ -66790,7 +66825,7 @@ function gb() {
                       for (re = 0; ; ) {
                         if ((ee | 0) < (Se | 0))
                           for (se = T(n, re), N = ee; ; ) {
-                            if (f = L[(N << 1) + Q >> 1], _ = (f << u) + se | 0, c = 0, N = N + 1 | 0, f = L[(N << 1) + Q >> 1] - f << u, (f | 0) >= 1)
+                            if (f = L[(N << 1) + P >> 1], _ = (f << u) + se | 0, c = 0, N = N + 1 | 0, f = L[(N << 1) + P >> 1] - f << u, (f | 0) >= 1)
                               for (; Oe = (c + _ << 2) + C | 0, m = Yd(m), D[Oe >> 2] = m >> 20, c = c + 1 | 0, (f | 0) != (c | 0); )
                                 ;
                             if (Xr((_ << 2) + C | 0, f, x(1), i[r + 36 >> 2]), (N | 0) == (Ae | 0))
@@ -66827,9 +66862,9 @@ function gb() {
                       for (; w = D[(c + ee << 2) + f >> 2], b = x(b + x(w * w)), w = D[(c + re << 2) + f >> 2], de = x(de + x(w * w)), c = c + 1 | 0, (Ae | 0) != (c | 0); )
                         ;
                     if (c = ga(_, (n << 2) + _ | 0, It), be = x(0), w = x(0), oe = (N | 0) < 1, !oe)
-                      for (ze = x(si(x((b > de ? de : b) / b))), b = x(ct * ze), m = 0, _ = 0; Q = (u | 0) > (_ | 0), b = Q ? b : x(ze * b), _ = _ - (Q ? 0 : u) | 0, Q = J + _ | 0, D[(m + C << 2) + c >> 2] = b * D[(Q << 2) + f >> 2], _ = _ + 1 | 0, de = D[((Q - n << 2) + c | 0) + 4096 >> 2], w = x(w + x(de * de)), m = m + 1 | 0, (N | 0) != (m | 0); )
+                      for (ze = x(si(x((b > de ? de : b) / b))), b = x(ct * ze), m = 0, _ = 0; P = (u | 0) > (_ | 0), b = P ? b : x(ze * b), _ = _ - (P ? 0 : u) | 0, P = J + _ | 0, D[(m + C << 2) + c >> 2] = b * D[(P << 2) + f >> 2], _ = _ + 1 | 0, de = D[((P - n << 2) + c | 0) + 4096 >> 2], w = x(w + x(de * de)), m = m + 1 | 0, (N | 0) != (m | 0); )
                         ;
-                    i[d >> 2] = i[c + Jt >> 2], i[d + 4 >> 2] = i[c + Kt >> 2], i[d + 8 >> 2] = i[c + ai >> 2], i[d + 12 >> 2] = i[c + ni >> 2], i[d + 16 >> 2] = i[c + hi >> 2], i[d + 20 >> 2] = i[c + xi >> 2], i[d + 24 >> 2] = i[c + Ci >> 2], i[d + 28 >> 2] = i[c + Bi >> 2], i[d + 32 >> 2] = i[c + Ei >> 2], i[d + 36 >> 2] = i[c + Ii >> 2], i[d + 40 >> 2] = i[c + Di >> 2], i[d + 44 >> 2] = i[c + zi >> 2], i[d + 48 >> 2] = i[c + Gi >> 2], i[d + 52 >> 2] = i[c + ca >> 2], i[d + 56 >> 2] = i[c + ua >> 2], i[d + 60 >> 2] = i[c + da >> 2], i[d + 64 >> 2] = i[c + ma >> 2], i[d + 68 >> 2] = i[c + Aa >> 2], i[d + 72 >> 2] = i[c + pa >> 2], i[d + 76 >> 2] = i[c + ha >> 2], i[d + 80 >> 2] = i[c + va >> 2], i[d + 84 >> 2] = i[c + wa >> 2], i[d + 88 >> 2] = i[c + xa >> 2], i[d + 92 >> 2] = i[c + Oe >> 2], Q = c - -8192 | 0, m = Q + (nt << 2) | 0, Du(m, Dt, m, N, 24, d, i[r + 36 >> 2]), m = 0;
+                    i[d >> 2] = i[c + Jt >> 2], i[d + 4 >> 2] = i[c + Kt >> 2], i[d + 8 >> 2] = i[c + ai >> 2], i[d + 12 >> 2] = i[c + ni >> 2], i[d + 16 >> 2] = i[c + hi >> 2], i[d + 20 >> 2] = i[c + xi >> 2], i[d + 24 >> 2] = i[c + Ci >> 2], i[d + 28 >> 2] = i[c + Bi >> 2], i[d + 32 >> 2] = i[c + Ei >> 2], i[d + 36 >> 2] = i[c + Ii >> 2], i[d + 40 >> 2] = i[c + Di >> 2], i[d + 44 >> 2] = i[c + zi >> 2], i[d + 48 >> 2] = i[c + Gi >> 2], i[d + 52 >> 2] = i[c + ca >> 2], i[d + 56 >> 2] = i[c + ua >> 2], i[d + 60 >> 2] = i[c + da >> 2], i[d + 64 >> 2] = i[c + ma >> 2], i[d + 68 >> 2] = i[c + Aa >> 2], i[d + 72 >> 2] = i[c + pa >> 2], i[d + 76 >> 2] = i[c + ha >> 2], i[d + 80 >> 2] = i[c + va >> 2], i[d + 84 >> 2] = i[c + wa >> 2], i[d + 88 >> 2] = i[c + xa >> 2], i[d + 92 >> 2] = i[c + Oe >> 2], P = c - -8192 | 0, m = P + (nt << 2) | 0, Du(m, Dt, m, N, 24, d, i[r + 36 >> 2]), m = 0;
                     t: {
                       i: {
                         if (!oe) {
@@ -66855,8 +66890,8 @@ function gb() {
                       for (; _ = (m + C << 2) + c | 0, D[_ >> 2] = b * D[_ >> 2], m = m + 1 | 0, (N | 0) > (m | 0); )
                         ;
                     }
-                    if (m = 0, _ = i[r + 60 >> 2], b = x(-D[r + 68 >> 2]), oe = i[r + 76 >> 2], Wr(se, Q, _, _, z, b, b, oe, oe, 0, 0, i[r + 36 >> 2]), (z | 0) >= 2)
-                      for (; _ = m << 2, Q = (m ^ -1) + z << 2, D[(_ + c | 0) - -8192 >> 2] = x(D[_ + te >> 2] * D[se + Q >> 2]) + x(D[Q + te >> 2] * D[_ + se >> 2]), m = m + 1 | 0, (Se | 0) != (m | 0); )
+                    if (m = 0, _ = i[r + 60 >> 2], b = x(-D[r + 68 >> 2]), oe = i[r + 76 >> 2], Wr(se, P, _, _, z, b, b, oe, oe, 0, 0, i[r + 36 >> 2]), (z | 0) >= 2)
+                      for (; _ = m << 2, P = (m ^ -1) + z << 2, D[(_ + c | 0) - -8192 >> 2] = x(D[_ + te >> 2] * D[se + P >> 2]) + x(D[P + te >> 2] * D[_ + se >> 2]), m = m + 1 | 0, (Se | 0) != (m | 0); )
                         ;
                     if (U = U + 1 | 0, (Ce | 0) == (U | 0))
                       break;
@@ -66865,13 +66900,13 @@ function gb() {
                 i[r + 52 >> 2] = le + 1, pe = d + 4320 | 0;
               }
               function vu(r, n, u, c, m) {
-                var d = 0, _ = 0, b = 0, f = 0, w = 0, C = 0, Q = 0, N = 0, U = 0, J = 0, z = 0, ee = 0, re = 0, de = 0, te = 0, se = 0, Ae = 0, be = 0, oe = 0, le = 0;
+                var d = 0, _ = 0, b = 0, f = 0, w = 0, C = 0, P = 0, N = 0, U = 0, J = 0, z = 0, ee = 0, re = 0, de = 0, te = 0, se = 0, Ae = 0, be = 0, oe = 0, le = 0;
                 if (f = pe - 560 | 0, pe = f, b = (u - 3 | 0) / 24 | 0, te = (b | 0) > 0 ? b : 0, U = T(te, -24) + u | 0, N = i[(m << 2) + 25088 >> 2], z = c - 1 | 0, (N + z | 0) >= 0)
                   for (_ = c + N | 0, u = te - z | 0, b = 0; d = (u | 0) < 0 ? 0 : +i[(u << 2) + 25104 >> 2], ve[(f + 320 | 0) + (b << 3) >> 3] = d, u = u + 1 | 0, b = b + 1 | 0, (b | 0) != (_ | 0); )
                     ;
-                for (de = U - 24 | 0, _ = 0, C = (N | 0) > 0 ? N : 0, Q = (c | 0) < 1; ; ) {
+                for (de = U - 24 | 0, _ = 0, C = (N | 0) > 0 ? N : 0, P = (c | 0) < 1; ; ) {
                   e: {
-                    if (Q) {
+                    if (P) {
                       d = 0;
                       break e;
                     }
@@ -66889,20 +66924,20 @@ function gb() {
                         C = u << 2, C = C + (f + 480 | 0) | 0, ee = d, w = d * 5960464477539063e-23;
                         t: {
                           if (Ke(w) < 2147483648) {
-                            Q = ~~w;
+                            P = ~~w;
                             break t;
                           }
-                          Q = -2147483648;
+                          P = -2147483648;
                         }
-                        w = +(Q | 0), d = ee + w * -16777216;
+                        w = +(P | 0), d = ee + w * -16777216;
                         t: {
                           if (Ke(d) < 2147483648) {
-                            Q = ~~d;
+                            P = ~~d;
                             break t;
                           }
-                          Q = -2147483648;
+                          P = -2147483648;
                         }
-                        if (i[C >> 2] = Q, b = b - 1 | 0, d = ve[(b << 3) + f >> 3] + w, u = u + 1 | 0, (_ | 0) == (u | 0))
+                        if (i[C >> 2] = P, b = b - 1 | 0, d = ve[(b << 3) + f >> 3] + w, u = u + 1 | 0, (_ | 0) == (u | 0))
                           break;
                       }
                     d = Ga(d, de), d = d + Kd(d * 0.125) * -8;
@@ -66920,7 +66955,7 @@ function gb() {
                           be = (de | 0) < 1;
                           r: {
                             if (!be) {
-                              b = (_ << 2) + f | 0, u = b + 476 | 0, Q = u, u = i[b + 476 >> 2], b = u, u = u >> Ae, b = b - (u << Ae) | 0, i[Q >> 2] = b, re = u + re | 0, J = b >> oe;
+                              b = (_ << 2) + f | 0, u = b + 476 | 0, P = u, u = i[b + 476 >> 2], b = u, u = u >> Ae, b = b - (u << Ae) | 0, i[P >> 2] = b, re = u + re | 0, J = b >> oe;
                               break r;
                             }
                             if (de)
@@ -66936,17 +66971,17 @@ function gb() {
                         J = 0;
                         break t;
                       }
-                      if (u = 0, Q = 0, !z)
+                      if (u = 0, P = 0, !z)
                         for (; ; ) {
                           z = (f + 480 | 0) + (u << 2) | 0, b = i[z >> 2], C = 16777215;
                           i: {
                             a: {
-                              if (Q || (C = 16777216, b))
+                              if (P || (C = 16777216, b))
                                 break a;
-                              Q = 0;
+                              P = 0;
                               break i;
                             }
-                            i[z >> 2] = C - b, Q = 1;
+                            i[z >> 2] = C - b, P = 1;
                           }
                           if (u = u + 1 | 0, (_ | 0) == (u | 0))
                             break;
@@ -66966,7 +67001,7 @@ function gb() {
                           }
                         b = (_ << 2) + f | 0, u = b + 476 | 0, i[u >> 2] = i[b + 476 >> 2] & 4194303;
                       }
-                      if (re = re + 1 | 0, (J | 0) != 2 || (d = 1 - d, J = 2, !Q))
+                      if (re = re + 1 | 0, (J | 0) != 2 || (d = 1 - d, J = 2, !P))
                         break t;
                       d = d - Ga(1, de);
                     }
@@ -67032,9 +67067,9 @@ function gb() {
                   if (C = 0, (_ | 0) < 0)
                     break e;
                   for (N = (N | 0) > 0 ? N : 0, b = _; ; ) {
-                    for (r = C >>> 0 > N >>> 0 ? N : C, Q = _ - b | 0, u = 0, d = 0; d = d + ve[(u << 3) + 27872 >> 3] * ve[(u + b << 3) + f >> 3], c = (r | 0) != (u | 0), u = u + 1 | 0, !!c; )
+                    for (r = C >>> 0 > N >>> 0 ? N : C, P = _ - b | 0, u = 0, d = 0; d = d + ve[(u << 3) + 27872 >> 3] * ve[(u + b << 3) + f >> 3], c = (r | 0) != (u | 0), u = u + 1 | 0, !!c; )
                       ;
-                    if (ve[(f + 160 | 0) + (Q << 3) >> 3] = d, b = b - 1 | 0, u = (_ | 0) != (C | 0), C = C + 1 | 0, !u)
+                    if (ve[(f + 160 | 0) + (P << 3) >> 3] = d, b = b - 1 | 0, u = (_ | 0) != (C | 0), C = C + 1 | 0, !u)
                       break;
                   }
                 }
@@ -67087,7 +67122,7 @@ function gb() {
                 return pe = f + 560 | 0, re & 7;
               }
               function ea(r, n, u, c, m, d, _, b, f, w, C) {
-                var Q = 0, N = 0, U = 0, J = 0, z = 0, ee = x(0), re = x(0), de = 0, te = 0, se = 0, Ae = 0, be = 0, oe = 0, le = 0, Se = 0;
+                var P = 0, N = 0, U = 0, J = 0, z = 0, ee = x(0), re = x(0), de = 0, te = 0, se = 0, Ae = 0, be = 0, oe = 0, le = 0, Se = 0;
                 be = (u >>> 0) / (m >>> 0) | 0, le = i[r >> 2];
                 e: {
                   if ((u | 0) == 1) {
@@ -67106,7 +67141,7 @@ function gb() {
                       break e;
                     return i[b >> 2] = i[n >> 2], 1;
                   }
-                  Ae = i[r + 24 >> 2], Q = (Ae | 0) > 0;
+                  Ae = i[r + 24 >> 2], P = (Ae | 0) > 0;
                   t: {
                     if (!d) {
                       w = d;
@@ -67122,27 +67157,27 @@ function gb() {
                     }
                     bt(w, d, u << 2);
                   }
-                  if (te = Q ? Ae : 0, (Ae | 0) >= 1)
+                  if (te = P ? Ae : 0, (Ae | 0) >= 1)
                     for (; ; ) {
                       t: {
                         if (le) {
                           if ((N | 0) == 31)
                             break t;
-                          for (z = u >> N, d = z >> 1, se = (d | 0) > 1 ? d : 1, J = 1 << N, de = J << 1, Q = 0; ; ) {
+                          for (z = u >> N, d = z >> 1, se = (d | 0) > 1 ? d : 1, J = 1 << N, de = J << 1, P = 0; ; ) {
                             if (d = 0, (z | 0) >= 2)
-                              for (; U = (T(d, de) + Q << 2) + n | 0, oe = U, ee = x(D[U >> 2] * x(0.7071067690849304)), U = (((d << 1 | 1) << N) + Q << 2) + n | 0, re = x(D[U >> 2] * x(0.7071067690849304)), D[oe >> 2] = ee + re, D[U >> 2] = ee - re, d = d + 1 | 0, (se | 0) != (d | 0); )
+                              for (; U = (T(d, de) + P << 2) + n | 0, oe = U, ee = x(D[U >> 2] * x(0.7071067690849304)), U = (((d << 1 | 1) << N) + P << 2) + n | 0, re = x(D[U >> 2] * x(0.7071067690849304)), D[oe >> 2] = ee + re, D[U >> 2] = ee - re, d = d + 1 | 0, (se | 0) != (d | 0); )
                                 ;
-                            if (Q = Q + 1 | 0, (J | 0) == (Q | 0))
+                            if (P = P + 1 | 0, (J | 0) == (P | 0))
                               break;
                           }
                         }
                         if (!w | (N | 0) == 31)
                           break t;
-                        for (z = u >> N, d = z >> 1, se = (d | 0) > 1 ? d : 1, J = 1 << N, de = J << 1, Q = 0; ; ) {
+                        for (z = u >> N, d = z >> 1, se = (d | 0) > 1 ? d : 1, J = 1 << N, de = J << 1, P = 0; ; ) {
                           if (d = 0, (z | 0) >= 2)
-                            for (; U = (T(d, de) + Q << 2) + w | 0, oe = U, ee = x(D[U >> 2] * x(0.7071067690849304)), U = (((d << 1 | 1) << N) + Q << 2) + w | 0, re = x(D[U >> 2] * x(0.7071067690849304)), D[oe >> 2] = ee + re, D[U >> 2] = ee - re, d = d + 1 | 0, (se | 0) != (d | 0); )
+                            for (; U = (T(d, de) + P << 2) + w | 0, oe = U, ee = x(D[U >> 2] * x(0.7071067690849304)), U = (((d << 1 | 1) << N) + P << 2) + w | 0, re = x(D[U >> 2] * x(0.7071067690849304)), D[oe >> 2] = ee + re, D[U >> 2] = ee - re, d = d + 1 | 0, (se | 0) != (d | 0); )
                               ;
-                          if (Q = Q + 1 | 0, (J | 0) == (Q | 0))
+                          if (P = P + 1 | 0, (J | 0) == (P | 0))
                             break;
                         }
                       }
@@ -67154,39 +67189,39 @@ function gb() {
                     if (!(z & 1 | (Ae | 0) > -1)) {
                       for (be = Ae; ; ) {
                         if (!(!le | (N | 0) < 1))
-                          for (d = z >> 1, se = (d | 0) > 1 ? d : 1, de = N << 1, Q = 0; ; ) {
+                          for (d = z >> 1, se = (d | 0) > 1 ? d : 1, de = N << 1, P = 0; ; ) {
                             if (d = 0, (z | 0) >= 2)
-                              for (; U = (T(d, de) + Q << 2) + n | 0, J = U, ee = x(D[U >> 2] * x(0.7071067690849304)), U = (T(d << 1 | 1, N) + Q << 2) + n | 0, re = x(D[U >> 2] * x(0.7071067690849304)), D[J >> 2] = ee + re, D[U >> 2] = ee - re, d = d + 1 | 0, (se | 0) != (d | 0); )
+                              for (; U = (T(d, de) + P << 2) + n | 0, J = U, ee = x(D[U >> 2] * x(0.7071067690849304)), U = (T(d << 1 | 1, N) + P << 2) + n | 0, re = x(D[U >> 2] * x(0.7071067690849304)), D[J >> 2] = ee + re, D[U >> 2] = ee - re, d = d + 1 | 0, (se | 0) != (d | 0); )
                                 ;
-                            if (Q = Q + 1 | 0, (N | 0) == (Q | 0))
+                            if (P = P + 1 | 0, (N | 0) == (P | 0))
                               break;
                           }
                         if (J = z >> 1, !(!w | (N | 0) < 1))
-                          for (se = (J | 0) > 1 ? J : 1, de = N << 1, Q = 0; ; ) {
+                          for (se = (J | 0) > 1 ? J : 1, de = N << 1, P = 0; ; ) {
                             if (d = 0, (z | 0) >= 2)
-                              for (; U = (T(d, de) + Q << 2) + w | 0, oe = U, ee = x(D[U >> 2] * x(0.7071067690849304)), U = (T(d << 1 | 1, N) + Q << 2) + w | 0, re = x(D[U >> 2] * x(0.7071067690849304)), D[oe >> 2] = ee + re, D[U >> 2] = ee - re, d = d + 1 | 0, (se | 0) != (d | 0); )
+                              for (; U = (T(d, de) + P << 2) + w | 0, oe = U, ee = x(D[U >> 2] * x(0.7071067690849304)), U = (T(d << 1 | 1, N) + P << 2) + w | 0, re = x(D[U >> 2] * x(0.7071067690849304)), D[oe >> 2] = ee + re, D[U >> 2] = ee - re, d = d + 1 | 0, (se | 0) != (d | 0); )
                                 ;
-                            if (Q = Q + 1 | 0, (N | 0) == (Q | 0))
+                            if (P = P + 1 | 0, (N | 0) == (P | 0))
                               break;
                           }
                         if (Se = Se + 1 | 0, d = N << 1, C = C << N | C, z & 2)
                           break t;
-                        if (Q = (be | 0) < -1, be = be + 1 | 0, N = d, z = J, !Q)
+                        if (P = (be | 0) < -1, be = be + 1 | 0, N = d, z = J, !P)
                           break;
                       }
                       break t;
                     }
                     J = z, d = N;
                   }
-                  Q = (m | 0) == 1;
+                  P = (m | 0) == 1;
                   t: {
-                    if ((d | 0) < 2 || (le && dn(n, J >> te, d << te, Q), !w))
+                    if ((d | 0) < 2 || (le && dn(n, J >> te, d << te, P), !w))
                       break t;
-                    dn(w, J >> te, d << te, Q);
+                    dn(w, J >> te, d << te, P);
                   }
                   if (C = Ha(r, n, u, c, d, w, _, f, C), !i[r + 4 >> 2])
                     break e;
-                  (d | 0) >= 2 && od(n, J >> te, d << te, Q);
+                  (d | 0) >= 2 && od(n, J >> te, d << te, P);
                   t: {
                     if (!Se) {
                       U = d;
@@ -67196,7 +67231,7 @@ function gb() {
                       if (J = J << 1, U = d >> 1, z = C >>> U | 0, (d | 0) >= 2)
                         for (w = J >> 1, N = (w | 0) > 1 ? w : 1, se = d & -2, w = 0; ; ) {
                           if (d = 0, (J | 0) >= 2)
-                            for (; Q = (T(d, se) + w << 2) + n | 0, r = Q, ee = x(D[Q >> 2] * x(0.7071067690849304)), Q = (T(d << 1 | 1, U) + w << 2) + n | 0, re = x(D[Q >> 2] * x(0.7071067690849304)), D[r >> 2] = ee + re, D[Q >> 2] = ee - re, d = d + 1 | 0, (N | 0) != (d | 0); )
+                            for (; P = (T(d, se) + w << 2) + n | 0, r = P, ee = x(D[P >> 2] * x(0.7071067690849304)), P = (T(d << 1 | 1, U) + w << 2) + n | 0, re = x(D[P >> 2] * x(0.7071067690849304)), D[r >> 2] = ee + re, D[P >> 2] = ee - re, d = d + 1 | 0, (N | 0) != (d | 0); )
                               ;
                           if (w = w + 1 | 0, (U | 0) == (w | 0))
                             break;
@@ -67210,7 +67245,7 @@ function gb() {
                       if (C = we[C + 33552 | 0], (N | 0) != 31)
                         for (z = u >> N, d = z >> 1, se = (d | 0) > 1 ? d : 1, J = 1 << N, de = J << 1, w = 0; ; ) {
                           if (d = 0, (z | 0) >= 2)
-                            for (; Q = (T(d, de) + w << 2) + n | 0, r = Q, ee = x(D[Q >> 2] * x(0.7071067690849304)), Q = (((d << 1 | 1) << N) + w << 2) + n | 0, re = x(D[Q >> 2] * x(0.7071067690849304)), D[r >> 2] = ee + re, D[Q >> 2] = ee - re, d = d + 1 | 0, (se | 0) != (d | 0); )
+                            for (; P = (T(d, de) + w << 2) + n | 0, r = P, ee = x(D[P >> 2] * x(0.7071067690849304)), P = (((d << 1 | 1) << N) + w << 2) + n | 0, re = x(D[P >> 2] * x(0.7071067690849304)), D[r >> 2] = ee + re, D[P >> 2] = ee - re, d = d + 1 | 0, (se | 0) != (d | 0); )
                               ;
                           if (w = w + 1 | 0, (J | 0) == (w | 0))
                             break;
@@ -67218,16 +67253,16 @@ function gb() {
                       if (N = N + 1 | 0, (te | 0) == (N | 0))
                         break;
                     }
-                  if (Q = U << te, !(!b | (u | 0) < 1))
+                  if (P = U << te, !(!b | (u | 0) < 1))
                     for (ee = x(si(+(u | 0))), d = 0; w = d << 2, D[w + b >> 2] = D[n + w >> 2] * ee, d = d + 1 | 0, (d | 0) != (u | 0); )
                       ;
-                  C = (-1 << Q ^ -1) & C;
+                  C = (-1 << P ^ -1) & C;
                 }
                 return C;
               }
               function Us(r) {
-                var n = 0, u = 0, c = 0, m = 0, d = 0, _ = 0, b = 0, f = 0, w = 0, C = 0, Q = 0, N = 0, U = x(0), J = x(0), z = 0, ee = 0, re = 0, de = 0, te = 0, se = 0;
-                u = i[r + 8 >> 2], n = i[r + 12 >> 2], d = (u >>> 0) / (n >>> 0) | 0, i[r + 36 >> 2] = d, c = T(i[r + 16 >> 2], 20), _ = i[c + 37364 >> 2], i[r + 48 >> 2] = _, Q = i[r + 24 >> 2], m = i[c + 37360 >> 2], i[r + 24 >> 2] = m, i[r + 40 >> 2] = u - T(n, d), re = i[r + 28 >> 2];
+                var n = 0, u = 0, c = 0, m = 0, d = 0, _ = 0, b = 0, f = 0, w = 0, C = 0, P = 0, N = 0, U = x(0), J = x(0), z = 0, ee = 0, re = 0, de = 0, te = 0, se = 0;
+                u = i[r + 8 >> 2], n = i[r + 12 >> 2], d = (u >>> 0) / (n >>> 0) | 0, i[r + 36 >> 2] = d, c = T(i[r + 16 >> 2], 20), _ = i[c + 37364 >> 2], i[r + 48 >> 2] = _, P = i[r + 24 >> 2], m = i[c + 37360 >> 2], i[r + 24 >> 2] = m, i[r + 40 >> 2] = u - T(n, d), re = i[r + 28 >> 2];
                 e: {
                   t: {
                     i: {
@@ -67286,14 +67321,14 @@ function gb() {
                     }
                     if (!i[r + 56 >> 2])
                       return n = T(i[r + 20 >> 2], u), n && qt(i[r + 72 >> 2], 0, n << 2), 0;
-                    if (u = i[r + 24 >> 2], Q >>> 0 < u >>> 0) {
+                    if (u = i[r + 24 >> 2], P >>> 0 < u >>> 0) {
                       if (f = i[r + 20 >> 2], !f)
                         return 0;
-                      for (de = Q - 1 | 0, te = (f << 2) - 4 | 0, se = i[r + 68 >> 2]; ; ) {
+                      for (de = P - 1 | 0, te = (f << 2) - 4 | 0, se = i[r + 68 >> 2]; ; ) {
                         if (b = N << 2, f = f - 1 | 0, z = f << 2, d = z + se | 0, m = i[d >> 2], w = m << 1, n = m + de | 0, n)
                           for (c = T(f, re), _ = T(i[r + 28 >> 2], f), u = i[r + 72 >> 2]; n = n - 1 | 0, i[((m + n | 0) + _ << 2) + u >> 2] = i[(n + c << 2) + u >> 2], !!n; )
                             ;
-                        ee = te - b | 0, w = w + Q | 0, m && qt(i[r + 72 >> 2] + T(i[r + 28 >> 2], ee) | 0, 0, m << 2), i[d >> 2] = 0, C = i[r + 24 >> 2];
+                        ee = te - b | 0, w = w + P | 0, m && qt(i[r + 72 >> 2] + T(i[r + 28 >> 2], ee) | 0, 0, m << 2), i[d >> 2] = 0, C = i[r + 24 >> 2];
                         i: {
                           if (C >>> 0 > w >>> 0) {
                             if (_ = w - 1 | 0, _)
@@ -67312,10 +67347,10 @@ function gb() {
                       }
                       return 0;
                     }
-                    if (n = 0, !i[r + 20 >> 2] | u >>> 0 >= Q >>> 0)
+                    if (n = 0, !i[r + 20 >> 2] | u >>> 0 >= P >>> 0)
                       break e;
                     for (N = i[r + 68 >> 2], b = 0; ; ) {
-                      if (f = (b << 2) + N | 0, n = i[f >> 2], c = Q - u >>> 1 | 0, i[f >> 2] = c, w = n + c | 0, n = w - 1 | 0, u = i[r + 24 >> 2], (n | 0) != (0 - u | 0))
+                      if (f = (b << 2) + N | 0, n = i[f >> 2], c = P - u >>> 1 | 0, i[f >> 2] = c, w = n + c | 0, n = w - 1 | 0, u = i[r + 24 >> 2], (n | 0) != (0 - u | 0))
                         for (n = n + u | 0, _ = n >>> 0 > 1 ? n : 1, d = T(i[r + 28 >> 2], b), u = i[r + 72 >> 2], n = 0; m = n + d | 0, i[(m << 2) + u >> 2] = i[(c + m << 2) + u >> 2], n = n + 1 | 0, (_ | 0) != (n | 0); )
                           ;
                       if (i[f >> 2] = w, b = b + 1 | 0, b >>> 0 >= dt[r + 20 >> 2])
@@ -67323,7 +67358,7 @@ function gb() {
                       u = i[r + 24 >> 2];
                     }
                   }
-                  i[r + 24 >> 2] = Q, i[r + 84 >> 2] = 8, n = 1;
+                  i[r + 24 >> 2] = P, i[r + 84 >> 2] = 8, n = 1;
                 }
                 return n;
               }
@@ -67493,7 +67528,7 @@ function gb() {
                 i[c + 4 >> 2] = r | 1, i[r + c >> 2] = r;
               }
               function jr(r, n, u, c, m, d, _, b, f) {
-                var w = 0, C = 0, Q = 0, N = 0, U = 0, J = 0, z = 0;
+                var w = 0, C = 0, P = 0, N = 0, U = 0, J = 0, z = 0;
                 N = pe - 112 | 0, pe = N;
                 e: {
                   t: {
@@ -67502,7 +67537,7 @@ function gb() {
                         r: {
                           c: {
                             o: {
-                              if (Q = i[r + 8 >> 2], Q - 1 >>> 0 < 2) {
+                              if (P = i[r + 8 >> 2], P - 1 >>> 0 < 2) {
                                 C = i[r + 12 >> 2];
                                 n: {
                                   if ((C | 0) <= 15999) {
@@ -67529,7 +67564,7 @@ function gb() {
                                   if ((w | 0) != 16e3)
                                     break t;
                                 }
-                                if (i[r + 16 >> 2] != (Q | 0))
+                                if (i[r + 16 >> 2] != (P | 0))
                                   break c;
                                 if (dt[r + 20 >> 2] >= 3)
                                   break r;
@@ -67592,8 +67627,8 @@ function gb() {
                                         break l;
                                       U = (w >>> 5 & 3) + 1101 | 0;
                                     }
-                                    if (C = Ed(n, C), w = we[n | 0], Q = wu(n, u, _, N + 107 | 0, 0, N, N + 108 | 0), (Q | 0) < 0) {
-                                      w = Q;
+                                    if (C = Ed(n, C), w = we[n | 0], P = wu(n, u, _, N + 107 | 0, 0, N, N + 108 | 0), (P | 0) < 0) {
+                                      w = P;
                                       break i;
                                     }
                                     if (u = z ? 1002 : (J | 0) == 96 ? 1001 : 1e3, _ = w & 4 ? 2 : 1, n = i[N + 108 >> 2] + n | 0, d) {
@@ -67602,8 +67637,8 @@ function gb() {
                                         break i;
                                       }
                                       if (d = m - C | 0, d) {
-                                        if (Q = i[r + 72 >> 2], w = jr(r, 0, 0, c, d, 0, 0), (w | 0) <= -1) {
-                                          i[r + 72 >> 2] = Q;
+                                        if (P = i[r + 72 >> 2], w = jr(r, 0, 0, c, d, 0, 0), (w | 0) <= -1) {
+                                          i[r + 72 >> 2] = P;
                                           break i;
                                         }
                                         if ((d | 0) != (w | 0))
@@ -67613,11 +67648,11 @@ function gb() {
                                         break a;
                                       break i;
                                     }
-                                    if (w = -2, (T(C, Q) | 0) > (m | 0))
+                                    if (w = -2, (T(C, P) | 0) > (m | 0))
                                       break i;
                                     i[r + 64 >> 2] = C, i[r + 52 >> 2] = U, i[r + 56 >> 2] = u, i[r + 48 >> 2] = _, d = 0;
                                     l: {
-                                      if ((Q | 0) < 1) {
+                                      if ((P | 0) < 1) {
                                         w = 0;
                                         break l;
                                       }
@@ -67628,7 +67663,7 @@ function gb() {
                                         }
                                         if ((u | 0) != (C | 0))
                                           break r;
-                                        if (w = w + C | 0, n = L[_ >> 1] + n | 0, d = d + 1 | 0, (Q | 0) == (d | 0))
+                                        if (w = w + C | 0, n = L[_ >> 1] + n | 0, d = d + 1 | 0, (P | 0) == (d | 0))
                                           break;
                                       }
                                     }
@@ -67810,7 +67845,7 @@ function gb() {
                 }
               }
               function Or(r, n, u, c) {
-                var m = 0, d = 0, _ = 0, b = 0, f = 0, w = 0, C = 0, Q = 0, N = 0, U = 0, J = 0, z = 0, ee = 0, re = 0, de = 0, te = 0, se = 0, Ae = 0;
+                var m = 0, d = 0, _ = 0, b = 0, f = 0, w = 0, C = 0, P = 0, N = 0, U = 0, J = 0, z = 0, ee = 0, re = 0, de = 0, te = 0, se = 0, Ae = 0;
                 _ = pe - 320 | 0, pe = _;
                 e:
                   switch (u - 10 | 0) {
@@ -67827,11 +67862,11 @@ function gb() {
                   if (se = (u | 0) < 4, se)
                     break e;
                   for (; ; ) {
-                    re = i[(_ + 224 | 0) + (d << 3) >> 2], c = re, m = c >> 31, J = c, z = m, c = n, m = c >> 31, c = m, U = d + 1 | 0, de = (_ + 160 | 0) + (U << 2) | 0, m = z, c = wi(J, m, n, c), w = c, m = Qt, c = m >>> 15 | 0, m = (m & 32767) << 17 | w >>> 15, C = m + 1 | 0, Q = C >>> 0 < 1 ? c + 1 | 0 : c, c = C, i[de >> 2] = (b << 1) - ((Q & 1) << 31 | c >>> 1), f = d << 2, ee = f + (_ + 160 | 0) | 0;
+                    re = i[(_ + 224 | 0) + (d << 3) >> 2], c = re, m = c >> 31, J = c, z = m, c = n, m = c >> 31, c = m, U = d + 1 | 0, de = (_ + 160 | 0) + (U << 2) | 0, m = z, c = wi(J, m, n, c), w = c, m = Qt, c = m >>> 15 | 0, m = (m & 32767) << 17 | w >>> 15, C = m + 1 | 0, P = C >>> 0 < 1 ? c + 1 | 0 : c, c = C, i[de >> 2] = (b << 1) - ((P & 1) << 31 | c >>> 1), f = d << 2, ee = f + (_ + 160 | 0) | 0;
                     t: {
-                      if (d >>> 0 < 2 || (f = i[(_ + f | 0) + 152 >> 2], n = f + n | 0, c = b, m = c >> 31, c = z, c = wi(b, m, J, c), Q = c, m = Qt, c = m >>> 15 | 0, m = (m & 32767) << 17 | Q >>> 15, w = m + 1 | 0, C = w >>> 0 < 1 ? c + 1 | 0 : c, c = w, i[ee >> 2] = n - ((C & 1) << 31 | c >>> 1), (d | 0) == 2))
+                      if (d >>> 0 < 2 || (f = i[(_ + f | 0) + 152 >> 2], n = f + n | 0, c = b, m = c >> 31, c = z, c = wi(b, m, J, c), P = c, m = Qt, c = m >>> 15 | 0, m = (m & 32767) << 17 | P >>> 15, w = m + 1 | 0, C = w >>> 0 < 1 ? c + 1 | 0 : c, c = w, i[ee >> 2] = n - ((C & 1) << 31 | c >>> 1), (d | 0) == 2))
                         break t;
-                      for (; b = d - 1 | 0, n = (_ + 160 | 0) + (b << 2) | 0, N = i[((d << 2) + _ | 0) + 148 >> 2], Ae = N + i[n >> 2] | 0, c = f, m = c >> 31, c = z, c = wi(f, m, J, c), C = c, m = Qt, c = m >>> 15 | 0, m = (m & 32767) << 17 | C >>> 15, Q = m + 1 | 0, w = Q >>> 0 < 1 ? c + 1 | 0 : c, c = Q, i[n >> 2] = Ae - ((w & 1) << 31 | c >>> 1), n = (d | 0) > 3, d = b, f = N, !!n; )
+                      for (; b = d - 1 | 0, n = (_ + 160 | 0) + (b << 2) | 0, N = i[((d << 2) + _ | 0) + 148 >> 2], Ae = N + i[n >> 2] | 0, c = f, m = c >> 31, c = z, c = wi(f, m, J, c), C = c, m = Qt, c = m >>> 15 | 0, m = (m & 32767) << 17 | C >>> 15, P = m + 1 | 0, w = P >>> 0 < 1 ? c + 1 | 0 : c, c = P, i[n >> 2] = Ae - ((w & 1) << 31 | c >>> 1), n = (d | 0) > 3, d = b, f = N, !!n; )
                         ;
                     }
                     if (i[_ + 164 >> 2] = i[_ + 164 >> 2] - re, (U | 0) == (te | 0))
@@ -67844,11 +67879,11 @@ function gb() {
                   if (se)
                     break e;
                   for (se = _ + 224 | 4, d = 1; ; ) {
-                    re = i[(d << 3) + se >> 2], c = re, m = c >> 31, J = c, z = m, c = n, m = c >> 31, c = m, U = d + 1 | 0, de = (_ + 96 | 0) + (U << 2) | 0, m = z, c = wi(J, m, n, c), w = c, m = Qt, c = m >>> 15 | 0, m = (m & 32767) << 17 | w >>> 15, C = m + 1 | 0, Q = C >>> 0 < 1 ? c + 1 | 0 : c, c = C, i[de >> 2] = (b << 1) - ((Q & 1) << 31 | c >>> 1), f = d << 2, ee = f + (_ + 96 | 0) | 0;
+                    re = i[(d << 3) + se >> 2], c = re, m = c >> 31, J = c, z = m, c = n, m = c >> 31, c = m, U = d + 1 | 0, de = (_ + 96 | 0) + (U << 2) | 0, m = z, c = wi(J, m, n, c), w = c, m = Qt, c = m >>> 15 | 0, m = (m & 32767) << 17 | w >>> 15, C = m + 1 | 0, P = C >>> 0 < 1 ? c + 1 | 0 : c, c = C, i[de >> 2] = (b << 1) - ((P & 1) << 31 | c >>> 1), f = d << 2, ee = f + (_ + 96 | 0) | 0;
                     t: {
-                      if (d >>> 0 < 2 || (f = i[(_ + f | 0) + 88 >> 2], n = f + n | 0, c = b, m = c >> 31, c = z, c = wi(b, m, J, c), Q = c, m = Qt, c = m >>> 15 | 0, m = (m & 32767) << 17 | Q >>> 15, w = m + 1 | 0, C = w >>> 0 < 1 ? c + 1 | 0 : c, c = w, i[ee >> 2] = n - ((C & 1) << 31 | c >>> 1), (d | 0) == 2))
+                      if (d >>> 0 < 2 || (f = i[(_ + f | 0) + 88 >> 2], n = f + n | 0, c = b, m = c >> 31, c = z, c = wi(b, m, J, c), P = c, m = Qt, c = m >>> 15 | 0, m = (m & 32767) << 17 | P >>> 15, w = m + 1 | 0, C = w >>> 0 < 1 ? c + 1 | 0 : c, c = w, i[ee >> 2] = n - ((C & 1) << 31 | c >>> 1), (d | 0) == 2))
                         break t;
-                      for (; b = d - 1 | 0, n = (_ + 96 | 0) + (b << 2) | 0, N = i[((d << 2) + _ | 0) + 84 >> 2], Ae = N + i[n >> 2] | 0, c = f, m = c >> 31, c = z, c = wi(f, m, J, c), C = c, m = Qt, c = m >>> 15 | 0, m = (m & 32767) << 17 | C >>> 15, Q = m + 1 | 0, w = Q >>> 0 < 1 ? c + 1 | 0 : c, c = Q, i[n >> 2] = Ae - ((w & 1) << 31 | c >>> 1), n = (d | 0) > 3, d = b, f = N, !!n; )
+                      for (; b = d - 1 | 0, n = (_ + 96 | 0) + (b << 2) | 0, N = i[((d << 2) + _ | 0) + 84 >> 2], Ae = N + i[n >> 2] | 0, c = f, m = c >> 31, c = z, c = wi(f, m, J, c), C = c, m = Qt, c = m >>> 15 | 0, m = (m & 32767) << 17 | C >>> 15, P = m + 1 | 0, w = P >>> 0 < 1 ? c + 1 | 0 : c, c = P, i[n >> 2] = Ae - ((w & 1) << 31 | c >>> 1), n = (d | 0) > 3, d = b, f = N, !!n; )
                         ;
                     }
                     if (i[_ + 100 >> 2] = i[_ + 100 >> 2] - re, (U | 0) == (te | 0))
@@ -67875,14 +67910,14 @@ function gb() {
                 pe = _ + 320 | 0;
               }
               function js(r, n, u, c, m, d) {
-                var _ = x(0), b = 0, f = x(0), w = 0, C = 0, Q = 0, N = x(0), U = 0, J = 0, z = 0, ee = x(0), re = 0, de = x(0), te = 0, se = x(0), Ae = x(0), be = x(0), oe = x(0), le = x(0), Se = x(0), Ce = x(0), Pe = x(0), ze = x(0), Ne = 0, Oe = 0, We = x(0), at = 0, nt = 0, ct = 0;
+                var _ = x(0), b = 0, f = x(0), w = 0, C = 0, P = 0, N = x(0), U = 0, J = 0, z = 0, ee = x(0), re = 0, de = x(0), te = 0, se = x(0), Ae = x(0), be = x(0), oe = x(0), le = x(0), Se = x(0), Ce = x(0), Pe = x(0), ze = x(0), Ne = 0, Oe = 0, We = x(0), at = 0, nt = 0, ct = 0;
                 if ((m | 0) >= 1) {
                   e: {
                     if ((m | 0) < 4)
                       break e;
                     if ((c | 0) >= 3) {
                       for (at = m - 3 | 0, te = c - 3 | 0, nt = (c | 0) == 3, Ne = c & -4, Oe = Ne | 1, ct = (Oe + 1 | 0) >= (c | 0); ; ) {
-                        if (re = Q << 2, d = re + n | 0, b = d + 12 | 0, f = D[d + 8 >> 2], de = D[d + 4 >> 2], ee = D[d >> 2], N = x(0), Se = x(0), Ce = x(0), Pe = x(0), d = r, C = 0, w = 0, U = 0, J = 0, z = 0, !nt) {
+                        if (re = P << 2, d = re + n | 0, b = d + 12 | 0, f = D[d + 8 >> 2], de = D[d + 4 >> 2], ee = D[d >> 2], N = x(0), Se = x(0), Ce = x(0), Pe = x(0), d = r, C = 0, w = 0, U = 0, J = 0, z = 0, !nt) {
                           for (; se = D[d >> 2], _ = D[b >> 2], Ae = D[d + 4 >> 2], be = D[b + 4 >> 2], oe = D[d + 8 >> 2], ze = D[b + 8 >> 2], le = D[d + 12 >> 2], We = D[b + 12 >> 2], N = x(x(x(x(N + x(se * _)) + x(Ae * be)) + x(oe * ze)) + x(le * We)), Se = x(x(x(x(Se + x(f * se)) + x(_ * Ae)) + x(be * oe)) + x(ze * le)), Ce = x(x(x(x(Ce + x(de * se)) + x(f * Ae)) + x(_ * oe)) + x(be * le)), Pe = x(x(x(x(Pe + x(ee * se)) + x(de * Ae)) + x(f * oe)) + x(_ * le)), b = b + 16 | 0, d = d + 16 | 0, ee = be, f = We, de = ze, C = C + 4 | 0, (te | 0) > (C | 0); )
                             ;
                           U = (Wt(Ce), yt(2)), J = (Wt(Se), yt(2)), z = (Wt(N), yt(2)), N = _, w = (Wt(Pe), yt(2));
@@ -67900,19 +67935,19 @@ function gb() {
                           }
                           _ = D[d >> 2], ee = D[C >> 2], z = (Wt(x(x(_ * ee) + (Gt(2, z), Ft()))), yt(2)), J = (Wt(x(x(N * _) + (Gt(2, J), Ft()))), yt(2)), U = (Wt(x(x(f * _) + (Gt(2, U), Ft()))), yt(2)), w = (Wt(x(x(de * _) + (Gt(2, w), Ft()))), yt(2)), d = d + 4 | 0, b = C + 4 | 0;
                         }
-                        if (ct || (_ = D[d >> 2], z = (Wt(x(x(_ * D[b >> 2]) + (Gt(2, z), Ft()))), yt(2)), J = (Wt(x(x(ee * _) + (Gt(2, J), Ft()))), yt(2)), U = (Wt(x(x(N * _) + (Gt(2, U), Ft()))), yt(2)), w = (Wt(x(x(f * _) + (Gt(2, w), Ft()))), yt(2))), i[u + re >> 2] = w, i[(re | 4) + u >> 2] = U, i[(re | 8) + u >> 2] = J, i[(re | 12) + u >> 2] = z, Q = Q + 4 | 0, !((at | 0) > (Q | 0)))
+                        if (ct || (_ = D[d >> 2], z = (Wt(x(x(_ * D[b >> 2]) + (Gt(2, z), Ft()))), yt(2)), J = (Wt(x(x(ee * _) + (Gt(2, J), Ft()))), yt(2)), U = (Wt(x(x(N * _) + (Gt(2, U), Ft()))), yt(2)), w = (Wt(x(x(f * _) + (Gt(2, w), Ft()))), yt(2))), i[u + re >> 2] = w, i[(re | 4) + u >> 2] = U, i[(re | 8) + u >> 2] = J, i[(re | 12) + u >> 2] = z, P = P + 4 | 0, !((at | 0) > (P | 0)))
                           break;
                       }
                       break e;
                     }
                     Le(34032, 34057, 69), Te();
                   }
-                  if ((m | 0) > (Q | 0))
+                  if ((m | 0) > (P | 0))
                     for (w = (c | 0) < 1; ; ) {
-                      if (te = Q << 2, f = x(0), !w)
+                      if (te = P << 2, f = x(0), !w)
                         for (C = n + te | 0, b = 0; d = b << 2, f = x(f + x(D[d + r >> 2] * D[d + C >> 2])), b = b + 1 | 0, (b | 0) != (c | 0); )
                           ;
-                      if (D[u + te >> 2] = f, Q = Q + 1 | 0, (Q | 0) == (m | 0))
+                      if (D[u + te >> 2] = f, P = P + 1 | 0, (P | 0) == (m | 0))
                         break;
                     }
                   return;
@@ -67920,7 +67955,7 @@ function gb() {
                 Le(33965, 33995, 251), Te();
               }
               function Yr(r, n, u, c, m, d, _, b, f, w, C) {
-                var Q = x(0), N = 0, U = 0, J = 0, z = x(0), ee = 0, re = 0, de = x(0), te = x(0), se = 0, Ae = 0, be = 0, oe = x(0);
+                var P = x(0), N = 0, U = 0, J = 0, z = x(0), ee = 0, re = 0, de = x(0), te = x(0), se = 0, Ae = 0, be = 0, oe = x(0);
                 N = pe - 32 | 0, pe = N, i[N + 24 >> 2] = C, i[N + 28 >> 2] = m, m = i[r + 28 >> 2], ee = i[r >> 2];
                 e: {
                   if ((c | 0) == 1) {
@@ -67954,7 +67989,7 @@ function gb() {
                     i[f >> 2] = i[n >> 2];
                     break e;
                   }
-                  Ns(r, N, n, u, c, N + 28 | 0, d, d, b, 1, N + 24 | 0), Q = x(x(i[N + 8 >> 2]) * x(30517578125e-15)), te = x(x(i[N + 4 >> 2]) * x(30517578125e-15)), J = i[N + 28 >> 2], re = i[N + 20 >> 2], U = i[N + 16 >> 2], be = i[N >> 2];
+                  Ns(r, N, n, u, c, N + 28 | 0, d, d, b, 1, N + 24 | 0), P = x(x(i[N + 8 >> 2]) * x(30517578125e-15)), te = x(x(i[N + 4 >> 2]) * x(30517578125e-15)), J = i[N + 28 >> 2], re = i[N + 20 >> 2], U = i[N + 16 >> 2], be = i[N >> 2];
                   t: {
                     if ((c | 0) == 2) {
                       Ae = U & -16385, se = ((Ae | 0) != 0) << 3, i[r + 32 >> 2] = i[r + 32 >> 2] - (se + re | 0), U = (U | 0) > 8192, re = U ? n : u, U = U ? u : n, se = J - se | 0, J = 0;
@@ -67969,14 +68004,14 @@ function gb() {
                       }
                       if (b = ea(r, U, 2, se, d, _, b, f, x(1), w, C), d = 1 - (J << 1) | 0, D[re >> 2] = D[U + 4 >> 2] * x(0 - d | 0), D[re + 4 >> 2] = D[U >> 2] * x(d | 0), !i[r + 4 >> 2])
                         break t;
-                      D[n >> 2] = te * D[n >> 2], D[n + 4 >> 2] = te * D[n + 4 >> 2], z = x(Q * D[u >> 2]), D[u >> 2] = z, D[u + 4 >> 2] = Q * D[u + 4 >> 2], Q = D[n >> 2], D[n >> 2] = Q - z, D[u >> 2] = Q + D[u >> 2], Q = D[n + 4 >> 2], D[n + 4 >> 2] = Q - D[u + 4 >> 2], D[u + 4 >> 2] = Q + D[u + 4 >> 2];
+                      D[n >> 2] = te * D[n >> 2], D[n + 4 >> 2] = te * D[n + 4 >> 2], z = x(P * D[u >> 2]), D[u >> 2] = z, D[u + 4 >> 2] = P * D[u + 4 >> 2], P = D[n >> 2], D[n >> 2] = P - z, D[u >> 2] = P + D[u >> 2], P = D[n + 4 >> 2], D[n + 4 >> 2] = P - D[u + 4 >> 2], D[u + 4 >> 2] = P + D[u + 4 >> 2];
                       break t;
                     }
                     if (C = i[N + 12 >> 2], re = i[r + 32 >> 2] - re | 0, i[r + 32 >> 2] = re, m = i[N + 24 >> 2], C = (J - C | 0) / 2 | 0, C = (C | 0) > (J | 0) ? J : C, C = (C | 0) > 0 ? C : 0, ee = J - C | 0, (C | 0) >= (ee | 0)) {
-                      _ = ea(r, n, c, C, d, _, b, f, x(1), w, m), C = (i[r + 32 >> 2] - re | 0) + C | 0, b = _ | ea(r, u, c, (U && (C | 0) > 24 ? C - 24 | 0 : 0) + ee | 0, d, 0, b, 0, Q, 0, m >> d);
+                      _ = ea(r, n, c, C, d, _, b, f, x(1), w, m), C = (i[r + 32 >> 2] - re | 0) + C | 0, b = _ | ea(r, u, c, (U && (C | 0) > 24 ? C - 24 | 0 : 0) + ee | 0, d, 0, b, 0, P, 0, m >> d);
                       break t;
                     }
-                    J = ea(r, u, c, ee, d, 0, b, 0, Q, 0, m >> d), ee = (i[r + 32 >> 2] - re | 0) + ee | 0, b = J | ea(r, n, c, ((U | 0) != 16384 && (ee | 0) > 24 ? ee - 24 | 0 : 0) + C | 0, d, _, b, f, x(1), w, m);
+                    J = ea(r, u, c, ee, d, 0, b, 0, P, 0, m >> d), ee = (i[r + 32 >> 2] - re | 0) + ee | 0, b = J | ea(r, n, c, ((U | 0) != 16384 && (ee | 0) > 24 ? ee - 24 | 0 : 0) + C | 0, d, _, b, f, x(1), w, m);
                   }
                   if (!i[r + 4 >> 2])
                     break e;
@@ -67984,17 +68019,17 @@ function gb() {
                     if ((c | 0) == 2)
                       break t;
                     if (z = x(0), (c | 0) >= 1)
-                      for (r = 0; d = r << 2, Q = D[d + u >> 2], de = x(de + x(Q * D[n + d >> 2])), z = x(z + x(Q * Q)), r = r + 1 | 0, (c | 0) != (r | 0); )
+                      for (r = 0; d = r << 2, P = D[d + u >> 2], de = x(de + x(P * D[n + d >> 2])), z = x(z + x(P * P)), r = r + 1 | 0, (c | 0) != (r | 0); )
                         ;
                     i: {
-                      if (z = x(x(te * te) + z), Q = x(te * de), Q = x(Q + Q), de = x(z + Q), !(de < x(6000000284984708e-19)) && (Q = x(z - Q), Q < x(6000000284984708e-19) ^ 1))
+                      if (z = x(x(te * te) + z), P = x(te * de), P = x(P + P), de = x(z + P), !(de < x(6000000284984708e-19)) && (P = x(z - P), P < x(6000000284984708e-19) ^ 1))
                         break i;
                       bt(u, n, c << 2);
                       break t;
                     }
                     if ((c | 0) < 1)
                       break e;
-                    for (de = x(x(1) / x(si(de))), oe = x(x(1) / x(si(Q))), r = 0; d = r << 2, C = d + n | 0, Q = x(te * D[C >> 2]), d = u + d | 0, z = D[d >> 2], D[C >> 2] = oe * x(Q - z), D[d >> 2] = de * x(Q + z), r = r + 1 | 0, (c | 0) != (r | 0); )
+                    for (de = x(x(1) / x(si(de))), oe = x(x(1) / x(si(P))), r = 0; d = r << 2, C = d + n | 0, P = x(te * D[C >> 2]), d = u + d | 0, z = D[d >> 2], D[C >> 2] = oe * x(P - z), D[d >> 2] = de * x(P + z), r = r + 1 | 0, (c | 0) != (r | 0); )
                       ;
                   }
                   if (!be | (c | 0) < 1)
@@ -68005,7 +68040,7 @@ function gb() {
                 return pe = N + 32 | 0, b;
               }
               function Jr(r, n) {
-                var u = 0, c = 0, m = 0, d = 0, _ = 0, b = 0, f = 0, w = 0, C = 0, Q = 0, N = 0, U = 0, J = 0, z = 0, ee = 0, re = 0, de = 0, te = 0, se = 0, Ae = 0, be = 0, oe = 0, le = 0;
+                var u = 0, c = 0, m = 0, d = 0, _ = 0, b = 0, f = 0, w = 0, C = 0, P = 0, N = 0, U = 0, J = 0, z = 0, ee = 0, re = 0, de = 0, te = 0, se = 0, Ae = 0, be = 0, oe = 0, le = 0;
                 U = pe - 96 | 0;
                 e: {
                   if ((n | 0) >= 1) {
@@ -68018,31 +68053,31 @@ function gb() {
                     for (; ; ) {
                       if (_ & 1)
                         return 0;
-                      if (b = 0 - (f << 7) | 0, c = b >> 31, N = b, re = c, b = wi(N, c, N, c), c = Qt, _ = 1073741824 - c | 0, u = _, b = u >> 31, u = b, b = Q, u = wi(w, b, _, u), c = u, b = Qt, de = ((b & 1073741823) << 2 | c >>> 30) & -4, (de | 0) < 107374)
+                      if (b = 0 - (f << 7) | 0, c = b >> 31, N = b, re = c, b = wi(N, c, N, c), c = Qt, _ = 1073741824 - c | 0, u = _, b = u >> 31, u = b, b = P, u = wi(w, b, _, u), c = u, b = Qt, de = ((b & 1073741823) << 2 | c >>> 30) & -4, (de | 0) < 107374)
                         break e;
                       for (z = C, C = 0, f = _ >> 31, ee = Xe(f ^ _ + f), f = _ << ee - 1, r = f >> 16, _ = 536870911 / (r | 0) | 0, c = (_ >> 15) + 1 >> 1, J = _ << 16, _ = J >> 16, f = 0 - ((T(_, f & 65535) >> 16) + T(r, _) << 3) | 0, c = ((T(f, c) + J | 0) + T(f >> 16, _) | 0) + (T(f & 65528, _) >> 16) | 0, u = c >> 31, te = c, se = u, _ = n >>> 1 | 0, oe = _ >>> 0 > 1 ? _ : 1, Ae = 31 - ee | 0; ; ) {
-                        J = (C << 2) + U | 0, _ = i[J >> 2], be = ((C ^ -1) + z << 2) + U | 0, f = i[be >> 2], c = f, u = c >> 31, c = re, c = wi(f, u, N, c), b = c, u = Qt, c = u >>> 30 | 0, u = (u & 1073741823) << 2 | b >>> 30, m = u + 1 | 0, n = m >>> 0 < 1 ? c + 1 | 0 : c, c = m, n = (n & 1) << 31 | c >>> 1, r = _ - n | 0, c = r, r = (r | 0) > -1, c = (((r ? n : _) ^ -2147483648) & (r ? _ : n)) > -1 ? c : r ? -2147483648 : 2147483647, u = c >> 31, r = c, c = se, c = wi(r, u, te, c), w = c, u = Qt, Q = u, n = c, b = c & 1, c = 0, m = c, c = u, u = n, d = (c & 1) << 31 | u >>> 1, r = (ee | 0) != 31, n = c >> 1, u = n, n = m, m = u + n | 0, c = b, b = c + d | 0, m = b >>> 0 < d >>> 0 ? m + 1 | 0 : m, n = b;
+                        J = (C << 2) + U | 0, _ = i[J >> 2], be = ((C ^ -1) + z << 2) + U | 0, f = i[be >> 2], c = f, u = c >> 31, c = re, c = wi(f, u, N, c), b = c, u = Qt, c = u >>> 30 | 0, u = (u & 1073741823) << 2 | b >>> 30, m = u + 1 | 0, n = m >>> 0 < 1 ? c + 1 | 0 : c, c = m, n = (n & 1) << 31 | c >>> 1, r = _ - n | 0, c = r, r = (r | 0) > -1, c = (((r ? n : _) ^ -2147483648) & (r ? _ : n)) > -1 ? c : r ? -2147483648 : 2147483647, u = c >> 31, r = c, c = se, c = wi(r, u, te, c), w = c, u = Qt, P = u, n = c, b = c & 1, c = 0, m = c, c = u, u = n, d = (c & 1) << 31 | u >>> 1, r = (ee | 0) != 31, n = c >> 1, u = n, n = m, m = u + n | 0, c = b, b = c + d | 0, m = b >>> 0 < d >>> 0 ? m + 1 | 0 : m, n = b;
                         t: {
                           if (!r)
                             break t;
-                          m = Q, n = w, d = Ae, u = d & 31, (d & 63) >>> 0 >= 32 ? (c = m >> 31, m = m >> u) : (c = m >> u, m = ((1 << u) - 1 & m) << 32 - u | n >>> u), u = m + 1 | 0, b = u >>> 0 < 1 ? c + 1 | 0 : c, c = u, n = (b & 1) << 31 | c >>> 1, m = b >> 1;
+                          m = P, n = w, d = Ae, u = d & 31, (d & 63) >>> 0 >= 32 ? (c = m >> 31, m = m >> u) : (c = m >> u, m = ((1 << u) - 1 & m) << 32 - u | n >>> u), u = m + 1 | 0, b = u >>> 0 < 1 ? c + 1 | 0 : c, c = u, n = (b & 1) << 31 | c >>> 1, m = b >> 1;
                         }
-                        if (u = m, w = n, b = w, n = b - -2147483648 | 0, u = n >>> 0 < 2147483648 ? u + 1 | 0 : u, u || (i[J >> 2] = w, u = _, m = u >> 31, u = re, u = wi(_, m, N, u), d = u, m = Qt, u = m >>> 30 | 0, m = (m & 1073741823) << 2 | d >>> 30, c = m + 1 | 0, n = c >>> 0 < 1 ? u + 1 | 0 : u, u = c, _ = (n & 1) << 31 | u >>> 1, n = f - _ | 0, c = n, n = (n | 0) > -1, u = (((n ? _ : f) ^ -2147483648) & (n ? f : _)) > -1 ? c : n ? -2147483648 : 2147483647, m = u >> 31, n = u, u = se, u = wi(n, m, te, u), w = u, m = Qt, Q = m, r ? (m = Q, n = w, b = Ae, d = b & 31, (b & 63) >>> 0 >= 32 ? (u = m >> 31, m = m >> d) : (u = m >> d, m = ((1 << d) - 1 & m) << 32 - d | n >>> d), d = m + 1 | 0, c = d >>> 0 < 1 ? u + 1 | 0 : u, u = d, w = (c & 1) << 31 | u >>> 1, m = c >> 1, d = m) : (c = w, n = c & 1, u = 0, r = u, m = Q, u = m, b = (u & 1) << 31 | c >>> 1, c = u >> 1, m = c, c = r, d = c + m | 0, u = n, n = b + u | 0, w = n, d = n >>> 0 < b >>> 0 ? d + 1 | 0 : d), Q = d, c = w, m = c - -2147483648 | 0, n = m >>> 0 < 2147483648 ? d + 1 | 0 : d, c = 0, n))
+                        if (u = m, w = n, b = w, n = b - -2147483648 | 0, u = n >>> 0 < 2147483648 ? u + 1 | 0 : u, u || (i[J >> 2] = w, u = _, m = u >> 31, u = re, u = wi(_, m, N, u), d = u, m = Qt, u = m >>> 30 | 0, m = (m & 1073741823) << 2 | d >>> 30, c = m + 1 | 0, n = c >>> 0 < 1 ? u + 1 | 0 : u, u = c, _ = (n & 1) << 31 | u >>> 1, n = f - _ | 0, c = n, n = (n | 0) > -1, u = (((n ? _ : f) ^ -2147483648) & (n ? f : _)) > -1 ? c : n ? -2147483648 : 2147483647, m = u >> 31, n = u, u = se, u = wi(n, m, te, u), w = u, m = Qt, P = m, r ? (m = P, n = w, b = Ae, d = b & 31, (b & 63) >>> 0 >= 32 ? (u = m >> 31, m = m >> d) : (u = m >> d, m = ((1 << d) - 1 & m) << 32 - d | n >>> d), d = m + 1 | 0, c = d >>> 0 < 1 ? u + 1 | 0 : u, u = d, w = (c & 1) << 31 | u >>> 1, m = c >> 1, d = m) : (c = w, n = c & 1, u = 0, r = u, m = P, u = m, b = (u & 1) << 31 | c >>> 1, c = u >> 1, m = c, c = r, d = c + m | 0, u = n, n = b + u | 0, w = n, d = n >>> 0 < b >>> 0 ? d + 1 | 0 : d), P = d, c = w, m = c - -2147483648 | 0, n = m >>> 0 < 2147483648 ? d + 1 | 0 : d, c = 0, n))
                           break e;
                         if (i[be >> 2] = w, C = C + 1 | 0, (oe | 0) == (C | 0))
                           break;
                       }
-                      if (C = z - 1 | 0, f = i[(C << 2) + U >> 2], _ = f + 16773022 >>> 0 > 33546044, n = de, d = n >> 31, w = n, Q = d, n = z, !((n | 0) > 1))
+                      if (C = z - 1 | 0, f = i[(C << 2) + U >> 2], _ = f + 16773022 >>> 0 > 33546044, n = de, d = n >> 31, w = n, P = d, n = z, !((n | 0) > 1))
                         break;
                     }
                   if (_)
                     break e;
-                  n = 0 - (i[U >> 2] << 7) | 0, d = n >> 31, N = n, n = wi(N, d, N, d), u = 0, d = Qt, n = d & 2147483647, m = n + ((c | 0) != 0) | 0, m = 1073741824 - m | 0, d = m >> 31, n = Q, n = wi(m, d, w, n), m = n, d = Qt, _ = ((d & 1073741823) << 2 | m >>> 30) & -4, le = (_ | 0) < 107374 ? 0 : _;
+                  n = 0 - (i[U >> 2] << 7) | 0, d = n >> 31, N = n, n = wi(N, d, N, d), u = 0, d = Qt, n = d & 2147483647, m = n + ((c | 0) != 0) | 0, m = 1073741824 - m | 0, d = m >> 31, n = P, n = wi(m, d, w, n), m = n, d = Qt, _ = ((d & 1073741823) << 2 | m >>> 30) & -4, le = (_ | 0) < 107374 ? 0 : _;
                 }
                 return le;
               }
               function wu(r, n, u, c, m, d, _, b) {
-                var f = 0, w = 0, C = 0, Q = 0, N = 0, U = 0, J = 0, z = 0, ee = 0, re = 0, de = 0;
+                var f = 0, w = 0, C = 0, P = 0, N = 0, U = 0, J = 0, z = 0, ee = 0, re = 0, de = 0;
                 z = -1;
                 e: {
                   if (!d | (n | 0) < 0 || (z = -4, !n))
@@ -68050,12 +68085,12 @@ function gb() {
                   ee = we[r | 0];
                   t: {
                     if (ee & 128) {
-                      Q = (48e3 << (ee >>> 3 & 3) >>> 0) / 400 | 0;
+                      P = (48e3 << (ee >>> 3 & 3) >>> 0) / 400 | 0;
                       break t;
                     }
-                    if (Q = ee & 8 ? 960 : 480, (ee & 96) == 96 || (w = ee >>> 3 & 3, Q = 2880, (w | 0) == 3))
+                    if (P = ee & 8 ? 960 : 480, (ee & 96) == 96 || (w = ee >>> 3 & 3, P = 2880, (w | 0) == 3))
                       break t;
-                    Q = (48e3 << w >>> 0) / 100 | 0;
+                    P = (48e3 << w >>> 0) / 100 | 0;
                   }
                   C = 1, w = r + 1 | 0, f = n - 1 | 0, N = f, U = ee & 3;
                   t: {
@@ -68090,7 +68125,7 @@ function gb() {
                               default:
                                 break c;
                             }
-                          if ((n | 0) < 2 || (J = we[r + 1 | 0], C = J & 63, !C | T(C, Q) >>> 0 > 5760))
+                          if ((n | 0) < 2 || (J = we[r + 1 | 0], C = J & 63, !C | T(C, P) >>> 0 > 5760))
                             break e;
                           U = r + 2 | 0, n = n - 2 | 0;
                           c: {
@@ -68115,14 +68150,14 @@ function gb() {
                             for (de = C - 1 | 0, J = 0, N = n, f = n; ; ) {
                               if (re = (J << 1) + d | 0, (f | 0) <= 0)
                                 return L[re >> 1] = 65535, -4;
-                              if (Q = 1, n = we[w | 0], n >>> 0 >= 252) {
+                              if (P = 1, n = we[w | 0], n >>> 0 >= 252) {
                                 if ((f | 0) <= 1)
                                   return L[re >> 1] = 65535, -4;
-                                Q = 2, n = (we[w + 1 | 0] << 2) + n | 0;
+                                P = 2, n = (we[w + 1 | 0] << 2) + n | 0;
                               }
-                              if (L[re >> 1] = n, f = f - Q | 0, (f | 0) < (n | 0))
+                              if (L[re >> 1] = n, f = f - P | 0, (f | 0) < (n | 0))
                                 break e;
-                              if (w = w + Q | 0, N = (N - Q | 0) - n | 0, J = J + 1 | 0, (de | 0) == (J | 0))
+                              if (w = w + P | 0, N = (N - P | 0) - n | 0, J = J + 1 | 0, (de | 0) == (J | 0))
                                 break;
                             }
                             if ((N | 0) >= 0)
@@ -68137,14 +68172,14 @@ function gb() {
                             break e;
                           if (C >>> 0 < 2)
                             break i;
-                          for (Q = C - 1 | 0, f = 0; L[(f << 1) + d >> 1] = N, f = f + 1 | 0, (Q | 0) != (f | 0); )
+                          for (P = C - 1 | 0, f = 0; L[(f << 1) + d >> 1] = N, f = f + 1 | 0, (P | 0) != (f | 0); )
                             ;
                           f = n;
                         }
                         if (!u)
                           break i;
                       }
-                      Q = ((C << 1) + d | 0) - 2 | 0, n = 65535, u = -1;
+                      P = ((C << 1) + d | 0) - 2 | 0, n = 65535, u = -1;
                       a: {
                         if ((f | 0) < 1)
                           break a;
@@ -68156,10 +68191,10 @@ function gb() {
                           break a;
                         n = (we[w + 1 | 0] << 2) + J | 0, u = 2;
                       }
-                      if (L[Q >> 1] = n, Q = n << 16 >> 16, (Q | 0) < 0 || (f = f - u | 0, (Q | 0) > (f | 0)))
+                      if (L[P >> 1] = n, P = n << 16 >> 16, (P | 0) < 0 || (f = f - u | 0, (P | 0) > (f | 0)))
                         break e;
                       if (w = u + w | 0, U) {
-                        if ((T(C, Q) | 0) > (f | 0))
+                        if ((T(C, P) | 0) > (f | 0))
                           break e;
                         if (C >>> 0 < 2 || (L[d >> 1] = n, n = 1, z = C - 1 | 0, (z | 0) == 1))
                           break t;
@@ -68167,7 +68202,7 @@ function gb() {
                           ;
                         break t;
                       }
-                      if ((u + Q | 0) > (N | 0))
+                      if ((u + P | 0) > (N | 0))
                         break e;
                       break t;
                     }
@@ -68183,24 +68218,24 @@ function gb() {
                 return z;
               }
               function Ha(r, n, u, c, m, d, _, b, f) {
-                var w = 0, C = 0, Q = 0, N = 0, U = 0, J = 0, z = 0, ee = x(0), re = x(0), de = 0, te = 0, se = 0, Ae = 0;
+                var w = 0, C = 0, P = 0, N = 0, U = 0, J = 0, z = 0, ee = x(0), re = x(0), de = 0, te = 0, se = 0, Ae = 0;
                 U = pe - 32 | 0, pe = U, i[U + 24 >> 2] = f, i[U + 28 >> 2] = c, w = i[r + 8 >> 2], C = i[w + 100 >> 2] + L[i[w + 96 >> 2] + (i[r + 12 >> 2] + T(i[w + 8 >> 2], _ + 1 | 0) << 1) >> 1] | 0, w = we[C | 0], z = -1, de = i[r + 28 >> 2], te = i[r + 20 >> 2], se = i[r >> 2];
                 e: {
                   if (!((_ | 0) == -1 | (u | 0) < 3 | (we[w + C | 0] + 12 | 0) >= (c | 0))) {
-                    w = _ - 1 | 0, c = u >>> 1 | 0, u = (c << 2) + n | 0, (m | 0) == 1 && (i[U + 24 >> 2] = f & 1 | f << 1), J = m + 1 >> 1, Ns(r, U, n, u, c, U + 28 | 0, J, m, w, 0, U + 24 | 0), ee = x(i[U + 8 >> 2]), re = x(i[U + 4 >> 2]), f = i[U + 20 >> 2], C = i[U + 12 >> 2], z = i[U + 16 >> 2], Q = C;
+                    w = _ - 1 | 0, c = u >>> 1 | 0, u = (c << 2) + n | 0, (m | 0) == 1 && (i[U + 24 >> 2] = f & 1 | f << 1), J = m + 1 >> 1, Ns(r, U, n, u, c, U + 28 | 0, J, m, w, 0, U + 24 | 0), ee = x(i[U + 8 >> 2]), re = x(i[U + 4 >> 2]), f = i[U + 20 >> 2], C = i[U + 12 >> 2], z = i[U + 16 >> 2], P = C;
                     t: {
-                      if (!(z & 16383) | (m | 0) < 2 || (Q = C - (C >> 5 - _) | 0, (z | 0) >= 8193))
+                      if (!(z & 16383) | (m | 0) < 2 || (P = C - (C >> 5 - _) | 0, (z | 0) >= 8193))
                         break t;
-                      _ = (c << 3 >> 6 - _) + C | 0, Q = _ & _ >> 31;
+                      _ = (c << 3 >> 6 - _) + C | 0, P = _ & _ >> 31;
                     }
-                    if (C = Q, ee = x(ee * x(30517578125e-15)), re = x(re * x(30517578125e-15)), _ = i[U + 28 >> 2], f = i[r + 32 >> 2] - f | 0, i[r + 32 >> 2] = f, N = d ? (c << 2) + d | 0 : 0, C = (_ - C | 0) / 2 | 0, C = (_ | 0) < (C | 0) ? _ : C, C = (C | 0) > 0 ? C : 0, _ = _ - C | 0, (_ | 0) <= (C | 0)) {
-                      Q = i[U + 24 >> 2], n = Ha(r, n, c, C, J, d, w, x(re * b), Q), C = (i[r + 32 >> 2] - f | 0) + C | 0, w = n | Ha(r, u, c, (z && (C | 0) > 24 ? C - 24 | 0 : 0) + _ | 0, J, N, w, x(ee * b), Q >> J) << (m >> 1);
+                    if (C = P, ee = x(ee * x(30517578125e-15)), re = x(re * x(30517578125e-15)), _ = i[U + 28 >> 2], f = i[r + 32 >> 2] - f | 0, i[r + 32 >> 2] = f, N = d ? (c << 2) + d | 0 : 0, C = (_ - C | 0) / 2 | 0, C = (_ | 0) < (C | 0) ? _ : C, C = (C | 0) > 0 ? C : 0, _ = _ - C | 0, (_ | 0) <= (C | 0)) {
+                      P = i[U + 24 >> 2], n = Ha(r, n, c, C, J, d, w, x(re * b), P), C = (i[r + 32 >> 2] - f | 0) + C | 0, w = n | Ha(r, u, c, (z && (C | 0) > 24 ? C - 24 | 0 : 0) + _ | 0, J, N, w, x(ee * b), P >> J) << (m >> 1);
                       break e;
                     }
-                    Q = i[U + 24 >> 2], u = Ha(r, u, c, _, J, N, w, x(ee * b), Q >> J), _ = (i[r + 32 >> 2] - f | 0) + _ | 0, w = Ha(r, n, c, ((z | 0) != 16384 && (_ | 0) > 24 ? _ - 24 | 0 : 0) + C | 0, J, d, w, x(re * b), Q) | u << (m >> 1);
+                    P = i[U + 24 >> 2], u = Ha(r, u, c, _, J, N, w, x(ee * b), P >> J), _ = (i[r + 32 >> 2] - f | 0) + _ | 0, w = Ha(r, n, c, ((z | 0) != 16384 && (_ | 0) > 24 ? _ - 24 | 0 : 0) + C | 0, J, d, w, x(re * b), P) | u << (m >> 1);
                     break e;
                   }
-                  _ = c - 1 | 0, N = w + 1 >>> 1 | 0, c = (_ | 0) > we[N + C | 0], w = c ? w : N, Q = w, N = c ? N : 0, c = (N + w | 0) + 1 >>> 1 | 0, w = we[C + c | 0] < (_ | 0), Q = w ? Q : c, w = w ? c : N, c = (Q + w | 0) + 1 >>> 1 | 0, N = we[C + c | 0] < (_ | 0), w = N ? c : w, Q = N ? Q : c, c = (w + Q | 0) + 1 >>> 1 | 0, N = we[C + c | 0] < (_ | 0), w = N ? c : w, Q = N ? Q : c, c = (w + Q | 0) + 1 >> 1, N = we[C + c | 0] < (_ | 0), Q = N ? Q : c, Ae = Q, N = N ? c : w, c = (Q + N | 0) + 1 >> 1, Q = we[C + c | 0] < (_ | 0), w = Q ? Ae : c, c = Q ? c : N, c && (z = we[c + C | 0]), c = (_ - z | 0) > (we[w + C | 0] - _ | 0) ? w : c, c && (J = we[c + C | 0] + 1 | 0), w = i[r + 32 >> 2] - J | 0, i[r + 32 >> 2] = w;
+                  _ = c - 1 | 0, N = w + 1 >>> 1 | 0, c = (_ | 0) > we[N + C | 0], w = c ? w : N, P = w, N = c ? N : 0, c = (N + w | 0) + 1 >>> 1 | 0, w = we[C + c | 0] < (_ | 0), P = w ? P : c, w = w ? c : N, c = (P + w | 0) + 1 >>> 1 | 0, N = we[C + c | 0] < (_ | 0), w = N ? c : w, P = N ? P : c, c = (w + P | 0) + 1 >>> 1 | 0, N = we[C + c | 0] < (_ | 0), w = N ? c : w, P = N ? P : c, c = (w + P | 0) + 1 >> 1, N = we[C + c | 0] < (_ | 0), P = N ? P : c, Ae = P, N = N ? c : w, c = (P + N | 0) + 1 >> 1, P = we[C + c | 0] < (_ | 0), w = P ? Ae : c, c = P ? c : N, c && (z = we[c + C | 0]), c = (_ - z | 0) > (we[w + C | 0] - _ | 0) ? w : c, c && (J = we[c + C | 0] + 1 | 0), w = i[r + 32 >> 2] - J | 0, i[r + 32 >> 2] = w;
                   t: {
                     i: {
                       if ((w | 0) > -1) {
@@ -68260,19 +68295,19 @@ function gb() {
                 return pe = U + 32 | 0, w;
               }
               function xu(r, n, u, c, m, d) {
-                var _ = x(0), b = x(0), f = 0, w = 0, C = 0, Q = 0, N = x(0), U = x(0), J = x(0), z = 0, ee = 0, re = x(0), de = 0, te = 0, se = x(0), Ae = 0;
+                var _ = x(0), b = x(0), f = 0, w = 0, C = 0, P = 0, N = x(0), U = x(0), J = x(0), z = 0, ee = 0, re = x(0), de = 0, te = 0, se = x(0), Ae = 0;
                 d = pe, Ae = d;
                 e: {
                   if ((c | 0) <= 0)
                     break e;
-                  if (Q = u >>> 2 | 0, f = d - ((Q << 2) + 15 & -16) | 0, d = f, pe = d, w = u + c | 0, C = d - ((w & -4) + 15 & -16) | 0, d = C, pe = d, z = c >>> 1 | 0, ee = d - ((z << 2) + 15 & -16) | 0, pe = ee, Q)
-                    for (d = 0; i[(d << 2) + f >> 2] = i[(d << 3) + r >> 2], d = d + 1 | 0, (Q | 0) != (d | 0); )
+                  if (P = u >>> 2 | 0, f = d - ((P << 2) + 15 & -16) | 0, d = f, pe = d, w = u + c | 0, C = d - ((w & -4) + 15 & -16) | 0, d = C, pe = d, z = c >>> 1 | 0, ee = d - ((z << 2) + 15 & -16) | 0, pe = ee, P)
+                    for (d = 0; i[(d << 2) + f >> 2] = i[(d << 3) + r >> 2], d = d + 1 | 0, (P | 0) != (d | 0); )
                       ;
                   if ((w | 0) >= 4)
                     for (d = w >> 2, w = (d | 0) > 1 ? d : 1, d = 0; i[(d << 2) + C >> 2] = i[(d << 3) + n >> 2], d = d + 1 | 0, (w | 0) != (d | 0); )
                       ;
-                  if (w = c >> 2, js(f, C, ee, Q, w, d), b = x(1), Q)
-                    for (d = 0; _ = D[(d << 2) + C >> 2], b = x(b + x(_ * _)), d = d + 1 | 0, (Q | 0) != (d | 0); )
+                  if (w = c >> 2, js(f, C, ee, P, w, d), b = x(1), P)
+                    for (d = 0; _ = D[(d << 2) + C >> 2], b = x(b + x(_ * _)), d = d + 1 | 0, (P | 0) != (d | 0); )
                       ;
                   if (de = 1, (c | 0) > 3)
                     for (U = x(-1), d = 0, J = x(-1); ; ) {
@@ -68286,20 +68321,20 @@ function gb() {
                         }
                         de = d, J = _, N = b;
                       }
-                      if (_ = D[(d + Q << 2) + C >> 2], se = x(_ * _), _ = D[C + f >> 2], b = x(xt(x(b + x(se - x(_ * _))), x(1))), d = d + 1 | 0, (w | 0) == (d | 0))
+                      if (_ = D[(d + P << 2) + C >> 2], se = x(_ * _), _ = D[C + f >> 2], b = x(xt(x(b + x(se - x(_ * _))), x(1))), d = d + 1 | 0, (w | 0) == (d | 0))
                         break;
                     }
                   t: {
                     if (!z) {
-                      Q = u >> 1;
+                      P = u >> 1;
                       break t;
                     }
-                    for (Q = u >> 1, de = de << 1, te = te << 1, w = 0; ; ) {
+                    for (P = u >> 1, de = de << 1, te = te << 1, w = 0; ; ) {
                       C = w << 2, c = ee + C | 0, i[c >> 2] = 0, d = w - te | 0, f = d, d = d >> 31;
                       i: {
                         if ((d ^ d + f) >= 3 && (d = w - de | 0, f = d, d = d >> 31, (d ^ d + f) > 2))
                           break i;
-                        for (b = x(0), f = n + C | 0, d = 0; C = d << 2, b = x(b + x(D[C + r >> 2] * D[C + f >> 2])), d = d + 1 | 0, (Q | 0) != (d | 0); )
+                        for (b = x(0), f = n + C | 0, d = 0; C = d << 2, b = x(b + x(D[C + r >> 2] * D[C + f >> 2])), d = d + 1 | 0, (P | 0) != (d | 0); )
                           ;
                         D[c >> 2] = xt(b, x(-1));
                       }
@@ -68307,7 +68342,7 @@ function gb() {
                         break;
                     }
                   }
-                  for (b = x(1), d = 0; _ = D[(d << 2) + n >> 2], b = x(b + x(_ * _)), d = d + 1 | 0, (Q | 0) != (d | 0); )
+                  for (b = x(1), d = 0; _ = D[(d << 2) + n >> 2], b = x(b + x(_ * _)), d = d + 1 | 0, (P | 0) != (d | 0); )
                     ;
                   f = 0;
                   t: {
@@ -68326,7 +68361,7 @@ function gb() {
                         }
                         J = _, N = b;
                       }
-                      if (_ = D[(d + Q << 2) + n >> 2], se = x(_ * _), _ = D[n + C >> 2], b = x(xt(x(b + x(se - x(_ * _))), x(1))), d = d + 1 | 0, (z | 0) == (d | 0))
+                      if (_ = D[(d + P << 2) + n >> 2], se = x(_ * _), _ = D[n + C >> 2], b = x(xt(x(b + x(se - x(_ * _))), x(1))), d = d + 1 | 0, (z | 0) == (d | 0))
                         break;
                     }
                     if ((r | 0) < 1 | (z - 1 | 0) <= (r | 0) || (f = -1, d = (r << 2) + ee | 0, _ = D[d + 4 >> 2], b = D[d - 4 >> 2], N = D[d >> 2], x(_ - b) > x(x(N - b) * x(0.699999988079071))))
@@ -68339,7 +68374,7 @@ function gb() {
                 Le(33965, 33995, 303), Te();
               }
               function Vr(r, n, u, c, m, d) {
-                var _ = x(0), b = 0, f = x(0), w = x(0), C = x(0), Q = 0, N = 0, U = 0, J = 0, z = 0, ee = 0, re = 0, de = 0, te = 0, se = 0;
+                var _ = x(0), b = 0, f = x(0), w = x(0), C = x(0), P = 0, N = 0, U = 0, J = 0, z = 0, ee = 0, re = 0, de = 0, te = 0, se = 0;
                 e: {
                   if (!d | m << 1 >= (n | 0))
                     break e;
@@ -68349,13 +68384,13 @@ function gb() {
                   if ((c | 0) < 1)
                     break e;
                   for (w = x(de), C = x(te), J = (n >>> 0) / (c >>> 0) | 0, z = J - d | 0, N = J - 3 | 0, ee = J - 1 | 0, U = (d << 1 ^ -1) + J | 0, se = (u | 0) > -1, u = 0; ; ) {
-                    Q = T(u, J);
+                    P = T(u, J);
                     t: {
                       if (!se) {
                         i: {
                           if (!d)
                             break i;
-                          if (n = 0, re = (Q << 2) + r | 0, m = re, (z | 0) >= 1)
+                          if (n = 0, re = (P << 2) + r | 0, m = re, (z | 0) >= 1)
                             for (; b = (d << 2) + m | 0, f = D[b >> 2], _ = D[m >> 2], D[b >> 2] = x(_ * w) + x(f * C), D[m >> 2] = x(_ * C) - x(f * w), m = m + 4 | 0, n = n + 1 | 0, (z | 0) != (n | 0); )
                               ;
                           if ((U | 0) < 0)
@@ -68363,7 +68398,7 @@ function gb() {
                           for (m = (U << 2) + re | 0, n = U; b = (d << 2) + m | 0, f = D[b >> 2], _ = D[m >> 2], D[b >> 2] = x(_ * w) + x(f * C), D[m >> 2] = x(_ * C) - x(f * w), m = m - 4 | 0, b = (n | 0) > 0, n = n - 1 | 0, !!b; )
                             ;
                         }
-                        if (b = (Q << 2) + r | 0, (ee | 0) >= 1)
+                        if (b = (P << 2) + r | 0, (ee | 0) >= 1)
                           for (_ = D[b >> 2], n = 0, m = b; f = D[m + 4 >> 2], D[m >> 2] = x(_ * w) - x(f * C), _ = x(x(_ * C) + x(f * w)), D[m + 4 >> 2] = _, m = m + 4 | 0, n = n + 1 | 0, (ee | 0) != (n | 0); )
                             ;
                         if ((N | 0) < 0)
@@ -68372,20 +68407,20 @@ function gb() {
                           ;
                         break t;
                       }
-                      if (Q = (Q << 2) + r | 0, (ee | 0) >= 1)
-                        for (_ = D[Q >> 2], n = 0, m = Q; f = D[m + 4 >> 2], D[m >> 2] = x(_ * w) + x(f * C), _ = x(x(f * w) - x(_ * C)), D[m + 4 >> 2] = _, m = m + 4 | 0, n = n + 1 | 0, (ee | 0) != (n | 0); )
+                      if (P = (P << 2) + r | 0, (ee | 0) >= 1)
+                        for (_ = D[P >> 2], n = 0, m = P; f = D[m + 4 >> 2], D[m >> 2] = x(_ * w) + x(f * C), _ = x(x(f * w) - x(_ * C)), D[m + 4 >> 2] = _, m = m + 4 | 0, n = n + 1 | 0, (ee | 0) != (n | 0); )
                           ;
                       if ((N | 0) >= 0)
-                        for (m = (N << 2) + Q | 0, n = N; _ = D[m + 4 >> 2], f = D[m >> 2], D[m + 4 >> 2] = x(_ * w) - x(f * C), D[m >> 2] = x(f * w) + x(_ * C), m = m - 4 | 0, b = (n | 0) > 0, n = n - 1 | 0, !!b; )
+                        for (m = (N << 2) + P | 0, n = N; _ = D[m + 4 >> 2], f = D[m >> 2], D[m + 4 >> 2] = x(_ * w) - x(f * C), D[m >> 2] = x(f * w) + x(_ * C), m = m - 4 | 0, b = (n | 0) > 0, n = n - 1 | 0, !!b; )
                           ;
                       if (!d)
                         break t;
-                      if (n = 0, m = Q, (z | 0) >= 1)
+                      if (n = 0, m = P, (z | 0) >= 1)
                         for (; b = (d << 2) + m | 0, _ = D[b >> 2], f = D[m >> 2], D[b >> 2] = x(_ * C) - x(f * w), D[m >> 2] = x(f * C) + x(_ * w), m = m + 4 | 0, n = n + 1 | 0, (z | 0) != (n | 0); )
                           ;
                       if ((U | 0) < 0)
                         break t;
-                      for (m = (U << 2) + Q | 0, n = U; b = (d << 2) + m | 0, _ = D[b >> 2], f = D[m >> 2], D[b >> 2] = x(_ * C) - x(f * w), D[m >> 2] = x(f * C) + x(_ * w), m = m - 4 | 0, b = (n | 0) > 0, n = n - 1 | 0, !!b; )
+                      for (m = (U << 2) + P | 0, n = U; b = (d << 2) + m | 0, _ = D[b >> 2], f = D[m >> 2], D[b >> 2] = x(_ * C) - x(f * w), D[m >> 2] = x(f * C) + x(_ * w), m = m - 4 | 0, b = (n | 0) > 0, n = n - 1 | 0, !!b; )
                         ;
                     }
                     if (u = u + 1 | 0, (c | 0) == (u | 0))
@@ -68394,7 +68429,7 @@ function gb() {
                 }
               }
               function Os(r, n) {
-                var u = 0, c = 0, m = 0, d = 0, _ = 0, b = 0, f = 0, w = 0, C = 0, Q = 0, N = 0;
+                var u = 0, c = 0, m = 0, d = 0, _ = 0, b = 0, f = 0, w = 0, C = 0, P = 0, N = 0;
                 _ = pe - 48 | 0, pe = _;
                 e: {
                   t: {
@@ -68441,17 +68476,17 @@ function gb() {
                       if (b >>> 0 > 1094263290)
                         break t;
                     }
-                    u = r * 0.6366197723675814 + 6755399441055744 + -6755399441055744, w = r + u * -1.5707963267341256, Q = u * 6077100506506192e-26, r = w - Q, ve[n >> 3] = r, C = b >>> 20 | 0, Qi(+r), d = yt(1) | 0, yt(0) | 0, d = (C - (d >>> 20 & 2047) | 0) < 17, Ke(u) < 2147483648 ? c = ~~u : c = -2147483648;
+                    u = r * 0.6366197723675814 + 6755399441055744 + -6755399441055744, w = r + u * -1.5707963267341256, P = u * 6077100506506192e-26, r = w - P, ve[n >> 3] = r, C = b >>> 20 | 0, Qi(+r), d = yt(1) | 0, yt(0) | 0, d = (C - (d >>> 20 & 2047) | 0) < 17, Ke(u) < 2147483648 ? c = ~~u : c = -2147483648;
                     i: {
                       if (d)
                         break i;
-                      if (r = u * 6077100506303966e-26, N = w - r, Q = u * 20222662487959506e-37 - (w - N - r), r = N - Q, ve[n >> 3] = r, Qi(+r), d = yt(1) | 0, yt(0) | 0, (C - (d >>> 20 & 2047) | 0) < 50) {
+                      if (r = u * 6077100506303966e-26, N = w - r, P = u * 20222662487959506e-37 - (w - N - r), r = N - P, ve[n >> 3] = r, Qi(+r), d = yt(1) | 0, yt(0) | 0, (C - (d >>> 20 & 2047) | 0) < 50) {
                         w = N;
                         break i;
                       }
-                      r = u * 20222662487111665e-37, w = N - r, Q = u * 84784276603689e-45 - (N - w - r), r = w - Q, ve[n >> 3] = r;
+                      r = u * 20222662487111665e-37, w = N - r, P = u * 84784276603689e-45 - (N - w - r), r = w - P, ve[n >> 3] = r;
                     }
-                    ve[n + 8 >> 3] = w - r - Q;
+                    ve[n + 8 >> 3] = w - r - P;
                     break e;
                   }
                   if (b >>> 0 >= 2146435072) {
@@ -68880,7 +68915,7 @@ function gb() {
                 L[r + 28 >> 1] = 0, L[r + 30 >> 1] = 0;
               }
               function Cu(r, n, u, c, m) {
-                var d = x(0), _ = 0, b = 0, f = 0, w = 0, C = x(0), Q = x(0), N = x(0), U = 0, J = 0, z = 0, ee = x(0), re = x(0), de = x(0), te = x(0), se = x(0), Ae = x(0), be = x(0);
+                var d = x(0), _ = 0, b = 0, f = 0, w = 0, C = x(0), P = x(0), N = x(0), U = 0, J = 0, z = 0, ee = x(0), re = x(0), de = x(0), te = x(0), se = x(0), Ae = x(0), be = x(0);
                 for (_ = pe - 48 | 0, pe = _, U = u >> 1, f = i[r >> 2], z = (U | 0) > 2 ? U : 2, b = 1; w = b << 3, J = w + f | 0, D[(b << 2) + n >> 2] = x(D[J >> 2] + x(x(D[J - 4 >> 2] + D[(w | 4) + f >> 2]) * x(0.5))) * x(0.5), b = b + 1 | 0, (z | 0) != (b | 0); )
                   ;
                 if (d = x(x(x(D[f + 4 >> 2] * x(0.5)) + D[f >> 2]) * x(0.5)), D[n >> 2] = d, (c | 0) == 2) {
@@ -68892,19 +68927,19 @@ function gb() {
                   }
                   D[n >> 2] = d + x(x(x(D[f + 4 >> 2] * x(0.5)) + D[f >> 2]) * x(0.5));
                 }
-                for (b = 0, ln(n, _ + 16 | 0, 0, 0, 4, U, m), D[_ + 16 >> 2] = D[_ + 16 >> 2] * x(1.000100016593933), d = D[_ + 20 >> 2], D[_ + 20 >> 2] = d - x(x(d * x(0.00800000037997961)) * x(0.00800000037997961)), d = D[_ + 24 >> 2], D[_ + 24 >> 2] = d - x(x(d * x(0.01600000075995922)) * x(0.01600000075995922)), d = D[_ + 28 >> 2], D[_ + 28 >> 2] = d - x(x(d * x(0.024000000208616257)) * x(0.024000000208616257)), d = D[_ + 32 >> 2], D[_ + 32 >> 2] = d - x(x(d * x(0.03200000151991844)) * x(0.03200000151991844)), sn(_, _ + 16 | 0, 4), d = x(D[_ + 8 >> 2] * x(0.7289999127388)), D[_ + 8 >> 2] = d, C = x(D[_ + 12 >> 2] * x(0.6560999155044556)), D[_ + 12 >> 2] = C, Q = x(D[_ + 4 >> 2] * x(0.809999942779541)), D[_ + 4 >> 2] = Q, N = x(D[_ >> 2] * x(0.8999999761581421)), D[_ >> 2] = N, re = x(C + x(d * x(0.800000011920929))), de = x(d + x(Q * x(0.800000011920929))), te = x(Q + x(N * x(0.800000011920929))), se = x(C * x(0.800000011920929)), Ae = x(N + x(0.800000011920929)), d = x(0), C = x(0), Q = x(0), N = x(0); f = (b << 2) + n | 0, ee = D[f >> 2], D[f >> 2] = x(se * be) + x(x(re * d) + x(x(de * C) + x(x(te * Q) + x(x(Ae * N) + ee)))), be = d, d = C, C = Q, Q = N, N = ee, b = b + 1 | 0, (U | 0) != (b | 0); )
+                for (b = 0, ln(n, _ + 16 | 0, 0, 0, 4, U, m), D[_ + 16 >> 2] = D[_ + 16 >> 2] * x(1.000100016593933), d = D[_ + 20 >> 2], D[_ + 20 >> 2] = d - x(x(d * x(0.00800000037997961)) * x(0.00800000037997961)), d = D[_ + 24 >> 2], D[_ + 24 >> 2] = d - x(x(d * x(0.01600000075995922)) * x(0.01600000075995922)), d = D[_ + 28 >> 2], D[_ + 28 >> 2] = d - x(x(d * x(0.024000000208616257)) * x(0.024000000208616257)), d = D[_ + 32 >> 2], D[_ + 32 >> 2] = d - x(x(d * x(0.03200000151991844)) * x(0.03200000151991844)), sn(_, _ + 16 | 0, 4), d = x(D[_ + 8 >> 2] * x(0.7289999127388)), D[_ + 8 >> 2] = d, C = x(D[_ + 12 >> 2] * x(0.6560999155044556)), D[_ + 12 >> 2] = C, P = x(D[_ + 4 >> 2] * x(0.809999942779541)), D[_ + 4 >> 2] = P, N = x(D[_ >> 2] * x(0.8999999761581421)), D[_ >> 2] = N, re = x(C + x(d * x(0.800000011920929))), de = x(d + x(P * x(0.800000011920929))), te = x(P + x(N * x(0.800000011920929))), se = x(C * x(0.800000011920929)), Ae = x(N + x(0.800000011920929)), d = x(0), C = x(0), P = x(0), N = x(0); f = (b << 2) + n | 0, ee = D[f >> 2], D[f >> 2] = x(se * be) + x(x(re * d) + x(x(de * C) + x(x(te * P) + x(x(Ae * N) + ee)))), be = d, d = C, C = P, P = N, N = ee, b = b + 1 | 0, (U | 0) != (b | 0); )
                   ;
                 pe = _ + 48 | 0;
               }
               function Bu(r, n, u) {
-                var c = 0, m = 0, d = 0, _ = 0, b = 0, f = 0, w = 0, C = 0, Q = 0, N = 0, U = 0, J = 0, z = 0, ee = 0;
-                N = (u << 1) + n | 0, U = u - 1 | 0, Q = (U << 1) + r | 0, ee = (u | 0) < 2;
+                var c = 0, m = 0, d = 0, _ = 0, b = 0, f = 0, w = 0, C = 0, P = 0, N = 0, U = 0, J = 0, z = 0, ee = 0;
+                N = (u << 1) + n | 0, U = u - 1 | 0, P = (U << 1) + r | 0, ee = (u | 0) < 2;
                 e: {
                   for (; ; ) {
                     if (d = L[r >> 1], w = L[n >> 1], c = d - w | 0, m = 1, _ = 0, !ee)
                       for (; b = d << 16, C = m << 1, d = L[C + r >> 1], b = (d - (b >> 16) | 0) - L[n + C >> 1] | 0, f = b, b = (c | 0) > (b | 0), c = b ? f : c, _ = b ? m : _, m = m + 1 | 0, (m | 0) != (u | 0); )
                         ;
-                    if (d = L[N >> 1], m = 32768 - (d + L[Q >> 1] | 0) | 0, f = m, m = (c | 0) > (m | 0), ((m ? f : c) | 0) > -1)
+                    if (d = L[N >> 1], m = 32768 - (d + L[P >> 1] | 0) | 0, f = m, m = (c | 0) > (m | 0), ((m ? f : c) | 0) > -1)
                       break e;
                     c = m ? u : _;
                     t: {
@@ -68920,7 +68955,7 @@ function gb() {
                             w = 0;
                             break i;
                           }
-                          L[Q >> 1] = -32768 - d;
+                          L[P >> 1] = -32768 - d;
                           break t;
                         }
                         if (m = 1, (c | 0) == 1)
@@ -68955,31 +68990,31 @@ function gb() {
                   if (fd(r, u), m = L[r >> 1], c = L[n >> 1], c = (c | 0) < (m | 0) ? m : c, L[r >> 1] = c, b = (u | 0) < 2, !b)
                     for (m = 1; _ = m << 1, d = _ + r | 0, f = d, d = L[d >> 1], c = L[n + _ >> 1] + (c << 16 >> 16) | 0, c = (c | 0) < 32767 ? c : 32767, c = (c | 0) > -32768 ? c : -32768, c = (c | 0) < (d | 0) ? d : c, L[f >> 1] = c, m = m + 1 | 0, (m | 0) != (u | 0); )
                       ;
-                  if (m = L[Q >> 1], c = 32768 - L[N >> 1] | 0, c = (c | 0) > (m | 0) ? m : c, L[Q >> 1] = c, b)
+                  if (m = L[P >> 1], c = 32768 - L[N >> 1] | 0, c = (c | 0) > (m | 0) ? m : c, L[P >> 1] = c, b)
                     break e;
                   for (m = u - 2 | 0; _ = m << 1, d = _ + r | 0, u = d, d = L[d >> 1], c = (c << 16 >> 16) - L[(n + _ | 0) + 2 >> 1] | 0, c = (c | 0) > (d | 0) ? d : c, L[u >> 1] = c, _ = (m | 0) > 0, m = m - 1 | 0, !!_; )
                     ;
                 }
               }
               function Ys(r, n, u, c, m, d) {
-                var _ = 0, b = 0, f = 0, w = 0, C = 0, Q = 0, N = 0, U = 0, J = 0, z = 0, ee = 0, re = 0, de = 0, te = 0, se = 0;
-                f = pe - 16 | 0, pe = f, ee = i[r + 24 >> 2], re = ee - 1 | 0, U = i[r + 72 >> 2], de = i[r + 28 >> 2], te = T(de, n), J = U + (te << 2) | 0, se = i[r + 88 >> 2], Q = i[d >> 2], N = i[c >> 2], _ = n << 2, b = _ + i[r + 68 >> 2] | 0;
+                var _ = 0, b = 0, f = 0, w = 0, C = 0, P = 0, N = 0, U = 0, J = 0, z = 0, ee = 0, re = 0, de = 0, te = 0, se = 0;
+                f = pe - 16 | 0, pe = f, ee = i[r + 24 >> 2], re = ee - 1 | 0, U = i[r + 72 >> 2], de = i[r + 28 >> 2], te = T(de, n), J = U + (te << 2) | 0, se = i[r + 88 >> 2], P = i[d >> 2], N = i[c >> 2], _ = n << 2, b = _ + i[r + 68 >> 2] | 0;
                 e: {
                   if (i[b >> 2]) {
-                    if (i[f + 12 >> 2] = Q, i[f + 8 >> 2] = i[b >> 2], i[r + 56 >> 2] = 1, w = ta[i[r + 84 >> 2]](r, n, J, f + 8 | 0, m, f + 12 | 0) | 0, b = i[f + 8 >> 2], _ = i[r + 60 >> 2] + _ | 0, C = i[_ >> 2], (b | 0) > (C | 0) && (i[f + 8 >> 2] = C, b = C), i[f + 12 >> 2] = w, i[_ >> 2] = i[_ >> 2] - b, b = i[f + 8 >> 2], (ee | 0) >= 2)
+                    if (i[f + 12 >> 2] = P, i[f + 8 >> 2] = i[b >> 2], i[r + 56 >> 2] = 1, w = ta[i[r + 84 >> 2]](r, n, J, f + 8 | 0, m, f + 12 | 0) | 0, b = i[f + 8 >> 2], _ = i[r + 60 >> 2] + _ | 0, C = i[_ >> 2], (b | 0) > (C | 0) && (i[f + 8 >> 2] = C, b = C), i[f + 12 >> 2] = w, i[_ >> 2] = i[_ >> 2] - b, b = i[f + 8 >> 2], (ee | 0) >= 2)
                       for (_ = 0; i[(_ << 2) + J >> 2] = i[(_ + b << 2) + J >> 2], _ = _ + 1 | 0, (re | 0) != (_ | 0); )
                         ;
                     if (z = i[r + 68 >> 2] + (n << 2) | 0, w = i[z >> 2] - b | 0, i[z >> 2] = w, w)
                       for (_ = 0, C = i[f + 8 >> 2]; b = _ + re | 0, i[(b << 2) + J >> 2] = i[(b + C << 2) + J >> 2], _ = _ + 1 | 0, (w | 0) != (_ | 0); )
                         ;
-                    if (_ = i[f + 12 >> 2], Q = Q - _ | 0, i[z >> 2])
+                    if (_ = i[f + 12 >> 2], P = P - _ | 0, i[z >> 2])
                       break e;
                     m = (T(i[r + 92 >> 2], _) << 2) + m | 0;
                   }
-                  if (!Q | !N)
+                  if (!P | !N)
                     break e;
                   for (z = de - re | 0, de = ((ee + te << 2) + U | 0) - 4 | 0; ; ) {
-                    b = N >>> 0 > z >>> 0 ? z : N, i[f + 12 >> 2] = b, i[f + 8 >> 2] = Q;
+                    b = N >>> 0 > z >>> 0 ? z : N, i[f + 12 >> 2] = b, i[f + 8 >> 2] = P;
                     t: {
                       if (u) {
                         if (_ = 0, !b)
@@ -68997,16 +69032,16 @@ function gb() {
                         ;
                       _ = i[f + 12 >> 2];
                     }
-                    if (N = N - w | 0, b = i[f + 8 >> 2], Q = Q - b | 0, !Q)
+                    if (N = N - w | 0, b = i[f + 8 >> 2], P = P - b | 0, !P)
                       break e;
                     if (u = u ? (T(_, se) << 2) + u | 0 : 0, m = (T(i[r + 92 >> 2], b) << 2) + m | 0, !N)
                       break;
                   }
                 }
-                return i[c >> 2] = i[c >> 2] - N, i[d >> 2] = i[d >> 2] - Q, pe = f + 16 | 0, _ = i[r + 84 >> 2], (_ | 0) == 8;
+                return i[c >> 2] = i[c >> 2] - N, i[d >> 2] = i[d >> 2] - P, pe = f + 16 | 0, _ = i[r + 84 >> 2], (_ | 0) == 8;
               }
               function Eu(r, n, u, c) {
-                var m = 0, d = 0, _ = 0, b = 0, f = 0, w = 0, C = 0, Q = 0, N = 0, U = 0, J = 0, z = 0, ee = 0;
+                var m = 0, d = 0, _ = 0, b = 0, f = 0, w = 0, C = 0, P = 0, N = 0, U = 0, J = 0, z = 0, ee = 0;
                 e: {
                   t: {
                     i: {
@@ -69057,24 +69092,24 @@ function gb() {
                       b = 63 - d | 0, d = d + 1 | 0;
                     }
                     if (w = n, m = r, C = 0, f = d & 63, _ = f & 31, (f & 63) >>> 0 >= 32 ? N = w >>> _ | 0 : (C = w >>> _ | 0, N = ((1 << _) - 1 & w) << 32 - _ | m >>> _), U = C, C = n, w = r, f = b & 63, _ = f & 31, (f & 63) >>> 0 >= 32 ? (m = w << _, r = 0) : (m = (1 << _) - 1 & w >>> 32 - _ | C << _, r = w << _), n = m, d)
-                      for (m = c - 1 | 0, _ = u - 1 | 0, m = (_ | 0) != -1 ? m + 1 | 0 : m, b = _, w = m; m = N, f = m << 1, m = U << 1 | m >>> 31, N = f | n >>> 31, Q = N, C = m, m = b, f = Q, _ = w - ((m >>> 0 < f >>> 0) + C | 0) | 0, U = c & _ >> 31, m = f, Q = _ >> 31, f = Q & u, N = m - f | 0, U = C - ((m >>> 0 < f >>> 0) + U | 0) | 0, m = n << 1 | r >>> 31, r = r << 1 | J, n = m | ee, z = 0, Q = Q & 1, J = Q, d = d - 1 | 0, !!d; )
+                      for (m = c - 1 | 0, _ = u - 1 | 0, m = (_ | 0) != -1 ? m + 1 | 0 : m, b = _, w = m; m = N, f = m << 1, m = U << 1 | m >>> 31, N = f | n >>> 31, P = N, C = m, m = b, f = P, _ = w - ((m >>> 0 < f >>> 0) + C | 0) | 0, U = c & _ >> 31, m = f, P = _ >> 31, f = P & u, N = m - f | 0, U = C - ((m >>> 0 < f >>> 0) + U | 0) | 0, m = n << 1 | r >>> 31, r = r << 1 | J, n = m | ee, z = 0, P = P & 1, J = P, d = d - 1 | 0, !!d; )
                         ;
-                    return Qt = z | (n << 1 | r >>> 31), r << 1 | Q;
+                    return Qt = z | (n << 1 | r >>> 31), r << 1 | P;
                   }
                   r = 0, n = 0;
                 }
                 return Qt = n, r;
               }
               function Js(r, n, u, c) {
-                var m = x(0), d = 0, _ = x(0), b = x(0), f = x(0), w = x(0), C = x(0), Q = x(0), N = x(0), U = x(0), J = 0;
+                var m = x(0), d = 0, _ = x(0), b = x(0), f = x(0), w = x(0), C = x(0), P = x(0), N = x(0), U = x(0), J = 0;
                 {
-                  d = n + 12 | 0, N = D[n + 8 >> 2], _ = D[n + 4 >> 2], Q = D[n >> 2];
+                  d = n + 12 | 0, N = D[n + 8 >> 2], _ = D[n + 4 >> 2], P = D[n >> 2];
                   {
-                    for (J = c - 3 | 0, b = D[u + 12 >> 2], f = D[u + 8 >> 2], w = D[u + 4 >> 2], C = D[u >> 2], n = 0; m = D[r >> 2], U = D[d >> 2], b = x(x(m * U) + b), D[u + 12 >> 2] = b, f = x(x(N * m) + f), D[u + 8 >> 2] = f, w = x(x(_ * m) + w), D[u + 4 >> 2] = w, C = x(x(Q * m) + C), D[u >> 2] = C, m = D[r + 4 >> 2], Q = D[d + 4 >> 2], b = x(b + x(m * Q)), D[u + 12 >> 2] = b, f = x(f + x(U * m)), D[u + 8 >> 2] = f, w = x(w + x(N * m)), D[u + 4 >> 2] = w, C = x(C + x(_ * m)), D[u >> 2] = C, m = D[r + 8 >> 2], _ = D[d + 8 >> 2], b = x(b + x(m * _)), D[u + 12 >> 2] = b, f = x(f + x(Q * m)), D[u + 8 >> 2] = f, w = x(w + x(U * m)), D[u + 4 >> 2] = w, C = x(C + x(N * m)), D[u >> 2] = C, m = D[r + 12 >> 2], N = D[d + 12 >> 2], b = x(b + x(m * N)), D[u + 12 >> 2] = b, f = x(f + x(_ * m)), D[u + 8 >> 2] = f, w = x(w + x(Q * m)), D[u + 4 >> 2] = w, C = x(C + x(U * m)), D[u >> 2] = C, d = d + 16 | 0, r = r + 16 | 0, n = n + 4 | 0, (J | 0) > (n | 0); )
+                    for (J = c - 3 | 0, b = D[u + 12 >> 2], f = D[u + 8 >> 2], w = D[u + 4 >> 2], C = D[u >> 2], n = 0; m = D[r >> 2], U = D[d >> 2], b = x(x(m * U) + b), D[u + 12 >> 2] = b, f = x(x(N * m) + f), D[u + 8 >> 2] = f, w = x(x(_ * m) + w), D[u + 4 >> 2] = w, C = x(x(P * m) + C), D[u >> 2] = C, m = D[r + 4 >> 2], P = D[d + 4 >> 2], b = x(b + x(m * P)), D[u + 12 >> 2] = b, f = x(f + x(U * m)), D[u + 8 >> 2] = f, w = x(w + x(N * m)), D[u + 4 >> 2] = w, C = x(C + x(_ * m)), D[u >> 2] = C, m = D[r + 8 >> 2], _ = D[d + 8 >> 2], b = x(b + x(m * _)), D[u + 12 >> 2] = b, f = x(f + x(P * m)), D[u + 8 >> 2] = f, w = x(w + x(U * m)), D[u + 4 >> 2] = w, C = x(C + x(N * m)), D[u >> 2] = C, m = D[r + 12 >> 2], N = D[d + 12 >> 2], b = x(b + x(m * N)), D[u + 12 >> 2] = b, f = x(f + x(_ * m)), D[u + 8 >> 2] = f, w = x(w + x(P * m)), D[u + 4 >> 2] = w, C = x(C + x(U * m)), D[u >> 2] = C, d = d + 16 | 0, r = r + 16 | 0, n = n + 4 | 0, (J | 0) > (n | 0); )
                       ;
                     n = c & -4;
                   }
-                  J = n | 1, (n | 0) < (c | 0) && (U = D[d >> 2], m = D[r >> 2], D[u >> 2] = x(Q * m) + D[u >> 2], D[u + 4 >> 2] = x(_ * m) + D[u + 4 >> 2], D[u + 8 >> 2] = x(N * m) + D[u + 8 >> 2], D[u + 12 >> 2] = x(m * U) + D[u + 12 >> 2], d = d + 4 | 0, r = r + 4 | 0), n = J + 1 | 0, (c | 0) > (J | 0) && (Q = D[d >> 2], m = D[r >> 2], D[u >> 2] = x(_ * m) + D[u >> 2], D[u + 4 >> 2] = x(N * m) + D[u + 4 >> 2], D[u + 8 >> 2] = x(U * m) + D[u + 8 >> 2], D[u + 12 >> 2] = x(m * Q) + D[u + 12 >> 2], d = d + 4 | 0, r = r + 4 | 0), (n | 0) < (c | 0) && (m = D[d >> 2], _ = D[r >> 2], D[u >> 2] = x(N * _) + D[u >> 2], D[u + 4 >> 2] = x(U * _) + D[u + 4 >> 2], D[u + 8 >> 2] = x(Q * _) + D[u + 8 >> 2], D[u + 12 >> 2] = x(_ * m) + D[u + 12 >> 2]);
+                  J = n | 1, (n | 0) < (c | 0) && (U = D[d >> 2], m = D[r >> 2], D[u >> 2] = x(P * m) + D[u >> 2], D[u + 4 >> 2] = x(_ * m) + D[u + 4 >> 2], D[u + 8 >> 2] = x(N * m) + D[u + 8 >> 2], D[u + 12 >> 2] = x(m * U) + D[u + 12 >> 2], d = d + 4 | 0, r = r + 4 | 0), n = J + 1 | 0, (c | 0) > (J | 0) && (P = D[d >> 2], m = D[r >> 2], D[u >> 2] = x(_ * m) + D[u >> 2], D[u + 4 >> 2] = x(N * m) + D[u + 4 >> 2], D[u + 8 >> 2] = x(U * m) + D[u + 8 >> 2], D[u + 12 >> 2] = x(m * P) + D[u + 12 >> 2], d = d + 4 | 0, r = r + 4 | 0), (n | 0) < (c | 0) && (m = D[d >> 2], _ = D[r >> 2], D[u >> 2] = x(N * _) + D[u >> 2], D[u + 4 >> 2] = x(U * _) + D[u + 4 >> 2], D[u + 8 >> 2] = x(P * _) + D[u + 8 >> 2], D[u + 12 >> 2] = x(_ * m) + D[u + 12 >> 2]);
                   return;
                 }
               }
@@ -69146,15 +69181,15 @@ function gb() {
                 Le(7468, 7530, 82), Te();
               }
               function Ua(r, n) {
-                var u = 0, c = 0, m = 0, d = 0, _ = 0, b = 0, f = 0, w = 0, C = 0, Q = 0, N = 0;
+                var u = 0, c = 0, m = 0, d = 0, _ = 0, b = 0, f = 0, w = 0, C = 0, P = 0, N = 0;
                 if (n >>> 0 > 1) {
                   C = n - 1 | 0;
                   e: {
                     if (C >>> 0 >= 256) {
-                      if (m = i[r + 28 >> 2], b = 24 - Xe(C) | 0, u = C >>> b | 0, c = u + 1 | 0, n = (m >>> 0) / (c >>> 0) | 0, i[r + 36 >> 2] = n, d = i[r + 32 >> 2], f = d, d = (d >>> 0) / (n >>> 0) | 0, _ = d + 1 | 0, c = _ - c | 0, Q = (c >>> 0 > _ >>> 0 ? 0 : c) + (u - d | 0) | 0, u = T(u - Q | 0, n), c = f - u | 0, i[r + 32 >> 2] = c, u = Q ? n : m - u | 0, i[r + 28 >> 2] = u, u >>> 0 <= 8388608)
+                      if (m = i[r + 28 >> 2], b = 24 - Xe(C) | 0, u = C >>> b | 0, c = u + 1 | 0, n = (m >>> 0) / (c >>> 0) | 0, i[r + 36 >> 2] = n, d = i[r + 32 >> 2], f = d, d = (d >>> 0) / (n >>> 0) | 0, _ = d + 1 | 0, c = _ - c | 0, P = (c >>> 0 > _ >>> 0 ? 0 : c) + (u - d | 0) | 0, u = T(u - P | 0, n), c = f - u | 0, i[r + 32 >> 2] = c, u = P ? n : m - u | 0, i[r + 28 >> 2] = u, u >>> 0 <= 8388608)
                         for (m = i[r + 24 >> 2], d = i[r + 40 >> 2], _ = i[r + 20 >> 2], N = i[r + 4 >> 2]; f = u << 8, i[r + 28 >> 2] = f, _ = _ + 8 | 0, i[r + 20 >> 2] = _, n = 0, m >>> 0 < N >>> 0 && (w = m + 1 | 0, i[r + 24 >> 2] = w, n = we[i[r >> 2] + m | 0], m = w), i[r + 40 >> 2] = n, c = ((d << 8 | n) >>> 1 & 255 | c << 8 & 2147483392) ^ 255, i[r + 32 >> 2] = c, w = u >>> 0 < 32769, d = n, u = f, !!w; )
                           ;
-                      f = Q << b, c = i[r + 12 >> 2], n = i[r + 16 >> 2];
+                      f = P << b, c = i[r + 12 >> 2], n = i[r + 16 >> 2];
                       t: {
                         if (b >>> 0 <= n >>> 0) {
                           _ = n;
@@ -69177,11 +69212,11 @@ function gb() {
                 Le(6958, 6982, 203), Te();
               }
               function Iu(r, n, u, c, m) {
-                var d = 0, _ = x(0), b = x(0), f = 0, w = x(0), C = x(0), Q = 0, N = 0, U = x(0), J = 0, z = 0, ee = x(0), re = 0, de = x(0);
-                for (m = pe, re = m, d = (c << 2) + 15 & -16, m = m - d | 0, pe = m, J = m - d | 0, pe = J, Q = (c | 0) > 1 ? c : 1, N = qt(m, 0, Q << 2), m = 0; d = m << 2, f = d + r | 0, _ = D[f >> 2], i[d + J >> 2] = _ < x(0), D[f >> 2] = Ke(_), i[n + d >> 2] = 0, m = m + 1 | 0, (Q | 0) != (m | 0); )
+                var d = 0, _ = x(0), b = x(0), f = 0, w = x(0), C = x(0), P = 0, N = 0, U = x(0), J = 0, z = 0, ee = x(0), re = 0, de = x(0);
+                for (m = pe, re = m, d = (c << 2) + 15 & -16, m = m - d | 0, pe = m, J = m - d | 0, pe = J, P = (c | 0) > 1 ? c : 1, N = qt(m, 0, P << 2), m = 0; d = m << 2, f = d + r | 0, _ = D[f >> 2], i[d + J >> 2] = _ < x(0), D[f >> 2] = Ke(_), i[n + d >> 2] = 0, m = m + 1 | 0, (P | 0) != (m | 0); )
                   ;
                 if (_ = x(0), (u | 0) > c >> 1) {
-                  for (m = 0; _ = x(_ + D[(m << 2) + r >> 2]), m = m + 1 | 0, (Q | 0) != (m | 0); )
+                  for (m = 0; _ = x(_ + D[(m << 2) + r >> 2]), m = m + 1 | 0, (P | 0) != (m | 0); )
                     ;
                   for (_ < x(64) && !(_ > x(10000000036274937e-31) ^ 1) || (i[r >> 2] = 1065353216, qt(r + 4 | 0, 0, (((c | 0) > 2 ? c : 2) << 2) - 4 | 0), _ = x(1)), w = x(x(x(u | 0) + x(0.800000011920929)) * x(x(1) / _)), d = 0, _ = x(0); ; ) {
                     f = d << 2, z = f + n | 0, C = D[r + f >> 2], b = x(ii(x(w * C)));
@@ -69192,7 +69227,7 @@ function gb() {
                       }
                       m = -2147483648;
                     }
-                    if (i[z >> 2] = m, b = x(m | 0), D[f + N >> 2] = b + b, U = x(U + x(C * b)), u = u - m | 0, _ = x(_ + x(b * b)), d = d + 1 | 0, (Q | 0) == (d | 0))
+                    if (i[z >> 2] = m, b = x(m | 0), D[f + N >> 2] = b + b, U = x(U + x(C * b)), u = u - m | 0, _ = x(_ + x(b * b)), d = d + 1 | 0, (P | 0) == (d | 0))
                       break;
                   }
                 }
@@ -69210,7 +69245,7 @@ function gb() {
                       break;
                   }
                 }
-                for (m = 0; d = m << 2, f = d + n | 0, d = i[d + J >> 2], i[f >> 2] = d + (i[f >> 2] ^ 0 - d), m = m + 1 | 0, (Q | 0) != (m | 0); )
+                for (m = 0; d = m << 2, f = d + n | 0, d = i[d + J >> 2], i[f >> 2] = d + (i[f >> 2] ^ 0 - d), m = m + 1 | 0, (P | 0) != (m | 0); )
                   ;
                 return pe = re, _;
               }
@@ -69299,7 +69334,7 @@ function gb() {
                 }
                 Le(2758, 2778, 94), Te();
               }
-              function Wr(r, n, u, c, m, d, _, b, f, w, C, Q) {
+              function Wr(r, n, u, c, m, d, _, b, f, w, C, P) {
                 var N = x(0), U = x(0), J = x(0), z = x(0), ee = 0, re = x(0), de = 0, te = 0, se = 0, Ae = 0, be = x(0), oe = x(0), le = x(0), Se = x(0), Ce = x(0), Pe = x(0), ze = x(0), Ne = x(0), Oe = x(0);
                 e: {
                   if (!(d != x(0) | _ != x(0))) {
@@ -69308,8 +69343,8 @@ function gb() {
                     ga(r, n, m << 2);
                     return;
                   }
-                  if (Q = (c | 0) > 15 ? c : 15, de = -2 - Q | 0, te = Q ^ -1, se = 1 - Q | 0, Ae = 0 - Q | 0, c = T(f, 12), be = x(D[c + 1624 >> 2] * _), oe = x(D[c + 1620 >> 2] * _), le = x(D[c + 1616 >> 2] * _), c = d == _ && (b | 0) == (f | 0) ? 0 : C, f = (u | 0) > 15 ? u : 15, c = (Q | 0) == (f | 0) ? c : C, (c | 0) >= 1) {
-                    for (C = T(b, 12), Se = x(D[C + 1624 >> 2] * d), Ce = x(D[C + 1620 >> 2] * d), Pe = x(D[C + 1616 >> 2] * d), b = 2 - Q | 0, N = D[(se << 2) + n >> 2], U = D[(Ae << 2) + n >> 2], J = D[(te << 2) + n >> 2], d = D[(de << 2) + n >> 2], C = 0; u = C << 2, ee = u + r | 0, z = D[(b + C << 2) + n >> 2], re = x(d + z), d = D[u + w >> 2], d = x(d * d), re = x(re * x(be * d)), ze = x(x(N + J) * x(oe * d)), Ne = x(U * x(le * d)), Oe = D[n + u >> 2], u = (C - f << 2) + n | 0, d = x(x(1) - d), D[ee >> 2] = re + x(ze + x(Ne + x(x(x(Oe + x(D[u >> 2] * x(Pe * d))) + x(x(Ce * d) * x(D[u + 4 >> 2] + D[u - 4 >> 2]))) + x(x(Se * d) * x(D[u + 8 >> 2] + D[u - 8 >> 2]))))), d = J, J = U, U = N, N = z, C = C + 1 | 0, (C | 0) != (c | 0); )
+                  if (P = (c | 0) > 15 ? c : 15, de = -2 - P | 0, te = P ^ -1, se = 1 - P | 0, Ae = 0 - P | 0, c = T(f, 12), be = x(D[c + 1624 >> 2] * _), oe = x(D[c + 1620 >> 2] * _), le = x(D[c + 1616 >> 2] * _), c = d == _ && (b | 0) == (f | 0) ? 0 : C, f = (u | 0) > 15 ? u : 15, c = (P | 0) == (f | 0) ? c : C, (c | 0) >= 1) {
+                    for (C = T(b, 12), Se = x(D[C + 1624 >> 2] * d), Ce = x(D[C + 1620 >> 2] * d), Pe = x(D[C + 1616 >> 2] * d), b = 2 - P | 0, N = D[(se << 2) + n >> 2], U = D[(Ae << 2) + n >> 2], J = D[(te << 2) + n >> 2], d = D[(de << 2) + n >> 2], C = 0; u = C << 2, ee = u + r | 0, z = D[(b + C << 2) + n >> 2], re = x(d + z), d = D[u + w >> 2], d = x(d * d), re = x(re * x(be * d)), ze = x(x(N + J) * x(oe * d)), Ne = x(U * x(le * d)), Oe = D[n + u >> 2], u = (C - f << 2) + n | 0, d = x(x(1) - d), D[ee >> 2] = re + x(ze + x(Ne + x(x(x(Oe + x(D[u >> 2] * x(Pe * d))) + x(x(Ce * d) * x(D[u + 4 >> 2] + D[u - 4 >> 2]))) + x(x(Se * d) * x(D[u + 8 >> 2] + D[u - 8 >> 2]))))), d = J, J = U, U = N, N = z, C = C + 1 | 0, (C | 0) != (c | 0); )
                       ;
                     ee = c;
                   }
@@ -69321,7 +69356,7 @@ function gb() {
                   }
                   if (c = m - ee | 0, (c | 0) < 1)
                     break e;
-                  for (C = ee << 2, r = C + r | 0, w = 2 - Q | 0, u = n + C | 0, J = D[u + (de << 2) >> 2], d = D[(te << 2) + u >> 2], N = D[(Ae << 2) + u >> 2], U = D[(se << 2) + u >> 2], C = 0; n = C << 2, z = D[(w + C << 2) + u >> 2], D[n + r >> 2] = x(be * x(J + z)) + x(x(oe * x(d + U)) + x(x(le * N) + D[n + u >> 2])), J = d, d = N, N = U, U = z, C = C + 1 | 0, (C | 0) != (c | 0); )
+                  for (C = ee << 2, r = C + r | 0, w = 2 - P | 0, u = n + C | 0, J = D[u + (de << 2) >> 2], d = D[(te << 2) + u >> 2], N = D[(Ae << 2) + u >> 2], U = D[(se << 2) + u >> 2], C = 0; n = C << 2, z = D[(w + C << 2) + u >> 2], D[n + r >> 2] = x(be * x(J + z)) + x(x(oe * x(d + U)) + x(x(le * N) + D[n + u >> 2])), J = d, d = N, N = U, U = z, C = C + 1 | 0, (C | 0) != (c | 0); )
                     ;
                 }
               }
@@ -69405,26 +69440,26 @@ function gb() {
                 return pe = c + 48 | 0, u | 0;
               }
               function Du(r, n, u, c, m, d, _) {
-                var b = 0, f = x(0), w = 0, C = 0, Q = 0, N = x(0), U = 0, J = 0, z = x(0), ee = 0, re = 0, de = 0;
+                var b = 0, f = x(0), w = 0, C = 0, P = 0, N = x(0), U = 0, J = 0, z = x(0), ee = 0, re = 0, de = 0;
                 _ = pe - 16 | 0, w = _, pe = _;
                 {
-                  U = _ - ((m << 2) + 15 & -16) | 0, Q = U, pe = Q, b = c + m | 0, Q = Q - ((b << 2) + 15 & -16) | 0, pe = Q, J = b, _ = 0, C = 0;
+                  U = _ - ((m << 2) + 15 & -16) | 0, P = U, pe = P, b = c + m | 0, P = P - ((b << 2) + 15 & -16) | 0, pe = P, J = b, _ = 0, C = 0;
                   {
                     for (; i[(_ << 2) + U >> 2] = i[((_ ^ -1) + m << 2) + n >> 2], _ = _ + 1 | 0, (_ | 0) != (m | 0); )
                       ;
-                    for (_ = 0, C = 0; D[(_ << 2) + Q >> 2] = -D[((_ ^ -1) + m << 2) + d >> 2], _ = _ + 1 | 0, (_ | 0) != (m | 0); )
+                    for (_ = 0, C = 0; D[(_ << 2) + P >> 2] = -D[((_ ^ -1) + m << 2) + d >> 2], _ = _ + 1 | 0, (_ | 0) != (m | 0); )
                       ;
                     C = m;
                   }
-                  if (_ = C, (J | 0) > (_ | 0) && qt((_ << 2) + Q | 0, 0, b - _ << 2), b = 0, (c | 0) >= 4)
-                    for (de = c - 3 | 0; _ = b << 2, i[w >> 2] = i[_ + r >> 2], J = _ | 4, i[w + 4 >> 2] = i[J + r >> 2], ee = _ | 8, i[w + 8 >> 2] = i[ee + r >> 2], re = _ | 12, i[w + 12 >> 2] = i[re + r >> 2], Js(U, _ + Q | 0, w, m), C = (m + b << 2) + Q | 0, f = D[w >> 2], D[C >> 2] = -f, D[u + _ >> 2] = f, N = x(D[w + 4 >> 2] - x(f * D[n >> 2])), D[w + 4 >> 2] = N, D[C + 4 >> 2] = -N, D[u + J >> 2] = N, z = x(x(D[w + 8 >> 2] - x(N * D[n >> 2])) - x(f * D[n + 4 >> 2])), D[w + 8 >> 2] = z, D[C + 8 >> 2] = -z, D[u + ee >> 2] = z, f = x(x(x(D[w + 12 >> 2] - x(z * D[n >> 2])) - x(N * D[n + 4 >> 2])) - x(f * D[n + 8 >> 2])), D[C + 12 >> 2] = -f, D[u + re >> 2] = f, b = b + 4 | 0, (de | 0) > (b | 0); )
+                  if (_ = C, (J | 0) > (_ | 0) && qt((_ << 2) + P | 0, 0, b - _ << 2), b = 0, (c | 0) >= 4)
+                    for (de = c - 3 | 0; _ = b << 2, i[w >> 2] = i[_ + r >> 2], J = _ | 4, i[w + 4 >> 2] = i[J + r >> 2], ee = _ | 8, i[w + 8 >> 2] = i[ee + r >> 2], re = _ | 12, i[w + 12 >> 2] = i[re + r >> 2], Js(U, _ + P | 0, w, m), C = (m + b << 2) + P | 0, f = D[w >> 2], D[C >> 2] = -f, D[u + _ >> 2] = f, N = x(D[w + 4 >> 2] - x(f * D[n >> 2])), D[w + 4 >> 2] = N, D[C + 4 >> 2] = -N, D[u + J >> 2] = N, z = x(x(D[w + 8 >> 2] - x(N * D[n >> 2])) - x(f * D[n + 4 >> 2])), D[w + 8 >> 2] = z, D[C + 8 >> 2] = -z, D[u + ee >> 2] = z, f = x(x(x(D[w + 12 >> 2] - x(z * D[n >> 2])) - x(N * D[n + 4 >> 2])) - x(f * D[n + 8 >> 2])), D[C + 12 >> 2] = -f, D[u + re >> 2] = f, b = b + 4 | 0, (de | 0) > (b | 0); )
                       ;
                   if ((c | 0) > (b | 0))
                     for (C = (m | 0) < 1; ; ) {
                       if (n = b << 2, f = D[n + r >> 2], _ = 0, !C)
-                        for (; f = x(f - x(D[(_ << 2) + U >> 2] * D[(_ + b << 2) + Q >> 2])), _ = _ + 1 | 0, (_ | 0) != (m | 0); )
+                        for (; f = x(f - x(D[(_ << 2) + U >> 2] * D[(_ + b << 2) + P >> 2])), _ = _ + 1 | 0, (_ | 0) != (m | 0); )
                           ;
-                      if (D[(m + b << 2) + Q >> 2] = f, D[n + u >> 2] = f, b = b + 1 | 0, (b | 0) == (c | 0))
+                      if (D[(m + b << 2) + P >> 2] = f, D[n + u >> 2] = f, b = b + 1 | 0, (b | 0) == (c | 0))
                         break;
                     }
                   for (_ = 0; i[(_ << 2) + d >> 2] = i[((_ ^ -1) + c << 2) + u >> 2], _ = _ + 1 | 0, (_ | 0) != (m | 0); )
@@ -69434,7 +69469,7 @@ function gb() {
                 }
               }
               function Ws(r, n, u, c, m) {
-                var d = 0, _ = 0, b = 0, f = 0, w = 0, C = 0, Q = 0;
+                var d = 0, _ = 0, b = 0, f = 0, w = 0, C = 0, P = 0;
                 if (b = i[r + 2316 >> 2], (b | 0) != i[r + 4252 >> 2] && (i[r + 4252 >> 2] = b, _ = r + 4244 | 0, i[_ >> 2] = 65536, i[_ + 4 >> 2] = 65536, _ = r + 4256 | 0, i[_ >> 2] = 2, i[_ + 4 >> 2] = 20, i[r + 4172 >> 2] = i[r + 2328 >> 2] << 7), c) {
                   bu(r, n, u, m), i[r + 4160 >> 2] = i[r + 4160 >> 2] + 1;
                   return;
@@ -69446,10 +69481,10 @@ function gb() {
                     t: {
                       if (!u || (f = ((u << 2) + n | 0) - 4 | 0, _ = i[f >> 2], (_ | 0) < 1))
                         break t;
-                      for (w = r + 4176 | 0, Q = i[r + 2332 >> 2], b = 0; ; ) {
+                      for (w = r + 4176 | 0, P = i[r + 2332 >> 2], b = 0; ; ) {
                         if (m = (b ^ -1) + u | 0, c = T(m, 10) + n | 0, c = (((L[c + 98 >> 1] + L[c + 96 >> 1] | 0) + L[c + 100 >> 1] | 0) + L[c + 102 >> 1] | 0) + L[c + 104 >> 1] | 0, (d | 0) < (c | 0) && (d = T(m << 16 >> 16, 10) + n | 0, L[w + 8 >> 1] = qe[d + 104 >> 1], _ = qe[d + 100 >> 1] | qe[d + 102 >> 1] << 16, d = qe[d + 96 >> 1] | qe[d + 98 >> 1] << 16, C = d, d = w, L[d >> 1] = C, L[d + 2 >> 1] = C >>> 16, L[d + 4 >> 1] = _, L[d + 6 >> 1] = _ >>> 16, i[r + 4172 >> 2] = i[(m << 2) + n >> 2] << 8, _ = i[f >> 2], d = c), b = b + 1 | 0, (b | 0) == (u | 0))
                           break t;
-                        if (!((T(b, Q) | 0) < (_ | 0)))
+                        if (!((T(b, P) | 0) < (_ | 0)))
                           break;
                       }
                     }
@@ -69467,7 +69502,7 @@ function gb() {
                 bt(r + 4186 | 0, n - -64 | 0, i[r + 2340 >> 2] << 1), L[r + 4240 >> 1] = i[n + 136 >> 2], d = (u << 2) + n | 0, _ = i[d + 8 >> 2], d = i[d + 12 >> 2], n = _, _ = r + 4244 | 0, i[_ >> 2] = n, i[_ + 4 >> 2] = d, i[r + 4260 >> 2] = i[r + 2332 >> 2], i[r + 4256 >> 2] = u;
               }
               function Tu(r, n, u, c) {
-                var m = 0, d = 0, _ = x(0), b = 0, f = x(0), w = 0, C = 0, Q = 0;
+                var m = 0, d = 0, _ = x(0), b = 0, f = x(0), w = 0, C = 0, P = 0;
                 m = u + 1 | 0, d = (n | 0) > (u | 0), d = Ua(c, i[i[((d ? m : n) << 2) + 27984 >> 2] + (((n | 0) > (m | 0) ? n : m) << 2) >> 2] + i[i[(((n | 0) < (u | 0) ? n : u) << 2) + 27984 >> 2] + ((d ? n : u) << 2) >> 2] | 0);
                 e: {
                   if ((u | 0) > 0) {
@@ -69478,7 +69513,7 @@ function gb() {
                         w = n;
                         t: {
                           if ((n | 0) <= (u | 0)) {
-                            c = u, b = w << 2, C = i[b + 27984 >> 2], m = i[(C + (u << 2) | 0) + 4 >> 2], Q = d >>> 0 >= m >>> 0 ? -1 : 0, m = d - (m & Q) | 0;
+                            c = u, b = w << 2, C = i[b + 27984 >> 2], m = i[(C + (u << 2) | 0) + 4 >> 2], P = d >>> 0 >= m >>> 0 ? -1 : 0, m = d - (m & P) | 0;
                             i: {
                               if (m >>> 0 < dt[b + C >> 2]) {
                                 for (; ; )
@@ -69488,7 +69523,7 @@ function gb() {
                               for (; n = c, c = n - 1 | 0, d = i[(n << 2) + C >> 2], d >>> 0 > m >>> 0; )
                                 ;
                             }
-                            c = ((u + Q | 0) - n ^ Q) << 16 >> 16, i[r >> 2] = c, _ = x(c | 0), f = x(f + x(_ * _)), u = n, d = m - d | 0;
+                            c = ((u + P | 0) - n ^ P) << 16 >> 16, i[r >> 2] = c, _ = x(c | 0), f = x(f + x(_ * _)), u = n, d = m - d | 0;
                             break t;
                           }
                           if (m = w << 2, c = u << 2, n = i[m + i[c + 27988 >> 2] >> 2], c = i[i[c + 27984 >> 2] + m >> 2], !(d >>> 0 < c >>> 0 | n >>> 0 <= d >>> 0)) {
@@ -69510,14 +69545,14 @@ function gb() {
               }
               function Lu(r, n, u, c, m, d) {
                 r = r | 0, n = n | 0, u = u | 0, c = c | 0, m = m | 0, d = d | 0;
-                var _ = x(0), b = x(0), f = x(0), w = 0, C = 0, Q = 0, N = 0, U = x(0), J = x(0), z = x(0), ee = 0, re = 0, de = 0, te = 0, se = 0, Ae = x(0), be = x(0), oe = 0, le = 0, Se = 0, Ce = x(0), Pe = 0, ze = 0, Ne = 0, Oe = 0, We = x(0);
+                var _ = x(0), b = x(0), f = x(0), w = 0, C = 0, P = 0, N = 0, U = x(0), J = x(0), z = x(0), ee = 0, re = 0, de = 0, te = 0, se = 0, Ae = x(0), be = x(0), oe = 0, le = 0, Se = 0, Ce = x(0), Pe = 0, ze = 0, Ne = 0, Oe = 0, We = x(0);
                 n = n << 2, ee = n + i[r + 64 >> 2] | 0, N = i[ee >> 2], re = i[r + 60 >> 2] + n | 0, w = i[re >> 2], de = i[c >> 2];
                 e: {
                   if ((w | 0) >= (de | 0))
                     break e;
                   for (oe = i[r + 40 >> 2], le = i[r + 36 >> 2], Se = i[r + 92 >> 2], c = i[d >> 2], te = (c | 0) > 0 ? c : 0, C = i[r + 12 >> 2], Ce = x(C >>> 0), se = i[r + 24 >> 2], Pe = (se | 0) < 1; ; ) {
-                    if ((Q | 0) == (te | 0)) {
-                      Q = te;
+                    if ((P | 0) == (te | 0)) {
+                      P = te;
                       break e;
                     }
                     d = i[r + 48 >> 2], c = T(N, d), n = c, c = (c >>> 0) / (C >>> 0) | 0, b = x(x(n - T(C, c) >>> 0) / Ce);
@@ -69529,18 +69564,18 @@ function gb() {
                       for (ze = (w << 2) + u | 0, Ne = 4 - c | 0, Oe = i[r + 76 >> 2], c = 0, z = x(0), J = x(0), U = x(0), f = x(0); _ = D[(c << 2) + ze >> 2], c = c + 1 | 0, n = (T(d, c) + Ne << 2) + Oe | 0, J = x(J + x(_ * D[n >> 2])), z = x(z + x(_ * D[n + 4 >> 2])), U = x(U + x(_ * D[n - 4 >> 2])), f = x(f + x(_ * D[n - 8 >> 2])), (c | 0) != (se | 0); )
                         ;
                     }
-                    if (_ = x(b * x(0.16666999459266663)), Ae = x(b * x(b * _)), be = x(Ae - _), We = x(be * f), _ = x(b * x(b * x(0.5))), f = x(x(b + _) - x(b * _)), _ = x(x(_ + x(b * x(-0.3333300054073334))) - Ae), D[(T(Q, Se) << 2) + m >> 2] = x(x(We + x(f * U)) + x(J * x(1 - +be - +f - +_))) + x(_ * z), c = N + oe | 0, N = c - (c >>> 0 < C >>> 0 ? 0 : C) | 0, Q = Q + 1 | 0, w = (w + le | 0) + (c >>> 0 >= C >>> 0) | 0, !((de | 0) > (w | 0)))
+                    if (_ = x(b * x(0.16666999459266663)), Ae = x(b * x(b * _)), be = x(Ae - _), We = x(be * f), _ = x(b * x(b * x(0.5))), f = x(x(b + _) - x(b * _)), _ = x(x(_ + x(b * x(-0.3333300054073334))) - Ae), D[(T(P, Se) << 2) + m >> 2] = x(x(We + x(f * U)) + x(J * x(1 - +be - +f - +_))) + x(_ * z), c = N + oe | 0, N = c - (c >>> 0 < C >>> 0 ? 0 : C) | 0, P = P + 1 | 0, w = (w + le | 0) + (c >>> 0 >= C >>> 0) | 0, !((de | 0) > (w | 0)))
                       break;
                   }
                 }
-                return i[re >> 2] = w, i[ee >> 2] = N, Q | 0;
+                return i[re >> 2] = w, i[ee >> 2] = N, P | 0;
               }
-              function Ks(r, n, u, c, m, d, _, b, f, w, C, Q, N) {
+              function Ks(r, n, u, c, m, d, _, b, f, w, C, P, N) {
                 var U = 0, J = 0, z = 0, ee = 0, re = 0, de = 0, te = 0, se = 0, Ae = 0, be = 0;
                 U = pe, Ae = U, se = i[r + 8 >> 2], re = i[r + 4 >> 2], J = i[r + 44 >> 2], ee = J << w, z = U - ((ee << 2) + 15 & -16) | 0, pe = z, te = i[r + 36 >> 2] - (f ? 0 : w) | 0, de = 1 << w, U = f ? de : 1, f = f ? J : ee;
                 e: {
                   if (!((_ | 0) != 1 | (b | 0) != 2)) {
-                    if (ur(r, n, z, c, m, d, de, C, Q), b = bt(i[u + 4 >> 2] + ((re | 0) / 2 << 2) | 0, z, ee << 2), (U | 0) < 1)
+                    if (ur(r, n, z, c, m, d, de, C, P), b = bt(i[u + 4 >> 2] + ((re | 0) / 2 << 2) | 0, z, ee << 2), (U | 0) < 1)
                       break e;
                     for (_ = r - -64 | 0, w = 0; nr(_, (w << 2) + b | 0, i[u >> 2] + (T(f, w) << 2) | 0, i[r + 60 >> 2], re, te, U, N), w = w + 1 | 0, (U | 0) != (w | 0); )
                       ;
@@ -69552,7 +69587,7 @@ function gb() {
                   }
                   if (!((b | 0) == 1 && (_ | 0) == 2)) {
                     for (be = (b | 0) > 1 ? b : 1, _ = r - -64 | 0, J = 0; ; ) {
-                      if (ur(r, (T(J, ee) << 2) + n | 0, z, (T(J, se) << 2) + c | 0, m, d, de, C, Q), (U | 0) >= 1)
+                      if (ur(r, (T(J, ee) << 2) + n | 0, z, (T(J, se) << 2) + c | 0, m, d, de, C, P), (U | 0) >= 1)
                         for (b = (J << 2) + u | 0, w = 0; nr(_, (w << 2) + z | 0, i[b >> 2] + (T(f, w) << 2) | 0, i[r + 60 >> 2], re, te, U, N), w = w + 1 | 0, (U | 0) != (w | 0); )
                           ;
                       if (J = J + 1 | 0, (be | 0) == (J | 0))
@@ -69560,7 +69595,7 @@ function gb() {
                     }
                     break e;
                   }
-                  if (w = i[u >> 2], ur(r, n, z, c, m, d, de, C, Q), J = ((re | 0) / 2 << 2) + w | 0, ur(r, (ee << 2) + n | 0, J, (se << 2) + c | 0, m, d, de, C, Q), w = 0, (ee | 0) > 0)
+                  if (w = i[u >> 2], ur(r, n, z, c, m, d, de, C, P), J = ((re | 0) / 2 << 2) + w | 0, ur(r, (ee << 2) + n | 0, J, (se << 2) + c | 0, m, d, de, C, P), w = 0, (ee | 0) > 0)
                     for (; b = w << 2, _ = z + b | 0, D[_ >> 2] = x(D[_ >> 2] * x(0.5)) + x(D[b + J >> 2] * x(0.5)), w = w + 1 | 0, (ee | 0) != (w | 0); )
                       ;
                   if ((U | 0) < 1)
@@ -69571,22 +69606,22 @@ function gb() {
                 pe = Ae;
               }
               function zu(r, n, u, c, m, d) {
-                var _ = 0, b = 0, f = 0, w = 0, C = 0, Q = 0, N = 0, U = 0, J = 0, z = 0, ee = 0, re = 0;
-                if (_ = qe[r + 4 >> 1] | qe[r + 6 >> 1] << 16, L[n >> 1] = _, L[n + 2 >> 1] = _ >>> 16, _ = qe[r + 8 >> 1] | qe[r + 10 >> 1] << 16, L[u >> 1] = _, L[u + 2 >> 1] = _ >>> 16, w = d << 1, _ = w + n | 0, _ = qe[_ >> 1] | qe[_ + 2 >> 1] << 16, L[r + 4 >> 1] = _, L[r + 6 >> 1] = _ >>> 16, _ = u + w | 0, _ = qe[_ >> 1] | qe[_ + 2 >> 1] << 16, L[r + 8 >> 1] = _, L[r + 10 >> 1] = _ >>> 16, w = m << 3, b = 65536 / (w | 0) | 0, Q = i[c + 4 >> 2], N = i[c >> 2], (m | 0) >= 1)
-                  for (c = b << 16 >> 16, f = L[r + 2 >> 1], U = (T(c, Q - f << 16 >> 16) >> 15) + 1 >> 1, C = L[r >> 1], J = (T(N - C << 16 >> 16, c) >> 15) + 1 >> 1, z = (w | 0) > 1 ? w : 1, c = 0; m = c + 1 | 0, b = m << 1, _ = b + u | 0, ee = _, re = L[_ >> 1] << 8, f = f + U | 0, _ = f << 16 >> 16, b = L[n + b >> 1], _ = (re + T(_, b >> 5) | 0) + (T(b << 11 & 63488, _) >> 16) | 0, c = (c << 1) + n | 0, c = (L[c + 4 >> 1] + L[c >> 1] | 0) + (b << 1) | 0, C = C + J | 0, b = C << 16 >> 16, c = (T(b, c >> 7) + _ | 0) + (T(c << 9 & 65024, b) >> 16) | 0, b = (c >> 7) + 1 >> 1, L[ee >> 1] = (c | 0) > 8388479 ? 32767 : (b | 0) > -32768 ? b : -32768, c = m, (z | 0) != (c | 0); )
+                var _ = 0, b = 0, f = 0, w = 0, C = 0, P = 0, N = 0, U = 0, J = 0, z = 0, ee = 0, re = 0;
+                if (_ = qe[r + 4 >> 1] | qe[r + 6 >> 1] << 16, L[n >> 1] = _, L[n + 2 >> 1] = _ >>> 16, _ = qe[r + 8 >> 1] | qe[r + 10 >> 1] << 16, L[u >> 1] = _, L[u + 2 >> 1] = _ >>> 16, w = d << 1, _ = w + n | 0, _ = qe[_ >> 1] | qe[_ + 2 >> 1] << 16, L[r + 4 >> 1] = _, L[r + 6 >> 1] = _ >>> 16, _ = u + w | 0, _ = qe[_ >> 1] | qe[_ + 2 >> 1] << 16, L[r + 8 >> 1] = _, L[r + 10 >> 1] = _ >>> 16, w = m << 3, b = 65536 / (w | 0) | 0, P = i[c + 4 >> 2], N = i[c >> 2], (m | 0) >= 1)
+                  for (c = b << 16 >> 16, f = L[r + 2 >> 1], U = (T(c, P - f << 16 >> 16) >> 15) + 1 >> 1, C = L[r >> 1], J = (T(N - C << 16 >> 16, c) >> 15) + 1 >> 1, z = (w | 0) > 1 ? w : 1, c = 0; m = c + 1 | 0, b = m << 1, _ = b + u | 0, ee = _, re = L[_ >> 1] << 8, f = f + U | 0, _ = f << 16 >> 16, b = L[n + b >> 1], _ = (re + T(_, b >> 5) | 0) + (T(b << 11 & 63488, _) >> 16) | 0, c = (c << 1) + n | 0, c = (L[c + 4 >> 1] + L[c >> 1] | 0) + (b << 1) | 0, C = C + J | 0, b = C << 16 >> 16, c = (T(b, c >> 7) + _ | 0) + (T(c << 9 & 65024, b) >> 16) | 0, b = (c >> 7) + 1 >> 1, L[ee >> 1] = (c | 0) > 8388479 ? 32767 : (b | 0) > -32768 ? b : -32768, c = m, (z | 0) != (c | 0); )
                     ;
                 if ((d | 0) > (w | 0))
-                  for (m = Q << 16 >> 16, b = N << 16 >> 16; f = w << 1, w = w + 1 | 0, c = w << 1, C = c + u | 0, c = L[n + c >> 1], _ = (T(c >> 5, m) + (L[C >> 1] << 8) | 0) + (T(c << 11 & 63488, m) >> 16) | 0, f = n + f | 0, c = (L[f + 4 >> 1] + L[f >> 1] | 0) + (c << 1) | 0, c = (_ + T(c >> 7, b) | 0) + (T(c << 9 & 65024, b) >> 16) | 0, f = (c >> 7) + 1 >> 1, L[C >> 1] = (c | 0) > 8388479 ? 32767 : (f | 0) > -32768 ? f : -32768, (d | 0) != (w | 0); )
+                  for (m = P << 16 >> 16, b = N << 16 >> 16; f = w << 1, w = w + 1 | 0, c = w << 1, C = c + u | 0, c = L[n + c >> 1], _ = (T(c >> 5, m) + (L[C >> 1] << 8) | 0) + (T(c << 11 & 63488, m) >> 16) | 0, f = n + f | 0, c = (L[f + 4 >> 1] + L[f >> 1] | 0) + (c << 1) | 0, c = (_ + T(c >> 7, b) | 0) + (T(c << 9 & 65024, b) >> 16) | 0, f = (c >> 7) + 1 >> 1, L[C >> 1] = (c | 0) > 8388479 ? 32767 : (f | 0) > -32768 ? f : -32768, (d | 0) != (w | 0); )
                     ;
-                if (L[r + 2 >> 1] = Q, L[r >> 1] = N, (d | 0) >= 1)
+                if (L[r + 2 >> 1] = P, L[r >> 1] = N, (d | 0) >= 1)
                   for (w = 0; w = w + 1 | 0, c = w << 1, m = c + n | 0, r = m, m = L[m >> 1], c = u + c | 0, b = L[c >> 1], f = m + b | 0, f = (f | 0) < 32767 ? f : 32767, L[r >> 1] = (f | 0) > -32768 ? f : -32768, m = m - b | 0, m = (m | 0) < 32767 ? m : 32767, L[c >> 1] = (m | 0) > -32768 ? m : -32768, (d | 0) != (w | 0); )
                     ;
               }
-              function Ru(r, n, u, c, m, d, _, b, f, w, C, Q, N, U) {
+              function Ru(r, n, u, c, m, d, _, b, f, w, C, P, N, U) {
                 var J = 0, z = x(0), ee = 0, re = x(0), de = 0, te = 0, se = x(0), Ae = 0, be = 0, oe = 0, le = 0, Se = x(0), Ce = 0, Pe = 0, ze = 0, Ne = 0, Oe = 0, We = x(0), at = 0, nt = x(0), ct = 0, ft = 0;
                 if ((_ | 0) < (b | 0))
                   for (J = 1 << c, Pe = (J | 0) > 1 ? J : 1, ze = (m | 0) > 1 ? m : 1, Ne = (c | 0) == 3, Oe = (c | 0) == 31; ; ) {
-                    for (J = i[r + 32 >> 2], de = _, _ = de + 1 | 0, oe = de << 1, Ae = L[J + (_ << 1) >> 1] - L[oe + J >> 1] | 0, le = Ae << c, We = x(x(1) / x(si(+(le | 0)))), Se = x(x(lr(+x(x((i[(de << 2) + Q >> 2] + 1 >>> 0) / (Ae >>> 0) >>> c | 0) * x(-0.125)) * 0.6931471805599453)) * x(0.5)), at = T(m, de), te = 0; ; ) {
+                    for (J = i[r + 32 >> 2], de = _, _ = de + 1 | 0, oe = de << 1, Ae = L[J + (_ << 1) >> 1] - L[oe + J >> 1] | 0, le = Ae << c, We = x(x(1) / x(si(+(le | 0)))), Se = x(x(lr(+x(x((i[(de << 2) + P >> 2] + 1 >>> 0) / (Ae >>> 0) >>> c | 0) * x(-0.125)) * 0.6931471805599453)) * x(0.5)), at = T(m, de), te = 0; ; ) {
                       ee = i[r + 8 >> 2], J = T(te, ee) + de << 2, z = D[J + C >> 2], re = D[w + J >> 2], nt = D[f + J >> 2], (m | 0) == 1 && (ee = ee + de << 2, se = D[ee + C >> 2], z = z > se ? z : se, se = D[w + ee >> 2], re = re > se ? re : se), ct = lr(+x(xt(x(nt - (z > re ? re : z)), x(0))) * -0.6931471805599453);
                       e: {
                         if (Oe)
@@ -69614,16 +69649,16 @@ function gb() {
                   }
               }
               function Zs(r, n, u, c, m, d, _, b) {
-                var f = x(0), w = x(0), C = 0, Q = 0, N = 0, U = 0, J = 0, z = x(0), ee = 0, re = 0, de = x(0), te = 0;
+                var f = x(0), w = x(0), C = 0, P = 0, N = 0, U = 0, J = 0, z = x(0), ee = 0, re = 0, de = x(0), te = 0;
                 if (C = pe, J = C, !(b | ((c | 0) != 2 | (m | 0) != 1))) {
                   if (f = D[_ + 4 >> 2], w = D[_ >> 2], (u | 0) >= 1)
-                    for (Q = i[r + 4 >> 2], N = i[r >> 2], z = D[d >> 2], b = 0; C = b << 2, de = D[Q + C >> 2], c = b << 3, w = x(w + x(D[C + N >> 2] + x(10000000031710769e-46))), D[c + n >> 2] = w * x(30517578125e-15), f = x(f + x(de + x(10000000031710769e-46))), D[(c | 4) + n >> 2] = f * x(30517578125e-15), f = x(z * f), w = x(z * w), b = b + 1 | 0, (b | 0) != (u | 0); )
+                    for (P = i[r + 4 >> 2], N = i[r >> 2], z = D[d >> 2], b = 0; C = b << 2, de = D[P + C >> 2], c = b << 3, w = x(w + x(D[C + N >> 2] + x(10000000031710769e-46))), D[c + n >> 2] = w * x(30517578125e-15), f = x(f + x(de + x(10000000031710769e-46))), D[(c | 4) + n >> 2] = f * x(30517578125e-15), f = x(z * f), w = x(z * w), b = b + 1 | 0, (b | 0) != (u | 0); )
                       ;
                   D[_ + 4 >> 2] = f, D[_ >> 2] = w, pe = J;
                   return;
                 }
                 if (!b) {
-                  for (te = (c | 0) > 1 ? c : 1, ee = (u | 0) / (m | 0) | 0, Q = C - ((u << 2) + 15 & -16) | 0, pe = Q, w = D[d >> 2], d = 0; ; ) {
+                  for (te = (c | 0) > 1 ? c : 1, ee = (u | 0) / (m | 0) | 0, P = C - ((u << 2) + 15 & -16) | 0, pe = P, w = D[d >> 2], d = 0; ; ) {
                     b = U << 2, C = b + n | 0, N = i[r + b >> 2], re = _ + b | 0, f = D[re >> 2];
                     e: {
                       if ((m | 0) <= 1) {
@@ -69635,14 +69670,14 @@ function gb() {
                       }
                       if (d = 1, b = 0, (u | 0) < 1)
                         break e;
-                      for (; d = b << 2, f = x(f + x(D[N + d >> 2] + x(10000000031710769e-46))), D[d + Q >> 2] = f, f = x(w * f), d = 1, b = b + 1 | 0, (b | 0) != (u | 0); )
+                      for (; d = b << 2, f = x(f + x(D[N + d >> 2] + x(10000000031710769e-46))), D[d + P >> 2] = f, f = x(w * f), d = 1, b = b + 1 | 0, (b | 0) != (u | 0); )
                         ;
                     }
                     D[re >> 2] = f;
                     e: {
                       if (!d || (b = 0, (ee | 0) < 1))
                         break e;
-                      for (; D[(T(c, b) << 2) + C >> 2] = D[(T(m, b) << 2) + Q >> 2] * x(30517578125e-15), b = b + 1 | 0, (ee | 0) != (b | 0); )
+                      for (; D[(T(c, b) << 2) + C >> 2] = D[(T(m, b) << 2) + P >> 2] * x(30517578125e-15), b = b + 1 | 0, (ee | 0) != (b | 0); )
                         ;
                     }
                     if (U = U + 1 | 0, (te | 0) == (U | 0))
@@ -69654,7 +69689,7 @@ function gb() {
                 Le(35264, 34183, 279), Te();
               }
               function nr(r, n, u, c, m, d, _, b) {
-                var f = 0, w = 0, C = x(0), Q = x(0), N = x(0), U = x(0), J = 0, z = 0, ee = 0, re = 0, de = 0, te = x(0), se = x(0), Ae = 0, be = 0;
+                var f = 0, w = 0, C = x(0), P = x(0), N = x(0), U = x(0), J = 0, z = 0, ee = 0, re = 0, de = 0, te = x(0), se = x(0), Ae = 0, be = 0;
                 if (b = i[r >> 2], J = b >> 1, w = i[r + 24 >> 2], (d | 0) >= 1)
                   for (; b = J, J = b >> 1, w = (b << 2) + w | 0, f = f + 1 | 0, (f | 0) != (d | 0); )
                     ;
@@ -69664,20 +69699,20 @@ function gb() {
                     Na(re, f);
                     break e;
                   }
-                  for (z = b >> 2, Ae = (z | 0) > 1 ? z : 1, d = 0, r = (T(J - 1 | 0, _) << 2) + n | 0, ee = i[re + 44 >> 2], de = _ << 1, be = 0 - de << 2; _ = L[ee >> 1] << 3, N = D[r >> 2], U = D[(d << 2) + w >> 2], C = D[n >> 2], Q = D[(d + z << 2) + w >> 2], D[(_ | 4) + f >> 2] = x(N * U) + x(C * Q), D[_ + f >> 2] = x(U * C) - x(N * Q), ee = ee + 2 | 0, r = r + be | 0, n = (de << 2) + n | 0, d = d + 1 | 0, (Ae | 0) != (d | 0); )
+                  for (z = b >> 2, Ae = (z | 0) > 1 ? z : 1, d = 0, r = (T(J - 1 | 0, _) << 2) + n | 0, ee = i[re + 44 >> 2], de = _ << 1, be = 0 - de << 2; _ = L[ee >> 1] << 3, N = D[r >> 2], U = D[(d << 2) + w >> 2], C = D[n >> 2], P = D[(d + z << 2) + w >> 2], D[(_ | 4) + f >> 2] = x(N * U) + x(C * P), D[_ + f >> 2] = x(U * C) - x(N * P), ee = ee + 2 | 0, r = r + be | 0, n = (de << 2) + n | 0, d = d + 1 | 0, (Ae | 0) != (d | 0); )
                     ;
                   if (Na(re, f), (b | 0) < 4)
                     break e;
-                  for (d = z + 1 >> 1, ee = (d | 0) > 1 ? d : 1, n = (J << 2) + f | 0, d = 0; r = n - 4 | 0, N = D[r >> 2], n = n - 8 | 0, U = D[n >> 2], C = D[f + 4 >> 2], Q = D[(d << 2) + w >> 2], te = D[f >> 2], se = D[(d + z << 2) + w >> 2], D[f >> 2] = x(C * Q) + x(te * se), D[r >> 2] = x(C * se) - x(te * Q), r = d ^ -1, C = D[(z + r << 2) + w >> 2], Q = D[(r + J << 2) + w >> 2], D[n >> 2] = x(N * C) + x(U * Q), D[f + 4 >> 2] = x(N * Q) - x(U * C), f = f + 8 | 0, d = d + 1 | 0, (ee | 0) != (d | 0); )
+                  for (d = z + 1 >> 1, ee = (d | 0) > 1 ? d : 1, n = (J << 2) + f | 0, d = 0; r = n - 4 | 0, N = D[r >> 2], n = n - 8 | 0, U = D[n >> 2], C = D[f + 4 >> 2], P = D[(d << 2) + w >> 2], te = D[f >> 2], se = D[(d + z << 2) + w >> 2], D[f >> 2] = x(C * P) + x(te * se), D[r >> 2] = x(C * se) - x(te * P), r = d ^ -1, C = D[(z + r << 2) + w >> 2], P = D[(r + J << 2) + w >> 2], D[n >> 2] = x(N * C) + x(U * P), D[f + 4 >> 2] = x(N * P) - x(U * C), f = f + 8 | 0, d = d + 1 | 0, (ee | 0) != (d | 0); )
                     ;
                 }
                 if (J = (m | 0) / 2 | 0, (m | 0) >= 2)
-                  for (f = m << 2, w = f + u | 0, f = c + f | 0, d = 0; N = D[u >> 2], f = f - 4 | 0, U = D[f >> 2], w = w - 4 | 0, C = D[w >> 2], Q = D[c >> 2], D[u >> 2] = x(N * U) - x(C * Q), D[w >> 2] = x(C * U) + x(N * Q), c = c + 4 | 0, u = u + 4 | 0, d = d + 1 | 0, (J | 0) != (d | 0); )
+                  for (f = m << 2, w = f + u | 0, f = c + f | 0, d = 0; N = D[u >> 2], f = f - 4 | 0, U = D[f >> 2], w = w - 4 | 0, C = D[w >> 2], P = D[c >> 2], D[u >> 2] = x(N * U) - x(C * P), D[w >> 2] = x(C * U) + x(N * P), c = c + 4 | 0, u = u + 4 | 0, d = d + 1 | 0, (J | 0) != (d | 0); )
                     ;
               }
               function Fu(r, n, u, c, m, d) {
                 r = r | 0, n = n | 0, u = u | 0, c = c | 0, m = m | 0, d = d | 0;
-                var _ = x(0), b = 0, f = x(0), w = 0, C = 0, Q = 0, N = 0, U = 0, J = 0, z = 0, ee = 0, re = 0, de = 0, te = 0, se = 0, Ae = 0, be = x(0), oe = 0, le = 0, Se = 0, Ce = x(0), Pe = 0, ze = 0, Ne = 0, Oe = 0, We = 0;
+                var _ = x(0), b = 0, f = x(0), w = 0, C = 0, P = 0, N = 0, U = 0, J = 0, z = 0, ee = 0, re = 0, de = 0, te = 0, se = 0, Ae = 0, be = x(0), oe = 0, le = 0, Se = 0, Ce = x(0), Pe = 0, ze = 0, Ne = 0, Oe = 0, We = 0;
                 n = n << 2, re = n + i[r + 64 >> 2] | 0, U = i[re >> 2], de = i[r + 60 >> 2] + n | 0, w = i[de >> 2], te = i[c >> 2];
                 e: {
                   if ((w | 0) >= (te | 0))
@@ -69690,13 +69725,13 @@ function gb() {
                     d = i[r + 48 >> 2], c = T(U, d), n = c, c = (c >>> 0) / (C >>> 0) | 0, f = x(x(n - T(C, c) >>> 0) / Ce);
                     t: {
                       if (Pe) {
-                        b = 0, Q = 0, J = 0, z = 0;
+                        b = 0, P = 0, J = 0, z = 0;
                         break t;
                       }
-                      for (ze = (w << 2) + u | 0, Ne = 4 - c | 0, Oe = i[r + 76 >> 2], c = 0, z = 0, J = 0, Q = 0, b = 0; _ = D[(c << 2) + ze >> 2], c = c + 1 | 0, n = (T(d, c) + Ne << 2) + Oe | 0, J = J + +x(_ * D[n >> 2]), z = z + +x(_ * D[n + 4 >> 2]), Q = Q + +x(_ * D[n - 4 >> 2]), b = b + +x(_ * D[n - 8 >> 2]), (c | 0) != (Ae | 0); )
+                      for (ze = (w << 2) + u | 0, Ne = 4 - c | 0, Oe = i[r + 76 >> 2], c = 0, z = 0, J = 0, P = 0, b = 0; _ = D[(c << 2) + ze >> 2], c = c + 1 | 0, n = (T(d, c) + Ne << 2) + Oe | 0, J = J + +x(_ * D[n >> 2]), z = z + +x(_ * D[n + 4 >> 2]), P = P + +x(_ * D[n - 4 >> 2]), b = b + +x(_ * D[n - 8 >> 2]), (c | 0) != (Ae | 0); )
                         ;
                     }
-                    if (_ = x(f * x(0.16666999459266663)), be = x(f * x(f * _)), ee = +x(be - _), We = b * ee, _ = x(f * x(f * x(0.5))), b = +x(x(f + _) - x(f * _)), Q = We + Q * b, ee = 1 - ee - b, b = +x(x(_ + x(f * x(-0.3333300054073334))) - be), D[(T(N, Se) << 2) + m >> 2] = Q + J * +x(ee - b) + z * b, c = U + oe | 0, U = c - (c >>> 0 < C >>> 0 ? 0 : C) | 0, N = N + 1 | 0, w = (w + le | 0) + (c >>> 0 >= C >>> 0) | 0, !((te | 0) > (w | 0)))
+                    if (_ = x(f * x(0.16666999459266663)), be = x(f * x(f * _)), ee = +x(be - _), We = b * ee, _ = x(f * x(f * x(0.5))), b = +x(x(f + _) - x(f * _)), P = We + P * b, ee = 1 - ee - b, b = +x(x(_ + x(f * x(-0.3333300054073334))) - be), D[(T(N, Se) << 2) + m >> 2] = P + J * +x(ee - b) + z * b, c = U + oe | 0, U = c - (c >>> 0 < C >>> 0 ? 0 : C) | 0, N = N + 1 | 0, w = (w + le | 0) + (c >>> 0 >= C >>> 0) | 0, !((te | 0) > (w | 0)))
                       break;
                   }
                 }
@@ -69733,8 +69768,8 @@ function gb() {
                 return _ = x(ii(x(x(b * x(10430.3818359375)) + x(0.5)))), x(Ke(_)) < x(2147483648) ? ~~_ : -2147483648;
               }
               function Xs(r, n, u, c, m) {
-                var d = 0, _ = 0, b = 0, f = 0, w = 0, C = 0, Q = 0, N = 0, U = 0, J = 0;
-                f = pe - 160 | 0, pe = f, Q = 8, _ = At(r, T(u >> 1, 9) + 7744 | 0, 8);
+                var d = 0, _ = 0, b = 0, f = 0, w = 0, C = 0, P = 0, N = 0, U = 0, J = 0;
+                f = pe - 160 | 0, pe = f, P = 8, _ = At(r, T(u >> 1, 9) + 7744 | 0, 8);
                 e: {
                   t: {
                     if ((m & -16) < (m | 0)) {
@@ -69744,7 +69779,7 @@ function gb() {
                     }
                     if ((m | 0) < 16)
                       break e;
-                    Q = m >> 4;
+                    P = m >> 4;
                   }
                   for (U = T(_, 18) + 7552 | 0; ; ) {
                     if (_ = w << 2, C = f + _ | 0, i[C >> 2] = 0, b = (f + 80 | 0) + _ | 0, d = At(r, U, 8), i[b >> 2] = d, _ = 0, (d | 0) == 17) {
@@ -69752,7 +69787,7 @@ function gb() {
                         ;
                       i[C >> 2] = _;
                     }
-                    if (w = w + 1 | 0, (Q | 0) == (w | 0))
+                    if (w = w + 1 | 0, (P | 0) == (w | 0))
                       break;
                   }
                   for (_ = 0; ; ) {
@@ -69764,7 +69799,7 @@ function gb() {
                       }
                       L[d >> 1] = 0, L[d + 2 >> 1] = 0, L[d + 4 >> 1] = 0, L[d + 6 >> 1] = 0, L[d + 24 >> 1] = 0, L[d + 26 >> 1] = 0, L[d + 28 >> 1] = 0, L[d + 30 >> 1] = 0, L[d + 16 >> 1] = 0, L[d + 18 >> 1] = 0, L[d + 20 >> 1] = 0, L[d + 22 >> 1] = 0, L[d + 8 >> 1] = 0, L[d + 10 >> 1] = 0, L[d + 12 >> 1] = 0, L[d + 14 >> 1] = 0;
                     }
-                    if (_ = _ + 1 | 0, (Q | 0) == (_ | 0))
+                    if (_ = _ + 1 | 0, (P | 0) == (_ | 0))
                       break;
                   }
                   for (; ; ) {
@@ -69777,7 +69812,7 @@ function gb() {
                       }
                       _ = (f + 80 | 0) + J | 0, i[_ >> 2] = i[_ >> 2] | b << 5;
                     }
-                    if (N = N + 1 | 0, (N | 0) == (Q | 0))
+                    if (N = N + 1 | 0, (N | 0) == (P | 0))
                       break;
                   }
                 }
@@ -69868,8 +69903,8 @@ function gb() {
                 i[n + 136 >> 2] = u, pe = m - -64 | 0;
               }
               function $s(r, n, u, c) {
-                var m = 0, d = 0, _ = 0, b = 0, f = 0, w = 0, C = 0, Q = 0, N = 0, U = 0, J = 0;
-                for (_ = pe, Q = _, m = i[r + 268 >> 2], b = _ - ((m << 2) + 31 & -16) | 0, pe = b, _ = i[r + 36 >> 2], d = i[r + 32 >> 2], i[b + 8 >> 2] = d, i[b + 12 >> 2] = _, d = i[r + 28 >> 2], _ = i[r + 24 >> 2], i[b >> 2] = _, i[b + 4 >> 2] = d, N = b + 16 | 0, U = i[r + 272 >> 2]; ; ) {
+                var m = 0, d = 0, _ = 0, b = 0, f = 0, w = 0, C = 0, P = 0, N = 0, U = 0, J = 0;
+                for (_ = pe, P = _, m = i[r + 268 >> 2], b = _ - ((m << 2) + 31 & -16) | 0, pe = b, _ = i[r + 36 >> 2], d = i[r + 32 >> 2], i[b + 8 >> 2] = d, i[b + 12 >> 2] = _, d = i[r + 28 >> 2], _ = i[r + 24 >> 2], i[b >> 2] = _, i[b + 4 >> 2] = d, N = b + 16 | 0, U = i[r + 272 >> 2]; ; ) {
                   if (f = (c | 0) < (m | 0) ? c : m, tn(r, N, u, f), _ = 0, w = f << 17, (w | 0) >= 1)
                     for (; C = T(_ & 65535, 12) >>> 16 | 0, d = C << 3, m = (_ >> 16 << 1) + b | 0, J = ((T(L[d + 2610 >> 1], L[m + 2 >> 1]) + T(L[d + 2608 >> 1], L[m >> 1]) | 0) + T(L[d + 2612 >> 1], L[m + 4 >> 1]) | 0) + T(L[d + 2614 >> 1], L[m + 6 >> 1]) | 0, d = 11 - C << 3, m = (((J + T(L[d + 2614 >> 1], L[m + 8 >> 1]) | 0) + T(L[d + 2612 >> 1], L[m + 10 >> 1]) | 0) + T(L[d + 2610 >> 1], L[m + 12 >> 1]) | 0) + T(L[d + 2608 >> 1], L[m + 14 >> 1]) | 0, d = (m >> 14) + 1 >> 1, L[n >> 1] = (m | 0) > 1073725439 ? 32767 : (d | 0) > -32768 ? d : -32768, n = n + 2 | 0, _ = _ + U | 0, (w | 0) > (_ | 0); )
                       ;
@@ -69879,7 +69914,7 @@ function gb() {
                   }
                   break;
                 }
-                m = (f << 2) + b | 0, _ = i[m + 4 >> 2], d = i[m >> 2], i[r + 24 >> 2] = d, i[r + 28 >> 2] = _, d = i[m + 12 >> 2], _ = i[m + 8 >> 2], i[r + 32 >> 2] = _, i[r + 36 >> 2] = d, pe = Q;
+                m = (f << 2) + b | 0, _ = i[m + 4 >> 2], d = i[m >> 2], i[r + 24 >> 2] = d, i[r + 28 >> 2] = _, d = i[m + 12 >> 2], _ = i[m + 8 >> 2], i[r + 32 >> 2] = _, i[r + 36 >> 2] = d, pe = P;
               }
               function Hu(r, n, u) {
                 var c = 0, m = 0, d = 0, _ = 0, b = 0, f = 0;
@@ -69931,12 +69966,12 @@ function gb() {
                 pe = d + 16 | 0;
               }
               function Uu(r, n, u, c, m) {
-                var d = 0, _ = 0, b = 0, f = 0, w = 0, C = 0, Q = 0;
-                b = c - u | 0, C = b - 1 | 0, Q = (m | 0) < 1;
+                var d = 0, _ = 0, b = 0, f = 0, w = 0, C = 0, P = 0;
+                b = c - u | 0, C = b - 1 | 0, P = (m | 0) < 1;
                 e: {
                   t: {
                     for (; ; ) {
-                      if (c = 0, u = 0, !Q)
+                      if (c = 0, u = 0, !P)
                         for (; _ = i[(c << 2) + n >> 2], f = _, _ = _ >> 31, _ = _ ^ _ + f, f = _, _ = (u | 0) < (_ | 0), u = _ ? f : u, d = _ ? c : d, c = c + 1 | 0, (m | 0) != (c | 0); )
                           ;
                       if (c = (b | 0) == 1 ? (u & 1) + (u >> 1) | 0 : (u >> C) + 1 >> 1, (c | 0) >= 32768) {
@@ -69976,7 +70011,7 @@ function gb() {
               }
               function Gu(r, n, u, c, m, d) {
                 r = r | 0, n = n | 0, u = u | 0, c = c | 0, m = m | 0, d = d | 0;
-                var _ = 0, b = 0, f = 0, w = 0, C = 0, Q = 0, N = 0, U = 0, J = 0, z = 0, ee = 0, re = 0, de = 0, te = 0, se = 0, Ae = 0, be = 0, oe = 0, le = 0;
+                var _ = 0, b = 0, f = 0, w = 0, C = 0, P = 0, N = 0, U = 0, J = 0, z = 0, ee = 0, re = 0, de = 0, te = 0, se = 0, Ae = 0, be = 0, oe = 0, le = 0;
                 n = n << 2, ee = n + i[r + 64 >> 2] | 0, w = i[ee >> 2], re = i[r + 60 >> 2] + n | 0, _ = i[re >> 2], de = i[c >> 2];
                 e: {
                   if ((_ | 0) >= (de | 0))
@@ -69989,13 +70024,13 @@ function gb() {
                     z = 0;
                     t: {
                       if (le) {
-                        C = 0, Q = 0, N = 0;
+                        C = 0, P = 0, N = 0;
                         break t;
                       }
-                      for (c = (_ << 2) + u | 0, n = (T(w, J) << 2) + oe | 0, d = 0, N = 0, Q = 0, C = 0; r = d << 2, C = C + +x(D[n + r >> 2] * D[r + c >> 2]), f = r | 12, z = z + +x(D[f + n >> 2] * D[c + f >> 2]), f = r | 8, N = N + +x(D[f + n >> 2] * D[c + f >> 2]), r = r | 4, Q = Q + +x(D[n + r >> 2] * D[r + c >> 2]), d = d + 4 | 0, (J | 0) > (d | 0); )
+                      for (c = (_ << 2) + u | 0, n = (T(w, J) << 2) + oe | 0, d = 0, N = 0, P = 0, C = 0; r = d << 2, C = C + +x(D[n + r >> 2] * D[r + c >> 2]), f = r | 12, z = z + +x(D[f + n >> 2] * D[c + f >> 2]), f = r | 8, N = N + +x(D[f + n >> 2] * D[c + f >> 2]), r = r | 4, P = P + +x(D[n + r >> 2] * D[r + c >> 2]), d = d + 4 | 0, (J | 0) > (d | 0); )
                         ;
                     }
-                    if (D[(T(b, be) << 2) + m >> 2] = C + Q + N + z, r = w + se | 0, w = r - (r >>> 0 < U >>> 0 ? 0 : U) | 0, b = b + 1 | 0, _ = (_ + Ae | 0) + (r >>> 0 >= U >>> 0) | 0, !((de | 0) > (_ | 0)))
+                    if (D[(T(b, be) << 2) + m >> 2] = C + P + N + z, r = w + se | 0, w = r - (r >>> 0 < U >>> 0 ? 0 : U) | 0, b = b + 1 | 0, _ = (_ + Ae | 0) + (r >>> 0 >= U >>> 0) | 0, !((de | 0) > (_ | 0)))
                       break;
                   }
                 }
@@ -70148,9 +70183,9 @@ function gb() {
                 return r;
               }
               function tn(r, n, u, c) {
-                var m = 0, d = 0, _ = 0, b = 0, f = 0, w = 0, C = 0, Q = 0, N = 0, U = 0, J = 0, z = 0, ee = 0, re = 0, de = 0;
+                var m = 0, d = 0, _ = 0, b = 0, f = 0, w = 0, C = 0, P = 0, N = 0, U = 0, J = 0, z = 0, ee = 0, re = 0, de = 0;
                 if ((c | 0) >= 1) {
-                  for (w = i[r + 20 >> 2], b = i[r + 16 >> 2], m = i[r + 12 >> 2], _ = i[r + 8 >> 2], f = i[r + 4 >> 2], d = i[r >> 2]; U = L[(N << 1) + u >> 1] << 10, C = U - d | 0, C = (T(C & 65535, 1746) >>> 16 | 0) + T(C >> 16, 1746) | 0, J = C + d | 0, d = J - f | 0, z = (T(d & 65535, 14986) >>> 16 | 0) + T(d >> 16, 14986) | 0, d = z + f | 0, f = d - _ | 0, Q = N << 2, d = (T(f >> 16, -26453) + (T(f & 65535, -26453) >> 16) | 0) + d | 0, _ = (d >> 9) + 1 >> 1, L[Q + n >> 1] = (d | 0) > 33553919 ? 32767 : (_ | 0) > -32768 ? _ : -32768, de = (Q | 2) + n | 0, _ = U - m | 0, Q = (T(_ & 65535, 6854) >>> 16 | 0) + T(_ >> 16, 6854) | 0, ee = Q + m | 0, m = ee - b | 0, re = (T(m & 65535, 25769) >>> 16 | 0) + T(m >> 16, 25769) | 0, m = re + b | 0, b = m - w | 0, m = (T(b >> 16, -9994) + (T(b & 65535, -9994) >> 16) | 0) + m | 0, w = (m >> 9) + 1 >> 1, L[de >> 1] = (m | 0) > 33553919 ? 32767 : (w | 0) > -32768 ? w : -32768, w = m + b | 0, _ = d + f | 0, b = ee + re | 0, f = J + z | 0, m = U + Q | 0, d = U + C | 0, N = N + 1 | 0, (N | 0) != (c | 0); )
+                  for (w = i[r + 20 >> 2], b = i[r + 16 >> 2], m = i[r + 12 >> 2], _ = i[r + 8 >> 2], f = i[r + 4 >> 2], d = i[r >> 2]; U = L[(N << 1) + u >> 1] << 10, C = U - d | 0, C = (T(C & 65535, 1746) >>> 16 | 0) + T(C >> 16, 1746) | 0, J = C + d | 0, d = J - f | 0, z = (T(d & 65535, 14986) >>> 16 | 0) + T(d >> 16, 14986) | 0, d = z + f | 0, f = d - _ | 0, P = N << 2, d = (T(f >> 16, -26453) + (T(f & 65535, -26453) >> 16) | 0) + d | 0, _ = (d >> 9) + 1 >> 1, L[P + n >> 1] = (d | 0) > 33553919 ? 32767 : (_ | 0) > -32768 ? _ : -32768, de = (P | 2) + n | 0, _ = U - m | 0, P = (T(_ & 65535, 6854) >>> 16 | 0) + T(_ >> 16, 6854) | 0, ee = P + m | 0, m = ee - b | 0, re = (T(m & 65535, 25769) >>> 16 | 0) + T(m >> 16, 25769) | 0, m = re + b | 0, b = m - w | 0, m = (T(b >> 16, -9994) + (T(b & 65535, -9994) >> 16) | 0) + m | 0, w = (m >> 9) + 1 >> 1, L[de >> 1] = (m | 0) > 33553919 ? 32767 : (w | 0) > -32768 ? w : -32768, w = m + b | 0, _ = d + f | 0, b = ee + re | 0, f = J + z | 0, m = U + P | 0, d = U + C | 0, N = N + 1 | 0, (N | 0) != (c | 0); )
                     ;
                   i[r + 20 >> 2] = w, i[r + 16 >> 2] = b, i[r + 12 >> 2] = m, i[r + 8 >> 2] = _, i[r + 4 >> 2] = f, i[r >> 2] = d;
                 }
@@ -70183,14 +70218,14 @@ function gb() {
                   }
               }
               function an(r, n, u, c, m, d, _, b, f) {
-                var w = 0, C = 0, Q = 0, N = 0, U = 0, J = 0, z = 0;
+                var w = 0, C = 0, P = 0, N = 0, U = 0, J = 0, z = 0;
                 U = (f | 0) > 1 ? f : 1, J = (n | 0) >= (u | 0);
                 e: {
                   if (J | (_ | 0) < (f | 0))
                     break e;
                   for (C = n; ; ) {
                     if (w = C << 2, z = w + m | 0, !(i[z >> 2] > 7 | i[d + w >> 2])) {
-                      for (w = 0; Q = Ki(b, 1), N = (T(i[r + 8 >> 2], w) + C << 2) + c | 0, D[N >> 2] = D[N >> 2] + x(x(x(x(Q | 0) + x(-0.5)) * x(1 << 13 - i[z >> 2])) * x(6103515625e-14)), w = w + 1 | 0, (U | 0) != (w | 0); )
+                      for (w = 0; P = Ki(b, 1), N = (T(i[r + 8 >> 2], w) + C << 2) + c | 0, D[N >> 2] = D[N >> 2] + x(x(x(x(P | 0) + x(-0.5)) * x(1 << 13 - i[z >> 2])) * x(6103515625e-14)), w = w + 1 | 0, (U | 0) != (w | 0); )
                         ;
                       _ = _ - U | 0;
                     }
@@ -70204,11 +70239,11 @@ function gb() {
                   if ((_ | 0) < (f | 0) | J)
                     break e;
                   for (; ; ) {
-                    Q = n << 2, C = Q + m | 0;
+                    P = n << 2, C = P + m | 0;
                     t: {
-                      if (i[C >> 2] > 7 || (w = 0, i[d + Q >> 2] != 1))
+                      if (i[C >> 2] > 7 || (w = 0, i[d + P >> 2] != 1))
                         break t;
-                      for (; Q = Ki(b, 1), N = (T(i[r + 8 >> 2], w) + n << 2) + c | 0, D[N >> 2] = D[N >> 2] + x(x(x(x(Q | 0) + x(-0.5)) * x(1 << 13 - i[C >> 2])) * x(6103515625e-14)), w = w + 1 | 0, (U | 0) != (w | 0); )
+                      for (; P = Ki(b, 1), N = (T(i[r + 8 >> 2], w) + n << 2) + c | 0, D[N >> 2] = D[N >> 2] + x(x(x(x(P | 0) + x(-0.5)) * x(1 << 13 - i[C >> 2])) * x(6103515625e-14)), w = w + 1 | 0, (U | 0) != (w | 0); )
                         ;
                       _ = _ - U | 0;
                     }
@@ -70220,7 +70255,7 @@ function gb() {
                 }
               }
               function ju(r, n, u, c, m, d) {
-                var _ = 0, b = 0, f = 0, w = 0, C = 0, Q = x(0), N = 0, U = 0, J = 0;
+                var _ = 0, b = 0, f = 0, w = 0, C = 0, P = x(0), N = 0, U = 0, J = 0;
                 if (d = pe - 16 | 0, _ = d, pe = d, (r | 0) != (u | 0)) {
                   for (w = d - ((m << 2) + 15 & -16) | 0, pe = w, d = 0; i[(d << 2) + w >> 2] = i[((d ^ -1) + m << 2) + n >> 2], d = d + 1 | 0, (d | 0) != (m | 0); )
                     ;
@@ -70229,10 +70264,10 @@ function gb() {
                       ;
                   if ((c | 0) > (b | 0))
                     for (C = (m | 0) < 1; ; ) {
-                      if (f = b << 2, Q = D[f + r >> 2], !C)
-                        for (n = b - m | 0, d = 0; Q = x(Q + x(D[(d << 2) + w >> 2] * D[(n + d << 2) + r >> 2])), d = d + 1 | 0, (d | 0) != (m | 0); )
+                      if (f = b << 2, P = D[f + r >> 2], !C)
+                        for (n = b - m | 0, d = 0; P = x(P + x(D[(d << 2) + w >> 2] * D[(n + d << 2) + r >> 2])), d = d + 1 | 0, (d | 0) != (m | 0); )
                           ;
-                      if (D[u + f >> 2] = Q, b = b + 1 | 0, (b | 0) == (c | 0))
+                      if (D[u + f >> 2] = P, b = b + 1 | 0, (b | 0) == (c | 0))
                         break;
                     }
                   pe = _ + 16 | 0;
@@ -70241,8 +70276,8 @@ function gb() {
                 Le(33804, 33829, 102), Te();
               }
               function Ou(r, n, u, c, m, d, _, b) {
-                var f = 0, w = 0, C = x(0), Q = x(0), N = 0, U = x(0), J = x(0), z = 0, ee = 0, re = 0, de = 0;
-                if (f = pe - 16 | 0, pe = f, i[f + 8 >> 2] = 0, i[f + 12 >> 2] = 0, m ? Q = x(0.149993896484375) : (w = b << 2, J = D[w + 24832 >> 2], Q = D[w + 24848 >> 2]), (n | 0) < (u | 0))
+                var f = 0, w = 0, C = x(0), P = x(0), N = 0, U = x(0), J = x(0), z = 0, ee = 0, re = 0, de = 0;
+                if (f = pe - 16 | 0, pe = f, i[f + 8 >> 2] = 0, i[f + 12 >> 2] = 0, m ? P = x(0.149993896484375) : (w = b << 2, J = D[w + 24832 >> 2], P = D[w + 24848 >> 2]), (n | 0) < (u | 0))
                   for (z = (_ | 0) > 1 ? _ : 1, ee = (i[d + 4 >> 2] << 3) + 32 | 0, N = (T(b, 84) + T(m, 42) | 0) + 24496 | 0; ; ) {
                     for (m = ((n | 0) < 20 ? n : 20) << 1, re = N + m | 0, de = (m | 1) + N | 0, m = 0; ; ) {
                       b = (ee - i[d + 20 >> 2] | 0) - Xe(i[d + 28 >> 2]) | 0;
@@ -70259,7 +70294,7 @@ function gb() {
                           break e;
                         _ = 0 - Si(d, 1) | 0;
                       }
-                      if (b = (T(i[r + 8 >> 2], m) + n << 2) + c | 0, w = (f + 8 | 0) + (m << 2) | 0, U = D[w >> 2], C = x(_ | 0), D[b >> 2] = x(U + x(J * x(xt(D[b >> 2], x(-9))))) + C, D[w >> 2] = x(U + C) - x(Q * C), m = m + 1 | 0, (z | 0) == (m | 0))
+                      if (b = (T(i[r + 8 >> 2], m) + n << 2) + c | 0, w = (f + 8 | 0) + (m << 2) | 0, U = D[w >> 2], C = x(_ | 0), D[b >> 2] = x(U + x(J * x(xt(D[b >> 2], x(-9))))) + C, D[w >> 2] = x(U + C) - x(P * C), m = m + 1 | 0, (z | 0) == (m | 0))
                         break;
                     }
                     if (n = n + 1 | 0, (u | 0) == (n | 0))
@@ -70481,7 +70516,7 @@ function gb() {
                 return r;
               }
               function on(r, n, u, c, m, d) {
-                var _ = 0, b = 0, f = 0, w = 0, C = 0, Q = 0, N = 0;
+                var _ = 0, b = 0, f = 0, w = 0, C = 0, P = 0, N = 0;
                 e: {
                   t: {
                     if ((m | 0) > 5) {
@@ -70491,10 +70526,10 @@ function gb() {
                         break e;
                       if ((c | 0) > (m | 0))
                         for (N = (m | 0) < 7, d = m; ; ) {
-                          if (Q = d << 1, b = Q + n | 0, f = b - 2 | 0, w = ((((T(L[u + 2 >> 1], L[b - 4 >> 1]) + T(L[u >> 1], L[f >> 1]) | 0) + T(L[u + 4 >> 1], L[b - 6 >> 1]) | 0) + T(L[u + 6 >> 1], L[b - 8 >> 1]) | 0) + T(L[u + 8 >> 1], L[b - 10 >> 1]) | 0) + T(L[u + 10 >> 1], L[b - 12 >> 1]) | 0, _ = 6, !N)
+                          if (P = d << 1, b = P + n | 0, f = b - 2 | 0, w = ((((T(L[u + 2 >> 1], L[b - 4 >> 1]) + T(L[u >> 1], L[f >> 1]) | 0) + T(L[u + 4 >> 1], L[b - 6 >> 1]) | 0) + T(L[u + 6 >> 1], L[b - 8 >> 1]) | 0) + T(L[u + 8 >> 1], L[b - 10 >> 1]) | 0) + T(L[u + 10 >> 1], L[b - 12 >> 1]) | 0, _ = 6, !N)
                             for (; C = _ << 1, w = (T(L[C + u >> 1], L[f - C >> 1]) + w | 0) + T(L[(C | 2) + u >> 1], L[((_ ^ -1) << 1) + f >> 1]) | 0, _ = _ + 2 | 0, (_ | 0) < (m | 0); )
                               ;
-                          if (_ = ((L[b >> 1] << 12) - w >> 11) + 1 >> 1, _ = (_ | 0) > -32768 ? _ : -32768, L[r + Q >> 1] = (_ | 0) < 32767 ? _ : 32767, d = d + 1 | 0, (d | 0) == (c | 0))
+                          if (_ = ((L[b >> 1] << 12) - w >> 11) + 1 >> 1, _ = (_ | 0) > -32768 ? _ : -32768, L[r + P >> 1] = (_ | 0) < 32767 ? _ : 32767, d = d + 1 | 0, (d | 0) == (c | 0))
                             break;
                         }
                       qt(r, 0, m << 1);
@@ -70508,8 +70543,8 @@ function gb() {
               }
               function Zu(r, n, u, c, m, d) {
                 r = r | 0, n = n | 0, u = u | 0, c = c | 0, m = m | 0, d = d | 0;
-                var _ = 0, b = 0, f = 0, w = 0, C = x(0), Q = 0, N = 0, U = 0, J = 0, z = 0, ee = 0, re = 0, de = 0, te = 0, se = 0;
-                n = n << 2, Q = n + i[r + 64 >> 2] | 0, f = i[Q >> 2], N = i[r + 60 >> 2] + n | 0, _ = i[N >> 2], U = i[c >> 2];
+                var _ = 0, b = 0, f = 0, w = 0, C = x(0), P = 0, N = 0, U = 0, J = 0, z = 0, ee = 0, re = 0, de = 0, te = 0, se = 0;
+                n = n << 2, P = n + i[r + 64 >> 2] | 0, f = i[P >> 2], N = i[r + 60 >> 2] + n | 0, _ = i[N >> 2], U = i[c >> 2];
                 e: {
                   if ((_ | 0) >= (U | 0))
                     break e;
@@ -70525,7 +70560,7 @@ function gb() {
                       break;
                   }
                 }
-                return i[N >> 2] = _, i[Q >> 2] = f, b | 0;
+                return i[N >> 2] = _, i[P >> 2] = f, b | 0;
               }
               function Xu(r, n, u) {
                 var c = 0, m = 0, d = 0, _ = 0, b = 0, f = 0;
@@ -70566,13 +70601,13 @@ function gb() {
                 Le(24339, 24272, 131), Te();
               }
               function sn(r, n, u) {
-                var c = x(0), m = 0, d = x(0), _ = 0, b = 0, f = 0, w = x(0), C = x(0), Q = 0, N = 0, U = 0;
+                var c = x(0), m = 0, d = x(0), _ = 0, b = 0, f = 0, w = x(0), C = x(0), P = 0, N = 0, U = 0;
                 d = D[n >> 2], r = qt(r, 0, u << 2);
                 e: {
                   if (D[n >> 2] == x(0))
                     break e;
-                  for (Q = (u | 0) > 0 ? u : 0, b = 1; ; ) {
-                    if ((m | 0) == (Q | 0))
+                  for (P = (u | 0) > 0 ? u : 0, b = 1; ; ) {
+                    if ((m | 0) == (P | 0))
                       break e;
                     if (u = 0, c = x(0), m)
                       for (; c = x(c + x(D[(u << 2) + r >> 2] * D[(m - u << 2) + n >> 2])), u = u + 1 | 0, (m | 0) != (u | 0); )
@@ -70639,8 +70674,8 @@ function gb() {
                 return pe = d + 208 | 0, n;
               }
               function ln(r, n, u, c, m, d, _) {
-                var b = 0, f = 0, w = x(0), C = 0, Q = 0;
-                b = pe, Q = b, b = b - ((d << 2) + 15 & -16) | 0, pe = b;
+                var b = 0, f = 0, w = x(0), C = 0, P = 0;
+                b = pe, P = b, b = b - ((d << 2) + 15 & -16) | 0, pe = b;
                 e: {
                   if ((d | 0) > 0) {
                     if ((c | 0) <= -1)
@@ -70658,20 +70693,20 @@ function gb() {
                         if (b = (f << 2) + n | 0, D[b >> 2] = w + D[b >> 2], b = (m | 0) != (f | 0), f = f + 1 | 0, !b)
                           break;
                       }
-                    return pe = Q, 0;
+                    return pe = P, 0;
                   }
                   Le(33874, 33829, 228), Te();
                 }
                 Le(33896, 33829, 229), Te();
               }
               function ur(r, n, u, c, m, d, _, b, f) {
-                var w = 0, C = 0, Q = 0, N = 0, U = 0, J = 0, z = x(0);
-                if (J = T(i[r + 44 >> 2], _), N = i[r + 32 >> 2], w = T(L[N + (d << 1) >> 1], _), (b | 0) != 1 && (r = (J | 0) / (b | 0) | 0, w = (r | 0) > (w | 0) ? w : r), U = f ? 0 : d, C = f ? 0 : m, Q = L[(C << 1) + N >> 1], b = T(Q, _), m = b << 2, d = u, (b | 0) >= 1)
+                var w = 0, C = 0, P = 0, N = 0, U = 0, J = 0, z = x(0);
+                if (J = T(i[r + 44 >> 2], _), N = i[r + 32 >> 2], w = T(L[N + (d << 1) >> 1], _), (b | 0) != 1 && (r = (J | 0) / (b | 0) | 0, w = (r | 0) > (w | 0) ? w : r), U = f ? 0 : d, C = f ? 0 : m, P = L[(C << 1) + N >> 1], b = T(P, _), m = b << 2, d = u, (b | 0) >= 1)
                   for (r = 0, d = qt(u, 0, m); d = d + 4 | 0, r = r + 1 | 0, (b | 0) != (r | 0); )
                     ;
                 if ((U | 0) > (C | 0))
                   for (r = n + m | 0, n = C; ; ) {
-                    for (b = n << 2, z = x(lr(+x(Ht(x(D[b + c >> 2] + D[b + 24384 >> 2]), x(32))) * 0.6931471805599453)), b = T(_, Q), n = n + 1 | 0, Q = L[(n << 1) + N >> 1], m = T(Q, _); D[d >> 2] = D[r >> 2] * z, d = d + 4 | 0, r = r + 4 | 0, b = b + 1 | 0, (b | 0) < (m | 0); )
+                    for (b = n << 2, z = x(lr(+x(Ht(x(D[b + c >> 2] + D[b + 24384 >> 2]), x(32))) * 0.6931471805599453)), b = T(_, P), n = n + 1 | 0, P = L[(n << 1) + N >> 1], m = T(P, _); D[d >> 2] = D[r >> 2] * z, d = d + 4 | 0, r = r + 4 | 0, b = b + 1 | 0, (b | 0) < (m | 0); )
                       ;
                     if ((n | 0) == (U | 0))
                       break;
@@ -70679,21 +70714,21 @@ function gb() {
                 (U | 0) < (C | 0) && (Le(33464, 33495, 263), Te()), d = f ? 0 : w, qt((d << 2) + u | 0, 0, J - d << 2);
               }
               function ed(r, n, u, c, m, d, _, b) {
-                var f = 0, w = 0, C = 0, Q = 0, N = 0, U = 0, J = 0;
+                var f = 0, w = 0, C = 0, P = 0, N = 0, U = 0, J = 0;
                 f = pe, J = f, C = f - ((_ << 2) + 15 & -16) | 0, pe = C;
                 e: {
                   if ((_ | 0) <= 0) {
-                    Q = (_ << 1) + C | 0;
+                    P = (_ << 1) + C | 0;
                     break e;
                   }
-                  for (Q = T(b - 2 | 0, _), f = i[d >> 2], N = f << 16 >> 16, U = (f >> 15) + 1 >> 1; f = i[(w + Q << 2) + m >> 2], f = ((T(f & 65535, N) >> 16) + T(f >> 16, N) | 0) + T(f, U) | 0, L[(w << 1) + C >> 1] = (f | 0) > 8388607 ? 32767 : (f | 0) < -8388608 ? -32768 : f >>> 8 | 0, w = w + 1 | 0, (w | 0) != (_ | 0); )
+                  for (P = T(b - 2 | 0, _), f = i[d >> 2], N = f << 16 >> 16, U = (f >> 15) + 1 >> 1; f = i[(w + P << 2) + m >> 2], f = ((T(f & 65535, N) >> 16) + T(f >> 16, N) | 0) + T(f, U) | 0, L[(w << 1) + C >> 1] = (f | 0) > 8388607 ? 32767 : (f | 0) < -8388608 ? -32768 : f >>> 8 | 0, w = w + 1 | 0, (w | 0) != (_ | 0); )
                     ;
-                  if (Q = (_ << 1) + C | 0, (_ | 0) < 1)
+                  if (P = (_ << 1) + C | 0, (_ | 0) < 1)
                     break e;
-                  for (U = T(b - 1 | 0, _), w = i[d + 4 >> 2], N = w << 16 >> 16, d = (w >> 15) + 1 >> 1, w = 0; f = i[(w + U << 2) + m >> 2], f = ((T(f & 65535, N) >> 16) + T(f >> 16, N) | 0) + T(d, f) | 0, L[(w << 1) + Q >> 1] = (f | 0) > 8388607 ? 32767 : (f | 0) < -8388608 ? -32768 : f >>> 8 | 0, w = w + 1 | 0, (w | 0) != (_ | 0); )
+                  for (U = T(b - 1 | 0, _), w = i[d + 4 >> 2], N = w << 16 >> 16, d = (w >> 15) + 1 >> 1, w = 0; f = i[(w + U << 2) + m >> 2], f = ((T(f & 65535, N) >> 16) + T(f >> 16, N) | 0) + T(d, f) | 0, L[(w << 1) + P >> 1] = (f | 0) > 8388607 ? 32767 : (f | 0) < -8388608 ? -32768 : f >>> 8 | 0, w = w + 1 | 0, (w | 0) != (_ | 0); )
                     ;
                 }
-                dr(r, n, C, _), dr(u, c, Q, _), pe = J;
+                dr(r, n, C, _), dr(u, c, P, _), pe = J;
               }
               function cn(r, n, u) {
                 var c = 0, m = 0, d = 0, _ = 0, b = 0, f = 0, w = 0;
@@ -70737,14 +70772,14 @@ function gb() {
                 return pe = c + 16 | 0, d;
               }
               function id(r, n, u, c, m, d, _, b, f) {
-                var w = 0, C = 0, Q = x(0);
+                var w = 0, C = 0, P = x(0);
                 f = pe, C = f;
                 e: {
                   if ((u | 0) > 0) {
                     if ((n | 0) <= 1)
                       break e;
-                    if (f = f - ((n << 2) + 27 & -16) | 0, pe = f, Vr(r, n, 1, m, u, c), Q = Iu(r, f, u, n, d), sd(f, n, u, d), b) {
-                      for (_ = x(x(x(1) / x(si(Q))) * _), d = 0; b = d << 2, D[b + r >> 2] = _ * x(i[b + f >> 2]), d = d + 1 | 0, (d | 0) != (n | 0); )
+                    if (f = f - ((n << 2) + 27 & -16) | 0, pe = f, Vr(r, n, 1, m, u, c), P = Iu(r, f, u, n, d), sd(f, n, u, d), b) {
+                      for (_ = x(x(x(1) / x(si(P))) * _), d = 0; b = d << 2, D[b + r >> 2] = _ * x(i[b + f >> 2]), d = d + 1 | 0, (d | 0) != (n | 0); )
                         ;
                       Vr(r, n, -1, m, u, c);
                     }
@@ -70891,7 +70926,7 @@ function gb() {
                 Le(28044, 27959, 444), Te();
               }
               function nd(r, n, u, c, m) {
-                var d = 0, _ = 0, b = 0, f = 0, w = 0, C = 0, Q = 0;
+                var d = 0, _ = 0, b = 0, f = 0, w = 0, C = 0, P = 0;
                 e: {
                   t: {
                     if ((c | 0) == 8) {
@@ -70913,8 +70948,8 @@ function gb() {
                       break e;
                     f = 8672, w = 12;
                   }
-                  for (c = c << 16, d = c >> 15, Q = d + r | 0, b = T(c >> 16, 18), c = 0; ; ) {
-                    C = (c << 2) + u | 0, r = xe[(T(c, w) + n | 0) + f | 0] + Q | 0, i[C >> 2] = r;
+                  for (c = c << 16, d = c >> 15, P = d + r | 0, b = T(c >> 16, 18), c = 0; ; ) {
+                    C = (c << 2) + u | 0, r = xe[(T(c, w) + n | 0) + f | 0] + P | 0, i[C >> 2] = r;
                     t: {
                       if ((d | 0) > (b | 0)) {
                         if (_ = d, (r | 0) > (d | 0))
@@ -70955,7 +70990,7 @@ function gb() {
                 (m | 0) < (c | 0) && (u = L[(m << 1) + u >> 1], _ = (T(u, u) >>> b | 0) + _ | 0), i[n >> 2] = b, i[r >> 2] = _;
               }
               function mn(r, n, u, c) {
-                var m = 0, d = 0, _ = 0, b = 0, f = x(0), w = 0, C = x(0), Q = 0, N = 0, U = 0, J = 0, z = 0;
+                var m = 0, d = 0, _ = 0, b = 0, f = x(0), w = 0, C = x(0), P = 0, N = 0, U = 0, J = 0, z = 0;
                 if (m = +n, _ = Ke(m), _ < 1e-6)
                   return r;
                 if (b = +(u | 0), !(b * 0.5 < _)) {
@@ -70967,7 +71002,7 @@ function gb() {
                     }
                     c = -2147483648;
                   }
-                  u = u + (c << 3) | 0, _ = ve[u + 8 >> 3], b = ve[u >> 3], U = ve[u + 16 >> 3], w = ve[u + 24 >> 3], m = +n * 3.141592653589793, J = Ad(m) * +r / m, n = x(f - x(c | 0)), r = x(n * n), d = +x(n * r), Q = d * 0.1666666667, m = +n, N = Q - m * 0.1666666667, z = w * N, w = +r * 0.5, d = w + m - d * 0.5, m = w + m * -0.3333333333 - Q, f = x(J * (z + (U * d + (b * m + _ * (1 - N - d - m)))));
+                  u = u + (c << 3) | 0, _ = ve[u + 8 >> 3], b = ve[u >> 3], U = ve[u + 16 >> 3], w = ve[u + 24 >> 3], m = +n * 3.141592653589793, J = Ad(m) * +r / m, n = x(f - x(c | 0)), r = x(n * n), d = +x(n * r), P = d * 0.1666666667, m = +n, N = P - m * 0.1666666667, z = w * N, w = +r * 0.5, d = w + m - d * 0.5, m = w + m * -0.3333333333 - P, f = x(J * (z + (U * d + (b * m + _ * (1 - N - d - m)))));
                 }
                 return f;
               }
@@ -71061,17 +71096,17 @@ function gb() {
               }
               function ud(r, n, u, c, m, d) {
                 r = r | 0, n = n | 0, u = u | 0, c = c | 0, m = m | 0, d = d | 0;
-                var _ = 0, b = 0, f = 0, w = 0, C = 0, Q = 0, N = 0;
+                var _ = 0, b = 0, f = 0, w = 0, C = 0, P = 0, N = 0;
                 u = n << 2, b = u + i[r + 64 >> 2] | 0, _ = i[b >> 2], n = 0, f = i[r + 60 >> 2] + u | 0, u = i[f >> 2], w = i[c >> 2];
                 e: {
                   if ((u | 0) >= (w | 0))
                     break e;
-                  for (c = i[r + 12 >> 2], C = i[r + 40 >> 2], Q = i[r + 36 >> 2], N = i[r + 92 >> 2], n = i[d >> 2], d = (n | 0) > 0 ? n : 0, n = 0; ; ) {
+                  for (c = i[r + 12 >> 2], C = i[r + 40 >> 2], P = i[r + 36 >> 2], N = i[r + 92 >> 2], n = i[d >> 2], d = (n | 0) > 0 ? n : 0, n = 0; ; ) {
                     if ((n | 0) == (d | 0)) {
                       n = d;
                       break e;
                     }
-                    if (i[(T(n, N) << 2) + m >> 2] = 0, r = _ + C | 0, _ = r - (r >>> 0 < c >>> 0 ? 0 : c) | 0, n = n + 1 | 0, u = (u + Q | 0) + (r >>> 0 >= c >>> 0) | 0, !((w | 0) > (u | 0)))
+                    if (i[(T(n, N) << 2) + m >> 2] = 0, r = _ + C | 0, _ = r - (r >>> 0 < c >>> 0 ? 0 : c) | 0, n = n + 1 | 0, u = (u + P | 0) + (r >>> 0 >= c >>> 0) | 0, !((w | 0) > (u | 0)))
                       break;
                   }
                 }
@@ -71277,11 +71312,11 @@ function gb() {
                   }
               }
               function gd(r, n, u, c, m, d, _) {
-                var b = 0, f = 0, w = 0, C = 0, Q = x(0);
+                var b = 0, f = 0, w = 0, C = 0, P = x(0);
                 if ((n | 0) < (u | 0))
                   for (C = (_ | 0) > 1 ? _ : 1; ; ) {
                     if (_ = 0, f = (n << 2) + m | 0, b = i[f >> 2], (b | 0) >= 1)
-                      for (; b = Ki(d, b), w = (T(i[r + 8 >> 2], _) + n << 2) + c | 0, Q = x(x(b | 0) + x(0.5)), b = i[f >> 2], D[w >> 2] = D[w >> 2] + x(x(x(Q * x(1 << 14 - b)) * x(6103515625e-14)) + x(-0.5)), _ = _ + 1 | 0, (C | 0) != (_ | 0); )
+                      for (; b = Ki(d, b), w = (T(i[r + 8 >> 2], _) + n << 2) + c | 0, P = x(x(b | 0) + x(0.5)), b = i[f >> 2], D[w >> 2] = D[w >> 2] + x(x(x(P * x(1 << 14 - b)) * x(6103515625e-14)) + x(-0.5)), _ = _ + 1 | 0, (C | 0) != (_ | 0); )
                         ;
                     if (n = n + 1 | 0, (u | 0) == (n | 0))
                       break;
@@ -71403,9 +71438,9 @@ function gb() {
                     ;
               }
               function wd(r, n, u, c) {
-                var m = 0, d = 0, _ = 0, b = 0, f = 0, w = 0, C = 0, Q = 0;
+                var m = 0, d = 0, _ = 0, b = 0, f = 0, w = 0, C = 0, P = 0;
                 if (m = i[r + 8 >> 2], (m | 0) >= 1)
-                  for (w = ((u << 1) + c | 0) - 1 | 0, C = i[r + 104 >> 2], b = i[r + 32 >> 2], _ = qe[b >> 1]; Q = _ << 16, f = d + 1 | 0, _ = L[(f << 1) + b >> 1], i[(d << 2) + n >> 2] = T(we[(T(m, w) + d | 0) + C | 0] - -64 | 0, T(_ - (Q >> 16) << u, c)) >> 2, d = f, m = i[r + 8 >> 2], (d | 0) < (m | 0); )
+                  for (w = ((u << 1) + c | 0) - 1 | 0, C = i[r + 104 >> 2], b = i[r + 32 >> 2], _ = qe[b >> 1]; P = _ << 16, f = d + 1 | 0, _ = L[(f << 1) + b >> 1], i[(d << 2) + n >> 2] = T(we[(T(m, w) + d | 0) + C | 0] - -64 | 0, T(_ - (P >> 16) << u, c)) >> 2, d = f, m = i[r + 8 >> 2], (d | 0) < (m | 0); )
                     ;
               }
               function xd(r) {
@@ -71764,9 +71799,9 @@ function gb() {
         return Be ? B(R, Be, Ie) : "";
       }
       typeof TextDecoder < "u" && new TextDecoder("utf-16le");
-      var I, R, Y;
+      var I, R, O;
       function $(Be) {
-        I = Be, a.HEAP8 = new Int8Array(Be), a.HEAP16 = new Int16Array(Be), a.HEAP32 = Y = new Int32Array(Be), a.HEAPU8 = R = new Uint8Array(Be), a.HEAPU16 = new Uint16Array(Be), a.HEAPU32 = new Uint32Array(Be), a.HEAPF32 = new Float32Array(Be), a.HEAPF64 = new Float64Array(Be);
+        I = Be, a.HEAP8 = new Int8Array(Be), a.HEAP16 = new Int16Array(Be), a.HEAP32 = O = new Int32Array(Be), a.HEAPU8 = R = new Uint8Array(Be), a.HEAPU16 = new Uint16Array(Be), a.HEAPU32 = new Uint32Array(Be), a.HEAPF32 = new Float32Array(Be), a.HEAPF64 = new Float64Array(Be);
       }
       var X = a.INITIAL_MEMORY || 16777216;
       a.wasmMemory ? A = a.wasmMemory : A = new s.Memory({
@@ -71833,8 +71868,8 @@ function gb() {
           var Ie = gt(Be);
           if (Ie)
             return Ie;
-          if (O)
-            return O(Be);
+          if (Y)
+            return Y(Be);
           throw "sync fetching of the wasm failed: you can preload it to Module['wasmBinary'] manually, or emcc.py will do that for you when generating HTML (but not JS)";
         } catch (He) {
           Ze(He);
@@ -71894,10 +71929,10 @@ function gb() {
       }
       var Rt = { mappings: {}, buffers: [null, [], []], printChar: function(Be, Ie) {
         var He = Rt.buffers[Be];
-        Ie === 0 || Ie === 10 ? ((Be === 1 ? G : V)(B(He, 0)), He.length = 0) : He.push(Ie);
+        Ie === 0 || Ie === 10 ? ((Be === 1 ? j : V)(B(He, 0)), He.length = 0) : He.push(Ie);
       }, varargs: void 0, get: function() {
         Rt.varargs += 4;
-        var Be = Y[Rt.varargs - 4 >> 2];
+        var Be = O[Rt.varargs - 4 >> 2];
         return Be;
       }, getStr: function(Be) {
         var Ie = E(Be);
@@ -71912,11 +71947,11 @@ function gb() {
       }
       function ui(Be, Ie, He, st) {
         for (var _t = 0, Re = 0; Re < He; Re++) {
-          for (var ut = Y[Ie + Re * 8 >> 2], Bt = Y[Ie + (Re * 8 + 4) >> 2], je = 0; je < Bt; je++)
+          for (var ut = O[Ie + Re * 8 >> 2], Bt = O[Ie + (Re * 8 + 4) >> 2], je = 0; je < Bt; je++)
             Rt.printChar(Be, R[ut + je]);
           _t += Bt;
         }
-        return Y[st >> 2] = _t, 0;
+        return O[st >> 2] = _t, 0;
       }
       function Zt(Be) {
         for (var Ie = [], He = 0; He < Be.length; He++) {
@@ -72022,11 +72057,11 @@ function yb() {
       this.getPageBoundaries(h).map(function(v) {
         var k = h.getUint8(v + 5, !0), M = h.getUint32(v + 18, !0);
         if (k & 2 && (this.numberOfChannels = h.getUint8(v + 37, !0), this.init()), M > 1) {
-          for (var P = h.getUint8(v + 26, !0), F = v + 27 + P, q = 0; q < P; q++) {
-            var O = h.getUint8(v + 27 + q, !0);
-            if (this.decoderBuffer.set(a.subarray(F, F += O), this.decoderBufferIndex), this.decoderBufferIndex += O, O < 255) {
-              var H = this._opus_decode_float(this.decoder, this.decoderBufferPointer, this.decoderBufferIndex, this.decoderOutputPointer, this.decoderOutputMaxLength, 0), j = Math.ceil(H * this.config.outputBufferSampleRate / this.config.decoderSampleRate);
-              this.HEAP32[this.decoderOutputLengthPointer >> 2] = H, this.HEAP32[this.resampleOutputLengthPointer >> 2] = j, this._speex_resampler_process_interleaved_float(this.resampler, this.decoderOutputPointer, this.decoderOutputLengthPointer, this.resampleOutputBufferPointer, this.resampleOutputLengthPointer), l.call(this, this.HEAPF32.subarray(this.resampleOutputBufferPointer >> 2, (this.resampleOutputBufferPointer >> 2) + j * this.numberOfChannels), p), this.decoderBufferIndex = 0;
+          for (var Q = h.getUint8(v + 26, !0), F = v + 27 + Q, q = 0; q < Q; q++) {
+            var Y = h.getUint8(v + 27 + q, !0);
+            if (this.decoderBuffer.set(a.subarray(F, F += Y), this.decoderBufferIndex), this.decoderBufferIndex += Y, Y < 255) {
+              var H = this._opus_decode_float(this.decoder, this.decoderBufferPointer, this.decoderBufferIndex, this.decoderOutputPointer, this.decoderOutputMaxLength, 0), G = Math.ceil(H * this.config.outputBufferSampleRate / this.config.decoderSampleRate);
+              this.HEAP32[this.decoderOutputLengthPointer >> 2] = H, this.HEAP32[this.resampleOutputLengthPointer >> 2] = G, this._speex_resampler_process_interleaved_float(this.resampler, this.decoderOutputPointer, this.decoderOutputLengthPointer, this.resampleOutputBufferPointer, this.resampleOutputLengthPointer), l.call(this, this.HEAPF32.subarray(this.resampleOutputBufferPointer >> 2, (this.resampleOutputBufferPointer >> 2) + G * this.numberOfChannels), p), this.decoderBufferIndex = 0;
             }
           }
           k & 4 && (this.completed = !0, this.oncomplete && this.oncomplete(p));
@@ -72048,12 +72083,12 @@ function yb() {
         for (; v < h; ) {
           var M = Math.min(h - v, this.decoderBufferMaxLength);
           this.decoderBuffer.set(a.subarray(v, v += M), this.decoderBufferIndex), this.decoderBufferIndex += M;
-          var P = this._opus_decode_float(this.decoder, this.decoderBufferPointer, a.length, this.decoderOutputPointer, this.decoderOutputMaxLength, 0), F;
+          var Q = this._opus_decode_float(this.decoder, this.decoderBufferPointer, a.length, this.decoderOutputPointer, this.decoderOutputMaxLength, 0), F;
           if (this.resampler) {
-            var q = Math.ceil(P * this.config.outputBufferSampleRate / this.config.decoderSampleRate);
-            this.HEAP32[this.decoderOutputLengthPointer >> 2] = P, this.HEAP32[this.resampleOutputLengthPointer >> 2] = q, this._speex_resampler_process_interleaved_float(this.resampler, this.decoderOutputPointer, this.decoderOutputLengthPointer, this.resampleOutputBufferPointer, this.resampleOutputLengthPointer), F = this.HEAPF32.subarray(this.resampleOutputBufferPointer >> 2, (this.resampleOutputBufferPointer >> 2) + q * this.numberOfChannels);
+            var q = Math.ceil(Q * this.config.outputBufferSampleRate / this.config.decoderSampleRate);
+            this.HEAP32[this.decoderOutputLengthPointer >> 2] = Q, this.HEAP32[this.resampleOutputLengthPointer >> 2] = q, this._speex_resampler_process_interleaved_float(this.resampler, this.decoderOutputPointer, this.decoderOutputLengthPointer, this.resampleOutputBufferPointer, this.resampleOutputLengthPointer), F = this.HEAPF32.subarray(this.resampleOutputBufferPointer >> 2, (this.resampleOutputBufferPointer >> 2) + q * this.numberOfChannels);
           } else
-            F = this.HEAPF32.subarray(this.decoderOutputPointer >> 2, (this.decoderOutputPointer >> 2) + P * this.numberOfChannels);
+            F = this.HEAPF32.subarray(this.decoderOutputPointer >> 2, (this.decoderOutputPointer >> 2) + Q * this.numberOfChannels);
           l.call(this, F, p), this.decoderBufferIndex = 0;
         }
         this.oncomplete && this.oncomplete(p);
@@ -72072,8 +72107,8 @@ function yb() {
       this.config.decoderSampleRate = v;
       var k = 19, M = h.getUint8(18);
       if (M > 0) {
-        var P = h.getUint8(19);
-        k += 2 + P * 8;
+        var Q = h.getUint8(19);
+        k += 2 + Q * 8;
       }
       var F = a.length * a.BYTES_PER_ELEMENT;
       if (F > k)
@@ -72087,9 +72122,9 @@ function yb() {
         return !1;
       var M = k.getUint32(8, !0);
       v && (v.vendor = new Uint8Array(k, 12, M));
-      var P = k.getUint32(12 + M, !0), F = 16 + M;
-      if (P > 0)
-        for (var q, O = 0; O < P; ++O)
+      var Q = k.getUint32(12 + M, !0), F = 16 + M;
+      if (Q > 0)
+        for (var q, Y = 0; Y < Q; ++Y)
           q = k.getUint32(F, !0), v && v.userComments.push(new Uint8Array(k, F + 4, q)), F += 4 + q;
       return v && (this.tags ? this.tags.push(v) : this.tags = [v]), F;
     }, t.prototype.getPageBoundaries = function(a) {

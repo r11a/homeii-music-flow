@@ -115,9 +115,9 @@ function ensureHaEditorComponents() {
   } catch (_) {}
 }
 
-const HOMEII_CARD_VERSION = "6.1.1";
-const HOMEII_BROWSER_EDITOR_TAG = "homeii-music-flow-browser-editor-v611";
-const HOMEII_MOBILE_EDITOR_TAG = "homeii-music-flow-editor-v611";
+const HOMEII_CARD_VERSION = "6.1.2";
+const HOMEII_BROWSER_EDITOR_TAG = "homeii-music-flow-browser-editor-v612";
+const HOMEII_MOBILE_EDITOR_TAG = "homeii-music-flow-editor-v612";
 const AMBIENT_LIGHT_PAIR_PLAYER_PREFIX = "__homeii_ambient_light_pair_player_";
 const AMBIENT_LIGHT_PAIR_LIGHTS_PREFIX = "__homeii_ambient_light_pair_lights_";
 
@@ -15535,7 +15535,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     const search = String(query || "").trim();
     const group = this._libraryTabSearchResultGroup(mediaType);
     if (!mediaType || !group || !search) return [];
-    const results = await this._search(search, { providerOnly: true, strict: true, limit });
+    const results = await this._search(search, { providerOnly: true, strict: true, limit: Math.min(limit, 10), mediaTypes: [mediaType] });
     return this._dedupeLibraryItems((Array.isArray(results?.[group]) ? results[group] : []).map((item) => ({
       ...item,
       media_type: item?.media_type || mediaType,
@@ -15605,7 +15605,6 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
         <div class="library-toolbar-actions library-toolbar-icons">
           <button class="media-layout-btn library-toolbar-search-toggle ${tabSearchOpen ? "active" : ""}" data-library-tab-search-toggle="${this._esc(page)}" title="${this._esc(this._i18n("ui.search"))}" aria-label="${this._esc(this._i18n("ui.search"))}" aria-expanded="${tabSearchOpen ? "true" : "false"}">${this._iconSvg("search")}</button>
           <div class="media-layout-toggle" role="tablist" aria-label="${this._esc(this._i18n("ui.media_layout"))}">
-            ${page === "library_artists" ? `<button class="media-layout-btn library-album-artists-toggle ${this._state.albumArtistsOnly ? "active" : ""}" data-album-artists-only="1" aria-pressed="${this._state.albumArtistsOnly ? "true" : "false"}" title="${this._esc(this._m("Album artists only", "אמני אלבומים בלבד"))}" aria-label="${this._esc(this._m("Album artists only", "אמני אלבומים בלבד"))}">${this._iconSvg("artist")}</button>` : ""}
             ${favoritesPage ? `<button class="media-layout-btn library-favorites-toggle" data-library-liked-open="library_liked" title="${this._esc(favoritesLabel)}" aria-label="${this._esc(favoritesLabel)}">${this._iconSvg("heart_filled")}</button>` : ``}
             ${!isSearch ? `<button class="media-layout-btn" data-media-surprise="1" title="${this._esc(this._i18n("ui.surprise_me"))}">${this._iconSvg("wand")}</button>` : ``}
             ${!isSearch ? `<button class="media-layout-btn library-flow-toggle ${libraryFlowActive ? "active" : ""}" data-library-flow-toggle="${this._esc(page)}" title="${this._esc(this._libraryFlowLabel())}" aria-label="${this._esc(this._libraryFlowLabel())}" aria-pressed="${libraryFlowActive ? "true" : "false"}">${this._iconSvg("queue_flow")}</button>` : ``}
@@ -15619,6 +15618,8 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
           </select>
         </div>
       </div>
+      ${page === "library_artists" ? `<div class="library-context-controls"><button type="button" class="library-context-toggle ${this._state.albumArtistsOnly ? "active" : ""}" data-album-artists-only="1" aria-pressed="${this._state.albumArtistsOnly ? "true" : "false"}">${this._iconSvg("artist")}<span>${this._esc(this._m("Album artists only", "אמני אלבומים בלבד"))}</span></button></div>` : ""}
+      ${page === "library_radio" ? `<div class="library-context-controls"><button type="button" class="library-context-toggle" data-menu-nav="favorite_radios">${this._iconSvg("radio")}<span>${this._esc(this._m("Pin stations to player", "הצמד תחנות לנגן"))}</span></button></div>` : ""}
       ${tabSearchOpen ? this._libraryTabSearchBoxHtml("row") : ""}
     `;
   }
@@ -15864,7 +15865,6 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     const query = (this._state.mediaQuery || "").trim();
     this._state.mediaSearchToken = Number(this._state.mediaSearchToken || 0) + 1;
     const searchToken = this._state.mediaSearchToken;
-    let completed = false;
     const isCurrentSearch = () => (
       this._state.menuOpen
       && this._state.mediaSearchToken === searchToken
@@ -15887,17 +15887,6 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
       ? this._mediaSearchSectionsHtml(cachedResults, searchRenderOptions)
       : this._loadingStateHtml(this._i18n("ui.searching"), { notice: true });
     if (hasInterimResults) this._hydrateImages(body);
-    if (!hasInterimResults) {
-      this._withTimeout(this._searchPreviewResults(query, 8), 3200, "Preview search timed out")
-        .then((previewResults) => {
-          if (completed || !isCurrentSearch() || hasInterimResults || !this._hasSearchResults(previewResults)) return;
-          hasInterimResults = true;
-          fastResults = previewResults;
-          resultsHost.innerHTML = this._mediaSearchSectionsHtml(previewResults, searchRenderOptions);
-          this._hydrateImages(body);
-        })
-        .catch(() => {});
-    }
     let providerPromise = null;
     let providerError = null;
     let libraryError = null;
@@ -15906,7 +15895,7 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
         await new Promise((resolve) => setTimeout(resolve, 650));
         if (!isCurrentSearch()) return this._emptySearchResults();
         return this._withTimeout(
-          this._search(query, { providerOnly: true, limit: 30, strict: true }),
+          this._search(query, { providerOnly: true, limit: 10, strict: true }),
           Math.max(this._musicAssistantTimeoutMs(), 18000),
           this._timeoutMessage("Music Assistant provider search"),
         );
@@ -15938,11 +15927,9 @@ class HomeiiMusicFlowBaseCard extends HomeiiBaseMusicCard {
     };
     if (providerPromise) {
       const providerResults = await providerPromise;
-      completed = true;
       if (!isCurrentSearch()) return;
       if (applyProviderResults(providerResults)) hasInterimResults = true;
     }
-    completed = true;
     if (!isCurrentSearch()) return;
     if (providerError || libraryError) {
       const notice = `<div class="notice open" role="alert">${this._esc(this._m(hasInterimResults ? "Some search sources could not be loaded. Try again." : "Search could not be completed. Try again.", hasInterimResults ? "חלק ממקורות החיפוש לא נטענו. נסה שוב." : "לא ניתן להשלים את החיפוש. נסה שוב."))}</div><button class="chip-btn" data-menu-action="retry_library">${this._esc(this._m("Retry", "נסה שוב"))}</button>`;
